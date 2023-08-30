@@ -1,7 +1,7 @@
 {
-    "name": "bsafe",
+    "name": "sdk-template-infinity",
     "version": "0.0.0",
-    "description": "A multi-signature system sdk built on Fuel",
+    "description": "A template to create new quick packages",
     "author": "InfinityBase - Guilherme Roque",
     "license": "Apache-2.0",
     "main": "dist/cjs/index.js",
@@ -10,9 +10,10 @@
         "dist"
     ],
     "scripts": {
-        "build": "rm -rf dist/ && prettier --write src/ && npm run build:esm && npm run build:cjs",
+        "build": "npm run build:sway && rm -rf dist/ && prettier --write src/ && npm run build:esm && npm run build:cjs",
         "build:esm": "tsc",
-        "build:cjs": "tsc --module CommonJS --outDir dist/cjs"
+        "build:cjs": "tsc --module CommonJS --outDir dist/cjs",
+        "build:sway": "chmod +x build-sway.sh && ./build-sway.sh"
     },
     "devDependencies": {
         "@types/node": "17.0.1",
@@ -21,8 +22,7 @@
         "prettier": "3.0.3",
         "react": "17.0.2",
         "react-dom": "17.0.2",
-        "typescript": "4.5.4",
-        "turbo": "1.10.0"
+        "typescript": "4.5.4"
     },
     "peerDependencies": {
         "react": "17.0.2",
