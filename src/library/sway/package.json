@@ -1,0 +1,15 @@
+{
+    "name": "@infintiysafe/sway",
+    "main": "./dist/index.ts",
+    "exports": {
+        "types": "./dist/index.ts",
+        "require": "./dist/index.js",
+        "default": "./dist/index.mjs"
+    },
+    "scripts": {
+        "build:sway": "node build.js"
+    },
+    "dependencies": {
+        "fuels": "^0.43.1"
+    }
+}
