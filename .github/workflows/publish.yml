@@ -13,11 +13,14 @@ jobs:
               with:
                   node-version: 16.19.0
 
-            - name: Install packages
-              run: npm install
+            - name: Install yarn globally
+              run: npm install -g yarn
 
-            - name: Build
-              run: npm run build
+            - name: Install dependencies
+              run: yarn install
+
+            - name: Run yarn build
+              run: yarn build
 
             - name: Publish package
-              run: npm publish --access public --token ${{ secrets.ACCESS_NPM_TOKEN }}
+              run: yarn publish --access public --token ${{ secrets.ACCESS_NPM_TOKEN }}
