@@ -1,0 +1,20 @@
+name: Deploy to NPM
+
+on:
+    push:
+        branches: [master]
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Setup Node.js
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 16.19.0
+
+            - name: Build
+              run: npm run build
+
+            - name: Publish package
+              run: npm publish --access public --token ${{ secrets.ACCESS_NPM_TOKEN }}

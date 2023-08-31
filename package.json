@@ -1,6 +1,6 @@
 {
-    "name": "@infinitybase/bsafe",
-    "version": "0.0.0",
+    "name": "b-safe",
+    "version": "0.0.1",
     "description": "A signature validation package built based on sway in the fuel network",
     "author": "InfinityBase - Guilherme Roque",
     "license": "Apache-2.0",
@@ -10,10 +10,11 @@
         "dist"
     ],
     "scripts": {
-        "build": "npm run build:sway && rm -rf dist/ && prettier --write src/ && npm run build:esm && npm run build:cjs",
+        "build": "npm run build:sway && rm -rf dist/ && prettier --write src/ && npm run build:esm && npm run build:cjs && npm run build:version",
         "build:esm": "tsc",
         "build:cjs": "tsc --module CommonJS --outDir dist/cjs",
-        "build:sway": "chmod +x build-sway.sh && ./build-sway.sh"
+        "build:sway": "chmod +x dbuild-sway.sh && ./dbuild-sway.sh",
+        "build:version": "chmod +x dupdate-version.sh && ./dupdate-version.sh"
     },
     "devDependencies": {
         "@types/node": "17.0.1",
