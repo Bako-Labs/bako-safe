@@ -21,6 +21,7 @@ jobs:
 
             - name: Run yarn build
               run: yarn build
+              working-directory: ${{ github.workspace }}
 
             - name: Publish package
               run: yarn publish --access public --token ${{ secrets.ACCESS_NPM_TOKEN }}
