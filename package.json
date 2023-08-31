@@ -10,7 +10,7 @@
         "dist"
     ],
     "scripts": {
-        "build": "npm run build:sway && rm -rf dist/ && prettier --write src/ && npm run build:esm && npm run build:cjs && npm run build:version",
+        "build": "yarn build:sway && rm -rf dist/ && prettier --write src/ && yarn build:esm && yarn build:cjs && yarn build:version",
         "build:esm": "tsc",
         "build:cjs": "tsc --module CommonJS --outDir dist/cjs",
         "build:sway": "chmod +x dbuild-sway.sh && ./dbuild-sway.sh",
