@@ -1,7 +1,7 @@
 {
-    "name": "sdk-template-infinity",
+    "name": "@infinitybase/bsafe",
     "version": "0.0.0",
-    "description": "A template to create new quick packages",
+    "description": "A signature validation package built based on sway in the fuel network",
     "author": "InfinityBase - Guilherme Roque",
     "license": "Apache-2.0",
     "main": "dist/cjs/index.js",
