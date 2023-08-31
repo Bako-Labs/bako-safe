@@ -1,32 +1,32 @@
 {
-    "name": "b-safe",
-    "version": "0.0.1",
-    "description": "A signature validation package built based on sway in the fuel network",
-    "author": "InfinityBase - Guilherme Roque",
-    "license": "Apache-2.0",
-    "main": "dist/cjs/index.js",
-    "module": "dist/esm/index.js",
-    "files": [
-        "dist"
-    ],
-    "scripts": {
-        "build": "yarn build:sway && rm -rf dist/ && prettier --write src/ && yarn build:esm && yarn build:cjs && yarn build:version",
-        "build:esm": "tsc",
-        "build:cjs": "tsc --module CommonJS --outDir dist/cjs",
-        "build:sway": "chmod +x dbuild-sway.sh && ./dbuild-sway.sh",
-        "build:version": "chmod +x dupdate-version.sh && ./dupdate-version.sh"
-    },
-    "devDependencies": {
-        "@types/node": "17.0.1",
-        "@types/react": "17.0.37",
-        "@types/react-dom": "17.0.11",
-        "prettier": "3.0.3",
-        "react": "17.0.2",
-        "react-dom": "17.0.2",
-        "typescript": "4.5.4"
-    },
-    "peerDependencies": {
-        "react": "17.0.2",
-        "react-dom": "17.0.2"
-    }
+  "name": "b-safe",
+  "version": "0.0.2",
+  "description": "A signature validation package built based on sway in the fuel network",
+  "author": "InfinityBase - Guilherme Roque",
+  "license": "Apache-2.0",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rm -rf dist/ && prettier --write src/ && yarn build:esm && yarn build:cjs && yarn build:version",
+    "build:esm": "tsc",
+    "build:cjs": "tsc --module CommonJS --outDir dist/cjs",
+    "build:sway": "chmod +x dbuild-sway.sh && ./dbuild-sway.sh",
+    "build:version": "chmod +x dupdate-version.sh && ./dupdate-version.sh"
+  },
+  "devDependencies": {
+    "@types/node": "17.0.1",
+    "@types/react": "17.0.37",
+    "@types/react-dom": "17.0.11",
+    "prettier": "3.0.3",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "typescript": "4.5.4"
+  },
+  "peerDependencies": {
+    "react": "17.0.2",
+    "react-dom": "17.0.2"
+  }
 }
