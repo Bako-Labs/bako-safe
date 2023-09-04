@@ -1,9 +1,9 @@
 import { InputValue, Predicate } from 'fuels';
 import { predicateABI, predicateBIN } from '../index';
 import { makeHashPredicate, makeSubscribers } from './helpers';
-import { IConfigurable, IPayloadVault } from './types';
+import { IConfigurable, IPayloadVault, IVault } from './types';
 
-export class Vault {
+export class Vault implements IVault {
     private predicate!: Predicate<InputValue[]>;
 
     public configurable!: IConfigurable;
@@ -29,14 +29,14 @@ export class Vault {
     }
 
     public async getPredicate() {
-        return this.predicate;
+        return await this.predicate;
     }
 
-    public async getAddress() {
+    public getAddress() {
         return this.predicate.address.toString();
     }
 
     public async getBalance() {
-        return this.predicate.getBalance();
+        return await this.predicate.getBalance();
     }
 }
