@@ -24,8 +24,12 @@ export interface IPayloadVault {
 
 export interface IVault {
     getPredicate: () => Promise<Predicate<InputValue[]>>;
-    getAddress: () => string;
     getBalance: () => Promise<BN>;
+    getAddress: () => string;
+    getAbi: () => { [name: string]: unknown };
+    getBin: () => string;
+    getNetwork: () => string;
+    getChainId: () => number;
 
     configurable: IConfigurable;
 }
