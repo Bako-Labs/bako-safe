@@ -1,6 +1,6 @@
 {
   "name": "bsafe",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A signature validation package built based on sway in the fuel network",
   "author": "InfinityBase - Guilherme Roque",
   "license": "Apache-2.0",
@@ -32,7 +32,6 @@
   "dependencies": {
     "@types/elliptic": "6.4.14",
     "@types/graphql": "14.5.0",
-    "fuels": "0.54.1",
-    "graphql-request": "6.1.0"
+    "fuels": "0.43.1"
   }
 }

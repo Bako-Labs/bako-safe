@@ -6,8 +6,6 @@ export interface IConfVault {
     SIGNERS: string[];
     addresses: string[];
     minSigners: number;
-    network: string;
-    chainId: number;
 }
 
 export interface IConfigurable {
@@ -29,7 +27,6 @@ export interface IVault {
     getAbi: () => { [name: string]: unknown };
     getBin: () => string;
     getNetwork: () => string;
-    getChainId: () => number;
 
     configurable: IConfigurable;
 }
