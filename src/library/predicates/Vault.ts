@@ -1,7 +1,7 @@
 import { InputValue, Predicate } from 'fuels';
 import { predicateABI, predicateBIN } from '../index';
 import { makeHashPredicate, makeSubscribers } from './helpers';
-import { IConfigurable, IPayloadVault, IVault } from './types';
+import { IConfVault, IConfigurable, IPayloadVault, IVault } from './types';
 export * from './types';
 
 export class Vault implements IVault {
@@ -13,27 +13,27 @@ export class Vault implements IVault {
     public configurable!: IConfigurable;
 
     constructor({ configurable, abi, bytecode }: IPayloadVault) {
+        this.abi = abi ? JSON.parse(abi) : predicateABI;
+        this.bin = bytecode ? bytecode : predicateBIN;
         this.network = 'https://beta-3.fuel.network/graphql';
-        const hasExists = configurable.HASH_PREDUCATE;
 
+        !(configurable instanceof Predicate) ? this.makePredicate(configurable, JSON.stringify(this.abi)) : (this.predicate = configurable);
+    }
+
+    private makePredicate(configurable: IConfVault, abi: string) {
+        const hasExists = configurable.HASH_PREDUCATE;
         const _configurable: { [name: string]: unknown } = {
             SIGNATURES_COUNT: hasExists ? configurable.SIGNATURES_COUNT : configurable.minSigners,
             SIGNERS: hasExists ? configurable.SIGNERS : makeSubscribers(configurable.addresses),
             HASH_PREDUCATE: hasExists ? configurable.HASH_PREDUCATE : makeHashPredicate()
         };
 
-        const _abi = abi ? JSON.parse(abi) : predicateABI;
-        const _bin = bytecode ? bytecode : predicateBIN;
-
         this.configurable = {
             HASH_PREDUCATE: _configurable.HASH_PREDUCATE as number[],
             SIGNATURES_COUNT: _configurable.SIGNATURES_COUNT as string,
             SIGNERS: _configurable.SIGNERS as string[]
         };
-
-        this.bin = _bin;
-        this.abi = _abi;
-        this.predicate = new Predicate(_bin, _abi, this.network, _configurable);
+        this.predicate = new Predicate(this.bin, JSON.parse(abi), this.network, _configurable);
     }
 
     public async getPredicate() {

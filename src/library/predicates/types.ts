@@ -15,7 +15,7 @@ export interface IConfigurable {
 }
 
 export interface IPayloadVault {
-    configurable: IConfVault;
+    configurable: IConfVault | Predicate<InputValue[]>;
     abi?: string;
     bytecode?: string;
 }
