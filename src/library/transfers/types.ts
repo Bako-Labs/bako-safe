@@ -35,7 +35,7 @@ export interface ITransfer {
     instanceTransaction(): Promise<IInstanceTransfer>;
     sendTransaction(): Promise<ISendTransaction>;
     setWitnesses(witnesses: string[]): string[];
-    getStatusWitnesses(): IRequiredWitnesses;
+    //getStatusWitnesses(): IRequiredWitnesses;
     getHashTxId(): string;
     getTransaction(): TransactionRequest;
 }

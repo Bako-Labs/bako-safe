@@ -2,7 +2,7 @@ import { Address, InputType, Provider, ScriptTransactionRequest, TransactionRequ
 import { Asset } from '../assets';
 import { ITransferAsset } from '../assets/types';
 import { Vault } from '../predicates';
-import { transactionScript, witnessesStatus } from './helpers';
+import { transactionScript } from './helpers';
 import { IPayloadTransfer, IRequiredWitnesses, ITransfer } from './types';
 
 export class Transfer extends Vault implements ITransfer {
@@ -102,13 +102,13 @@ export class Transfer extends Vault implements ITransfer {
         return this.witnesses;
     }
 
-    public getStatusWitnesses() {
-        return {
-            required: Number(this.configurable.SIGNATURES_COUNT),
-            signed: this.witnesses.length,
-            witnesses: witnessesStatus(this.witnesses, this.configurable.SIGNERS, this.hashTxId)
-        };
-    }
+    // public getStatusWitnesses() {
+    //     return {
+    //         required: Number(this.configurable.SIGNATURES_COUNT),
+    //         signed: this.witnesses.length,
+    //         witnesses: witnessesStatus(this.witnesses, this.configurable.SIGNERS, this.hashTxId)
+    //     };
+    // }
 
     public getAssets() {
         return this.assets;
