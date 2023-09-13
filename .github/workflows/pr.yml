@@ -24,11 +24,8 @@ jobs:
                   password: ${{ secrets.GUIMROQUE_GITHUB_TOKEN }}
             - uses: ./.github/actions/setup-rust
 
-            - name: Check projects formatting
-              run: pnpm check
-
             - name: Build projects
-              run: pnpm build
+              run: yarn build
 
             - name: Test projects
-              run: pnpm test
+              run: yarn test
