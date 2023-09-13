@@ -207,7 +207,6 @@ describe('Test Vault', () => {
         ];
 
         const transaction = await vault.includeTransaction(_assets, []);
-        const previusBalance = await vault.getBalances();
         const witnesses = [
             await signin(transaction.transaction.getHashTxId(), 'USER_1'),
             await signin(transaction.transaction.getHashTxId(), 'USER_2'),
