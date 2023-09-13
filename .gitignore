@@ -3,7 +3,6 @@ package-lock.json
 exemple/
 .DS_Store
 dist/
-predicate/
 
 yarn.lock
 yarn-error.log

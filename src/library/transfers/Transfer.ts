@@ -99,12 +99,12 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
             status: result.status.type,
             block: this.makeBlockUrl(),
             gasUsed: result.gasUsed.format(),
-            transactionResume: JSON.stringify(result)
+            transactionResume: '' //JSON.stringify(result)
         };
     }
 
     private makeBlockUrl() {
-        return `https://fuellabs.github.io/block-explorer-v2/transaction/0x${this.hashTxId}?providerUrl=${encodeURIComponent(this.vault.getNetwork())}`;
+        return `https://fuellabs.github.io/block-explorer-v2/transaction/${this.hashTxId}?providerUrl=${encodeURIComponent(this.vault.getNetwork())}`;
     }
 
     public getHashTxId() {

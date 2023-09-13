@@ -1,6 +1,7 @@
 import { BN, Provider, Wallet, bn } from 'fuels';
 import { IPayloadVault, Vault } from '../library';
 import { ITransferAsset } from '../library/assets';
+import { defaultValues } from '../library/predicates/helpers';
 import accounts from '../mocks/accounts.json';
 import assets from '../mocks/assets.json';
 
@@ -206,14 +207,16 @@ describe('Test Vault', () => {
         ];
 
         const transaction = await vault.includeTransaction(_assets, []);
-
+        const previusBalance = await vault.getBalances();
         const witnesses = [
             await signin(transaction.transaction.getHashTxId(), 'USER_1'),
-            //await signin(transaction.transaction.getHashTxId(), 'USER_2'),
-            await signin(transaction.transaction.getHashTxId(), 'USER_5')
+            await signin(transaction.transaction.getHashTxId(), 'USER_2'),
+            defaultValues['signature']
+            //await signin(transaction.transaction.getHashTxId(), 'USER_3')
         ];
 
         transaction.transaction.witnesses = witnesses;
-        await expect(transaction.transaction.sendTransaction()).rejects.toThrow('PredicateVerificationFailed');
+        await transaction.transaction.sendTransaction();
+        expect(await vault.getBalances()).toBe(previusBalance);
     });
 });
