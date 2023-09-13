@@ -18,7 +18,8 @@ configurable {
         0x0000000000000000000000000000000000000000000000000000000000000000,
         0x0000000000000000000000000000000000000000000000000000000000000000,
     ],
-    SIGNATURES_COUNT: u64 = 0
+    SIGNATURES_COUNT: u64 = 0,
+    HASH_PREDUCATE: [u64; 20] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 }
 
 fn check_signature(index: u64, tx_hash: b256) -> u64 {
@@ -54,6 +55,9 @@ fn check_signature(index: u64, tx_hash: b256) -> u64 {
 
 fn main() -> bool {
     let mut verified = 0;
+
+    // this line existis with use and include configurable HASH_PREDICATE on build
+    let hash_predicate = HASH_PREDUCATE;
     let tx_id_hash = tx_id();
     let tx_hash = b256_to_ascii_bytes(tx_id_hash).sha256();
     let witness_count = tx_witnesses_count();

@@ -216,7 +216,6 @@ describe('Test Vault', () => {
         ];
 
         transaction.transaction.witnesses = witnesses;
-        await transaction.transaction.sendTransaction();
-        expect(await vault.getBalances()).toBe(previusBalance);
+        await expect(transaction.transaction.sendTransaction()).rejects.toThrow('PredicateVerificationFailed');
     });
 });
