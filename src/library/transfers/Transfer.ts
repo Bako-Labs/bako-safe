@@ -1,80 +1,98 @@
-import { Address, InputType, Provider, ScriptTransactionRequest, TransactionRequest, TransactionResponse, arrayify, bn, hashTransaction, hexlify, transactionRequestify } from 'fuels';
+import { Address, InputType, Provider, ScriptTransactionRequest, TransactionResponse, arrayify, bn, hashTransaction, hexlify, transactionRequestify } from 'fuels';
 import { Asset } from '../assets';
-import { ITransferAsset } from '../assets/types';
+import { IAssetGroupById, ITransferAsset } from '../assets/types';
 import { Vault } from '../predicates';
 import { transactionScript } from './helpers';
-import { IPayloadTransfer, IRequiredWitnesses, ITransfer } from './types';
+import { IPayloadTransfer, ITransfer } from './types';
 
-export class Transfer extends Vault implements ITransfer {
-    private transaction!: TransactionRequest;
+export class Transfer extends ScriptTransactionRequest implements ITransfer {
+    //private transaction: TransactionRequest;
     private hashTxId!: string;
+    private vault: Vault;
 
     private assets: ITransferAsset[];
-    private witnesses: string[];
+    //private witnesses: string[];
     //private signers: string[];
 
     constructor({ vault, assets, witnesses }: IPayloadTransfer) {
-        super(vault);
-
-        this.witnesses = witnesses;
-        this.assets = assets;
-        this.transaction = new ScriptTransactionRequest({
+        super({
             gasPrice: bn(1),
             gasLimit: bn(100000),
             script: transactionScript
         });
+        this.witnesses = witnesses;
+        this.assets = assets;
+        this.vault = vault;
     }
-    getWitnesses(): Promise<IRequiredWitnesses> {
+    setWitnesses(witnesses: string[]): string[] {
         throw new Error('Method not implemented.');
     }
 
     public async instanceTransaction() {
         const outputs = await Asset.assetsGroupByTo(this.assets);
         const coins = await Asset.assetsGroupById(this.assets);
-        const transactionCoins = await Asset.addTransactionFee(coins, this.transaction.gasPrice.toString());
-        const vault = await this.getPredicate();
+        const transactionCoins = await Asset.addTransactionFee(coins, this.gasPrice.toString());
+        const vault = this.vault;
 
         Object.entries(outputs).map(([key, value]) => {
-            this.transaction.addCoinOutput(Address.fromString(value.to), bn.parseUnits(value.amount.toString()), value.assetId);
+            this.addCoinOutput(Address.fromString(value.to), bn.parseUnits(value.amount.toString()), value.assetId);
         });
 
         //todo: verify requiriments
-        const _coins = vault.getResourcesToSpend(transactionCoins);
+        await this.validtateBalance(coins);
+        const _coins = await vault.getResourcesToSpend(transactionCoins);
 
-        this.transaction.addResources(await _coins);
+        this.addResources(_coins);
 
         // Add predicate data to the input
-        this.transaction.inputs?.forEach((input) => {
+        this.inputs?.forEach((input) => {
             if (input.type === InputType.Coin && hexlify(input.owner) === vault.address.toB256()) {
-                // eslint-disable-next-line no-param-reassign
                 input.predicate = arrayify(vault.bytes);
-                // eslint-disable-next-line no-param-reassign
                 input.predicateData = arrayify(vault.predicateData);
             }
         });
 
         // Request signature
-        const txData = transactionRequestify(this.transaction);
+        const txData = transactionRequestify(this);
         const txhash = hashTransaction(txData);
         const hash = txhash.slice(2);
 
-        this.transaction = txData;
         this.hashTxId = hash;
 
         return { txData, hash };
     }
 
-    public async sendTransaction() {
-        this.transaction.witnesses = this.witnesses;
-        const provider = new Provider(this.getNetwork());
+    private async validtateBalance(_coins: IAssetGroupById) {
+        const balances = await this.vault.getBalances();
+        const coins = await Asset.assetsGroupById(
+            balances.map((item) => {
+                return {
+                    assetId: item.assetId,
+                    amount: item.amount.format(),
+                    to: ''
+                };
+            })
+        );
 
-        const encodedTransaction = hexlify(this.transaction.toTransactionBytes());
+        Object.entries(_coins).map(([key, value]) => {
+            if (bn(coins[value.assetId].amount).lt(bn(value.amount))) {
+                throw new Error(`Insufficient balance for ${value.assetId}`);
+            }
+        });
+    }
+
+    public async sendTransaction() {
+        const provider = new Provider(this.vault.getNetwork());
+
+        const encodedTransaction = hexlify(this.toTransactionBytes());
+
         const {
             submit: { id: transactionId }
         } = await provider.operations.submit({ encodedTransaction });
-        //this.hashTxId = transactionId.slice(2);
+        this.hashTxId = transactionId.slice();
 
         const sender = new TransactionResponse(transactionId, provider);
+
         const result = await sender.waitForResult();
 
         return {
@@ -86,29 +104,17 @@ export class Transfer extends Vault implements ITransfer {
     }
 
     private makeBlockUrl() {
-        return `https://fuellabs.github.io/block-explorer-v2/transaction/0x${this.hashTxId}?providerUrl=${encodeURIComponent(this.getNetwork())}`;
+        return `https://fuellabs.github.io/block-explorer-v2/transaction/0x${this.hashTxId}?providerUrl=${encodeURIComponent(this.vault.getNetwork())}`;
     }
 
     public getHashTxId() {
-        return this.hashTxId;
+        const hash = hashTransaction(transactionRequestify(this));
+        return hash.slice(2);
     }
 
     public getTransaction() {
-        return this.transaction;
+        return this;
     }
-
-    public setWitnesses(witnesses: string[]) {
-        this.witnesses = [...this.witnesses, ...witnesses];
-        return this.witnesses;
-    }
-
-    // public getStatusWitnesses() {
-    //     return {
-    //         required: Number(this.configurable.SIGNATURES_COUNT),
-    //         signed: this.witnesses.length,
-    //         witnesses: witnessesStatus(this.witnesses, this.configurable.SIGNERS, this.hashTxId)
-    //     };
-    // }
 
     public getAssets() {
         return this.assets;

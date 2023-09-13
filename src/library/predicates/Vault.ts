@@ -1,51 +1,88 @@
-import { InputValue, Predicate } from 'fuels';
-import { predicateABI, predicateBIN } from '../index';
+import { Predicate } from 'fuels';
+import { ITransferAsset } from '../assets';
+import { IPayloadTransfer, Transfer, predicateABI, predicateBIN } from '../index';
 import { makeHashPredicate, makeSubscribers } from './helpers';
-import { IConfVault, IConfigurable, IPayloadVault, IVault } from './types';
+import { IConfVault, IConfigurable, IPayloadVault, IVault, IVaultTransfer } from './types';
 export * from './types';
 
-export class Vault implements IVault {
-    private predicate!: Predicate<InputValue[]>;
-    private bin!: string;
-    private abi!: { [name: string]: unknown };
-    private network!: string;
-
-    public configurable!: IConfigurable;
+export class Vault extends Predicate<[]> implements IVault {
+    private bin: string;
+    private abi: { [name: string]: unknown };
+    private network: string;
+    private configurable: IConfigurable;
+    private transactions: IVaultTransfer[] = [];
 
     constructor({ configurable, abi, bytecode }: IPayloadVault) {
-        this.abi = abi ? JSON.parse(abi) : predicateABI;
-        this.bin = bytecode ? bytecode : predicateBIN;
-        this.network = 'https://beta-3.fuel.network/graphql';
+        const _abi = abi ? JSON.parse(abi) : predicateABI;
+        const _bin = bytecode ? bytecode : predicateBIN;
+        const _network = configurable.network; //todo: move to dynamic
 
-        !(configurable instanceof Predicate) ? this.makePredicate(configurable, JSON.stringify(this.abi)) : (this.predicate = configurable);
-    }
+        //validations
+        Vault.validations(configurable);
 
-    private makePredicate(configurable: IConfVault, abi: string) {
-        const hasExists = configurable.HASH_PREDUCATE;
-        const _configurable: { [name: string]: unknown } = {
-            SIGNATURES_COUNT: hasExists ? configurable.SIGNATURES_COUNT : configurable.minSigners,
-            SIGNERS: hasExists ? configurable.SIGNERS : makeSubscribers(configurable.addresses),
-            HASH_PREDUCATE: hasExists ? configurable.HASH_PREDUCATE : makeHashPredicate()
-        };
+        //make predicate
+        const _configurable = Vault.makePredicate(configurable, JSON.stringify(_abi));
 
-        this.configurable = {
+        super(_bin, _abi, _network, _configurable);
+
+        this.bin = _bin;
+        this.network = _network;
+        this.abi = _abi;
+        this.configurable = this.configurable = {
             HASH_PREDUCATE: _configurable.HASH_PREDUCATE as number[],
             SIGNATURES_COUNT: _configurable.SIGNATURES_COUNT as string,
             SIGNERS: _configurable.SIGNERS as string[]
         };
-        this.predicate = new Predicate(this.bin, JSON.parse(abi), this.network, _configurable);
     }
 
-    public async getPredicate() {
-        return await this.predicate;
+    private static validations(configurable: IConfVault) {
+        const { SIGNATURES_COUNT, SIGNERS } = configurable;
+        if (!SIGNATURES_COUNT || Number(SIGNATURES_COUNT) == 0) {
+            throw new Error('SIGNATURES_COUNT is required must be granter than zero');
+        }
+        if (!SIGNERS || SIGNERS.length === 0) {
+            throw new Error('SIGNERS must be greater than zero');
+        }
+        if (SIGNERS.length < Number(SIGNATURES_COUNT)) {
+            throw new Error('Required Signers must be less than signers');
+        }
     }
 
-    public async getBalance() {
-        return await this.predicate.getBalance();
+    private static makePredicate(configurable: IConfVault, abi: string) {
+        const hasExists = configurable.HASH_PREDUCATE;
+        const _configurable: { [name: string]: unknown } = {
+            SIGNATURES_COUNT: configurable.SIGNATURES_COUNT,
+            SIGNERS: makeSubscribers(configurable.SIGNERS),
+            HASH_PREDUCATE: hasExists ? configurable.HASH_PREDUCATE : makeHashPredicate()
+        };
+
+        return _configurable;
     }
 
-    public getAddress() {
-        return this.predicate.address.toString();
+    public async includeTransaction(assets: ITransferAsset[], witnesses: string[]) {
+        const payload: IPayloadTransfer = {
+            vault: this,
+            assets: assets,
+            witnesses: witnesses
+        };
+        const _transfer = new Transfer(payload);
+        await _transfer.instanceTransaction();
+
+        const transfer: IVaultTransfer = {
+            hash: makeHashPredicate().join(''),
+            transaction: _transfer
+        };
+        this.transactions.push(transfer);
+
+        return transfer;
+    }
+
+    public findTransactions(hash: string) {
+        return this.transactions.find((transaction) => transaction.hash === hash);
+    }
+
+    public getTransactions() {
+        return this.transactions;
     }
 
     public getAbi() {
@@ -54,6 +91,10 @@ export class Vault implements IVault {
 
     public getBin() {
         return this.bin;
+    }
+
+    public getConfigurable() {
+        return this.configurable;
     }
 
     public getNetwork() {

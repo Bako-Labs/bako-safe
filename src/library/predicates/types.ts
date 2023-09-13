@@ -1,13 +1,16 @@
-import { BN, InputValue, Predicate } from 'fuels';
+import { ITransferAsset } from '../assets';
+import { Transfer } from '../transfers';
 
 export interface IConfVault {
     HASH_PREDUCATE: number[] | undefined;
-    SIGNATURES_COUNT: string;
+    SIGNATURES_COUNT: number;
     SIGNERS: string[];
-    addresses: string[];
-    minSigners: number;
+    network: string;
 }
-
+export interface IVaultTransfer {
+    hash: string;
+    transaction: Transfer;
+}
 export interface IConfigurable {
     HASH_PREDUCATE: number[];
     SIGNATURES_COUNT: string;
@@ -15,18 +18,16 @@ export interface IConfigurable {
 }
 
 export interface IPayloadVault {
-    configurable: IConfVault | Predicate<InputValue[]>;
+    configurable: IConfVault;
     abi?: string;
     bytecode?: string;
 }
 
 export interface IVault {
-    getPredicate: () => Promise<Predicate<InputValue[]>>;
-    getBalance: () => Promise<BN>;
-    getAddress: () => string;
     getAbi: () => { [name: string]: unknown };
     getBin: () => string;
-    getNetwork: () => string;
-
-    configurable: IConfigurable;
+    getConfigurable: () => IConfigurable;
+    includeTransaction: (assets: ITransferAsset[], witnesses: string[]) => Promise<IVaultTransfer>;
+    findTransactions: (hash: string) => IVaultTransfer | undefined;
+    getTransactions: () => IVaultTransfer[];
 }

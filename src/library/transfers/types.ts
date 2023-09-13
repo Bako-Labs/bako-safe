@@ -1,9 +1,9 @@
-import { TransactionRequest } from 'fuels';
+import { Resources, TransactionRequest } from 'fuels';
 import { ITransferAsset } from '../assets/types';
-import { IPayloadVault } from '../predicates';
+import { Vault } from '../predicates';
 
 export interface IPayloadTransfer {
-    vault: IPayloadVault;
+    vault: Vault;
     assets: ITransferAsset[];
     witnesses: string[];
 }
@@ -25,14 +25,14 @@ export interface IRequiredWitnesses {
 }
 
 export interface ISendTransaction {
-    status: 'success' | 'failure';
+    status: string;
     block: string;
     gasUsed: string;
     transactionResume: string;
 }
 
 export interface ITransfer {
-    instanceTransaction(): Promise<IInstanceTransfer>;
+    instanceTransaction(_coins: Resources[]): Promise<IInstanceTransfer>;
     sendTransaction(): Promise<ISendTransaction>;
     setWitnesses(witnesses: string[]): string[];
     //getStatusWitnesses(): IRequiredWitnesses;
