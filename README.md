@@ -6,8 +6,8 @@ A streamlined solution within the Fuel ecosystem, enabling seamless implementati
 
 ## Links
 
--   [Bsafe](https://home.bsafe.com)
--   [BSAFE beta version](https://app.bsafe.com)
+-   [Bsafe](https://home.bsafe.pro)
+-   [BSAFE beta version](https://app.bsafe.pro)
 -   [Fuel Wallet](https://chrome.google.com/webstore/detail/fuel-wallet/dldjpboieedgcmpkchcjcbijingjcgok)
 -   [Simple app exemple](https://github.com/infinitybase/bsafe-example)
 -   [Implementation details](https://github.com/infinitybase/bsafe/blob/d56523ab905d4749fa22787936db41a100be08c9/src/__tests__/vault.test.ts)
