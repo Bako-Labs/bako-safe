@@ -64,7 +64,7 @@ const _assets: ITransferAsset[] = [
 ];
 
 // Create a transaction
-const transaction = await vault.includeTransaction(_assets, []);
+const {transaction} = await vault.includeTransaction(_assets, []);
 
 // Signin transaction
 const signer = Wallet.fromPrivateKey(accounts[account].privateKey, fuelProvider); // instance an wallet account
