@@ -6,7 +6,7 @@ A streamlined solution within the Fuel ecosystem, enabling seamless implementati
 
 ## Links
 
--   [Bsafe](https://home.bsafe.pro)
+-   [Bsafe](https://www.bsafe.pro)
 -   [BSAFE beta version](https://app.bsafe.pro)
 -   [Fuel Wallet](https://chrome.google.com/webstore/detail/fuel-wallet/dldjpboieedgcmpkchcjcbijingjcgok)
 -   [Simple app exemple](https://github.com/infinitybase/bsafe-example)
@@ -32,6 +32,7 @@ npm install bsafe
 ## The guist
 
 ```javascript
+import { BN, Provider, Wallet, bn } from 'fuels';
 import {Vault, IPayloadVault, ITransferAsset} from 'bsafe'
 import accounts from '../mocks/accounts.json';
 import assets from '../mocks/assets.json';
