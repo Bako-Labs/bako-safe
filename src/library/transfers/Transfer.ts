@@ -33,8 +33,6 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
         const coins = await Asset.assetsGroupById(this.assets);
         const transactionCoins = await Asset.addTransactionFee(coins, this.gasPrice);
         const vault = this.vault;
-        console.log('[outputs]', outputs);
-        console.log('[coins]', coins);
 
         Object.entries(outputs).map(([key, value]) => {
             this.addCoinOutput(Address.fromString(value.to), value.amount, value.assetId);

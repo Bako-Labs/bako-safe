@@ -18,10 +18,8 @@ export class Asset {
 
             if (!acc[assetId]) {
                 acc[assetId] = bn.parseUnits(amount);
-                console.log('if neg', acc);
             } else {
                 acc[assetId] = acc[assetId].add(bn.parseUnits(amount));
-                console.log('else neg', acc);
             }
 
             return acc;
@@ -37,15 +35,15 @@ export class Asset {
 
         return list.reduce((acc: IAssetGroupByTo, asset: ITransferAsset) => {
             const { to, amount, assetId }: ITransferAsset = asset;
-
-            if (!acc[`${to}${assetId}`]) {
-                acc[`${to}${assetId}`] = {
+            const key = `${to}${assetId}`;
+            if (!acc[key]) {
+                acc[key] = {
                     assetId,
                     amount: bn.parseUnits(amount),
                     to
                 };
             } else {
-                acc[`${to}${assetId}`].amount.add(bn.parseUnits(amount));
+                acc[key].amount.add(bn.parseUnits(amount));
             }
             return acc;
         }, {}) as IAssetGroupByTo;
@@ -56,7 +54,8 @@ export class Asset {
          * Checks if there is an eth asset in the transaction to pay for the gas and inserts a minimum amount
          *
          * @param ITransferAsset[] - An array of assets to transfer.
-         * @param _fee:
+         * @param _fee - value in BN to add on amount of eth of transaction
+         * @param assets - group of assets to sended of transaction
          * @returns An object with n unique keys, each key being a destination address and the value of each key is equivalent to the sum of the equivalent assets received.
          */
 
