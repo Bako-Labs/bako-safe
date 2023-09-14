@@ -1,60 +1,78 @@
-import { NativeAssetId, bn } from 'fuels';
+import { BN, NativeAssetId, bn } from 'fuels';
 import { IAssetGroupById, IAssetGroupByTo, ITransferAsset } from './types';
 
 export class Asset {
+    /**
+     *  Asset: provides utils to organize assets
+     */
+
     public static async assetsGroupById(list: ITransferAsset[]) {
+        /**
+         * Groupe assest by id
+         *
+         * @param ITransferAsset[] - An array of assets to transfer.
+         * @returns An object with n unique keys, each key being an asset and the value of each key is equivalent to the sum of the equivalent assets received.
+         */
         return list.reduce((acc: IAssetGroupById, asset: ITransferAsset) => {
             const { assetId, amount }: { assetId: string; amount: string } = asset;
 
             if (!acc[assetId]) {
-                acc[assetId] = {
-                    assetId,
-                    amount: parseFloat(amount)
-                };
+                acc[assetId] = bn.parseUnits(amount);
+                console.log('if neg', acc);
             } else {
-                acc[assetId].amount += parseFloat(amount);
+                acc[assetId] = acc[assetId].add(bn.parseUnits(amount));
+                console.log('else neg', acc);
             }
 
             return acc;
-        }, {}) as IAssetGroupById;
+        }, {});
     }
-
     public static async assetsGroupByTo(list: ITransferAsset[]) {
+        /**
+         * Group assets by transaction destination
+         *
+         * @param ITransferAsset[] - An array of assets to transfer.
+         * @returns An object with n unique keys, each key being a destination address and the value of each key is equivalent to the sum of the equivalent assets received.
+         */
+
         return list.reduce((acc: IAssetGroupByTo, asset: ITransferAsset) => {
             const { to, amount, assetId }: ITransferAsset = asset;
 
             if (!acc[`${to}${assetId}`]) {
                 acc[`${to}${assetId}`] = {
                     assetId,
-                    amount: parseFloat(amount),
+                    amount: bn.parseUnits(amount),
                     to
                 };
             } else {
-                acc[`${to}${assetId}`].amount += parseFloat(amount);
+                acc[`${to}${assetId}`].amount.add(bn.parseUnits(amount));
             }
             return acc;
         }, {}) as IAssetGroupByTo;
     }
 
-    public static async addTransactionFee(assets: IAssetGroupById, _fee: string) {
+    public static async addTransactionFee(assets: IAssetGroupById, _fee: BN) {
+        /**
+         * Checks if there is an eth asset in the transaction to pay for the gas and inserts a minimum amount
+         *
+         * @param ITransferAsset[] - An array of assets to transfer.
+         * @param _fee:
+         * @returns An object with n unique keys, each key being a destination address and the value of each key is equivalent to the sum of the equivalent assets received.
+         */
+
         let _assets = assets;
         let containETH = !!_assets[NativeAssetId];
 
         if (containETH) {
-            let value = bn().add(bn(1)).add(bn.parseUnits(_assets[NativeAssetId].amount.toString()));
-            _assets[NativeAssetId].amount = parseFloat(value.format());
+            let value = bn(_fee).add(_assets[NativeAssetId]);
+            _assets[NativeAssetId] = value;
         } else {
-            let value = bn().add(bn(10000));
-
-            _assets[NativeAssetId] = {
-                assetId: NativeAssetId,
-                amount: Number(parseFloat(value.format()).toFixed(20).toString())
-            };
+            _assets[NativeAssetId] = bn().add(_fee);
         }
 
         return Object.entries(_assets).map(([key, value]) => {
             return {
-                amount: bn.parseUnits(value.amount.toString()),
+                amount: value,
                 assetId: key
             };
         });

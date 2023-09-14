@@ -1,3 +1,5 @@
+import { BN } from 'fuels';
+
 export type IAsset = {
     name: string;
     slug: string;
@@ -11,16 +13,13 @@ export type ITransferAsset = {
 };
 
 export type IAssetGroupById = {
-    [assetId: string]: {
-        assetId: string;
-        amount: number;
-    };
+    [name: string]: BN;
 };
 
 export type IAssetGroupByTo = {
-    [to: string]: {
+    [name: string]: {
         assetId: string;
-        amount: number;
+        amount: BN;
         to: string;
     };
 };

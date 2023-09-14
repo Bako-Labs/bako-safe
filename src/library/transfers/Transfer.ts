@@ -31,11 +31,13 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
     public async instanceTransaction() {
         const outputs = await Asset.assetsGroupByTo(this.assets);
         const coins = await Asset.assetsGroupById(this.assets);
-        const transactionCoins = await Asset.addTransactionFee(coins, this.gasPrice.toString());
+        const transactionCoins = await Asset.addTransactionFee(coins, this.gasPrice);
         const vault = this.vault;
+        console.log('[outputs]', outputs);
+        console.log('[coins]', coins);
 
         Object.entries(outputs).map(([key, value]) => {
-            this.addCoinOutput(Address.fromString(value.to), bn.parseUnits(value.amount.toString()), value.assetId);
+            this.addCoinOutput(Address.fromString(value.to), value.amount, value.assetId);
         });
 
         //todo: verify requiriments
@@ -75,8 +77,8 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
         );
 
         Object.entries(_coins).map(([key, value]) => {
-            if (bn(coins[value.assetId].amount).lt(bn(value.amount))) {
-                throw new Error(`Insufficient balance for ${value.assetId}`);
+            if (bn(coins[key]).lt(value)) {
+                throw new Error(`Insufficient balance for ${key}`);
             }
         });
     }

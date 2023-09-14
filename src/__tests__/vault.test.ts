@@ -55,12 +55,12 @@ describe('Test Vault', () => {
 
     it('Created an valid vault', async () => {
         await sendPredicateCoins(vault, bn(1_000_000_000), 'sETH');
-        await sendPredicateCoins(vault, bn(1_000_000), 'ETH');
+        await sendPredicateCoins(vault, bn(1_000_000_000), 'ETH');
 
         expect(await vault.getBalances()).toStrictEqual([
             {
                 assetId: assets['ETH'],
-                amount: bn(1_000_000)
+                amount: bn(1_000_000_000)
             },
             {
                 assetId: assets['sETH'],
@@ -93,10 +93,11 @@ describe('Test Vault', () => {
         const _assets: ITransferAsset[] = [
             {
                 amount: bn(1_000).format(),
-                assetId: assets['ETH'],
+                assetId: assets['sETH'],
                 to: accounts['STORE'].address
             }
         ];
+
         // Create a transaction
         const transaction = await vault.includeTransaction(_assets, []);
 
