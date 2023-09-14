@@ -2,8 +2,8 @@ import { BN, Provider, Wallet, bn } from 'fuels';
 import { IPayloadVault, Vault } from '../library';
 import { ITransferAsset } from '../library/assets';
 import { defaultValues } from '../library/predicates/helpers';
-import accounts from '../mocks/accounts.json';
-import assets from '../mocks/assets.json';
+import accounts from '../mocks/accounts';
+import assets from '../mocks/assets';
 
 describe('Test Vault', () => {
     const fuelProvider = new Provider('http://localhost:4000/graphql');
