@@ -29,6 +29,11 @@ yarn add bsafe
 npm install bsafe
 ```
 
+## Requirements
+
+-   [Rust](https://www.rust-lang.org/tools/install)
+-   [Fuel toochain](https://github.com/FuelLabs/fuelup)
+
 ## The guist
 
 ```javascript
