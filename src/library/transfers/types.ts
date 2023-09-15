@@ -28,14 +28,11 @@ export interface ISendTransaction {
     status: string;
     block: string;
     gasUsed: string;
-    transactionResume: string;
 }
 
 export interface ITransfer {
     instanceTransaction(_coins: Resources[]): Promise<IInstanceTransfer>;
     sendTransaction(): Promise<ISendTransaction>;
-    setWitnesses(witnesses: string[]): string[];
-    //getStatusWitnesses(): IRequiredWitnesses;
     getHashTxId(): string;
     getTransaction(): TransactionRequest;
 }
