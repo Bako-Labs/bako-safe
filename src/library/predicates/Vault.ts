@@ -5,6 +5,10 @@ import { makeHashPredicate, makeSubscribers } from './helpers';
 import { IConfVault, IConfigurable, IPayloadVault, IVault } from './types';
 export * from './types';
 
+/**
+ * `Vault` are extension of predicates, to manager transactions, and sends.
+ */
+
 export class Vault extends Predicate<[]> implements IVault {
     private bin: string;
     private abi: { [name: string]: unknown };
@@ -12,16 +16,25 @@ export class Vault extends Predicate<[]> implements IVault {
     private configurable: IConfigurable;
     private transactions: { [id: string]: Transfer } = {};
 
+    /**
+     * Creates an instance of the Predicate class.
+     *
+     * @param configurable - The parameters of signature requirements.
+     *      @param HASH_PREDUCATE - Hash to works an unic predicate, is not required, but to instance old predicate is an number array
+     *      @param SIGNATURES_COUNT - Number of signatures required of predicate
+     *      @param SIGNERS - Array string of predicate signers
+     * @param abi - The JSON abi to BSAFE multisig.
+     * @param bytecode - The binary code of preficate BSAFE multisig.
+     */
+
     constructor({ configurable, abi, bytecode }: IPayloadVault) {
         const _abi = abi ? JSON.parse(abi) : predicateABI;
         const _bin = bytecode ? bytecode : predicateBIN;
         const _network = configurable.network; //todo: move to dynamic
 
-        //validations
         Vault.validations(configurable);
 
-        //make predicate
-        const _configurable = Vault.makePredicate(configurable, JSON.stringify(_abi));
+        const _configurable = Vault.makePredicate(configurable);
 
         super(_bin, _abi, _network, _configurable);
 
@@ -35,6 +48,13 @@ export class Vault extends Predicate<[]> implements IVault {
         };
     }
 
+    /**
+     *
+     * Validate creation parameters.
+     *
+     * @param configurable - The parameters of signature requirements.
+     * @returns thire is no return, but if an error is detected it is trigged
+     */
     private static validations(configurable: IConfVault) {
         const { SIGNATURES_COUNT, SIGNERS } = configurable;
         if (!SIGNATURES_COUNT || Number(SIGNATURES_COUNT) == 0) {
@@ -48,7 +68,13 @@ export class Vault extends Predicate<[]> implements IVault {
         }
     }
 
-    private static makePredicate(configurable: IConfVault, abi: string) {
+    /**
+     * Make configurable of predicate
+     *
+     * @param configurable - The parameters of signature requirements.
+     * @returns an formatted object to instance a new predicate
+     */
+    private static makePredicate(configurable: IConfVault) {
         const hasExists = configurable.HASH_PREDUCATE;
         const _configurable: { [name: string]: unknown } = {
             SIGNATURES_COUNT: configurable.SIGNATURES_COUNT,
@@ -59,6 +85,13 @@ export class Vault extends Predicate<[]> implements IVault {
         return _configurable;
     }
 
+    /**
+     * Include new transaction to vault
+     *
+     * @param assets - Output assets of transaction
+     * @param witnesses - witnesses of predicate [transaction id signed to address signer]
+     * @returns return a new transaction and include in vault states
+     */
     public async includeTransaction(assets: ITransferAsset[], witnesses: string[]) {
         const payload: IPayloadTransfer = {
             vault: this,
@@ -74,28 +107,59 @@ export class Vault extends Predicate<[]> implements IVault {
         return this.transactions[_id];
     }
 
+    /**
+     * Return an specific transaction of list
+     *
+     * @param hash - key of specific transaction of object
+     * @returns an transaction
+     */
     public findTransactions(hash: string) {
         return this.transactions[hash];
     }
 
+    /**
+     * Return an list of transaction of this vault
+     *
+     * @returns an transaction list
+     */
     public getTransactions() {
         return Object.entries(this.transactions).map(([, value]) => {
             return value;
         });
     }
 
+    /**
+     * Return abi of this vault
+     *
+     * @returns an abi
+     */
     public getAbi() {
         return this.abi;
     }
 
+    /**
+     * Return binary of this vault
+     *
+     * @returns an binary
+     */
     public getBin() {
         return this.bin;
     }
 
+    /**
+     * Return this vault configurables state
+     *
+     * @returns configurables [signers, signers requested, hash]
+     */
     public getConfigurable() {
         return this.configurable;
     }
 
+    /**
+     * Return this vault network of provider
+     *
+     * @returns url of provider
+     */
     public getNetwork() {
         return this.network;
     }

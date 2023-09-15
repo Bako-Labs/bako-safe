@@ -9,7 +9,7 @@ export interface IConfVault {
 }
 
 export interface IConfigurable {
-    HASH_PREDUCATE: number[];
+    HASH_PREDUCATE?: number[];
     SIGNATURES_COUNT: string;
     SIGNERS: string[];
 }
