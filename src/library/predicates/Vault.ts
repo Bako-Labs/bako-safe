@@ -2,7 +2,7 @@ import { Predicate } from 'fuels';
 import { ITransferAsset } from '../assets';
 import { IPayloadTransfer, Transfer, predicateABI, predicateBIN } from '../index';
 import { makeHashPredicate, makeSubscribers } from './helpers';
-import { IConfVault, IConfigurable, IPayloadVault, IVault, IVaultTransfer } from './types';
+import { IConfVault, IConfigurable, IPayloadVault, IVault } from './types';
 export * from './types';
 
 export class Vault extends Predicate<[]> implements IVault {
@@ -10,7 +10,7 @@ export class Vault extends Predicate<[]> implements IVault {
     private abi: { [name: string]: unknown };
     private network: string;
     private configurable: IConfigurable;
-    private transactions: IVaultTransfer[] = [];
+    private transactions: { [id: string]: Transfer } = {};
 
     constructor({ configurable, abi, bytecode }: IPayloadVault) {
         const _abi = abi ? JSON.parse(abi) : predicateABI;
@@ -67,22 +67,21 @@ export class Vault extends Predicate<[]> implements IVault {
         };
         const _transfer = new Transfer(payload);
         await _transfer.instanceTransaction();
+        const _id = makeHashPredicate().join('');
 
-        const transfer: IVaultTransfer = {
-            hash: makeHashPredicate().join(''),
-            transaction: _transfer
-        };
-        this.transactions.push(transfer);
+        this.transactions[_id] = _transfer;
 
-        return transfer;
+        return this.transactions[_id];
     }
 
     public findTransactions(hash: string) {
-        return this.transactions.find((transaction) => transaction.hash === hash);
+        return this.transactions[hash];
     }
 
     public getTransactions() {
-        return this.transactions;
+        return Object.entries(this.transactions).map(([, value]) => {
+            return value;
+        });
     }
 
     public getAbi() {

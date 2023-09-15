@@ -7,14 +7,14 @@ export interface IConfVault {
     SIGNERS: string[];
     network: string;
 }
-export interface IVaultTransfer {
-    hash: string;
-    transaction: Transfer;
-}
+
 export interface IConfigurable {
     HASH_PREDUCATE: number[];
     SIGNATURES_COUNT: string;
     SIGNERS: string[];
+}
+export interface ITransferList {
+    [id: string]: Transfer;
 }
 
 export interface IPayloadVault {
@@ -27,7 +27,7 @@ export interface IVault {
     getAbi: () => { [name: string]: unknown };
     getBin: () => string;
     getConfigurable: () => IConfigurable;
-    includeTransaction: (assets: ITransferAsset[], witnesses: string[]) => Promise<IVaultTransfer>;
-    findTransactions: (hash: string) => IVaultTransfer | undefined;
-    getTransactions: () => IVaultTransfer[];
+    includeTransaction: (assets: ITransferAsset[], witnesses: string[]) => Promise<Transfer>;
+    findTransactions: (hash: string) => Transfer | undefined;
+    getTransactions: () => Transfer[];
 }

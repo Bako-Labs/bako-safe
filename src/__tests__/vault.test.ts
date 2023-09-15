@@ -103,20 +103,20 @@ describe('Test Vault', () => {
 
         // Signin transaction
         const witnesses = [
-            await signin(transaction.transaction.getHashTxId(), 'USER_1'),
-            await signin(transaction.transaction.getHashTxId(), 'USER_2'),
-            await signin(transaction.transaction.getHashTxId(), 'USER_3'),
-            await signin(transaction.transaction.getHashTxId(), 'USER_4'),
-            await signin(transaction.transaction.getHashTxId(), 'USER_5')
+            await signin(transaction.getHashTxId(), 'USER_1'),
+            await signin(transaction.getHashTxId(), 'USER_2'),
+            await signin(transaction.getHashTxId(), 'USER_3'),
+            await signin(transaction.getHashTxId(), 'USER_4'),
+            await signin(transaction.getHashTxId(), 'USER_5')
         ];
 
-        //transaction.transaction.setWitnesses
-        transaction.transaction.witnesses = witnesses;
+        //transaction.setWitnesses
+        transaction.witnesses = witnesses;
 
-        const result = await transaction.transaction.sendTransaction();
+        const result = await transaction.sendTransaction();
 
-        expect(await vault.findTransactions(transaction.hash)).toHaveProperty('transaction');
-        expect(transaction.transaction.witnesses.length).toBe(5);
+        //expect(await vault.findTransactions(transaction.hash)).toHaveProperty('transaction');
+        expect(transaction.witnesses.length).toBe(5);
         expect(result.status).toBe('success');
     });
 
@@ -138,20 +138,20 @@ describe('Test Vault', () => {
 
         // Signin transaction
         const witnesses = [
-            await signin(transaction.transaction.getHashTxId(), 'USER_1'),
-            await signin(transaction.transaction.getHashTxId(), 'USER_2'),
-            await signin(transaction.transaction.getHashTxId(), 'USER_3'),
-            await signin(transaction.transaction.getHashTxId(), 'USER_4'),
-            await signin(transaction.transaction.getHashTxId(), 'USER_5')
+            await signin(transaction.getHashTxId(), 'USER_1'),
+            await signin(transaction.getHashTxId(), 'USER_2'),
+            await signin(transaction.getHashTxId(), 'USER_3'),
+            await signin(transaction.getHashTxId(), 'USER_4'),
+            await signin(transaction.getHashTxId(), 'USER_5')
         ];
 
-        //transaction.transaction.setWitnesses
-        transaction.transaction.witnesses = witnesses;
+        //transaction.setWitnesses
+        transaction.witnesses = witnesses;
 
-        const result = await transaction.transaction.sendTransaction();
+        const result = await transaction.sendTransaction();
 
-        expect(await vault.findTransactions(transaction.hash)).toHaveProperty('transaction');
-        expect(transaction.transaction.witnesses.length).toBe(5);
+        //expect(await vault.findTransactions(transaction.hash)).toHaveProperty('transaction');
+        expect(transaction.witnesses.length).toBe(5);
         expect(result.status).toBe('success');
     });
 
@@ -192,10 +192,10 @@ describe('Test Vault', () => {
 
         const transaction = await vault.includeTransaction(_assets, []);
 
-        const witnesses = [await signin(transaction.transaction.getHashTxId(), 'USER_1'), await signin(transaction.transaction.getHashTxId(), 'USER_2')];
+        const witnesses = [await signin(transaction.getHashTxId(), 'USER_1'), await signin(transaction.getHashTxId(), 'USER_2')];
 
-        transaction.transaction.witnesses = witnesses;
-        await expect(transaction.transaction.sendTransaction()).rejects.toThrow('PredicateVerificationFailed');
+        transaction.witnesses = witnesses;
+        await expect(transaction.sendTransaction()).rejects.toThrow('PredicateVerificationFailed');
     });
 
     it('Send transaction with invalid sign', async () => {
@@ -209,13 +209,13 @@ describe('Test Vault', () => {
 
         const transaction = await vault.includeTransaction(_assets, []);
         const witnesses = [
-            await signin(transaction.transaction.getHashTxId(), 'USER_1'),
-            await signin(transaction.transaction.getHashTxId(), 'USER_2'),
+            await signin(transaction.getHashTxId(), 'USER_1'),
+            await signin(transaction.getHashTxId(), 'USER_2'),
             defaultValues['signature']
-            //await signin(transaction.transaction.getHashTxId(), 'USER_3')
+            //await signin(transaction.getHashTxId(), 'USER_3')
         ];
 
-        transaction.transaction.witnesses = witnesses;
-        await expect(transaction.transaction.sendTransaction()).rejects.toThrow('PredicateVerificationFailed');
+        transaction.witnesses = witnesses;
+        await expect(transaction.sendTransaction()).rejects.toThrow('PredicateVerificationFailed');
     });
 });

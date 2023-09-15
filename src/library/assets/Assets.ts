@@ -53,7 +53,6 @@ export class Asset {
         /**
          * Checks if there is an eth asset in the transaction to pay for the gas and inserts a minimum amount
          *
-         * @param ITransferAsset[] - An array of assets to transfer.
          * @param _fee - value in BN to add on amount of eth of transaction
          * @param assets - group of assets to sended of transaction
          * @returns An object with n unique keys, each key being a destination address and the value of each key is equivalent to the sum of the equivalent assets received.
