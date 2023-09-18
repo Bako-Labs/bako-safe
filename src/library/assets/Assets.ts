@@ -1,4 +1,5 @@
-import { BN, NativeAssetId, bn } from 'fuels';
+import { BN, bn } from 'fuels';
+import assets from '../../mocks/assets';
 import { IAssetGroupById, IAssetGroupByTo, ITransferAsset } from './types';
 
 export class Asset {
@@ -49,7 +50,7 @@ export class Asset {
         }, {}) as IAssetGroupByTo;
     }
 
-    public static async addTransactionFee(assets: IAssetGroupById, _fee: BN) {
+    public static async addTransactionFee(_assets: IAssetGroupById, _fee: BN) {
         /**
          * Checks if there is an eth asset in the transaction to pay for the gas and inserts a minimum amount
          *
@@ -58,17 +59,17 @@ export class Asset {
          * @returns An object with n unique keys, each key being a destination address and the value of each key is equivalent to the sum of the equivalent assets received.
          */
 
-        let _assets = assets;
-        let containETH = !!_assets[NativeAssetId];
+        let _assets_aux = _assets;
+        let containETH = !!_assets_aux[assets['ETH']];
 
         if (containETH) {
-            let value = bn(_fee).add(_assets[NativeAssetId]);
-            _assets[NativeAssetId] = value;
+            let value = bn(_fee).add(_assets_aux[assets['ETH']]);
+            _assets_aux[assets['ETH']] = value;
         } else {
-            _assets[NativeAssetId] = bn().add(_fee);
+            _assets_aux[assets['ETH']] = bn().add(_fee);
         }
 
-        return Object.entries(_assets).map(([key, value]) => {
+        return Object.entries(_assets_aux).map(([key, value]) => {
             return {
                 amount: value,
                 assetId: key

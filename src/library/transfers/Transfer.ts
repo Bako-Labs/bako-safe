@@ -1,4 +1,4 @@
-import { Address, InputType, Provider, ScriptTransactionRequest, TransactionResponse, arrayify, bn, hashTransaction, hexlify, transactionRequestify } from 'fuels';
+import { Address, InputType, Provider, ScriptTransactionRequest, TransactionRequestLike, TransactionResponse, arrayify, bn, hashTransaction, hexlify, transactionRequestify } from 'fuels';
 import { Asset } from '../assets';
 import { IAssetGroupById, ITransferAsset } from '../assets/types';
 import { Vault } from '../predicates';
@@ -9,8 +9,9 @@ import { IPayloadTransfer, ITransfer } from './types';
  * `Transfer` are extension of ScriptTransactionRequest, to create and send transactions
  */
 export class Transfer extends ScriptTransactionRequest implements ITransfer {
-    private hashTxId!: string;
     private vault: Vault;
+    private chainId: number;
+    private network: string;
 
     private assets: ITransferAsset[];
     /**
@@ -26,6 +27,10 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
             gasLimit: bn(100000),
             script: transactionScript
         });
+
+        const _configurable = vault.getConfigurable();
+        this.chainId = _configurable.chainId;
+        this.network = _configurable.network;
         this.witnesses = witnesses;
         this.assets = assets;
         this.vault = vault;
@@ -57,14 +62,6 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
                 input.predicateData = arrayify(vault.predicateData);
             }
         });
-
-        const txData = transactionRequestify(this);
-        const txhash = hashTransaction(txData);
-        const hash = txhash.slice(2);
-
-        this.hashTxId = hash;
-
-        return { txData, hash };
     }
 
     /**
@@ -84,7 +81,6 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
                 };
             })
         );
-
         Object.entries(_coins).map(([key, value]) => {
             if (bn(coins[key]).lt(value)) {
                 throw new Error(`Insufficient balance for ${key}`);
@@ -99,33 +95,38 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
      * @returns sumary result of transaction
      */
     public async sendTransaction() {
-        const provider = new Provider(this.vault.getNetwork());
+        const provider = new Provider(this.network);
+        const _transaction = transactionRequestify(this);
+        const tx_est = await provider.estimatePredicates(_transaction);
 
-        const encodedTransaction = hexlify(this.toTransactionBytes());
+        const encodedTransaction = hexlify(tx_est.toTransactionBytes());
 
         const {
             submit: { id: transactionId }
         } = await provider.operations.submit({ encodedTransaction });
-        this.hashTxId = transactionId.slice();
 
         const sender = new TransactionResponse(transactionId, provider);
 
         const result = await sender.waitForResult();
 
         return {
-            status: result.status.type,
-            block: this.makeBlockUrl(),
-            gasUsed: result.gasUsed.format()
+            status: result.status,
+            gasUsed: result.gasUsed.format(),
+            block: this.makeBlockUrl(result.id)
         };
     }
 
+    hashTransaction(tx: TransactionRequestLike) {
+        const txHash = hashTransaction(transactionRequestify(tx), this.chainId);
+        return txHash.slice(2).toLowerCase();
+    }
     /**
      * Create the url to consult the fuel block explorer
      *
      * @returns link of transaction block
      */
-    private makeBlockUrl() {
-        return `https://fuellabs.github.io/block-explorer-v2/transaction/${this.hashTxId}?providerUrl=${encodeURIComponent(this.vault.getNetwork())}`;
+    private makeBlockUrl(block: string | undefined) {
+        return block ? `https://fuellabs.github.io/block-explorer-v2/transaction/${block}?providerUrl=${encodeURIComponent(this.network)}` : '';
     }
 
     /**
@@ -134,7 +135,7 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
      * @returns hash of this transaction
      */
     public getHashTxId() {
-        const hash = hashTransaction(transactionRequestify(this));
+        const hash = hashTransaction(transactionRequestify(this), this.chainId);
         return hash.slice(2);
     }
 

@@ -6,13 +6,9 @@ export interface IConfVault {
     SIGNATURES_COUNT: number;
     SIGNERS: string[];
     network: string;
+    chainId: number;
 }
 
-export interface IConfigurable {
-    HASH_PREDUCATE?: number[];
-    SIGNATURES_COUNT: string;
-    SIGNERS: string[];
-}
 export interface ITransferList {
     [id: string]: Transfer;
 }
@@ -26,7 +22,7 @@ export interface IPayloadVault {
 export interface IVault {
     getAbi: () => { [name: string]: unknown };
     getBin: () => string;
-    getConfigurable: () => IConfigurable;
+    getConfigurable: () => IConfVault;
     includeTransaction: (assets: ITransferAsset[], witnesses: string[]) => Promise<Transfer>;
     findTransactions: (hash: string) => Transfer | undefined;
     getTransactions: () => Transfer[];
