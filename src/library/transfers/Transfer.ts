@@ -58,7 +58,6 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
             }
         });
 
-        // Request signature
         const txData = transactionRequestify(this);
         const txhash = hashTransaction(txData);
         const hash = txhash.slice(2);

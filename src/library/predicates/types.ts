@@ -2,7 +2,7 @@ import { ITransferAsset } from '../assets';
 import { Transfer } from '../transfers';
 
 export interface IConfVault {
-    HASH_PREDUCATE: number[] | undefined;
+    HASH_PREDUCATE?: number[];
     SIGNATURES_COUNT: number;
     SIGNERS: string[];
     network: string;

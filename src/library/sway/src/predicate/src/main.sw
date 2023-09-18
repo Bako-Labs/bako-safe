@@ -5,6 +5,15 @@ predicate;
 use std::{b512::B512, ecr::ec_recover_address, tx::tx_id, tx::tx_witness_data, tx::tx_witnesses_count, bytes::Bytes};
 use libraries::{ascii::b256_to_ascii_bytes};
 
+
+/*
+    Configurable params:
+
+    - SIGNERS: address of required signatures
+    - SIGNATURES_COUNT: required signatures to approval
+    - HASH_PREDUCATE: hash of the predicate 
+*/
+
 configurable {
     SIGNERS: [b256; 10] = [
         0x0000000000000000000000000000000000000000000000000000000000000000,
@@ -22,10 +31,15 @@ configurable {
     HASH_PREDUCATE: [u64; 20] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 }
 
+/*
+    Validate signature:
+
+    params: 
+        - INDEX: position of signature
+        - TX_HASH: hash of signature
+*/
+
 fn check_signature(index: u64, tx_hash: b256) -> u64 {
-    // If the index is bigger than the witness count
-    // return false because the signature does not exist
-    // and if we try to access it, it will panic
     if (index >= tx_witnesses_count()) {
         return 0;
     }
