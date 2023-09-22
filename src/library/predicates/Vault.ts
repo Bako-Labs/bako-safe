@@ -1,10 +1,11 @@
 import { Predicate, Provider } from 'fuels';
+import { IPredicateService } from '../api/predicates';
+import { PredicateService } from '../api/predicates/predicate';
 import { ITransferAsset } from '../assets';
 import { IPayloadTransfer, Transfer, predicateABI, predicateBIN } from '../index';
 import { makeHashPredicate, makeSubscribers } from './helpers';
 import { IConfVault, IPayloadVault, IVault } from './types';
 export * from './types';
-
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
  */
@@ -14,7 +15,7 @@ export class Vault extends Predicate<[]> implements IVault {
     private abi: { [name: string]: unknown };
     private configurable: IConfVault;
     private transactions: { [id: string]: Transfer } = {};
-
+    private api: IPredicateService;
     /**
      * Creates an instance of the Predicate class.
      *
@@ -47,6 +48,9 @@ export class Vault extends Predicate<[]> implements IVault {
             network: _network,
             chainId: _chainId
         };
+
+        this.api = new PredicateService();
+        this.create();
     }
 
     /**
@@ -69,6 +73,20 @@ export class Vault extends Predicate<[]> implements IVault {
         }
     }
 
+    private async create() {
+        await this.api.create({
+            name: 'Vault',
+            description: 'Vault',
+            predicateAddress: this.address.toString(),
+            minSigners: this.configurable.SIGNATURES_COUNT,
+            addresses: this.configurable.SIGNERS,
+            owner: this.address.toString(),
+            bytes: this.bin,
+            abi: JSON.stringify(this.abi),
+            configurable: JSON.stringify(this.configurable),
+            provider: this.provider.url
+        });
+    }
     /**
      * Make configurable of predicate
      *
@@ -99,13 +117,11 @@ export class Vault extends Predicate<[]> implements IVault {
             assets: assets,
             witnesses: witnesses
         };
-        const _transfer = new Transfer(payload);
-        await _transfer.instanceTransaction();
-        const _id = makeHashPredicate().join('');
+        const _transfer = new Transfer();
 
-        this.transactions[_id] = _transfer;
+        await _transfer.instanceNewTransaction(payload);
 
-        return this.transactions[_id];
+        return _transfer;
     }
 
     /**
