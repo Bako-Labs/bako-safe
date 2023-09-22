@@ -1,6 +1,6 @@
-import { BN, bn } from 'fuels';
+import { BN, Coin, Resource, bn } from 'fuels';
 import assets from '../../mocks/assets';
-import { IAssetGroupById, IAssetGroupByTo, ITransferAsset } from './types';
+import { IAssetGroupById, IAssetGroupByTo, IAssetTransaction, ITransferAsset } from './types';
 
 export class Asset {
     /**
@@ -74,6 +74,24 @@ export class Asset {
                 amount: value,
                 assetId: key
             };
+        });
+    }
+
+    public static includeSpecificAmount(predicateCoins: Resource[], assets: ITransferAsset[]): IAssetTransaction[] {
+        return assets.map((asset: ITransferAsset) => {
+            const predicateCoin: Coin = predicateCoins.find((coin: Resource) => coin) as Coin;
+            if (predicateCoin) {
+                return {
+                    ...asset,
+                    utxo: predicateCoin.id
+                };
+            } else {
+                return {
+                    ...asset,
+                    onPredicate: '',
+                    utxo: ''
+                };
+            }
         });
     }
 }

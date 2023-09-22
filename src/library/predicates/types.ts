@@ -1,5 +1,5 @@
 import { ITransferAsset } from '../assets';
-import { Transfer } from '../transfers';
+import { IPayloadTransfer, Transfer } from '../transfers';
 
 export interface IConfVault {
     HASH_PREDUCATE?: number[];
@@ -13,6 +13,11 @@ export interface ITransferList {
     [id: string]: Transfer;
 }
 
+export interface IInstanceNewTransfer {
+    assets: ITransferAsset[];
+    witnesses: string[];
+}
+
 export interface IPayloadVault {
     configurable: IConfVault;
     abi?: string;
@@ -23,7 +28,7 @@ export interface IVault {
     getAbi: () => { [name: string]: unknown };
     getBin: () => string;
     getConfigurable: () => IConfVault;
-    includeTransaction: (assets: ITransferAsset[], witnesses: string[]) => Promise<Transfer>;
     findTransactions: (hash: string) => Transfer | undefined;
     getTransactions: () => Transfer[];
+    BSAFEIncludeTransaction: (params: IPayloadTransfer | string) => Promise<Transfer>;
 }

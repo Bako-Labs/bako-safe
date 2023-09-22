@@ -1,11 +1,10 @@
 import { TransactionRequest } from 'fuels';
 import { ITransferAsset } from '../assets/types';
-import { Vault } from '../predicates';
 
 export interface IPayloadTransfer {
-    vault: Vault;
     assets: ITransferAsset[];
     witnesses: string[];
+    BSAFETransactionId?: string;
 }
 
 export interface IInstanceTransfer {

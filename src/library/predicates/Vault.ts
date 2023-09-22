@@ -1,7 +1,6 @@
 import { Predicate, Provider } from 'fuels';
 import { IPredicateService } from '../api/predicates';
 import { PredicateService } from '../api/predicates/predicate';
-import { ITransferAsset } from '../assets';
 import { IPayloadTransfer, Transfer, predicateABI, predicateBIN } from '../index';
 import { makeHashPredicate, makeSubscribers } from './helpers';
 import { IConfVault, IPayloadVault, IVault } from './types';
@@ -25,7 +24,7 @@ export class Vault extends Predicate<[]> implements IVault {
      *      @param SIGNERS - Array string of predicate signers
      * @param abi - The JSON abi to BSAFE multisig.
      * @param bytecode - The binary code of preficate BSAFE multisig.
-     */
+     **/
 
     constructor({ configurable, abi, bytecode }: IPayloadVault) {
         const _abi = abi ? JSON.parse(abi) : predicateABI;
@@ -111,15 +110,10 @@ export class Vault extends Predicate<[]> implements IVault {
      * @param witnesses - witnesses of predicate [transaction id signed to address signer]
      * @returns return a new transaction and include in vault states
      */
-    public async includeTransaction(assets: ITransferAsset[], witnesses: string[]) {
-        const payload: IPayloadTransfer = {
-            vault: this,
-            assets: assets,
-            witnesses: witnesses
-        };
-        const _transfer = new Transfer();
 
-        await _transfer.instanceNewTransaction(payload);
+    public async BSAFEIncludeTransaction(params: IPayloadTransfer | string) {
+        const _transfer = new Transfer(this);
+        await _transfer.instanceTransaction(params);
 
         return _transfer;
     }

@@ -1,7 +1,7 @@
 import { Address, InputType, Provider, ScriptTransactionRequest, TransactionRequestLike, TransactionResponse, arrayify, bn, hashTransaction, hexlify, transactionRequestify } from 'fuels';
-import { ICreateTransactionPayload, TransactionService, TransactionStatus } from '../api/transactions';
+import { ICreateTransactionPayload, ITransactionService, TransactionService, TransactionStatus } from '../api/transactions';
 import { Asset } from '../assets';
-import { IAssetGroupById, ITransferAsset } from '../assets/types';
+import { IAssetGroupById, IAssetTransaction } from '../assets/types';
 import { Vault } from '../predicates';
 import { transactionScript } from './helpers';
 import { IPayloadTransfer, ITransfer } from './types';
@@ -13,7 +13,8 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
     private chainId!: number;
     private network!: string;
     public BSAFETransactionId!: string;
-    private assets!: ITransferAsset[];
+    private assets!: IAssetTransaction[];
+    private service: ITransactionService;
     /**
      * Creates an instance of the Transfer class.
      *
@@ -21,25 +22,37 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
      * @param assets - Asset output of transaction
      * @param witnesses - Signatures on the hash of this transaction, signed by the vault subscribers
      */
-    constructor() {
+    constructor(vault: Vault) {
         super({
             gasPrice: bn(1),
             gasLimit: bn(100000),
             script: transactionScript
         });
+        this.vault = vault;
+        this.service = new TransactionService();
+
+        const _configurable = this.vault.getConfigurable();
+        this.chainId = _configurable.chainId;
+        this.network = _configurable.network;
     }
+
+    public async instanceTransaction(params: IPayloadTransfer | string) {
+        if (typeof params === 'string') {
+            // find on API
+            this.BSAFETransactionId = params;
+            await this.instanceOldTransaction();
+        } else {
+            // instance new transaction
+            await this.instanceNewTransaction(params);
+        }
+    }
+
     /**
      * Configure outputs and parameters of transaction instance.
      *
      * @returns this transaction configured and your hash
      */
-    public async instanceNewTransaction({ vault, assets, witnesses }: IPayloadTransfer) {
-        this.vault = vault;
-
-        const _configurable = vault.getConfigurable();
-        this.chainId = _configurable.chainId;
-        this.network = _configurable.network;
-
+    public async instanceNewTransaction({ assets, witnesses }: IPayloadTransfer) {
         const outputs = await Asset.assetsGroupByTo(assets);
         const coins = await Asset.assetsGroupById(assets);
         const transactionCoins = await Asset.addTransactionFee(coins, this.gasPrice);
@@ -49,33 +62,43 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
         });
 
         await this.validtateBalance(coins);
-        const _coins = await vault.getResourcesToSpend(transactionCoins);
+        const _coins = await this.vault.getResourcesToSpend(transactionCoins);
 
         this.addResources(_coins);
+        this.assets = _coins.length > 0 ? Asset.includeSpecificAmount(_coins, assets) : [];
 
         this.inputs?.forEach((input) => {
-            if (input.type === InputType.Coin && hexlify(input.owner) === vault.address.toB256()) {
-                input.predicate = arrayify(vault.bytes);
-                input.predicateData = arrayify(vault.predicateData);
+            if (input.type === InputType.Coin && hexlify(input.owner) === this.vault.address.toB256()) {
+                input.predicate = arrayify(this.vault.bytes);
+                input.predicateData = arrayify(this.vault.predicateData);
             }
         });
 
         this.witnesses = witnesses;
 
-        await this.createTransaction();
+        !this.BSAFETransactionId && (await this.createTransaction());
+    }
+
+    public async instanceOldTransaction() {
+        const { witnesses, assets } = await this.service.findByTransactionID(this.BSAFETransactionId);
+        const _witnesses: string[] = [];
+        witnesses.map((item) => {
+            item.signature && _witnesses.push(item.signature);
+        });
+
+        await this.instanceNewTransaction({ witnesses: _witnesses, assets });
     }
 
     private async createTransaction() {
-        const service = new TransactionService();
         const transaction: ICreateTransactionPayload = {
             predicateAddress: this.vault.address.toString(),
             name: 'transaction of ',
-            txData: JSON.stringify(transactionRequestify(this)),
             hash: this.getHashTxId(),
-            status: TransactionStatus.AWAIT_REQUIREMENTS
+            status: TransactionStatus.AWAIT_REQUIREMENTS,
+            assets: this.assets
         };
 
-        const result = await service.create(transaction);
+        const result = await this.service.create(transaction);
         this.BSAFETransactionId = result.id;
     }
 
