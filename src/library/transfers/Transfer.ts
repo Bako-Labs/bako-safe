@@ -1,8 +1,9 @@
-import { Address, InputType, Provider, ScriptTransactionRequest, TransactionRequestLike, TransactionResponse, arrayify, bn, hashTransaction, hexlify, transactionRequestify } from 'fuels';
+import { Address, InputType, ScriptTransactionRequest, TransactionRequestLike, arrayify, bn, hashTransaction, hexlify, transactionRequestify } from 'fuels';
 import { ICreateTransactionPayload, ITransactionService, TransactionService, TransactionStatus } from '../api/transactions';
 import { Asset } from '../assets';
 import { IAssetGroupById, IAssetTransaction } from '../assets/types';
 import { Vault } from '../predicates';
+import { delay } from '../utils';
 import { transactionScript } from './helpers';
 import { IPayloadTransfer, ITransfer } from './types';
 /**
@@ -11,10 +12,11 @@ import { IPayloadTransfer, ITransfer } from './types';
 export class Transfer extends ScriptTransactionRequest implements ITransfer {
     private vault!: Vault;
     private chainId!: number;
-    private network!: string;
+    //private network!: string;
     public BSAFETransactionId!: string;
     private assets!: IAssetTransaction[];
     private service: ITransactionService;
+    private sendingProcess: boolean = false;
     /**
      * Creates an instance of the Transfer class.
      *
@@ -24,7 +26,7 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
      */
     constructor(vault: Vault) {
         super({
-            gasPrice: bn(1),
+            gasPrice: bn(1_000_000),
             gasLimit: bn(100000),
             script: transactionScript
         });
@@ -33,7 +35,7 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
 
         const _configurable = this.vault.getConfigurable();
         this.chainId = _configurable.chainId;
-        this.network = _configurable.network;
+        //this.network = _configurable.network;
     }
 
     public async instanceTransaction(params: IPayloadTransfer | string) {
@@ -75,7 +77,6 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
         });
 
         this.witnesses = witnesses;
-
         !this.BSAFETransactionId && (await this.createTransaction());
     }
 
@@ -86,7 +87,16 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
             item.signature && _witnesses.push(item.signature);
         });
 
-        await this.instanceNewTransaction({ witnesses: _witnesses, assets });
+        await this.instanceNewTransaction({
+            witnesses: _witnesses,
+            assets: assets.map((assest) => {
+                return {
+                    assetId: assest.assetId,
+                    amount: assest.amount.toString(),
+                    to: assest.to
+                };
+            })
+        });
     }
 
     private async createTransaction() {
@@ -132,26 +142,53 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
      * @param _coins - Vault to which this transaction belongs
      * @returns sumary result of transaction
      */
-    public async sendTransaction() {
-        const provider = new Provider(this.network);
-        const _transaction = transactionRequestify(this);
-        const tx_est = await provider.estimatePredicates(_transaction);
+    public async send() {
+        const transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
+        switch (transaction.status) {
+            case TransactionStatus.PENDING_SENDER:
+                this.sendingProcess = true;
+                await this.service.send(this.BSAFETransactionId);
+                this.sendingProcess = false;
+                break;
 
-        const encodedTransaction = hexlify(tx_est.toTransactionBytes());
+            case TransactionStatus.AWAIT_REQUIREMENTS || TransactionStatus.SUCCESS:
+                this.sendingProcess = false;
+                break;
+        }
+        return (
+            transaction?.resume && {
+                ...JSON.parse(transaction.resume),
+                bsafeID: transaction.id
+            }
+        );
+    }
 
-        const {
-            submit: { id: transactionId }
-        } = await provider.operations.submit({ encodedTransaction });
+    public async wait() {
+        const transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
+        switch (transaction.status) {
+            case TransactionStatus.PENDING_SENDER: // send transaction
+                if (!this.sendingProcess) return await this.send();
+                break;
 
-        const sender = new TransactionResponse(transactionId, provider);
+            case TransactionStatus.AWAIT_REQUIREMENTS: //call this recursive function
+                await delay(1000);
+                this.wait();
+                break;
 
-        const result = await sender.waitForResult();
+            case TransactionStatus.SUCCESS:
+                this.sendingProcess = false;
+                return (
+                    transaction?.resume && {
+                        ...JSON.parse(transaction.resume),
+                        bsafeID: transaction.id
+                    }
+                );
 
-        return {
-            status: result.status,
-            gasUsed: result.gasUsed.format(),
-            block: this.makeBlockUrl(result.id)
-        };
+            default:
+                break;
+        }
+
+        return true;
     }
 
     hashTransaction(tx: TransactionRequestLike) {
@@ -163,9 +200,9 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
      *
      * @returns link of transaction block
      */
-    private makeBlockUrl(block: string | undefined) {
-        return block ? `https://fuellabs.github.io/block-explorer-v2/transaction/${block}?providerUrl=${encodeURIComponent(this.network)}` : '';
-    }
+    // private makeBlockUrl(block: string | undefined) {
+    //     return block ? `https://fuellabs.github.io/block-explorer-v2/transaction/${block}?providerUrl=${encodeURIComponent(this.network)}` : '';
+    // }
 
     /**
      * Generates and formats the transaction hash
@@ -173,8 +210,8 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
      * @returns hash of this transaction
      */
     public getHashTxId() {
-        const hash = hashTransaction(transactionRequestify(this), this.chainId);
-        return hash.slice(2);
+        const txHash = hashTransaction(transactionRequestify(this), this.chainId);
+        return txHash.slice(2);
     }
 
     /**

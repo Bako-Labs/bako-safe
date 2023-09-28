@@ -2,8 +2,9 @@ import { IAssetTransaction, ITransferAsset } from '../../assets';
 
 export enum TransactionStatus {
     AWAIT_REQUIREMENTS = 'AWAIT_REQUIREMENTS', // -> AWAIT SIGNATURES
-    PENDING_SENDER = 'PENDING', // -> AWAIT SENDER, BEFORE AWAIT STATUS
-    DONE = 'DONE' // -> SENDED
+    PENDING_SENDER = 'PENDING_SENDER', // -> AWAIT SENDER, BEFORE AWAIT STATUS
+    SUCCESS = 'SUCCESS', // -> SENDED
+    FAILED = 'FAILED' // -> FAILED
 }
 
 export interface ICreateTransactionPayload {
@@ -39,4 +40,5 @@ export interface ITransactionService {
     findByHash: (hash: string) => Promise<ITransaction>;
     findByTransactionID: (transactionId: string) => Promise<ITransaction>;
     sign: (BSAFETransactionId: string, account: string, signer: string) => Promise<ITransaction>;
+    send: (BSAFETransactionId: string) => Promise<ITransaction>;
 }

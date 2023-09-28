@@ -23,6 +23,16 @@ export interface IRequiredWitnesses {
     witnesses: IWitnesses[];
 }
 
+export interface ITransferResult {
+    block: string;
+    witnesses: string[];
+    outputs: ITransferAsset[];
+    bsafeID?: string;
+    fee?: string;
+    gasUsed?: string;
+    status?: string;
+}
+
 export interface ISendTransaction {
     status: string;
     block: string;
@@ -31,7 +41,7 @@ export interface ISendTransaction {
 
 export interface ITransfer {
     instanceNewTransaction(params: IPayloadTransfer): void;
-    sendTransaction(): void;
+    send(): void;
     getHashTxId(): string;
     getTransaction(): TransactionRequest;
 }

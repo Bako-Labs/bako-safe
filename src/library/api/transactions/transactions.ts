@@ -33,4 +33,10 @@ export class TransactionService extends Api implements ITransactionService {
 
         return data;
     }
+
+    public async send(BSAFETransactionId: string) {
+        const { data } = await this.client.post(`/transaction/send/${BSAFETransactionId}`);
+
+        return data;
+    }
 }
