@@ -1,8 +1,8 @@
-import { Predicate } from 'fuels';
+import { Predicate, Provider } from 'fuels';
 import { ITransferAsset } from '../assets';
 import { IPayloadTransfer, Transfer, predicateABI, predicateBIN } from '../index';
 import { makeHashPredicate, makeSubscribers } from './helpers';
-import { IConfVault, IConfigurable, IPayloadVault, IVault } from './types';
+import { IConfVault, IPayloadVault, IVault } from './types';
 export * from './types';
 
 /**
@@ -12,8 +12,7 @@ export * from './types';
 export class Vault extends Predicate<[]> implements IVault {
     private bin: string;
     private abi: { [name: string]: unknown };
-    private network: string;
-    private configurable: IConfigurable;
+    private configurable: IConfVault;
     private transactions: { [id: string]: Transfer } = {};
 
     /**
@@ -31,20 +30,22 @@ export class Vault extends Predicate<[]> implements IVault {
         const _abi = abi ? JSON.parse(abi) : predicateABI;
         const _bin = bytecode ? bytecode : predicateBIN;
         const _network = configurable.network; //todo: move to dynamic
-
+        const _chainId = configurable.chainId;
         Vault.validations(configurable);
 
         const _configurable = Vault.makePredicate(configurable);
+        const provider = new Provider(_network);
 
-        super(_bin, _abi, _network, _configurable);
+        super(_bin, _chainId, _abi, provider, _configurable);
 
         this.bin = _bin;
-        this.network = _network;
         this.abi = _abi;
         this.configurable = this.configurable = {
             HASH_PREDUCATE: _configurable.HASH_PREDUCATE as number[],
-            SIGNATURES_COUNT: _configurable.SIGNATURES_COUNT as string,
-            SIGNERS: _configurable.SIGNERS as string[]
+            SIGNATURES_COUNT: _configurable.SIGNATURES_COUNT as number,
+            SIGNERS: _configurable.SIGNERS as string[],
+            network: _network,
+            chainId: _chainId
         };
     }
 
@@ -153,14 +154,5 @@ export class Vault extends Predicate<[]> implements IVault {
      */
     public getConfigurable() {
         return this.configurable;
-    }
-
-    /**
-     * Return this vault network of provider
-     *
-     * @returns url of provider
-     */
-    public getNetwork() {
-        return this.network;
     }
 }

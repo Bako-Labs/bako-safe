@@ -1,4 +1,4 @@
-import { Resources, TransactionRequest } from 'fuels';
+import { Resource, TransactionRequest } from 'fuels';
 import { ITransferAsset } from '../assets/types';
 import { Vault } from '../predicates';
 
@@ -31,8 +31,8 @@ export interface ISendTransaction {
 }
 
 export interface ITransfer {
-    instanceTransaction(_coins: Resources[]): Promise<IInstanceTransfer>;
-    sendTransaction(): Promise<ISendTransaction>;
+    instanceTransaction(_coins: Resource[]): void;
+    sendTransaction(): void;
     getHashTxId(): string;
     getTransaction(): TransactionRequest;
 }
