@@ -1,10 +1,10 @@
 import { IAssetTransaction, ITransferAsset } from '../../assets';
 
 export enum TransactionStatus {
-    AWAIT_REQUIREMENTS = 'AWAIT_REQUIREMENTS', // -> AWAIT SIGNATURES
-    PENDING_SENDER = 'PENDING_SENDER', // -> AWAIT SENDER, BEFORE AWAIT STATUS
-    SUCCESS = 'SUCCESS', // -> SENDED
-    FAILED = 'FAILED' // -> FAILED
+    AWAIT_REQUIREMENTS = 'await_requirements', // -> AWAIT SIGNATURES
+    PENDING_SENDER = 'pending_sender', // -> AWAIT SENDER, BEFORE AWAIT STATUS
+    SUCCESS = 'success', // -> SENDED
+    FAILED = 'failed' // -> FAILED
 }
 
 export interface ICreateTransactionPayload {
@@ -15,7 +15,6 @@ export interface ICreateTransactionPayload {
     assets: ITransferAsset[];
     sendTime?: Date;
     gasUsed?: string;
-    resume?: string; // RESULT
 }
 
 export interface IWitnesses {
@@ -33,6 +32,7 @@ export interface ITransaction extends ICreateTransactionPayload {
     predicateID: string;
     assets: IAssetTransaction[];
     witnesses: IWitnesses[];
+    resume: string; // RESULT
 }
 
 export interface ITransactionService {

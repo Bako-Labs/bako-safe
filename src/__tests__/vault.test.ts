@@ -177,11 +177,12 @@ describe('Test Vault', () => {
             await oldTransaction.send();
 
             await oldTransaction.wait();
+            console.log('[WAIT_RESULT_1]: ', await oldTransaction.wait());
 
             //jest.advanceTimersByTime(10000);
             await signTimeout();
 
-            await oldTransaction.wait();
+            console.log('[WAIT_RESULT_2]: ', await oldTransaction.wait());
 
             //expect(result).toBe(true);
 

@@ -155,12 +155,10 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
                 this.sendingProcess = false;
                 break;
         }
-        return (
-            transaction?.resume && {
-                ...JSON.parse(transaction.resume),
-                bsafeID: transaction.id
-            }
-        );
+        return {
+            ...JSON.parse(transaction.resume),
+            bsafeID: transaction.id
+        };
     }
 
     public async wait() {
@@ -177,18 +175,18 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
 
             case TransactionStatus.SUCCESS:
                 this.sendingProcess = false;
-                return (
-                    transaction?.resume && {
-                        ...JSON.parse(transaction.resume),
-                        bsafeID: transaction.id
-                    }
-                );
+                break;
 
             default:
                 break;
         }
 
-        return true;
+        return (
+            transaction?.resume && {
+                ...JSON.parse(transaction.resume),
+                bsafeID: transaction.id
+            }
+        );
     }
 
     hashTransaction(tx: TransactionRequestLike) {
