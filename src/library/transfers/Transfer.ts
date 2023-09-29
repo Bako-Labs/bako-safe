@@ -64,8 +64,8 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
         });
 
         await this.validtateBalance(coins);
+        //todo: invalidate used coins [make using bsafe api assets?]
         const _coins = await this.vault.getResourcesToSpend(transactionCoins);
-
         this.addResources(_coins);
         this.assets = _coins.length > 0 ? Asset.includeSpecificAmount(_coins, assets) : [];
 
@@ -162,15 +162,21 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
     }
 
     public async wait() {
-        const transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
+        let transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
+        let status = transaction.status;
         switch (transaction.status) {
             case TransactionStatus.PENDING_SENDER: // send transaction
                 if (!this.sendingProcess) return await this.send();
                 break;
 
             case TransactionStatus.AWAIT_REQUIREMENTS: //call this recursive function
-                await delay(1000);
-                this.wait();
+                while (status === TransactionStatus.AWAIT_REQUIREMENTS) {
+                    delay(5000); // todo: make time to dynamic
+                    transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
+                    status = transaction.status;
+                }
+                await this.send();
+                transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
                 break;
 
             case TransactionStatus.SUCCESS:
@@ -181,12 +187,10 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
                 break;
         }
 
-        return (
-            transaction?.resume && {
-                ...JSON.parse(transaction.resume),
-                bsafeID: transaction.id
-            }
-        );
+        return {
+            ...JSON.parse(transaction.resume),
+            bsafeID: transaction.id
+        };
     }
 
     hashTransaction(tx: TransactionRequestLike) {
