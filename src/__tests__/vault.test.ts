@@ -180,11 +180,13 @@ describe('Test Vault', () => {
             const oldTransaction = await vault.BSAFEIncludeTransaction(transaction.BSAFETransactionId);
 
             const pending_requirements = await oldTransaction.send();
+            console.log(pending_requirements);
             expect(pending_requirements.status).toBe('await_requirements');
 
             // this process isan`t async, next line is async
             signTimeout();
             const result = await oldTransaction.wait();
+            console.log(result);
             expect(result.status).toBe('success');
         },
         30 * 1000
