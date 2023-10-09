@@ -42,10 +42,12 @@ import {Vault, IPayloadVault, ITransferAsset} from 'bsafe'
 import accounts from '../mocks/accounts.json';
 import assets from '../mocks/assets.json';
 
-const fuelProvider = new Provider('http://beta-3.fuel.network/graphql');
+const fuelProvider = new Provider('http://beta-4.fuel.network/graphql');
 const txParams = {
     gasPrice: bn(1)
 };
+let chainId: number = await fuelProvider.getChainId();
+
 const rootWallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, fuelProvider);
 
 const signers = [accounts['USER_1'].address, accounts['USER_2'].address, accounts['USER_3'].address];
@@ -53,10 +55,10 @@ const signers = [accounts['USER_1'].address, accounts['USER_2'].address, account
 // make your vault
 const VaultPayload: IPayloadVault = {
     configurable: {
-        HASH_PREDUCATE: undefined, //undefined to new Vault or an valid hash to instance older vault
         SIGNATURES_COUNT: 1, // required signatures
         SIGNERS: signers, // witnesses account
         network: fuelProvider.url // your network connected wallet
+        chainId: chainId
     }
 };
 const vault = new Vault(VaultPayload);
