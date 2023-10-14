@@ -46,8 +46,9 @@ const fuelProvider = new Provider('http://beta-4.fuel.network/graphql');
 const txParams = {
     gasPrice: bn(1)
 };
+type IAccount = 'FULL' | 'USER_1' | 'USER_2' | 'USER_3' | 'USER_4' | 'USER_5'
 
-const signin = async (tx_hash: string, account: 'FULL' | 'USER_1' | 'USER_2' | 'USER_3' | 'USER_4' | 'USER_5') => {
+const signin = async (tx_hash: string, account:IAccount ) => {
     const signer = Wallet.fromPrivateKey(accounts[account].privateKey, fuelProvider);
     return signer.signMessage(tx_hash);
 };
