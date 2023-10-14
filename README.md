@@ -46,6 +46,12 @@ const fuelProvider = new Provider('http://beta-4.fuel.network/graphql');
 const txParams = {
     gasPrice: bn(1)
 };
+
+const signin = async (tx_hash: string, account: 'FULL' | 'USER_1' | 'USER_2' | 'USER_3' | 'USER_4' | 'USER_5') => {
+    const signer = Wallet.fromPrivateKey(accounts[account].privateKey, fuelProvider);
+    return signer.signMessage(tx_hash);
+};
+
 let chainId: number = await fuelProvider.getChainId();
 
 const rootWallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, fuelProvider);
@@ -78,7 +84,9 @@ const {transaction} = await vault.includeTransaction(_assets, []);
 const signer = Wallet.fromPrivateKey(accounts[account].privateKey, fuelProvider); // instance an wallet account
 const tx_hash = transaction.getHashTxId() //get transaction hash
 const witnesses = [
-    signer.signMessage()
+    await signin(transaction.getHashTxId(), 'USER_1'),
+    await signin(transaction.getHashTxId(), 'USER_2'),
+    await signin(transaction.getHashTxId(), 'USER_3'),
 ];
 //set transaction witnesses
 transaction.witnesses = witnesses;
