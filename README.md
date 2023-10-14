@@ -84,9 +84,9 @@ const {transaction} = await vault.includeTransaction(_assets, []);
 const signer = Wallet.fromPrivateKey(accounts[account].privateKey, fuelProvider); // instance an wallet account
 const tx_hash = transaction.getHashTxId() //get transaction hash
 const witnesses = [
-    await signin(transaction.getHashTxId(), 'USER_1'),
-    await signin(transaction.getHashTxId(), 'USER_2'),
-    await signin(transaction.getHashTxId(), 'USER_3'),
+    await signin(tx_hash, 'USER_1'),
+    await signin(tx_hash, 'USER_2'),
+    await signin(tx_hash, 'USER_3'),
 ];
 //set transaction witnesses
 transaction.witnesses = witnesses;

@@ -6,7 +6,7 @@ export default {
     },
     STORE: {
         account: '0x53de37ae51fcfecb17ee3589f68904ac75bf5ec109edeb1065ccb63145287da6',
-        address: 'fuel18p77ecqa7sr9ruw766ek4wxjr0z9hfzantglc25v0znzgwwxx5tqtm0un3',
+        address: 'fuel1200r0tj3lnlvk9lwxkyldzgy436m7hkpp8k7kyr9ejmrz3fg0knqndhwm6',
         privateKey: '0x61a006b78a6e9eb5aeb11df25e6444be281893875ae5fdc5fa4a0f4702995cb7'
     },
     USER_1: {
