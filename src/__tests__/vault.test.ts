@@ -39,7 +39,6 @@ describe('Test Vault', () => {
     const newVault = async () => {
         const VaultPayload: IPayloadVault = {
             configurable: {
-                HASH_PREDUCATE: undefined,
                 SIGNATURES_COUNT: 3,
                 SIGNERS: signers,
                 network: fuelProvider.url,
