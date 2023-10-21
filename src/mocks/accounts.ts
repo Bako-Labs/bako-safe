@@ -1,3 +1,4 @@
+// -> valid accounts just to network http://localhost:4000/graphql
 export const accounts = {
     FULL: {
         account: '0x94ffcc53b892684acefaebc8a3d4a595e528a8cf664eeb3ef36f1020b0809d0d',
@@ -6,7 +7,7 @@ export const accounts = {
     },
     STORE: {
         account: '0x53de37ae51fcfecb17ee3589f68904ac75bf5ec109edeb1065ccb63145287da6',
-        address: 'fuel18p77ecqa7sr9ruw766ek4wxjr0z9hfzantglc25v0znzgwwxx5tqtm0un3',
+        address: 'fuel1200r0tj3lnlvk9lwxkyldzgy436m7hkpp8k7kyr9ejmrz3fg0knqndhwm6',
         privateKey: '0x61a006b78a6e9eb5aeb11df25e6444be281893875ae5fdc5fa4a0f4702995cb7'
     },
     USER_1: {

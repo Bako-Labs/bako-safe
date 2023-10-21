@@ -42,10 +42,19 @@ import {Vault, IPayloadVault, ITransferAsset} from 'bsafe'
 import accounts from '../mocks/accounts.json';
 import assets from '../mocks/assets.json';
 
-const fuelProvider = new Provider('http://beta-3.fuel.network/graphql');
+const fuelProvider = new Provider('http://beta-4.fuel.network/graphql');
 const txParams = {
     gasPrice: bn(1)
 };
+type IAccount = 'FULL' | 'USER_1' | 'USER_2' | 'USER_3' | 'USER_4' | 'USER_5'
+
+const signin = async (tx_hash: string, account:IAccount ) => {
+    const signer = Wallet.fromPrivateKey(accounts[account].privateKey, fuelProvider);
+    return signer.signMessage(tx_hash);
+};
+
+let chainId: number = await fuelProvider.getChainId();
+
 const rootWallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, fuelProvider);
 
 const signers = [accounts['USER_1'].address, accounts['USER_2'].address, accounts['USER_3'].address];
@@ -53,10 +62,10 @@ const signers = [accounts['USER_1'].address, accounts['USER_2'].address, account
 // make your vault
 const VaultPayload: IPayloadVault = {
     configurable: {
-        HASH_PREDUCATE: undefined, //undefined to new Vault or an valid hash to instance older vault
         SIGNATURES_COUNT: 1, // required signatures
         SIGNERS: signers, // witnesses account
         network: fuelProvider.url // your network connected wallet
+        chainId: chainId
     }
 };
 const vault = new Vault(VaultPayload);
@@ -76,7 +85,9 @@ const {transaction} = await vault.includeTransaction(_assets, []);
 const signer = Wallet.fromPrivateKey(accounts[account].privateKey, fuelProvider); // instance an wallet account
 const tx_hash = transaction.getHashTxId() //get transaction hash
 const witnesses = [
-    signer.signMessage()
+    await signin(tx_hash, 'USER_1'),
+    await signin(tx_hash, 'USER_2'),
+    await signin(tx_hash, 'USER_3'),
 ];
 //set transaction witnesses
 transaction.witnesses = witnesses;
