@@ -4,6 +4,8 @@ import { PredicateService } from '../api/predicates/predicate';
 import { IPayloadTransfer, Transfer, predicateABI, predicateBIN } from '../index';
 import { makeHashPredicate, makeSubscribers } from './helpers';
 import { IConfVault, IPayloadVault, IVault } from './types';
+import { IBSAFEAuth } from '../api/auth';
+import { defaultConfigurable } from '../configurables';
 export * from './types';
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
@@ -14,7 +16,9 @@ export class Vault extends Predicate<[]> implements IVault {
     private abi: { [name: string]: unknown };
     private configurable: IConfVault;
     private transactions: { [id: string]: Transfer } = {};
-    private api: IPredicateService;
+    private api!: IPredicateService;
+    private auth!: IBSAFEAuth;
+    public transactionRecursiveTimeout: number;
     /**
      * Creates an instance of the Predicate class.
      *
@@ -26,7 +30,7 @@ export class Vault extends Predicate<[]> implements IVault {
      * @param bytecode - The binary code of preficate BSAFE multisig.
      **/
 
-    constructor({ configurable, abi, bytecode }: IPayloadVault) {
+    constructor({ configurable, abi, bytecode, transactionRecursiveTimeout, BSAFEAuth }: IPayloadVault) {
         const _abi = abi ? JSON.parse(abi) : predicateABI;
         const _bin = bytecode ? bytecode : predicateBIN;
         const _network = configurable.network; //todo: move to dynamic
@@ -47,9 +51,13 @@ export class Vault extends Predicate<[]> implements IVault {
             network: _network,
             chainId: _chainId
         };
-
-        this.api = new PredicateService();
-        this.create();
+        this.transactionRecursiveTimeout = transactionRecursiveTimeout ? transactionRecursiveTimeout : defaultConfigurable['refetchTimeout'];
+        if (BSAFEAuth) {
+            const _auth = BSAFEAuth;
+            this.auth = _auth;
+            this.api = new PredicateService(_auth);
+            this.create();
+        }
     }
 
     /**
@@ -112,7 +120,7 @@ export class Vault extends Predicate<[]> implements IVault {
      */
 
     public async BSAFEIncludeTransaction(params: IPayloadTransfer | string) {
-        const _transfer = new Transfer(this);
+        const _transfer = new Transfer(this, this.auth);
         await _transfer.instanceTransaction(params);
 
         return _transfer;

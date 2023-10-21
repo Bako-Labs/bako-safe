@@ -1,4 +1,4 @@
-export default {
+export const accounts = {
     FULL: {
         account: '0x94ffcc53b892684acefaebc8a3d4a595e528a8cf664eeb3ef36f1020b0809d0d',
         address: 'fuel1jnluc5acjf5y4nh6a0y28499jhjj32x0ve8wk0hndugzpvyqn5xsfsfzly',
@@ -26,12 +26,20 @@ export default {
     },
     USER_4: {
         account: '0xfd8c520ef8caff0ad3289aa64acecd4ef86ac8f643fd9b76bf2d163a86a66716',
-        address: 'fuel16fterwmj5t5uajdfk8qjmys96dtadqnsqr0dz39sw2v8lrrqfh8qhe86yq',
+        address: 'fuel1lkx9yrhcetls45egn2ny4nkdfmux4j8kg07eka4l95tr4p4xvutqmvhl2l',
         privateKey: '0xb58ad4fb072290d03fc2d81cd7534e9bf7360ccad8a48d2799b60bab357255da'
     },
     USER_5: {
         account: '0x8247104854dd733cb475901d55047f57cb3c8cafe3a9f7233de3325b8bf56a5c',
-        address: 'fuel12f0xee2jxhywxhh3fu6qmafzc8nmzk93tsz7djpal3rq7nt34j5sysdwp3',
+        address: 'fuel1sfr3qjz5m4enedr4jqw42prl2l9ner90uw5lwgeauve9hzl4dfwqxhyn83',
         privateKey: '0x4256a670740031e4e7cb7216c9fe8921a4485c187686b7ab0ae7c317d7de0a22'
     }
+};
+
+export type IAccountKeys = keyof typeof accounts;
+
+export type IDefaultAccount = {
+    account: string;
+    address: string;
+    privateKey: string;
 };

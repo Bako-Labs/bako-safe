@@ -3,6 +3,7 @@ import { IAssetTransaction, ITransferAsset } from '../../assets';
 export enum TransactionStatus {
     AWAIT_REQUIREMENTS = 'await_requirements', // -> AWAIT SIGNATURES
     PENDING_SENDER = 'pending_sender', // -> AWAIT SENDER, BEFORE AWAIT STATUS
+    PROCESS_ON_CHAIN = 'process_on_chain', // -> AWAIT DONE ON CHAIN
     SUCCESS = 'success', // -> SENDED
     FAILED = 'failed' // -> FAILED
 }
@@ -25,6 +26,20 @@ export interface IWitnesses {
     updatedAt: string;
 }
 
+export enum TransactionProcessStatus {
+    SUCCESS = 'SuccessStatus',
+    SQUIZED = 'SqueezedOutStatus',
+    SUBMITED = 'SubmittedStatus',
+    FAILED = 'FailureStatus'
+}
+
+export interface ITransactionResume {
+    status: TransactionProcessStatus;
+    hash?: string;
+    gasUsed?: string;
+    sendTime?: Date;
+    witnesses?: string[];
+}
 export interface ITransaction extends ICreateTransactionPayload {
     id: string;
     createdAt: string;
@@ -40,5 +55,6 @@ export interface ITransactionService {
     findByHash: (hash: string) => Promise<ITransaction>;
     findByTransactionID: (transactionId: string) => Promise<ITransaction>;
     sign: (BSAFETransactionId: string, account: string, signer: string) => Promise<ITransaction>;
-    send: (BSAFETransactionId: string) => Promise<ITransaction>;
+    send: (BSAFETransactionId: string) => Promise<ITransactionResume>;
+    verify: (BSAFETransactionId: string) => Promise<ITransactionResume>;
 }

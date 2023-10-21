@@ -1,3 +1,4 @@
+import { IBSAFEAuth } from '../api/auth/types';
 import { ITransferAsset } from '../assets';
 import { IPayloadTransfer, Transfer } from '../transfers';
 
@@ -20,8 +21,10 @@ export interface IInstanceNewTransfer {
 
 export interface IPayloadVault {
     configurable: IConfVault;
+    transactionRecursiveTimeout?: number;
     abi?: string;
     bytecode?: string;
+    BSAFEAuth?: IBSAFEAuth;
 }
 
 export interface IVault {

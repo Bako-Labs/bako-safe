@@ -1,16 +1,20 @@
-import { defaultConfigurable } from '../../configurables';
 import { Api } from '../api';
+import { IBSAFEAuth } from '../auth/types';
 import { ICreateTransactionPayload, ITransactionService } from './types';
 
 export class TransactionService extends Api implements ITransactionService {
-    constructor() {
-        super(defaultConfigurable['api_url'], defaultConfigurable['api_token']);
+    constructor(auth: IBSAFEAuth) {
+        super(auth);
     }
 
     public async create(payload: ICreateTransactionPayload) {
-        const { data } = await this.client.post('/transaction', payload);
+        try {
+            const { data } = await this.client.post('/transaction', payload);
 
-        return data;
+            return data;
+        } catch (e) {
+            console.log(JSON.stringify(e));
+        }
     }
 
     public async findByHash(hash: string) {
@@ -28,7 +32,8 @@ export class TransactionService extends Api implements ITransactionService {
     public async sign(BSAFETransactionId: string, account: string, signer: string) {
         const { data } = await this.client.put(`/transaction/signer/${BSAFETransactionId}`, {
             account,
-            signer
+            signer,
+            confirm: true
         });
 
         return data;
@@ -36,6 +41,12 @@ export class TransactionService extends Api implements ITransactionService {
 
     public async send(BSAFETransactionId: string) {
         const { data } = await this.client.post(`/transaction/send/${BSAFETransactionId}`);
+
+        return data;
+    }
+
+    public async verify(BSAFETransactionId: string) {
+        const { data } = await this.client.post(`/transaction/verify/${BSAFETransactionId}`);
 
         return data;
     }

@@ -1,5 +1,6 @@
-import { TransactionRequest } from 'fuels';
+import { TransactionRequest, TransactionStatus } from 'fuels';
 import { ITransferAsset } from '../assets/types';
+import { ITransactionResume } from '../api/transactions';
 
 export interface IPayloadTransfer {
     assets: ITransferAsset[];
@@ -24,13 +25,13 @@ export interface IRequiredWitnesses {
 }
 
 export interface ITransferResult {
-    block: string;
-    witnesses: string[];
-    outputs: ITransferAsset[];
+    status: TransactionStatus;
+    block?: string;
+    witnesses?: string[];
+    outputs?: ITransferAsset[];
     bsafeID?: string;
     fee?: string;
     gasUsed?: string;
-    status?: string;
 }
 
 export interface ISendTransaction {
@@ -43,5 +44,6 @@ export interface ITransfer {
     instanceNewTransaction(params: IPayloadTransfer): void;
     send(): void;
     getHashTxId(): string;
-    getTransaction(): TransactionRequest;
+    getScript(): TransactionRequest;
+    wait(): Promise<ITransactionResume | undefined>;
 }

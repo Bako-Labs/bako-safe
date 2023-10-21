@@ -1,10 +1,10 @@
-import { defaultConfigurable } from '../../configurables';
 import { Api } from '../api';
+import { IBSAFEAuth } from '../auth/types';
 import { IPredicatePayload, IPredicateService } from './types';
 
 export class PredicateService extends Api implements IPredicateService {
-    constructor() {
-        super(defaultConfigurable['api_url'], defaultConfigurable['api_token']);
+    constructor(auth: IBSAFEAuth) {
+        super(auth);
     }
 
     public async create(payload: IPredicatePayload) {
