@@ -2,7 +2,7 @@ import { GetTransactionParams, ITransaction } from '../transactions';
 
 export interface IPredicatePayload {
     name: string;
-    description: string;
+    description?: string;
     predicateAddress: string;
     minSigners: number;
     addresses: string[];

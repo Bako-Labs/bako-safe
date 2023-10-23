@@ -58,7 +58,7 @@ export class Vault extends Predicate<[]> implements IVault {
             network: _network,
             chainId: _chainId
         };
-        this.name = name ? name : `Random Vault Name - ${createHash('sha256').toString()}`;
+        this.name = name ? name : `Random Vault Name - ${createHash('sha256').update(Date.now().toString()).digest('hex')}`;
         this.description = description ? description : undefined;
 
         this.transactionRecursiveTimeout = transactionRecursiveTimeout ? transactionRecursiveTimeout : defaultConfigurable['refetchTimeout'];
@@ -110,8 +110,8 @@ export class Vault extends Predicate<[]> implements IVault {
     private async create() {
         this.verifyAuth();
         const { id } = await this.api.create({
-            name: 'Vault',
-            description: 'Vault',
+            name: this.name,
+            description: this.description,
             predicateAddress: this.address.toString(),
             minSigners: this.configurable.SIGNATURES_COUNT,
             addresses: this.configurable.SIGNERS,
