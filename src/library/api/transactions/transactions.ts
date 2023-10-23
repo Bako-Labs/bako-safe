@@ -8,13 +8,9 @@ export class TransactionService extends Api implements ITransactionService {
     }
 
     public async create(payload: ICreateTransactionPayload) {
-        try {
-            const { data } = await this.client.post('/transaction', payload);
+        const { data } = await this.client.post('/transaction', payload);
 
-            return data;
-        } catch (e) {
-            console.log(JSON.stringify(e));
-        }
+        return data;
     }
 
     public async findByHash(hash: string) {

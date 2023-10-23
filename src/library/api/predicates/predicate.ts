@@ -1,5 +1,6 @@
 import { Api } from '../api';
 import { IBSAFEAuth } from '../auth/types';
+import { GetTransactionParams } from '../transactions';
 import { IPredicatePayload, IPredicateService } from './types';
 
 export class PredicateService extends Api implements IPredicateService {
@@ -21,6 +22,16 @@ export class PredicateService extends Api implements IPredicateService {
 
     public async hasReservedCoins(predicateAddress: string) {
         const { data } = await this.client.get(`/predicate/reserved-coins/${predicateAddress}`);
+
+        return data;
+    }
+
+    public async listPredicateTransactions(params?: GetTransactionParams) {
+        const { data } = await this.client.get('/transaction', {
+            params: {
+                ...params
+            }
+        });
 
         return data;
     }

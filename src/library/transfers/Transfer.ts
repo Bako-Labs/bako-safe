@@ -1,4 +1,4 @@
-import { ScriptTransactionRequest, TransactionRequestLike, bn, hashTransaction, transactionRequestify } from 'fuels';
+import { ScriptTransactionRequest, bn, hashTransaction, transactionRequestify } from 'fuels';
 import { ICreateTransactionPayload, ITransaction, ITransactionService, TransactionService, TransactionStatus } from '../api/transactions';
 import { Asset } from '../assets';
 import { IAssetGroupById, IAssetTransaction } from '../assets/types';
@@ -15,7 +15,6 @@ import { ITransactionResume } from '../api/transactions/types';
 export class Transfer implements ITransfer {
     private vault!: Vault;
     private chainId!: number;
-    //private network!: string;
     private assets!: IAssetTransaction[];
     private service!: ITransactionService;
     public BSAFETransactionId!: string;
@@ -35,9 +34,24 @@ export class Transfer implements ITransfer {
 
         const _configurable = this.vault.getConfigurable();
         this.chainId = _configurable.chainId;
-        //this.network = _configurable.network;
     }
 
+    /**
+     * To use bsafe API, auth is required
+     *
+     * @returns if auth is not defined, throw an error
+     */
+    private verifyAuth() {
+        if (!this.service) {
+            throw new Error('Auth is required');
+        }
+    }
+
+    /**
+     * Instance a transaction, if you have the transaction id, instance old transaction, if not instance new transaction
+     *
+     * @param params - If string, instance old transaction, if object, instance new transaction
+     */
     public async instanceTransaction(params: IPayloadTransfer | ITransaction | string) {
         if (typeof params === 'string') {
             // find on API
@@ -89,6 +103,11 @@ export class Transfer implements ITransfer {
         }
     }
 
+    /**
+     * if you have the transaction id, this function called to find on BSAFE API and instance this transaction
+     *
+     * @param params - If string, instance old transaction, if object, instance new transaction
+     */
     public async instanceOldTransaction() {
         const { witnesses, assets } = await this.service.findByTransactionID(this.BSAFETransactionId);
         const _witnesses: string[] = [];
@@ -108,7 +127,13 @@ export class Transfer implements ITransfer {
         });
     }
 
+    /**
+     * Send a caller to BSAFE API to save transaction
+     *
+     * @returns if auth is not defined, throw an error
+     */
     private async createTransaction() {
+        this.verifyAuth();
         const transaction: ICreateTransactionPayload = {
             predicateAddress: this.vault.address.toString(),
             name: 'transaction of ',
@@ -146,19 +171,22 @@ export class Transfer implements ITransfer {
     }
 
     /**
-     * Send this transaction, update the tx_id, instantiate a transaction Response and wait for it to be processed
+     * Using BSAFEauth, send this transaction to chain
      *
-     * @param _coins - Vault to which this transaction belongs
-     * @returns sumary result of transaction
+     * @returns an resume for transaction
      */
     public async send() {
+        this.verifyAuth();
         const transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
         switch (transaction.status) {
             case TransactionStatus.PENDING_SENDER:
                 await this.service.send(this.BSAFETransactionId);
                 break;
 
-            case TransactionStatus.AWAIT_REQUIREMENTS || TransactionStatus.SUCCESS:
+            case TransactionStatus.PROCESS_ON_CHAIN:
+                return await this.wait();
+
+            case TransactionStatus.FAILED || TransactionStatus.SUCCESS:
                 break;
         }
         return {
@@ -167,7 +195,13 @@ export class Transfer implements ITransfer {
         };
     }
 
+    /**
+     * An recursive function, to wait for transaction to be processed
+     *
+     * @returns an resume for transaction
+     */
     public async wait() {
+        this.verifyAuth();
         let transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
         while (transaction.status !== TransactionStatus.SUCCESS && transaction.status !== TransactionStatus.FAILED) {
             await delay(this.vault.transactionRecursiveTimeout); // todo: make time to dynamic
@@ -186,18 +220,14 @@ export class Transfer implements ITransfer {
         return result;
     }
 
-    hashTransaction(tx: TransactionRequestLike) {
-        const txHash = hashTransaction(transactionRequestify(tx), this.chainId);
-        return txHash.slice(2).toLowerCase();
-    }
     /**
      * Create the url to consult the fuel block explorer
      *
      * @returns link of transaction block
      */
-    // private makeBlockUrl(block: string | undefined) {
-    //     return block ? `https://fuellabs.github.io/block-explorer-v2/transaction/${block}?providerUrl=${encodeURIComponent(this.network)}` : '';
-    // }
+    makeBlockUrl(block: string | undefined) {
+        return block ? `https://fuellabs.github.io/block-explorer-v2/transaction/${this.getHashTxId()}?providerUrl=${encodeURIComponent(this.vault.provider.url)}` : '';
+    }
 
     /**
      * Generates and formats the transaction hash

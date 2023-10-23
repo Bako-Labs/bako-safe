@@ -1,24 +1,29 @@
 import { Predicate, Provider } from 'fuels';
-import { IPredicateService } from '../api/predicates';
+import { createHash } from 'crypto';
+
+import { IListTransactions, IPredicateService } from '../api/predicates';
 import { PredicateService } from '../api/predicates/predicate';
 import { IPayloadTransfer, Transfer, predicateABI, predicateBIN } from '../index';
 import { makeHashPredicate, makeSubscribers } from './helpers';
 import { IConfVault, IPayloadVault, IVault } from './types';
 import { IBSAFEAuth } from '../api/auth';
 import { defaultConfigurable } from '../configurables';
-export * from './types';
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
  */
 
 export class Vault extends Predicate<[]> implements IVault {
     private bin: string;
-    private abi: { [name: string]: unknown };
+    private BSAFEVaultId!: string;
     private configurable: IConfVault;
+    private abi: { [name: string]: unknown };
     private transactions: { [id: string]: Transfer } = {};
     private api!: IPredicateService;
     private auth!: IBSAFEAuth;
+
     public transactionRecursiveTimeout: number;
+    public name!: string;
+    public description?: string;
     /**
      * Creates an instance of the Predicate class.
      *
@@ -28,12 +33,14 @@ export class Vault extends Predicate<[]> implements IVault {
      *      @param SIGNERS - Array string of predicate signers
      * @param abi - The JSON abi to BSAFE multisig.
      * @param bytecode - The binary code of preficate BSAFE multisig.
+     * @param transactionRecursiveTimeout - The time to refetch transaction on BSAFE API.
+     * @param BSAFEAuth - The auth to BSAFE API.
      **/
 
-    constructor({ configurable, abi, bytecode, transactionRecursiveTimeout, BSAFEAuth }: IPayloadVault) {
+    constructor({ configurable, abi, bytecode, transactionRecursiveTimeout, BSAFEAuth, name, description }: IPayloadVault) {
         const _abi = abi ? JSON.parse(abi) : predicateABI;
         const _bin = bytecode ? bytecode : predicateBIN;
-        const _network = configurable.network; //todo: move to dynamic
+        const _network = configurable.network;
         const _chainId = configurable.chainId;
         Vault.validations(configurable);
 
@@ -51,7 +58,11 @@ export class Vault extends Predicate<[]> implements IVault {
             network: _network,
             chainId: _chainId
         };
+        this.name = name ? name : `Random Vault Name - ${createHash('sha256').toString()}`;
+        this.description = description ? description : undefined;
+
         this.transactionRecursiveTimeout = transactionRecursiveTimeout ? transactionRecursiveTimeout : defaultConfigurable['refetchTimeout'];
+
         if (BSAFEAuth) {
             const _auth = BSAFEAuth;
             this.auth = _auth;
@@ -80,8 +91,25 @@ export class Vault extends Predicate<[]> implements IVault {
         }
     }
 
+    /**
+     * To use bsafe API, auth is required
+     *
+     * @returns if auth is not defined, throw an error
+     */
+    private verifyAuth() {
+        if (!this.auth) {
+            throw new Error('Auth is required');
+        }
+    }
+
+    /**
+     * Send a caller to BSAFE API to save predicate
+     *
+     * @returns if auth is not defined, throw an error
+     */
     private async create() {
-        await this.api.create({
+        this.verifyAuth();
+        const { id } = await this.api.create({
             name: 'Vault',
             description: 'Vault',
             predicateAddress: this.address.toString(),
@@ -93,7 +121,9 @@ export class Vault extends Predicate<[]> implements IVault {
             configurable: JSON.stringify(this.configurable),
             provider: this.provider.url
         });
+        this.BSAFEVaultId = id;
     }
+
     /**
      * Make configurable of predicate
      *
@@ -141,9 +171,11 @@ export class Vault extends Predicate<[]> implements IVault {
      *
      * @returns an transaction list
      */
-    public getTransactions() {
-        return Object.entries(this.transactions).map(([, value]) => {
-            return value;
+    public async getTransactions(params?: IListTransactions) {
+        this.verifyAuth();
+        return await this.api.listPredicateTransactions({
+            predicateId: [this.BSAFEVaultId],
+            ...params
         });
     }
 

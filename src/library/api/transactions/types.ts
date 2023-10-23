@@ -1,5 +1,10 @@
 import { IAssetTransaction, ITransferAsset } from '../../assets';
 
+export enum SortOption {
+    ASC = 'ASC',
+    DESC = 'DESC'
+}
+
 export enum TransactionStatus {
     AWAIT_REQUIREMENTS = 'await_requirements', // -> AWAIT SIGNATURES
     PENDING_SENDER = 'pending_sender', // -> AWAIT SENDER, BEFORE AWAIT STATUS
@@ -24,6 +29,17 @@ export interface IWitnesses {
     account: string;
     createdAt: string;
     updatedAt: string;
+}
+
+export interface GetTransactionParams {
+    predicateId?: string[];
+    to?: string;
+    hash?: string;
+    status?: TransactionStatus[];
+    perPage?: number;
+    page?: number;
+    orderBy?: string;
+    sort?: SortOption;
 }
 
 export enum TransactionProcessStatus {
