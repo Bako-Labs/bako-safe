@@ -1,4 +1,4 @@
-import { ScriptTransactionRequest, bn, hashTransaction, transactionRequestify } from 'fuels';
+import { ScriptTransactionRequest, TransactionRequest, TransactionResponse, bn, hashTransaction, hexlify, transactionRequestify } from 'fuels';
 import { ICreateTransactionPayload, ITransaction, ITransactionService, TransactionService, TransactionStatus } from '../api/transactions';
 import { Asset } from '../assets';
 import { IAssetGroupById, IAssetTransaction } from '../assets/types';
@@ -184,23 +184,41 @@ export class Transfer implements ITransfer {
      * @returns an resume for transaction
      */
     public async send() {
-        this.verifyAuth();
-        const transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
-        switch (transaction.status) {
-            case TransactionStatus.PENDING_SENDER:
-                await this.service.send(this.BSAFETransactionId);
-                break;
+        if (!this.service) {
+            const tx: TransactionRequest = transactionRequestify(this.BSAFEScript);
+            const tx_est = await this.vault.provider.estimatePredicates(tx);
+            const encodedTransaction = hexlify(tx_est.toTransactionBytes());
+            const {
+                submit: { id: transactionId }
+            } = await this.vault.provider.operations.submit({ encodedTransaction });
 
-            case TransactionStatus.PROCESS_ON_CHAIN:
-                return await this.wait();
+            const sender = new TransactionResponse(transactionId, this.vault.provider);
+            const result = await sender.wait();
+            return {
+                status: result.status,
+                hash: this.getHashTxId(),
+                gasUsed: result.gasUsed.toString(),
+                sendTime: new Date().toISOString(),
+                witnesses: this.BSAFEScript.witnesses
+            };
+        } else {
+            const transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
+            switch (transaction.status) {
+                case TransactionStatus.PENDING_SENDER:
+                    await this.service.send(this.BSAFETransactionId);
+                    break;
 
-            case TransactionStatus.FAILED || TransactionStatus.SUCCESS:
-                break;
+                case TransactionStatus.PROCESS_ON_CHAIN:
+                    return await this.wait();
+
+                case TransactionStatus.FAILED || TransactionStatus.SUCCESS:
+                    break;
+            }
+            return {
+                ...JSON.parse(transaction.resume),
+                bsafeID: transaction.id
+            };
         }
-        return {
-            ...JSON.parse(transaction.resume),
-            bsafeID: transaction.id
-        };
     }
 
     /**

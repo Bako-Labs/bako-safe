@@ -25,6 +25,7 @@ export class Vault extends Predicate<[]> implements IVault {
     public name!: string;
     public description?: string;
     public BSAFEVault!: IPredicate;
+    public provider: Provider;
     /**
      * Creates an instance of the Predicate class.
      *
@@ -59,6 +60,7 @@ export class Vault extends Predicate<[]> implements IVault {
             network: _network,
             chainId: _chainId
         };
+        this.provider = provider;
         this.name = name ? name : `Random Vault Name - ${uuidv4()}`;
         this.description = description ? description : undefined;
         this.BSAFEVaultId = BSAFEVaultId!;
