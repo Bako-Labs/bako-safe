@@ -14,10 +14,15 @@ export interface IPredicatePayload {
     chainId?: number;
 }
 
-export type IListTransactions = Omit<GetTransactionParams, 'predicateId'>;
+export interface IListTransactions extends GetTransactionParams, Omit<GetTransactionParams, 'predicateId'> {}
 
 export interface IPredicate extends IPredicatePayload {
     id: string;
+    completeUser: {
+        name?: string;
+        avatar: string;
+        address: string;
+    }[];
     createdAt: string;
     updatedAt: string;
 }

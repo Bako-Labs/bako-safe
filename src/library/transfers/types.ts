@@ -1,6 +1,6 @@
 import { TransactionRequest, TransactionStatus } from 'fuels';
 import { ITransferAsset } from '../assets/types';
-import { ITransactionResume } from '../api/transactions';
+import { ITransactionResume, IWitnesses } from '../api/transactions';
 
 export interface IPayloadTransfer {
     assets: ITransferAsset[];
@@ -11,11 +11,6 @@ export interface IPayloadTransfer {
 export interface IInstanceTransfer {
     txData: TransactionRequest;
     hash: string;
-}
-
-export interface IWitnesses {
-    address: string;
-    status: boolean;
 }
 
 export interface IRequiredWitnesses {

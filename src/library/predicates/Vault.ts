@@ -24,7 +24,7 @@ export class Vault extends Predicate<[]> implements IVault {
     public transactionRecursiveTimeout: number;
     public name!: string;
     public description?: string;
-    public BSAFEVault?: IPredicate;
+    public BSAFEVault!: IPredicate;
     /**
      * Creates an instance of the Predicate class.
      *
