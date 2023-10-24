@@ -5,7 +5,7 @@ import { ITransactionResume } from '../api/transactions';
 export interface IPayloadTransfer {
     assets: ITransferAsset[];
     witnesses: string[];
-    BSAFETransactionId?: string;
+    name?: string;
 }
 
 export interface IInstanceTransfer {

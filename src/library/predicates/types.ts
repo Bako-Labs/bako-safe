@@ -1,6 +1,5 @@
 import { IBSAFEAuth } from '../api/auth/types';
 import { IListTransactions } from '../api/predicates';
-import { ITransaction } from '../api/transactions';
 import { ITransferAsset } from '../assets';
 import { IPayloadTransfer, Transfer } from '../transfers';
 
@@ -35,7 +34,6 @@ export interface IVault {
     getAbi: () => { [name: string]: unknown };
     getBin: () => string;
     getConfigurable: () => IConfVault;
-    findTransactions: (hash: string) => Transfer | undefined;
-    getTransactions: (params?: IListTransactions) => Promise<ITransaction[]>;
+    getTransactions: (params?: IListTransactions) => Promise<Transfer[]>;
     BSAFEIncludeTransaction: (params: IPayloadTransfer | string) => Promise<Transfer>;
 }

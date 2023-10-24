@@ -9,16 +9,20 @@ import { IBSAFEAuth } from '../api/auth';
 import { BSAFEScriptTransaction } from './ScriptTransaction';
 import { defaultConfigurable } from '../configurables';
 import { ITransactionResume } from '../api/transactions/types';
+import { v4 as uuidv4 } from 'uuid';
+
 /**
  * `Transfer` are extension of ScriptTransactionRequest, to create and send transactions
  */
 export class Transfer implements ITransfer {
+    public name!: string;
     private vault!: Vault;
     private chainId!: number;
     private assets!: IAssetTransaction[];
     private service!: ITransactionService;
     public BSAFETransactionId!: string;
     public BSAFEScript!: ScriptTransactionRequest;
+    public BSAFETrsanction!: ITransaction;
     /**
      * Creates an instance of the Transfer class.
      *
@@ -85,7 +89,7 @@ export class Transfer implements ITransfer {
      *
      * @returns this transaction configured and your hash
      */
-    public async instanceNewTransaction({ assets, witnesses }: IPayloadTransfer) {
+    public async instanceNewTransaction({ assets, witnesses, name }: IPayloadTransfer) {
         const outputs = await Asset.assetsGroupByTo(assets);
         const coins = await Asset.assetsGroupById(assets);
         const transactionCoins = await Asset.addTransactionFee(coins, defaultConfigurable['gasPrice']);
@@ -97,9 +101,9 @@ export class Transfer implements ITransfer {
         const script_t = new BSAFEScriptTransaction();
         await script_t.instanceTransaction(_coins, this.vault, outputs, witnesses);
         this.BSAFEScript = script_t;
-
+        this.name = name ? name : `Random Vault Name - ${uuidv4()}`;
         if (this.service) {
-            !this.BSAFETransactionId && (await this.createTransaction());
+            await this.createTransaction();
         }
     }
 
@@ -141,9 +145,13 @@ export class Transfer implements ITransfer {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
             assets: this.assets
         };
+        if (this.BSAFETransactionId) {
+            this.BSAFETrsanction = await this.service.findByTransactionID(this.BSAFETransactionId);
+        } else {
+            this.BSAFETrsanction = await this.service.create(transaction);
+        }
 
-        const result = await this.service.create(transaction);
-        this.BSAFETransactionId = result.id;
+        this.BSAFETransactionId = this.BSAFETrsanction.id;
     }
 
     /**

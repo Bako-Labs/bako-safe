@@ -18,7 +18,6 @@ export class Vault extends Predicate<[]> implements IVault {
     public BSAFEVaultId!: string;
     private configurable: IConfVault;
     private abi: { [name: string]: unknown };
-    private transactions: { [id: string]: Transfer } = {};
     private api!: IPredicateService;
     private auth!: IBSAFEAuth;
 
@@ -68,9 +67,6 @@ export class Vault extends Predicate<[]> implements IVault {
             const _auth = BSAFEAuth;
             this.auth = _auth;
             this.api = new PredicateService(_auth);
-            if (this.configurable.HASH_PREDUCATE) {
-                this.BSAFEVaultId = this.configurable.HASH_PREDUCATE.join('');
-            }
             this.create();
         }
     }
@@ -113,7 +109,7 @@ export class Vault extends Predicate<[]> implements IVault {
      */
     private async create() {
         this.verifyAuth();
-        const { id } = await this.api.create({
+        const { id, name, description } = await this.api.create({
             name: this.name,
             description: this.description,
             predicateAddress: this.address.toString(),
@@ -126,6 +122,8 @@ export class Vault extends Predicate<[]> implements IVault {
             provider: this.provider.url
         });
         this.BSAFEVaultId = id;
+        this.name = name;
+        this.description = description;
     }
 
     /**
@@ -161,26 +159,26 @@ export class Vault extends Predicate<[]> implements IVault {
     }
 
     /**
-     * Return an specific transaction of list
-     *
-     * @param hash - key of specific transaction of object
-     * @returns an transaction
-     */
-    public findTransactions(hash: string) {
-        return this.transactions[hash];
-    }
-
-    /**
      * Return an list of transaction of this vault
      *
      * @returns an transaction list
      */
     public async getTransactions(params?: IListTransactions) {
         this.verifyAuth();
-        return await this.api.listPredicateTransactions({
+        const result: Transfer[] = [];
+
+        const BSAFEtransactions = await this.api.listPredicateTransactions({
             predicateId: [this.BSAFEVaultId],
             ...params
         });
+
+        for await (const BSAFEtransaction of BSAFEtransactions) {
+            const _transfer = new Transfer(this, this.auth);
+            await _transfer.instanceTransaction(BSAFEtransaction);
+            result.push(_transfer);
+        }
+
+        return result;
     }
 
     /**
