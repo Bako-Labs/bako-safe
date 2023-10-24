@@ -1,9 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
-import { createHash } from 'crypto';
 import { Wallet } from 'fuels';
 import { defaultConfigurable } from '../../configurables';
 import { IAuthService, IBSAFEAuth } from './types';
 import { IDefaultAccount } from '../../../mocks/accounts';
+import { v4 as uuidv4 } from 'uuid';
 
 // woking to local node just fine
 export class AuthService implements IAuthService {
@@ -44,7 +44,7 @@ export class AuthService implements IAuthService {
         const { address, provider, id } = this.auth;
         const message = {
             address,
-            hash: createHash('sha256').toString(),
+            hash: uuidv4(),
             createdAt: new Date().toISOString(),
             provider,
             encoder: 'fuel', // -> todo: move to enum

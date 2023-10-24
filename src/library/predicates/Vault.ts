@@ -1,5 +1,4 @@
 import { Predicate, Provider } from 'fuels';
-import { createHash } from 'crypto';
 
 import { IListTransactions, IPredicateService } from '../api/predicates';
 import { PredicateService } from '../api/predicates/predicate';
@@ -8,13 +7,15 @@ import { makeHashPredicate, makeSubscribers } from './helpers';
 import { IConfVault, IPayloadVault, IVault } from './types';
 import { IBSAFEAuth } from '../api/auth';
 import { defaultConfigurable } from '../configurables';
+import { v4 as uuidv4 } from 'uuid';
+
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
  */
 
 export class Vault extends Predicate<[]> implements IVault {
     private bin: string;
-    private BSAFEVaultId!: string;
+    public BSAFEVaultId!: string;
     private configurable: IConfVault;
     private abi: { [name: string]: unknown };
     private transactions: { [id: string]: Transfer } = {};
@@ -58,7 +59,7 @@ export class Vault extends Predicate<[]> implements IVault {
             network: _network,
             chainId: _chainId
         };
-        this.name = name ? name : `Random Vault Name - ${createHash('sha256').update(Date.now().toString()).digest('hex')}`;
+        this.name = name ? name : `Random Vault Name - ${uuidv4()}`;
         this.description = description ? description : undefined;
 
         this.transactionRecursiveTimeout = transactionRecursiveTimeout ? transactionRecursiveTimeout : defaultConfigurable['refetchTimeout'];
@@ -67,6 +68,9 @@ export class Vault extends Predicate<[]> implements IVault {
             const _auth = BSAFEAuth;
             this.auth = _auth;
             this.api = new PredicateService(_auth);
+            if (this.configurable.HASH_PREDUCATE) {
+                this.BSAFEVaultId = this.configurable.HASH_PREDUCATE.join('');
+            }
             this.create();
         }
     }

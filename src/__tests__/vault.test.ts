@@ -104,28 +104,35 @@ describe('Test Vault', () => {
         ]);
     });
 
-    test('Instance an old Vault', async () => {
-        const vault = await newVault();
-        const conf = vault.getConfigurable();
-        const abi = vault.getAbi();
-        const bin = vault.getBin();
+    test(
+        'Instance an old Vault',
+        async () => {
+            const vault = await newVault();
+            const conf = vault.getConfigurable();
+            const abi = vault.getAbi();
+            const bin = vault.getBin();
 
-        const payloadAux: IPayloadVault = {
-            configurable: {
-                HASH_PREDUCATE: conf.HASH_PREDUCATE,
-                SIGNATURES_COUNT: Number(conf.SIGNATURES_COUNT),
-                SIGNERS: conf.SIGNERS,
-                network: conf.network,
-                chainId: conf.chainId
-            },
-            abi: JSON.stringify(abi),
-            bytecode: bin,
-            BSAFEAuth: auth['USER_1'].BSAFEAuth
-        };
+            const payloadAux: IPayloadVault = {
+                configurable: {
+                    HASH_PREDUCATE: conf.HASH_PREDUCATE,
+                    SIGNATURES_COUNT: Number(conf.SIGNATURES_COUNT),
+                    SIGNERS: conf.SIGNERS,
+                    network: conf.network,
+                    chainId: conf.chainId
+                },
+                abi: JSON.stringify(abi),
+                bytecode: bin,
+                BSAFEAuth: auth['USER_1'].BSAFEAuth
+            };
 
-        const auxVault = new Vault(payloadAux);
-        expect(auxVault.getConfigurable().HASH_PREDUCATE).toStrictEqual(conf.HASH_PREDUCATE);
-    });
+            const auxVault = new Vault(payloadAux);
+
+            await delay(5000);
+            expect(auxVault.getConfigurable().HASH_PREDUCATE).toStrictEqual(conf.HASH_PREDUCATE);
+            expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
+        },
+        10 * 1000
+    );
 
     test(
         'Sign transactions with invalid users',
