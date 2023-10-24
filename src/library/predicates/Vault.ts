@@ -37,7 +37,7 @@ export class Vault extends Predicate<[]> implements IVault {
      * @param BSAFEAuth - The auth to BSAFE API.
      **/
 
-    constructor({ configurable, abi, bytecode, transactionRecursiveTimeout, BSAFEAuth, name, description }: IPayloadVault) {
+    constructor({ configurable, abi, bytecode, transactionRecursiveTimeout, BSAFEAuth, name, description, BSAFEVaultId }: IPayloadVault) {
         const _abi = abi ? JSON.parse(abi) : predicateABI;
         const _bin = bytecode ? bytecode : predicateBIN;
         const _network = configurable.network;
@@ -60,7 +60,7 @@ export class Vault extends Predicate<[]> implements IVault {
         };
         this.name = name ? name : `Random Vault Name - ${uuidv4()}`;
         this.description = description ? description : undefined;
-
+        this.BSAFEVaultId = BSAFEVaultId!;
         this.transactionRecursiveTimeout = transactionRecursiveTimeout ? transactionRecursiveTimeout : defaultConfigurable['refetchTimeout'];
 
         if (BSAFEAuth) {
@@ -92,6 +92,46 @@ export class Vault extends Predicate<[]> implements IVault {
     }
 
     /**
+     *
+     * Constructor method to instance a vault from BSAFE API.
+     *
+     * @param BSAFEAuth - Auth of bsafe API.
+     * @param BSAFEPredicateId - id of vault on BSAFE API. [optional]
+     * @param predicateAddress - address of vault on BSAFE API. [optional]
+     * @returns thire is no return, but if an error is detected it is trigged
+     */
+    static async instanceVault(
+        BSAFEAuth: IBSAFEAuth,
+        existis: {
+            BSAFEPredicateId?: string;
+            predicateAddress?: string;
+        }
+    ) {
+        const { BSAFEPredicateId, predicateAddress } = existis;
+        if (predicateAddress == undefined && BSAFEPredicateId == undefined) {
+            throw new Error('predicateAddress or BSAFEPredicateId is required');
+        }
+
+        const api = new PredicateService(BSAFEAuth);
+        const result = BSAFEPredicateId ? await api.findById(BSAFEPredicateId) : predicateAddress && (await api.findByAddress(predicateAddress));
+
+        if (!result) {
+            throw new Error('BSAFEVault not found');
+        }
+
+        const { configurable, abi, bytes, name, description, id } = result;
+        return new Vault({
+            configurable: JSON.parse(configurable),
+            abi,
+            bytecode: bytes,
+            BSAFEAuth: BSAFEAuth,
+            name,
+            description,
+            BSAFEVaultId: id
+        });
+    }
+
+    /**
      * To use bsafe API, auth is required
      *
      * @returns if auth is not defined, throw an error
@@ -109,7 +149,7 @@ export class Vault extends Predicate<[]> implements IVault {
      */
     private async create() {
         this.verifyAuth();
-        const { id, name, description } = await this.api.create({
+        const { id } = await this.api.create({
             name: this.name,
             description: this.description,
             predicateAddress: this.address.toString(),
@@ -122,8 +162,6 @@ export class Vault extends Predicate<[]> implements IVault {
             provider: this.provider.url
         });
         this.BSAFEVaultId = id;
-        this.name = name;
-        this.description = description;
     }
 
     /**

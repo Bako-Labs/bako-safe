@@ -140,7 +140,7 @@ export class Transfer implements ITransfer {
         this.verifyAuth();
         const transaction: ICreateTransactionPayload = {
             predicateAddress: this.vault.address.toString(),
-            name: 'transaction of ',
+            name: this.name,
             hash: this.getHashTxId(),
             status: TransactionStatus.AWAIT_REQUIREMENTS,
             assets: this.assets

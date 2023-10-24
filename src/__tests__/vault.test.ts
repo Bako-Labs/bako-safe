@@ -105,30 +105,26 @@ describe('Test Vault', () => {
     });
 
     test(
-        'Instance an old Vault',
+        'Instance an old Vault by predicate address',
         async () => {
             const vault = await newVault();
-            const conf = vault.getConfigurable();
-            const abi = vault.getAbi();
-            const bin = vault.getBin();
 
-            const payloadAux: IPayloadVault = {
-                configurable: {
-                    HASH_PREDUCATE: conf.HASH_PREDUCATE,
-                    SIGNATURES_COUNT: Number(conf.SIGNATURES_COUNT),
-                    SIGNERS: conf.SIGNERS,
-                    network: conf.network,
-                    chainId: conf.chainId
-                },
-                abi: JSON.stringify(abi),
-                bytecode: bin,
-                BSAFEAuth: auth['USER_1'].BSAFEAuth
-            };
+            const auxVault = await Vault.instanceVault(auth['USER_1'].BSAFEAuth, {
+                BSAFEPredicateId: vault.BSAFEVaultId
+            });
+            expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
+        },
+        10 * 1000
+    );
 
-            const auxVault = new Vault(payloadAux);
+    test(
+        'Instance an old Vault by predicate address',
+        async () => {
+            const vault = await newVault();
 
-            await delay(5000);
-            expect(auxVault.getConfigurable().HASH_PREDUCATE).toStrictEqual(conf.HASH_PREDUCATE);
+            const auxVault = await Vault.instanceVault(auth['USER_1'].BSAFEAuth, {
+                predicateAddress: vault.address.toString()
+            });
             expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
         },
         10 * 1000

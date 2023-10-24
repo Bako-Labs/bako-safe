@@ -28,6 +28,7 @@ export interface IPayloadVault {
     abi?: string;
     bytecode?: string;
     BSAFEAuth?: IBSAFEAuth;
+    BSAFEVaultId?: string;
 }
 
 export interface IVault {

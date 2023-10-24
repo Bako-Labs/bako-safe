@@ -20,6 +20,12 @@ export class PredicateService extends Api implements IPredicateService {
         return data;
     }
 
+    public async findById(predicateId: string) {
+        const { data } = await this.client.get(`/predicate/${predicateId}`);
+
+        return data;
+    }
+
     public async hasReservedCoins(predicateAddress: string) {
         const { data } = await this.client.get(`/predicate/reserved-coins/${predicateAddress}`);
 
