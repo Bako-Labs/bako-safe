@@ -1,6 +1,6 @@
 import { Predicate, Provider } from 'fuels';
 
-import { IListTransactions, IPredicateService } from '../api/predicates';
+import { IListTransactions, IPredicate, IPredicateService } from '../api/predicates';
 import { PredicateService } from '../api/predicates/predicate';
 import { IPayloadTransfer, Transfer, predicateABI, predicateBIN } from '../index';
 import { makeHashPredicate, makeSubscribers } from './helpers';
@@ -24,6 +24,7 @@ export class Vault extends Predicate<[]> implements IVault {
     public transactionRecursiveTimeout: number;
     public name!: string;
     public description?: string;
+    public BSAFEVault?: IPredicate;
     /**
      * Creates an instance of the Predicate class.
      *
@@ -144,12 +145,14 @@ export class Vault extends Predicate<[]> implements IVault {
 
     /**
      * Send a caller to BSAFE API to save predicate
+     * Set BSAFEVaultId and BSAFEVault
+     *
      *
      * @returns if auth is not defined, throw an error
      */
     private async create() {
         this.verifyAuth();
-        const { id } = await this.api.create({
+        const { id, ...rest } = await this.api.create({
             name: this.name,
             description: this.description,
             predicateAddress: this.address.toString(),
@@ -161,6 +164,10 @@ export class Vault extends Predicate<[]> implements IVault {
             configurable: JSON.stringify(this.configurable),
             provider: this.provider.url
         });
+        this.BSAFEVault = {
+            ...rest,
+            id
+        };
         this.BSAFEVaultId = id;
     }
 
