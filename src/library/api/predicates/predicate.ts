@@ -1,10 +1,11 @@
-import { defaultConfigurable } from '../../configurables';
 import { Api } from '../api';
+import { IBSAFEAuth } from '../auth/types';
+import { GetTransactionParams } from '../transactions';
 import { IPredicatePayload, IPredicateService } from './types';
 
 export class PredicateService extends Api implements IPredicateService {
-    constructor() {
-        super(defaultConfigurable['api_url'], defaultConfigurable['api_token']);
+    constructor(auth: IBSAFEAuth) {
+        super(auth);
     }
 
     public async create(payload: IPredicatePayload) {
@@ -19,8 +20,24 @@ export class PredicateService extends Api implements IPredicateService {
         return data;
     }
 
+    public async findById(predicateId: string) {
+        const { data } = await this.client.get(`/predicate/${predicateId}`);
+
+        return data;
+    }
+
     public async hasReservedCoins(predicateAddress: string) {
         const { data } = await this.client.get(`/predicate/reserved-coins/${predicateAddress}`);
+
+        return data;
+    }
+
+    public async listPredicateTransactions(params?: GetTransactionParams) {
+        const { data } = await this.client.get('/transaction', {
+            params: {
+                ...params
+            }
+        });
 
         return data;
     }

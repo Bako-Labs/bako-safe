@@ -1,3 +1,5 @@
+import { IBSAFEAuth } from '../api/auth/types';
+import { IListTransactions } from '../api/predicates';
 import { ITransferAsset } from '../assets';
 import { IPayloadTransfer, Transfer } from '../transfers';
 
@@ -20,15 +22,19 @@ export interface IInstanceNewTransfer {
 
 export interface IPayloadVault {
     configurable: IConfVault;
+    name?: string;
+    description?: string;
+    transactionRecursiveTimeout?: number;
     abi?: string;
     bytecode?: string;
+    BSAFEAuth?: IBSAFEAuth;
+    BSAFEVaultId?: string;
 }
 
 export interface IVault {
     getAbi: () => { [name: string]: unknown };
     getBin: () => string;
     getConfigurable: () => IConfVault;
-    findTransactions: (hash: string) => Transfer | undefined;
-    getTransactions: () => Transfer[];
+    BSAFEGetTransactions: (params?: IListTransactions) => Promise<Transfer[]>;
     BSAFEIncludeTransaction: (params: IPayloadTransfer | string) => Promise<Transfer>;
 }

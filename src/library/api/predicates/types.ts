@@ -1,6 +1,8 @@
+import { GetTransactionParams, ITransaction } from '../transactions';
+
 export interface IPredicatePayload {
     name: string;
-    description: string;
+    description?: string;
     predicateAddress: string;
     minSigners: number;
     addresses: string[];
@@ -12,8 +14,15 @@ export interface IPredicatePayload {
     chainId?: number;
 }
 
+export interface IListTransactions extends GetTransactionParams, Omit<GetTransactionParams, 'predicateId'> {}
+
 export interface IPredicate extends IPredicatePayload {
     id: string;
+    completeUser: {
+        name?: string;
+        avatar: string;
+        address: string;
+    }[];
     createdAt: string;
     updatedAt: string;
 }
@@ -21,5 +30,7 @@ export interface IPredicate extends IPredicatePayload {
 export interface IPredicateService {
     create: (payload: IPredicatePayload) => Promise<IPredicate>;
     findByAddress: (predicateAddress: string) => Promise<IPredicate>;
+    findById: (predicateAddress: string) => Promise<IPredicate>;
     hasReservedCoins: (predicateAddress: string) => Promise<string[]>;
+    listPredicateTransactions: (params?: GetTransactionParams) => Promise<ITransaction[]>;
 }

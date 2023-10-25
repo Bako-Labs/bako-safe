@@ -1,16 +1,21 @@
-import { Address, BN, Provider, Wallet, bn } from 'fuels';
+import { Address, BN, Provider, TransactionStatus, Wallet, bn } from 'fuels';
 import { IPayloadTransfer, IPayloadVault, Vault } from '../library';
 import { TransactionService } from '../library/api/transactions';
 import { ITransferAsset } from '../library/assets';
-import accounts from '../mocks/accounts';
-import assets from '../mocks/assets';
+
+import { defaultConfigurable } from '../configurables';
+
+import { accounts } from '../mocks/accounts';
+import { IUserAuth, authService, assets } from '../mocks';
+
 describe('Test Vault', () => {
-    const fuelProvider = new Provider('http://localhost:4000/graphql');
+    let chainId: number;
+    let auth: IUserAuth;
+
+    const fuelProvider = new Provider(defaultConfigurable['provider']);
     const txParams = {
         gasPrice: bn(1)
     };
-    let chainId: number;
-    const serviceTransactions = new TransactionService();
 
     const rootWallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, fuelProvider);
 
@@ -18,6 +23,7 @@ describe('Test Vault', () => {
 
     beforeAll(async () => {
         chainId = await fuelProvider.getChainId();
+        auth = await authService(['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4']);
     });
 
     const sendPredicateCoins = async (predicate: Vault, amount: BN, asset: 'ETH' | 'DAI' | 'sETH') => {
@@ -25,26 +31,31 @@ describe('Test Vault', () => {
         await deposit.wait();
     };
 
-    const signin = async (BSAFETransactionId: string, tx_hash: string, account: 'FULL' | 'USER_1' | 'USER_2' | 'USER_3' | 'USER_4' | 'USER_5') => {
+    const signin = async (BSAFETransactionId: string, tx_hash: string, account: 'FULL' | 'USER_1' | 'USER_2' | 'USER_3' | 'USER_4' | 'USER_5', BSAFEAuth: boolean) => {
         const signer = Wallet.fromPrivateKey(accounts[account].privateKey, fuelProvider);
         const tx = await signer.signMessage(tx_hash);
-        const acc = Address.fromString(accounts[account].address).toHexString();
-        return await serviceTransactions.sign(BSAFETransactionId, acc, tx);
+        if (BSAFEAuth) {
+            const acc = Address.fromString(accounts[account].address).toHexString();
+            const serviceTransactions = new TransactionService(auth[account].BSAFEAuth);
+            return await serviceTransactions.sign(BSAFETransactionId, acc, tx);
+        }
+        return tx;
     };
 
     const delay = (ms: number): Promise<void> => {
         return new Promise((resolve) => setTimeout(resolve, ms));
     };
 
+    // -> create predicate with USER_1 owner
     const newVault = async () => {
         const VaultPayload: IPayloadVault = {
             configurable: {
-                HASH_PREDUCATE: undefined,
                 SIGNATURES_COUNT: 3,
                 SIGNERS: signers,
                 network: fuelProvider.url,
                 chainId: chainId
-            }
+            },
+            BSAFEAuth: auth['USER_1'].BSAFEAuth
         };
         const vault = new Vault(VaultPayload);
 
@@ -62,7 +73,8 @@ describe('Test Vault', () => {
                 SIGNERS: signers,
                 network: fuelProvider.url,
                 chainId: chainId
-            }
+            },
+            BSAFEAuth: auth['USER_1'].BSAFEAuth
         };
 
         VaultPayload.configurable.SIGNATURES_COUNT = 0;
@@ -95,27 +107,31 @@ describe('Test Vault', () => {
         ]);
     });
 
-    test('Instance an old Vault', async () => {
-        const vault = await newVault();
-        const conf = vault.getConfigurable();
-        const abi = vault.getAbi();
-        const bin = vault.getBin();
+    test(
+        'Instance an old Vault by predicate address',
+        async () => {
+            const vault = await newVault();
 
-        const payloadAux: IPayloadVault = {
-            configurable: {
-                HASH_PREDUCATE: conf.HASH_PREDUCATE,
-                SIGNATURES_COUNT: Number(conf.SIGNATURES_COUNT),
-                SIGNERS: conf.SIGNERS,
-                network: conf.network,
-                chainId: conf.chainId
-            },
-            abi: JSON.stringify(abi),
-            bytecode: bin
-        };
+            const auxVault = await Vault.instanceBSAFEVault(auth['USER_1'].BSAFEAuth, {
+                BSAFEPredicateId: vault.BSAFEVaultId
+            });
+            expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
+        },
+        10 * 1000
+    );
 
-        const auxVault = new Vault(payloadAux);
-        expect(auxVault.getConfigurable().HASH_PREDUCATE).toStrictEqual(conf.HASH_PREDUCATE);
-    });
+    test(
+        'Instance an old Vault by predicate address',
+        async () => {
+            const vault = await newVault();
+
+            const auxVault = await Vault.instanceBSAFEVault(auth['USER_1'].BSAFEAuth, {
+                predicateAddress: vault.address.toString()
+            });
+            expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
+        },
+        10 * 1000
+    );
 
     test(
         'Sign transactions with invalid users',
@@ -133,17 +149,16 @@ describe('Test Vault', () => {
                 witnesses: []
             };
             const transaction = await vault.BSAFEIncludeTransaction(newTransfer);
+            expect(await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_2', true)).toBe(true);
+            expect(await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_1', true)).toBe(true);
+            expect(await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_3', true)).toBe(true);
+            expect(await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_5', true)).toBe(false);
 
-            expect(await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_5')).toBe(false);
-            expect(await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_2')).toBe(true);
-            expect(await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_1')).toBe(true);
-            expect(await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_3')).toBe(true);
-
-            await transaction.send();
+            transaction.send();
             const result = await transaction.wait();
-            expect(result.status).toBe('success');
+            expect(result.status).toBe(TransactionStatus.success);
         },
-        10 * 1000
+        100 * 1000
     );
 
     test(
@@ -160,10 +175,10 @@ describe('Test Vault', () => {
 
             const signTimeout = async () => {
                 await delay(5000);
-                await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_3');
+                await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_3', true);
 
                 await delay(5000);
-                await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_2');
+                await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_2', true);
             };
 
             const newTransfer: IPayloadTransfer = {
@@ -175,7 +190,7 @@ describe('Test Vault', () => {
             const transaction = await vault.BSAFEIncludeTransaction(newTransfer);
 
             // Signin transaction
-            await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_1');
+            await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_1', true);
 
             const oldTransaction = await vault.BSAFEIncludeTransaction(transaction.BSAFETransactionId);
 
@@ -185,12 +200,37 @@ describe('Test Vault', () => {
 
             // this process isan`t async, next line is async
             signTimeout();
-            const result = await oldTransaction.wait();
-            console.log(result);
-            expect(result.status).toBe('success');
+
+            const result = await transaction.wait();
+            expect(result.status).toBe(TransactionStatus.success);
         },
-        30 * 1000
+        100 * 1000
     );
+
+    test('Instance old transaction', async () => {
+        const vault = await newVault();
+        const _assetsA: IPayloadTransfer = {
+            assets: [
+                {
+                    amount: bn(1_000).format(),
+                    assetId: assets['ETH'],
+                    to: accounts['STORE'].address
+                },
+                {
+                    amount: bn(1_000).format(),
+                    assetId: assets['sETH'],
+                    to: accounts['STORE'].address
+                }
+            ],
+            witnesses: []
+        };
+
+        // Create a transaction
+        const transaction = await vault.BSAFEIncludeTransaction(_assetsA);
+        const transaction_aux = await vault.BSAFEIncludeTransaction(transaction.BSAFETransactionId);
+
+        expect(transaction_aux.BSAFETransactionId).toStrictEqual(transaction.BSAFETransactionId);
+    });
 
     test('Send an transaction to with vault without balance', async () => {
         const vault = await newVault();
@@ -225,38 +265,110 @@ describe('Test Vault', () => {
         await expect(vault.BSAFEIncludeTransaction(_assetsB)).rejects.toThrow(`Insufficient balance for ${assets['sETH']}`);
     });
 
-    // it('Send transaction without required signers', async () => {
-    //     const vault = await newVault();
-    //     const _assets: ITransferAsset[] = [
-    //         {
-    //             amount: bn(1_000).format(),
-    //             assetId: assets['ETH'],
-    //             to: accounts['STORE'].address
-    //         }
-    //     ];
+    test(
+        'Find a transactions of predicate and return an list of Transfer instances',
+        async () => {
+            const vault = await newVault();
+            const _assetsA: IPayloadTransfer = {
+                assets: [
+                    {
+                        amount: bn(1_000).format(),
+                        assetId: assets['ETH'],
+                        to: accounts['STORE'].address
+                    },
+                    {
+                        amount: bn(1_000).format(),
+                        assetId: assets['sETH'],
+                        to: accounts['STORE'].address
+                    }
+                ],
+                witnesses: []
+            };
 
-    //     const transaction = await vault.includeTransaction(_assets, []);
+            const _assetsB: IPayloadTransfer = {
+                assets: [
+                    {
+                        amount: bn(1_000_00).format(),
+                        assetId: assets['ETH'],
+                        to: accounts['STORE'].address
+                    },
+                    {
+                        amount: bn(1_000_00).format(),
+                        assetId: assets['sETH'],
+                        to: accounts['STORE'].address
+                    }
+                ],
+                witnesses: []
+            };
 
-    //     const witnesses = [await signin(transaction.getHashTxId(), 'USER_1'), await signin(transaction.getHashTxId(), 'USER_2')];
+            const transaction = await vault.BSAFEIncludeTransaction(_assetsA);
+            await vault.BSAFEIncludeTransaction(_assetsB);
 
-    //     transaction.witnesses = witnesses;
-    //     await expect(transaction.sendTransaction()).rejects.toThrow('PredicateVerificationFailed');
-    // });
+            await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_2', true);
 
-    // it('Send transaction with invalid sign', async () => {
-    //     const vault = await newVault();
-    //     const _assets: ITransferAsset[] = [
-    //         {
-    //             amount: bn(1_000).format(),
-    //             assetId: assets['ETH'],
-    //             to: accounts['STORE'].address
-    //         }
-    //     ];
+            const transactions = await vault.BSAFEGetTransactions();
+            expect(transactions.length).toBe(2);
+        },
+        100 * 1000
+    );
 
-    //     const transaction = await vault.includeTransaction(_assets, []);
-    //     const witnesses = [await signin(transaction.getHashTxId(), 'USER_1'), await signin(transaction.getHashTxId(), 'USER_2'), defaultValues['signature']];
+    test('Call an method of vault depends of auth without credentials', async () => {
+        const VaultPayload: IPayloadVault = {
+            configurable: {
+                SIGNATURES_COUNT: 3,
+                SIGNERS: signers,
+                network: fuelProvider.url,
+                chainId: chainId
+            }
+        };
+        const vault = new Vault(VaultPayload);
 
-    //     transaction.witnesses = witnesses;
-    //     await expect(transaction.sendTransaction()).rejects.toThrow('PredicateVerificationFailed');
-    // });
+        await sendPredicateCoins(vault, bn(1_000_000_000), 'sETH');
+        await sendPredicateCoins(vault, bn(1_000_000_000), 'ETH');
+
+        await expect(vault.getConfigurable().SIGNATURES_COUNT).toBe(3);
+        await expect(vault.BSAFEGetTransactions()).rejects.toThrow('Auth is required');
+    });
+
+    test('Sent a transaction without BSAFEAuth', async () => {
+        const VaultPayload: IPayloadVault = {
+            configurable: {
+                SIGNATURES_COUNT: 3,
+                SIGNERS: signers,
+                network: fuelProvider.url,
+                chainId: chainId
+            }
+        };
+        const vault = new Vault(VaultPayload);
+
+        await sendPredicateCoins(vault, bn(1_000_000_000), 'sETH');
+        await sendPredicateCoins(vault, bn(1_000_000_000), 'ETH');
+
+        const _assetsA: IPayloadTransfer = {
+            assets: [
+                {
+                    amount: bn(1_000).format(),
+                    assetId: assets['ETH'],
+                    to: accounts['STORE'].address
+                },
+                {
+                    amount: bn(1_000).format(),
+                    assetId: assets['sETH'],
+                    to: accounts['STORE'].address
+                }
+            ],
+            witnesses: []
+        };
+
+        const tx = await vault.BSAFEIncludeTransaction(_assetsA);
+        tx.BSAFEScript.witnesses = [
+            await signin(tx.BSAFETransactionId, tx.getHashTxId(), 'USER_1', false),
+            await signin(tx.BSAFETransactionId, tx.getHashTxId(), 'USER_2', false),
+            await signin(tx.BSAFETransactionId, tx.getHashTxId(), 'USER_3', false)
+        ];
+
+        const result = await tx.send().then(async (tx) => await tx.wait());
+
+        expect(result.status).toBe(TransactionStatus.success);
+    });
 });

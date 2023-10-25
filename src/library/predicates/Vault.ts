@@ -1,20 +1,26 @@
 import { Predicate, Provider } from 'fuels';
-import { IPredicateService } from '../api/predicates';
-import { PredicateService } from '../api/predicates/predicate';
-import { IPayloadTransfer, Transfer, predicateABI, predicateBIN } from '../index';
-import { makeHashPredicate, makeSubscribers } from './helpers';
-import { IConfVault, IPayloadVault, IVault } from './types';
-export * from './types';
+
+import { IListTransactions, IPredicate, IPredicateService, IBSAFEAuth, PredicateService } from '../api';
+import { IPayloadTransfer, Transfer, predicateABI, predicateBIN, makeHashPredicate, makeSubscribers, IConfVault, IPayloadVault, IVault } from '../';
+import { v4 as uuidv4 } from 'uuid';
+
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
  */
 
 export class Vault extends Predicate<[]> implements IVault {
     private bin: string;
-    private abi: { [name: string]: unknown };
+    public BSAFEVaultId!: string;
     private configurable: IConfVault;
-    private transactions: { [id: string]: Transfer } = {};
-    private api: IPredicateService;
+    private abi: { [name: string]: unknown };
+    private api!: IPredicateService;
+    private auth!: IBSAFEAuth;
+
+    public transactionRecursiveTimeout: number;
+    public name!: string;
+    public description?: string;
+    public BSAFEVault!: IPredicate;
+    public provider: Provider;
     /**
      * Creates an instance of the Predicate class.
      *
@@ -24,12 +30,14 @@ export class Vault extends Predicate<[]> implements IVault {
      *      @param SIGNERS - Array string of predicate signers
      * @param abi - The JSON abi to BSAFE multisig.
      * @param bytecode - The binary code of preficate BSAFE multisig.
+     * @param transactionRecursiveTimeout - The time to refetch transaction on BSAFE API.
+     * @param BSAFEAuth - The auth to BSAFE API.
      **/
 
-    constructor({ configurable, abi, bytecode }: IPayloadVault) {
+    constructor({ configurable, abi, bytecode, transactionRecursiveTimeout, BSAFEAuth, name, description, BSAFEVaultId }: IPayloadVault) {
         const _abi = abi ? JSON.parse(abi) : predicateABI;
         const _bin = bytecode ? bytecode : predicateBIN;
-        const _network = configurable.network; //todo: move to dynamic
+        const _network = configurable.network;
         const _chainId = configurable.chainId;
         Vault.validations(configurable);
 
@@ -47,9 +55,18 @@ export class Vault extends Predicate<[]> implements IVault {
             network: _network,
             chainId: _chainId
         };
+        this.provider = provider;
+        this.name = name ? name : `Random Vault Name - ${uuidv4()}`;
+        this.description = description ? description : undefined;
+        this.BSAFEVaultId = BSAFEVaultId!;
+        this.transactionRecursiveTimeout = transactionRecursiveTimeout ? transactionRecursiveTimeout : 1000;
 
-        this.api = new PredicateService();
-        this.create();
+        if (BSAFEAuth) {
+            const _auth = BSAFEAuth;
+            this.auth = _auth;
+            this.api = new PredicateService(_auth);
+            this.create();
+        }
     }
 
     /**
@@ -72,10 +89,69 @@ export class Vault extends Predicate<[]> implements IVault {
         }
     }
 
+    /**
+     *
+     * Constructor method to instance a vault from BSAFE API.
+     *
+     * @param BSAFEAuth - Auth of bsafe API.
+     * @param BSAFEPredicateId - id of vault on BSAFE API. [optional]
+     * @param predicateAddress - address of vault on BSAFE API. [optional]
+     * @returns thire is no return, but if an error is detected it is trigged
+     */
+    static async instanceBSAFEVault(
+        BSAFEAuth: IBSAFEAuth,
+        existis: {
+            BSAFEPredicateId?: string;
+            predicateAddress?: string;
+        }
+    ) {
+        const { BSAFEPredicateId, predicateAddress } = existis;
+        if (predicateAddress == undefined && BSAFEPredicateId == undefined) {
+            throw new Error('predicateAddress or BSAFEPredicateId is required');
+        }
+
+        const api = new PredicateService(BSAFEAuth);
+        const result = BSAFEPredicateId ? await api.findById(BSAFEPredicateId) : predicateAddress && (await api.findByAddress(predicateAddress));
+
+        if (!result) {
+            throw new Error('BSAFEVault not found');
+        }
+
+        const { configurable, abi, bytes, name, description, id } = result;
+        return new Vault({
+            configurable: JSON.parse(configurable),
+            abi,
+            bytecode: bytes,
+            BSAFEAuth: BSAFEAuth,
+            name,
+            description,
+            BSAFEVaultId: id
+        });
+    }
+
+    /**
+     * To use bsafe API, auth is required
+     *
+     * @returns if auth is not defined, throw an error
+     */
+    private verifyAuth() {
+        if (!this.auth) {
+            throw new Error('Auth is required');
+        }
+    }
+
+    /**
+     * Send a caller to BSAFE API to save predicate
+     * Set BSAFEVaultId and BSAFEVault
+     *
+     *
+     * @returns if auth is not defined, throw an error
+     */
     private async create() {
-        await this.api.create({
-            name: 'Vault',
-            description: 'Vault',
+        this.verifyAuth();
+        const { id, ...rest } = await this.api.create({
+            name: this.name,
+            description: this.description,
             predicateAddress: this.address.toString(),
             minSigners: this.configurable.SIGNATURES_COUNT,
             addresses: this.configurable.SIGNERS,
@@ -85,7 +161,13 @@ export class Vault extends Predicate<[]> implements IVault {
             configurable: JSON.stringify(this.configurable),
             provider: this.provider.url
         });
+        this.BSAFEVault = {
+            ...rest,
+            id
+        };
+        this.BSAFEVaultId = id;
     }
+
     /**
      * Make configurable of predicate
      *
@@ -112,20 +194,10 @@ export class Vault extends Predicate<[]> implements IVault {
      */
 
     public async BSAFEIncludeTransaction(params: IPayloadTransfer | string) {
-        const _transfer = new Transfer(this);
+        const _transfer = new Transfer(this, this.auth);
         await _transfer.instanceTransaction(params);
 
         return _transfer;
-    }
-
-    /**
-     * Return an specific transaction of list
-     *
-     * @param hash - key of specific transaction of object
-     * @returns an transaction
-     */
-    public findTransactions(hash: string) {
-        return this.transactions[hash];
     }
 
     /**
@@ -133,10 +205,22 @@ export class Vault extends Predicate<[]> implements IVault {
      *
      * @returns an transaction list
      */
-    public getTransactions() {
-        return Object.entries(this.transactions).map(([, value]) => {
-            return value;
+    public async BSAFEGetTransactions(params?: IListTransactions) {
+        this.verifyAuth();
+        const result: Transfer[] = [];
+
+        const BSAFEtransactions = await this.api.listPredicateTransactions({
+            predicateId: [this.BSAFEVaultId],
+            ...params
         });
+
+        for await (const BSAFEtransaction of BSAFEtransactions) {
+            const _transfer = new Transfer(this, this.auth);
+            await _transfer.instanceTransaction(BSAFEtransaction);
+            result.push(_transfer);
+        }
+
+        return result;
     }
 
     /**

@@ -1,22 +1,24 @@
-import { Address, InputType, ScriptTransactionRequest, TransactionRequestLike, arrayify, bn, hashTransaction, hexlify, transactionRequestify } from 'fuels';
-import { ICreateTransactionPayload, ITransactionService, TransactionService, TransactionStatus } from '../api/transactions';
-import { Asset } from '../assets';
-import { IAssetGroupById, IAssetTransaction } from '../assets/types';
-import { Vault } from '../predicates';
-import { delay } from '../utils';
-import { transactionScript } from './helpers';
+import { ScriptTransactionRequest, TransactionRequest, TransactionResponse, bn, hashTransaction, hexlify, transactionRequestify } from 'fuels';
+import { ICreateTransactionPayload, ITransaction, ITransactionService, TransactionService, TransactionStatus, IBSAFEAuth, ITransactionResume } from '../api';
+import { Asset, Vault, IAssetGroupById, IAssetTransaction } from '../';
+import { delay } from '../../utils';
+import { defaultConfigurable } from '../../configurables';
 import { IPayloadTransfer, ITransfer } from './types';
+import { BSAFEScriptTransaction } from './ScriptTransaction';
+import { v4 as uuidv4 } from 'uuid';
+
 /**
  * `Transfer` are extension of ScriptTransactionRequest, to create and send transactions
  */
-export class Transfer extends ScriptTransactionRequest implements ITransfer {
+export class Transfer implements ITransfer {
+    public name!: string;
     private vault!: Vault;
     private chainId!: number;
-    //private network!: string;
-    public BSAFETransactionId!: string;
     private assets!: IAssetTransaction[];
-    private service: ITransactionService;
-    private sendingProcess: boolean = false;
+    private service!: ITransactionService;
+    public BSAFETransactionId!: string;
+    public BSAFEScript!: ScriptTransactionRequest;
+    public BSAFETrsanction!: ITransaction;
     /**
      * Creates an instance of the Transfer class.
      *
@@ -24,28 +26,94 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
      * @param assets - Asset output of transaction
      * @param witnesses - Signatures on the hash of this transaction, signed by the vault subscribers
      */
-    constructor(vault: Vault) {
-        super({
-            gasPrice: bn(1_000_000),
-            gasLimit: bn(100000),
-            script: transactionScript
-        });
+    constructor(vault: Vault, auth?: IBSAFEAuth) {
         this.vault = vault;
-        this.service = new TransactionService();
+        if (auth) {
+            this.service = new TransactionService(auth);
+        }
 
         const _configurable = this.vault.getConfigurable();
         this.chainId = _configurable.chainId;
-        //this.network = _configurable.network;
     }
 
-    public async instanceTransaction(params: IPayloadTransfer | string) {
+    /**
+     * Instance a transaction, if you have the transaction id, instance old transaction, if not instance new transaction
+     *
+     * @param params - If string, instance old transaction, if object, instance new transaction
+     */
+    public async instanceTransaction(params: IPayloadTransfer | ITransaction | string) {
         if (typeof params === 'string') {
             // find on API
             this.BSAFETransactionId = params;
             await this.instanceOldTransaction();
+        } else if ('id' in params && 'assets' in params && 'witnesses' in params) {
+            const { witnesses, assets } = params;
+            const _witnesses: string[] = [];
+            witnesses.map((item) => {
+                item.signature && _witnesses.push(item.signature);
+            });
+
+            await this.instanceNewTransaction({
+                witnesses: _witnesses,
+                assets: assets.map((assest) => {
+                    return {
+                        assetId: assest.assetId,
+                        amount: assest.amount.toString(),
+                        to: assest.to
+                    };
+                })
+            });
         } else {
             // instance new transaction
             await this.instanceNewTransaction(params);
+        }
+    }
+
+    /**
+     * Create the url to consult the fuel block explorer
+     *
+     * @returns link of transaction block
+     */
+    public makeBlockUrl(block: string | undefined) {
+        return block ? `https://fuellabs.github.io/block-explorer-v2/transaction/${this.getHashTxId()}?providerUrl=${encodeURIComponent(this.vault.provider.url)}` : '';
+    }
+
+    /**
+     * Generates and formats the transaction hash
+     *
+     * @returns hash of this transaction
+     */
+    public getHashTxId() {
+        const txHash = hashTransaction(transactionRequestify(this.BSAFEScript), this.chainId);
+        return txHash.slice(2);
+    }
+
+    /**
+     * Encapsulation of this transaction
+     *
+     * @returns this transaction
+     */
+    public getScript() {
+        return this.BSAFEScript;
+    }
+
+    /**
+     * Encapsulation of this transaction assets
+     *
+     * @returns this transaction assets
+     */
+    public getAssets() {
+        return this.assets;
+    }
+
+    /**
+     * To use bsafe API, auth is required
+     *
+     * @returns if auth is not defined, throw an error
+     */
+    private verifyAuth() {
+        if (!this.service) {
+            throw new Error('Auth is required');
         }
     }
 
@@ -54,33 +122,30 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
      *
      * @returns this transaction configured and your hash
      */
-    public async instanceNewTransaction({ assets, witnesses }: IPayloadTransfer) {
+    private async instanceNewTransaction({ assets, witnesses, name }: IPayloadTransfer) {
         const outputs = await Asset.assetsGroupByTo(assets);
         const coins = await Asset.assetsGroupById(assets);
-        const transactionCoins = await Asset.addTransactionFee(coins, this.gasPrice);
-
-        Object.entries(outputs).map(([, value]) => {
-            this.addCoinOutput(Address.fromString(value.to), value.amount, value.assetId);
-        });
+        const transactionCoins = await Asset.addTransactionFee(coins, defaultConfigurable['gasPrice']);
 
         await this.validtateBalance(coins);
-        //todo: invalidate used coins [make using bsafe api assets?]
         const _coins = await this.vault.getResourcesToSpend(transactionCoins);
-        this.addResources(_coins);
+
         this.assets = _coins.length > 0 ? Asset.includeSpecificAmount(_coins, assets) : [];
-
-        this.inputs?.forEach((input) => {
-            if (input.type === InputType.Coin && hexlify(input.owner) === this.vault.address.toB256()) {
-                input.predicate = arrayify(this.vault.bytes);
-                input.predicateData = arrayify(this.vault.predicateData);
-            }
-        });
-
-        this.witnesses = witnesses;
-        !this.BSAFETransactionId && (await this.createTransaction());
+        const script_t = new BSAFEScriptTransaction();
+        await script_t.instanceTransaction(_coins, this.vault, outputs, witnesses);
+        this.BSAFEScript = script_t;
+        this.name = name ? name : `Random Vault Name - ${uuidv4()}`;
+        if (this.service) {
+            await this.createTransaction();
+        }
     }
 
-    public async instanceOldTransaction() {
+    /**
+     * if you have the transaction id, this function called to find on BSAFE API and instance this transaction
+     *
+     * @param params - If string, instance old transaction, if object, instance new transaction
+     */
+    private async instanceOldTransaction() {
         const { witnesses, assets } = await this.service.findByTransactionID(this.BSAFETransactionId);
         const _witnesses: string[] = [];
         witnesses.map((item) => {
@@ -99,17 +164,27 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
         });
     }
 
+    /**
+     * Send a caller to BSAFE API to save transaction
+     *
+     * @returns if auth is not defined, throw an error
+     */
     private async createTransaction() {
+        this.verifyAuth();
         const transaction: ICreateTransactionPayload = {
             predicateAddress: this.vault.address.toString(),
-            name: 'transaction of ',
+            name: this.name,
             hash: this.getHashTxId(),
             status: TransactionStatus.AWAIT_REQUIREMENTS,
             assets: this.assets
         };
+        if (this.BSAFETransactionId) {
+            this.BSAFETrsanction = await this.service.findByTransactionID(this.BSAFETransactionId);
+        } else {
+            this.BSAFETrsanction = await this.service.create(transaction);
+        }
 
-        const result = await this.service.create(transaction);
-        this.BSAFETransactionId = result.id;
+        this.BSAFETransactionId = this.BSAFETrsanction.id;
     }
 
     /**
@@ -137,100 +212,60 @@ export class Transfer extends ScriptTransactionRequest implements ITransfer {
     }
 
     /**
-     * Send this transaction, update the tx_id, instantiate a transaction Response and wait for it to be processed
+     * Using BSAFEauth, send this transaction to chain
      *
-     * @param _coins - Vault to which this transaction belongs
-     * @returns sumary result of transaction
+     * @returns an resume for transaction
      */
     public async send() {
-        const transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
-        switch (transaction.status) {
-            case TransactionStatus.PENDING_SENDER:
-                this.sendingProcess = true;
-                await this.service.send(this.BSAFETransactionId);
-                this.sendingProcess = false;
-                break;
+        if (!this.service) {
+            const tx: TransactionRequest = transactionRequestify(this.BSAFEScript);
+            const tx_est = await this.vault.provider.estimatePredicates(tx);
+            const encodedTransaction = hexlify(tx_est.toTransactionBytes());
+            const {
+                submit: { id: transactionId }
+            } = await this.vault.provider.operations.submit({ encodedTransaction });
+            return new TransactionResponse(transactionId, this.vault.provider);
+        } else {
+            const transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
+            switch (transaction.status) {
+                case TransactionStatus.PENDING_SENDER:
+                    await this.service.send(this.BSAFETransactionId);
+                    break;
 
-            case TransactionStatus.AWAIT_REQUIREMENTS || TransactionStatus.SUCCESS:
-                this.sendingProcess = false;
-                break;
+                case TransactionStatus.PROCESS_ON_CHAIN:
+                    return await this.wait();
+
+                case TransactionStatus.FAILED || TransactionStatus.SUCCESS:
+                    break;
+            }
+            return {
+                ...JSON.parse(transaction.resume),
+                bsafeID: transaction.id
+            };
         }
-        return {
-            ...JSON.parse(transaction.resume),
-            bsafeID: transaction.id
-        };
     }
 
+    /**
+     * An recursive function, to wait for transaction to be processed
+     *
+     * @returns an resume for transaction
+     */
     public async wait() {
         let transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
-        let status = transaction.status;
-        switch (transaction.status) {
-            case TransactionStatus.PENDING_SENDER: // send transaction
-                if (!this.sendingProcess) return await this.send();
-                break;
+        while (transaction.status !== TransactionStatus.SUCCESS && transaction.status !== TransactionStatus.FAILED) {
+            await delay(this.vault.transactionRecursiveTimeout); // todo: make time to dynamic
+            transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
 
-            case TransactionStatus.AWAIT_REQUIREMENTS: //call this recursive function
-                while (status === TransactionStatus.AWAIT_REQUIREMENTS) {
-                    delay(5000); // todo: make time to dynamic
-                    transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
-                    status = transaction.status;
-                }
-                await this.send();
-                transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
-                break;
+            if (transaction.status == TransactionStatus.PENDING_SENDER) await this.send();
 
-            case TransactionStatus.SUCCESS:
-                this.sendingProcess = false;
-                break;
-
-            default:
-                break;
+            if (transaction.status == TransactionStatus.PROCESS_ON_CHAIN) await this.service.verify(this.BSAFETransactionId);
         }
 
-        return {
+        const result: ITransactionResume = {
             ...JSON.parse(transaction.resume),
+            status: transaction.status,
             bsafeID: transaction.id
         };
-    }
-
-    hashTransaction(tx: TransactionRequestLike) {
-        const txHash = hashTransaction(transactionRequestify(tx), this.chainId);
-        return txHash.slice(2).toLowerCase();
-    }
-    /**
-     * Create the url to consult the fuel block explorer
-     *
-     * @returns link of transaction block
-     */
-    // private makeBlockUrl(block: string | undefined) {
-    //     return block ? `https://fuellabs.github.io/block-explorer-v2/transaction/${block}?providerUrl=${encodeURIComponent(this.network)}` : '';
-    // }
-
-    /**
-     * Generates and formats the transaction hash
-     *
-     * @returns hash of this transaction
-     */
-    public getHashTxId() {
-        const txHash = hashTransaction(transactionRequestify(this), this.chainId);
-        return txHash.slice(2);
-    }
-
-    /**
-     * Encapsulation of this transaction
-     *
-     * @returns this transaction
-     */
-    public getTransaction() {
-        return this;
-    }
-
-    /**
-     * Encapsulation of this transaction assets
-     *
-     * @returns this transaction assets
-     */
-    public getAssets() {
-        return this.assets;
+        return result;
     }
 }
