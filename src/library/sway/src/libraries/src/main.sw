@@ -1,3 +1,3 @@
 library;
 
-mod ascii;
+pub mod ascii;
