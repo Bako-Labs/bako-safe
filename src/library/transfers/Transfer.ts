@@ -1,14 +1,10 @@
 import { ScriptTransactionRequest, TransactionRequest, TransactionResponse, bn, hashTransaction, hexlify, transactionRequestify } from 'fuels';
-import { ICreateTransactionPayload, ITransaction, ITransactionService, TransactionService, TransactionStatus } from '../api/transactions';
-import { Asset } from '../assets';
-import { IAssetGroupById, IAssetTransaction } from '../assets/types';
-import { Vault } from '../predicates';
+import { ICreateTransactionPayload, ITransaction, ITransactionService, TransactionService, TransactionStatus, IBSAFEAuth, ITransactionResume } from '../api';
+import { Asset, Vault, IAssetGroupById, IAssetTransaction } from '../';
 import { delay } from '../../utils';
-import { IPayloadTransfer, ITransfer } from './types';
-import { IBSAFEAuth } from '../api/auth';
-import { BSAFEScriptTransaction } from './ScriptTransaction';
 import { defaultConfigurable } from '../../configurables';
-import { ITransactionResume } from '../api/transactions/types';
+import { IPayloadTransfer, ITransfer } from './types';
+import { BSAFEScriptTransaction } from './ScriptTransaction';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -38,17 +34,6 @@ export class Transfer implements ITransfer {
 
         const _configurable = this.vault.getConfigurable();
         this.chainId = _configurable.chainId;
-    }
-
-    /**
-     * To use bsafe API, auth is required
-     *
-     * @returns if auth is not defined, throw an error
-     */
-    private verifyAuth() {
-        if (!this.service) {
-            throw new Error('Auth is required');
-        }
     }
 
     /**
@@ -85,11 +70,59 @@ export class Transfer implements ITransfer {
     }
 
     /**
+     * Create the url to consult the fuel block explorer
+     *
+     * @returns link of transaction block
+     */
+    public makeBlockUrl(block: string | undefined) {
+        return block ? `https://fuellabs.github.io/block-explorer-v2/transaction/${this.getHashTxId()}?providerUrl=${encodeURIComponent(this.vault.provider.url)}` : '';
+    }
+
+    /**
+     * Generates and formats the transaction hash
+     *
+     * @returns hash of this transaction
+     */
+    public getHashTxId() {
+        const txHash = hashTransaction(transactionRequestify(this.BSAFEScript), this.chainId);
+        return txHash.slice(2);
+    }
+
+    /**
+     * Encapsulation of this transaction
+     *
+     * @returns this transaction
+     */
+    public getScript() {
+        return this.BSAFEScript;
+    }
+
+    /**
+     * Encapsulation of this transaction assets
+     *
+     * @returns this transaction assets
+     */
+    public getAssets() {
+        return this.assets;
+    }
+
+    /**
+     * To use bsafe API, auth is required
+     *
+     * @returns if auth is not defined, throw an error
+     */
+    private verifyAuth() {
+        if (!this.service) {
+            throw new Error('Auth is required');
+        }
+    }
+
+    /**
      * Configure outputs and parameters of transaction instance.
      *
      * @returns this transaction configured and your hash
      */
-    public async instanceNewTransaction({ assets, witnesses, name }: IPayloadTransfer) {
+    private async instanceNewTransaction({ assets, witnesses, name }: IPayloadTransfer) {
         const outputs = await Asset.assetsGroupByTo(assets);
         const coins = await Asset.assetsGroupById(assets);
         const transactionCoins = await Asset.addTransactionFee(coins, defaultConfigurable['gasPrice']);
@@ -112,7 +145,7 @@ export class Transfer implements ITransfer {
      *
      * @param params - If string, instance old transaction, if object, instance new transaction
      */
-    public async instanceOldTransaction() {
+    private async instanceOldTransaction() {
         const { witnesses, assets } = await this.service.findByTransactionID(this.BSAFETransactionId);
         const _witnesses: string[] = [];
         witnesses.map((item) => {
@@ -234,42 +267,5 @@ export class Transfer implements ITransfer {
             bsafeID: transaction.id
         };
         return result;
-    }
-
-    /**
-     * Create the url to consult the fuel block explorer
-     *
-     * @returns link of transaction block
-     */
-    makeBlockUrl(block: string | undefined) {
-        return block ? `https://fuellabs.github.io/block-explorer-v2/transaction/${this.getHashTxId()}?providerUrl=${encodeURIComponent(this.vault.provider.url)}` : '';
-    }
-
-    /**
-     * Generates and formats the transaction hash
-     *
-     * @returns hash of this transaction
-     */
-    public getHashTxId() {
-        const txHash = hashTransaction(transactionRequestify(this.BSAFEScript), this.chainId);
-        return txHash.slice(2);
-    }
-
-    /**
-     * Encapsulation of this transaction
-     *
-     * @returns this transaction
-     */
-    public getScript() {
-        return this.BSAFEScript;
-    }
-
-    /**
-     * Encapsulation of this transaction assets
-     *
-     * @returns this transaction assets
-     */
-    public getAssets() {
-        return this.assets;
     }
 }

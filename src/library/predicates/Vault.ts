@@ -1,11 +1,7 @@
 import { Predicate, Provider } from 'fuels';
 
-import { IListTransactions, IPredicate, IPredicateService } from '../api/predicates';
-import { PredicateService } from '../api/predicates/predicate';
-import { IPayloadTransfer, Transfer, predicateABI, predicateBIN } from '../index';
-import { makeHashPredicate, makeSubscribers } from './helpers';
-import { IConfVault, IPayloadVault, IVault } from './types';
-import { IBSAFEAuth } from '../api/auth';
+import { IListTransactions, IPredicate, IPredicateService, IBSAFEAuth, PredicateService } from '../api';
+import { IPayloadTransfer, Transfer, predicateABI, predicateBIN, makeHashPredicate, makeSubscribers, IConfVault, IPayloadVault, IVault } from '../';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -209,7 +205,7 @@ export class Vault extends Predicate<[]> implements IVault {
      *
      * @returns an transaction list
      */
-    public async getTransactions(params?: IListTransactions) {
+    public async BSAFEGetTransactions(params?: IListTransactions) {
         this.verifyAuth();
         const result: Transfer[] = [];
 

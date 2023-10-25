@@ -35,6 +35,6 @@ export interface IVault {
     getAbi: () => { [name: string]: unknown };
     getBin: () => string;
     getConfigurable: () => IConfVault;
-    getTransactions: (params?: IListTransactions) => Promise<Transfer[]>;
+    BSAFEGetTransactions: (params?: IListTransactions) => Promise<Transfer[]>;
     BSAFEIncludeTransaction: (params: IPayloadTransfer | string) => Promise<Transfer>;
 }

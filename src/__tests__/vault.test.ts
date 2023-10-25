@@ -304,7 +304,7 @@ describe('Test Vault', () => {
 
             await signin(transaction.BSAFETransactionId, transaction.getHashTxId(), 'USER_2', true);
 
-            const transactions = await vault.getTransactions();
+            const transactions = await vault.BSAFEGetTransactions();
             expect(transactions.length).toBe(2);
         },
         100 * 1000
@@ -325,7 +325,7 @@ describe('Test Vault', () => {
         await sendPredicateCoins(vault, bn(1_000_000_000), 'ETH');
 
         await expect(vault.getConfigurable().SIGNATURES_COUNT).toBe(3);
-        await expect(vault.getTransactions()).rejects.toThrow('Auth is required');
+        await expect(vault.BSAFEGetTransactions()).rejects.toThrow('Auth is required');
     });
 
     test('Sent a transaction without BSAFEAuth', async () => {

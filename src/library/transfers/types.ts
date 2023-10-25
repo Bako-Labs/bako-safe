@@ -36,7 +36,6 @@ export interface ISendTransaction {
 }
 
 export interface ITransfer {
-    instanceNewTransaction(params: IPayloadTransfer): void;
     send(): void;
     getHashTxId(): string;
     getScript(): TransactionRequest;
