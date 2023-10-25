@@ -18,6 +18,7 @@ A streamlined solution within the Fuel ecosystem, enabling seamless implementati
 -   Set up sending requirements 🔧
 -   Validate signatures 🔏
 -   Send different assets to different destinations in the same transaction 📤
+-   Data persistence for transactions with the BSAFE API 📝
 
 ## Install
 
