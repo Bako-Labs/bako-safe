@@ -1,9 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
 import { Wallet } from 'fuels';
-import { defaultConfigurable } from '../../configurables';
 import { IAuthService, IBSAFEAuth } from './types';
 import { IDefaultAccount } from '../../../mocks/accounts';
 import { v4 as uuidv4 } from 'uuid';
+import { defaultConfigurable } from '../../../configurables';
 
 // woking to local node just fine
 export class AuthService implements IAuthService {
@@ -19,7 +19,7 @@ export class AuthService implements IAuthService {
 
     constructor() {
         this.client = axios.create({
-            baseURL: defaultConfigurable['api_url']
+            baseURL: defaultConfigurable.api_url
         });
     }
 
@@ -47,7 +47,7 @@ export class AuthService implements IAuthService {
             hash: uuidv4(),
             createdAt: new Date().toISOString(),
             provider,
-            encoder: 'fuel', // -> todo: move to enum
+            encoder: defaultConfigurable.encoder,
             user_id: id
         };
 

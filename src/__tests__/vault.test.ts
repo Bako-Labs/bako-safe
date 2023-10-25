@@ -2,11 +2,11 @@ import { Address, BN, Provider, TransactionStatus, Wallet, bn } from 'fuels';
 import { IPayloadTransfer, IPayloadVault, Vault } from '../library';
 import { TransactionService } from '../library/api/transactions';
 import { ITransferAsset } from '../library/assets';
-import assets from '../mocks/assets';
 
-import { defaultConfigurable } from '../library/configurables';
-import { IUserAuth, authService } from './utils/auth';
+import { defaultConfigurable } from '../configurables';
+
 import { accounts } from '../mocks/accounts';
+import { IUserAuth, authService, assets } from '../mocks';
 
 describe('Test Vault', () => {
     let chainId: number;
@@ -112,7 +112,7 @@ describe('Test Vault', () => {
         async () => {
             const vault = await newVault();
 
-            const auxVault = await Vault.instanceVault(auth['USER_1'].BSAFEAuth, {
+            const auxVault = await Vault.instanceBSAFEVault(auth['USER_1'].BSAFEAuth, {
                 BSAFEPredicateId: vault.BSAFEVaultId
             });
             expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
@@ -125,7 +125,7 @@ describe('Test Vault', () => {
         async () => {
             const vault = await newVault();
 
-            const auxVault = await Vault.instanceVault(auth['USER_1'].BSAFEAuth, {
+            const auxVault = await Vault.instanceBSAFEVault(auth['USER_1'].BSAFEAuth, {
                 predicateAddress: vault.address.toString()
             });
             expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
@@ -365,8 +365,8 @@ describe('Test Vault', () => {
             await signin(tx.BSAFETransactionId, tx.getHashTxId(), 'USER_3', false)
         ];
 
-        const result = await tx.send();
-        console.log(result);
+        const result = await tx.send().then(async (tx) => await tx.wait());
+
         expect(result.status).toBe(TransactionStatus.success);
     });
 });

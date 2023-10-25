@@ -1,5 +1,5 @@
 import { BN, Coin, Resource, bn } from 'fuels';
-import assets from '../../mocks/assets';
+import { assets } from '../../mocks';
 import { IAssetGroupById, IAssetGroupByTo, IAssetTransaction, ITransferAsset } from './types';
 
 export class Asset {

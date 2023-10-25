@@ -3,11 +3,11 @@ import { ICreateTransactionPayload, ITransaction, ITransactionService, Transacti
 import { Asset } from '../assets';
 import { IAssetGroupById, IAssetTransaction } from '../assets/types';
 import { Vault } from '../predicates';
-import { delay } from '../utils';
+import { delay } from '../../utils';
 import { IPayloadTransfer, ITransfer } from './types';
 import { IBSAFEAuth } from '../api/auth';
 import { BSAFEScriptTransaction } from './ScriptTransaction';
-import { defaultConfigurable } from '../configurables';
+import { defaultConfigurable } from '../../configurables';
 import { ITransactionResume } from '../api/transactions/types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -191,16 +191,7 @@ export class Transfer implements ITransfer {
             const {
                 submit: { id: transactionId }
             } = await this.vault.provider.operations.submit({ encodedTransaction });
-
-            const sender = new TransactionResponse(transactionId, this.vault.provider);
-            const result = await sender.wait();
-            return {
-                status: result.status,
-                hash: this.getHashTxId(),
-                gasUsed: result.gasUsed.toString(),
-                sendTime: new Date().toISOString(),
-                witnesses: this.BSAFEScript.witnesses
-            };
+            return new TransactionResponse(transactionId, this.vault.provider);
         } else {
             const transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
             switch (transaction.status) {
@@ -227,7 +218,6 @@ export class Transfer implements ITransfer {
      * @returns an resume for transaction
      */
     public async wait() {
-        this.verifyAuth();
         let transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
         while (transaction.status !== TransactionStatus.SUCCESS && transaction.status !== TransactionStatus.FAILED) {
             await delay(this.vault.transactionRecursiveTimeout); // todo: make time to dynamic

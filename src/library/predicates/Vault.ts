@@ -6,7 +6,6 @@ import { IPayloadTransfer, Transfer, predicateABI, predicateBIN } from '../index
 import { makeHashPredicate, makeSubscribers } from './helpers';
 import { IConfVault, IPayloadVault, IVault } from './types';
 import { IBSAFEAuth } from '../api/auth';
-import { defaultConfigurable } from '../configurables';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -64,7 +63,7 @@ export class Vault extends Predicate<[]> implements IVault {
         this.name = name ? name : `Random Vault Name - ${uuidv4()}`;
         this.description = description ? description : undefined;
         this.BSAFEVaultId = BSAFEVaultId!;
-        this.transactionRecursiveTimeout = transactionRecursiveTimeout ? transactionRecursiveTimeout : defaultConfigurable['refetchTimeout'];
+        this.transactionRecursiveTimeout = transactionRecursiveTimeout ? transactionRecursiveTimeout : 1000;
 
         if (BSAFEAuth) {
             const _auth = BSAFEAuth;
@@ -103,7 +102,7 @@ export class Vault extends Predicate<[]> implements IVault {
      * @param predicateAddress - address of vault on BSAFE API. [optional]
      * @returns thire is no return, but if an error is detected it is trigged
      */
-    static async instanceVault(
+    static async instanceBSAFEVault(
         BSAFEAuth: IBSAFEAuth,
         existis: {
             BSAFEPredicateId?: string;

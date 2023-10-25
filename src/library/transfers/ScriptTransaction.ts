@@ -1,13 +1,13 @@
 import { Address, InputType, Predicate, Resource, ScriptTransactionRequest, arrayify, hexlify } from 'fuels';
 import { transactionScript } from './helpers';
 import { IAssetGroupByTo } from '../assets';
-import { defaultConfigurable } from '../configurables';
+import { defaultConfigurable } from '../../configurables';
 
 export class BSAFEScriptTransaction extends ScriptTransactionRequest {
     constructor() {
         super({
-            gasPrice: defaultConfigurable['gasPrice'],
-            gasLimit: defaultConfigurable['gasLimit'],
+            gasPrice: defaultConfigurable.gasPrice,
+            gasLimit: defaultConfigurable.gasLimit,
             script: transactionScript
         });
     }

@@ -1,4 +1,4 @@
-import assets from '../../mocks/assets';
+import { assets } from '../../mocks';
 import { IAsset } from './types';
 const assetsList: IAsset[] = [
     {
