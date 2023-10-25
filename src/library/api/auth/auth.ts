@@ -66,7 +66,7 @@ export class AuthService implements IAuthService {
     }
 
     private async signer(message: string) {
-        if (!this.user || !this.auth) return;
+        if (!this.user || !this.auth || !this.user.privateKey) return;
         const signer = Wallet.fromPrivateKey(this.user.privateKey, this.auth.provider);
         return await signer.signMessage(message);
     }

@@ -37,41 +37,38 @@ npm install bsafe
 
 ## The guist
 
-```javascript
+There are currently two ways to use this package, the first of which is with the data persistence of the API built BSAFE and used in the dApp[BSAFE](https://app.bsafe.pro) and there is another without
+the data persistence, only to generate and validate transactions.
+
+For this guide, we will be using some [scripts](https://github.com/infinitybase/bsafe/src/utils) and a node [fuelVM](https://github.com/FuelLabs/fuel-vm) running locally, in addition there are a file
+[defaultConfigurable](https://github.com/infinitybase/bsafe/src/configurables.ts) for the main parameters and a folder with [mocks](https://github.com/infinitybase/bsafe/src/mocks) for fake coins and
+accounts.
+
+In a simple way, we can implement use without data persistence
+
+```typescript
 import { BN, Provider, Wallet, bn } from 'fuels';
-import {Vault, IPayloadVault, ITransferAsset} from 'bsafe'
-import accounts from '../mocks/accounts.json';
-import assets from '../mocks/assets.json';
+import {Vault, IPayloadVault, IPayloadTransfer, sign, defaultConfigurable, mocks, accounts} from 'bsafe'
 
-const fuelProvider = new Provider('http://beta-4.fuel.network/graphql');
-const txParams = {
-    gasPrice: bn(1)
-};
-type IAccount = 'FULL' | 'USER_1' | 'USER_2' | 'USER_3' | 'USER_4' | 'USER_5'
+// instance a new fuel provider to http://localhost:4000/graphql
+const fuelProvider = new Provider(defaultConfigurable.provider);
 
-const signin = async (tx_hash: string, account:IAccount ) => {
-    const signer = Wallet.fromPrivateKey(accounts[account].privateKey, fuelProvider);
-    return signer.signMessage(tx_hash);
-};
-
-let chainId: number = await fuelProvider.getChainId();
-
-const rootWallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, fuelProvider);
-
+// import default accounts to vmnode runner on http://localhost:4000/graphql
 const signers = [accounts['USER_1'].address, accounts['USER_2'].address, accounts['USER_3'].address];
 
 // make your vault
 const VaultPayload: IPayloadVault = {
     configurable: {
-        SIGNATURES_COUNT: 1, // required signatures
+        SIGNATURES_COUNT: 3, // required signatures
         SIGNERS: signers, // witnesses account
         network: fuelProvider.url // your network connected wallet
-        chainId: chainId
+        chainId: await fuelProvider.getChainId()
     }
 };
 const vault = new Vault(VaultPayload);
 
-const _assets: ITransferAsset[] = [
+// Include transaction coins
+const transfer: IPayloadTransfer[] = [
     {
         amount: bn(1_000).format(),
         assetId: assets['ETH'],
@@ -80,20 +77,63 @@ const _assets: ITransferAsset[] = [
 ];
 
 // Create a transaction
-const {transaction} = await vault.includeTransaction(_assets, []);
+const tx = await vault.BSAFEIncludeTransaction(transfer);
+
+// Insert your transaction hash signed by witnesses
+tx.BSAFEScript.witnesses = [
+    await signin(tx.getHashTxId(), 'USER_1'),
+    await signin(tx.getHashTxId(), 'USER_2'),
+    await signin(tx.getHashTxId(), 'USER_3')
+]
 
 // Signin transaction
-const signer = Wallet.fromPrivateKey(accounts[account].privateKey, fuelProvider); // instance an wallet account
-const tx_hash = transaction.getHashTxId() //get transaction hash
-const witnesses = [
-    await signin(tx_hash, 'USER_1'),
-    await signin(tx_hash, 'USER_2'),
-    await signin(tx_hash, 'USER_3'),
+const result = await tx.send().then(async (tx) => await tx.wait());
+```
+
+Implementation with data persistence through bsafe-api
+
+```typescript
+import { BN, Provider, Wallet, bn } from 'fuels';
+import {Vault, IPayloadVault, IPayloadTransfer, sign, defaultConfigurable, mocks, accounts} from 'bsafe'
+
+// instance a new fuel provider to http://localhost:4000/graphql
+const fuelProvider = new Provider(defaultConfigurable.provider);
+
+// import default accounts to vmnode runner on http://localhost:4000/graphql and authenticate on bsafe-api
+const auth = await authService(['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4']);
+
+
+// make your vault, with 'USER_1' to owner
+const VaultPayload: IPayloadVault = {
+    configurable: {
+        SIGNATURES_COUNT: 2, // required signatures
+        SIGNERS: signers, // witnesses account
+        network: fuelProvider.url // your network connected wallet
+        chainId: await fuelProvider.getChainId()
+    },
+    BSAFEAuth: auth['USER_1'].BSAFEAuth
+
+};
+const vault = new Vault(VaultPayload);
+
+// Include transaction coins
+const transfer: IPayloadTransfer[] = [
+    {
+        amount: bn(1_000).format(),
+        assetId: assets['ETH'],
+        to: accounts['STORE'].address
+    }
 ];
-//set transaction witnesses
-transaction.witnesses = witnesses;
 
-//send transaction
-const result = await transaction.sendTransaction()
+// Create a transaction
+const tx = await vault.BSAFEIncludeTransaction(transfer);
 
+// Insert your transaction hash signed by witnesses
+tx.BSAFEScript.witnesses = [
+    await signin(tx.getHashTxId(), 'USER_1'),
+    await signin(tx.getHashTxId(), 'USER_2'),
+]
+
+// Signin transaction
+const result = await tx.send().then(async (tx) => await tx.wait());
 ```

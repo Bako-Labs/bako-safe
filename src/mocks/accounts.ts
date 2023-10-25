@@ -40,7 +40,7 @@ export const accounts = {
 export type IAccountKeys = keyof typeof accounts;
 
 export type IDefaultAccount = {
-    account: string;
     address: string;
-    privateKey: string;
+    account?: string;
+    privateKey?: string;
 };
