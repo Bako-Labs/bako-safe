@@ -12,7 +12,7 @@ export class BSAFEScriptTransaction extends ScriptTransactionRequest {
         });
     }
 
-    public async instanceTransaction(_coins: Resource[], vault: Predicate<[]>, outputs: IAssetGroupByTo, witnesses: string[]) {
+    public async instanceTransaction(_coins: Resource[], vault: Predicate<[]>, outputs: IAssetGroupByTo, witnesses?: string[]) {
         Object.entries(outputs).map(([, value]) => {
             this.addCoinOutput(Address.fromString(value.to), value.amount, value.assetId);
         });
@@ -27,6 +27,8 @@ export class BSAFEScriptTransaction extends ScriptTransactionRequest {
             }
         });
 
-        this.witnesses = witnesses;
+        if (witnesses) {
+            this.witnesses = [...this.witnesses, ...witnesses];
+        }
     }
 }

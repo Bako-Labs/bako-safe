@@ -4,7 +4,7 @@ import { ITransactionResume, IWitnesses } from '../api/transactions';
 
 export interface IPayloadTransfer {
     assets: ITransferAsset[];
-    witnesses: string[];
+    witnesses?: string[];
     name?: string;
 }
 
