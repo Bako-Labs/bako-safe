@@ -129,7 +129,6 @@ export class Vault extends Predicate<[]> implements IVault {
             });
         } else if (isNew) {
             const { configurable, provider, name, description, abi, bytecode, BSAFEAuth, BSAFEVaultId } = params;
-            console.log('[IS_NEW]: ', BSAFEVaultId);
             return new Vault({
                 configurable,
                 provider,
