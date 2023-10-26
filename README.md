@@ -90,50 +90,52 @@ tx.BSAFEScript.witnesses = [
 const result = await tx.send().then(async (tx) => await tx.wait());
 ```
 
-Implementation with data persistence through bsafe-api
+On implementation with data persistence through bsafe-api, do you need instance vault with IAUTHBsafe.
 
 ```typescript
-import { BN, Provider, Wallet, bn } from 'fuels';
-import {Vault, IPayloadVault, IPayloadTransfer, sign, defaultConfigurable, mocks, accounts} from 'bsafe'
+import { AuthService, IBSAFEAuth } from 'bsafe';
 
-// instance a new fuel provider to http://localhost:4000/graphql
-const fuelProvider = new Provider(defaultConfigurable.provider);
+const auth = new AuthService();
+await auth.createUser(accounts['STORE'].address, defaultConfigurable.provider);
+await auth.createSession();
 
-// import default accounts to vmnode runner on http://localhost:4000/graphql and authenticate on bsafe-api
-const auth = await authService(['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4']);
-
-
-// make your vault, with 'USER_1' to owner
 const VaultPayload: IPayloadVault = {
     configurable: {
-        SIGNATURES_COUNT: 2, // required signatures
+        SIGNATURES_COUNT: 3, // required signatures
         SIGNERS: signers, // witnesses account
         network: fuelProvider.url // your network connected wallet
         chainId: await fuelProvider.getChainId()
     },
-    BSAFEAuth: auth['USER_1'].BSAFEAuth
-
+    BSAFEAuth: auth.BSAFEAuth
 };
 const vault = new Vault(VaultPayload);
+//Here you can retrieve the information about your predicate, passing only the BSAFEId (id within the bsafe api) or the address of this predicate
 
-// Include transaction coins
-const transfer: IPayloadTransfer[] = [
-    {
-        amount: bn(1_000).format(),
-        assetId: assets['ETH'],
-        to: accounts['STORE'].address
-    }
-];
+const auxVault = Vault.instanceBSAFEVault(vault.address.toString())
+const _auxVault = Vault.instanceBSAFEVault(vault.BSAFEVaultId)
 
-// Create a transaction
-const tx = await vault.BSAFEIncludeTransaction(transfer);
+//from any of the instances we will be able to generate a transaction
+const transf: IPayloadTransfer = {
+    assets: [
+        {
+            amount: bn(1_000_000_000_000_000).format(),
+            assetId: assets['ETH'],
+            to: accounts['STORE'].address
+        },
+        {
+            amount: bn(1_000_000_000_000_000).format(),
+            assetId: assets['sETH'],
+            to: accounts['STORE'].address
+        }
+    ],
+    BSAFEAuth: auth.BSAFEAuth
+};
 
-// Insert your transaction hash signed by witnesses
-tx.BSAFEScript.witnesses = [
-    await signin(tx.getHashTxId(), 'USER_1'),
-    await signin(tx.getHashTxId(), 'USER_2'),
-]
+//You can also instantiate a transaction at any time, passing the bsafe api id to it
+const transaction = await vault.BSAFEIncludeTransaction(transf)
+const _transaction = await vault.BSAFEIncludeTransaction(transaction.BSAFETransactionId)
 
-// Signin transaction
-const result = await tx.send().then(async (tx) => await tx.wait());
+await transaction.send()
+const result = await transaction.wait()
+
 ```
