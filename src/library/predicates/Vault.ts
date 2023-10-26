@@ -1,7 +1,7 @@
 import { Predicate, Provider } from 'fuels';
 
 import { IListTransactions, IPredicate, IPredicateService, IBSAFEAuth, PredicateService } from '../api';
-import { IPayloadTransfer, Transfer, predicateABI, predicateBIN, makeHashPredicate, makeSubscribers, IConfVault, IPayloadVault, IVault } from '../';
+import { IPayloadTransfer, Transfer, predicateABI, predicateBIN, makeHashPredicate, makeSubscribers, IConfVault, IPayloadVault, IVault, IBSAFEApi } from '../';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -25,7 +25,7 @@ export class Vault extends Predicate<[]> implements IVault {
      * Creates an instance of the Predicate class.
      *
      * @param configurable - The parameters of signature requirements.
-     *      @param HASH_PREDUCATE - Hash to works an unic predicate, is not required, but to instance old predicate is an number array
+     *      @param HASH_PREDICATE - Hash to works an unic predicate, is not required, but to instance old predicate is an number array
      *      @param SIGNATURES_COUNT - Number of signatures required of predicate
      *      @param SIGNERS - Array string of predicate signers
      * @param abi - The JSON abi to BSAFE multisig.
@@ -34,7 +34,7 @@ export class Vault extends Predicate<[]> implements IVault {
      * @param BSAFEAuth - The auth to BSAFE API.
      **/
 
-    constructor({ configurable, abi, bytecode, transactionRecursiveTimeout, BSAFEAuth, name, description, BSAFEVaultId }: IPayloadVault) {
+    protected constructor({ configurable, provider, abi, bytecode, transactionRecursiveTimeout, BSAFEAuth, name, description, BSAFEVaultId }: IPayloadVault) {
         const _abi = abi ? JSON.parse(abi) : predicateABI;
         const _bin = bytecode ? bytecode : predicateBIN;
         const _network = configurable.network;
@@ -42,14 +42,12 @@ export class Vault extends Predicate<[]> implements IVault {
         Vault.validations(configurable);
 
         const _configurable = Vault.makePredicate(configurable);
-        const provider = new Provider(_network);
-
-        super(_bin, _chainId, _abi, provider, _configurable);
+        super(_bin, provider, _abi, _configurable);
 
         this.bin = _bin;
         this.abi = _abi;
         this.configurable = this.configurable = {
-            HASH_PREDUCATE: _configurable.HASH_PREDUCATE as number[],
+            HASH_PREDICATE: _configurable.HASH_PREDICATE as number[],
             SIGNATURES_COUNT: _configurable.SIGNATURES_COUNT as number,
             SIGNERS: _configurable.SIGNERS as string[],
             network: _network,
@@ -65,7 +63,7 @@ export class Vault extends Predicate<[]> implements IVault {
             const _auth = BSAFEAuth;
             this.auth = _auth;
             this.api = new PredicateService(_auth);
-            this.create();
+            this.createOnService();
         }
     }
 
@@ -98,35 +96,53 @@ export class Vault extends Predicate<[]> implements IVault {
      * @param predicateAddress - address of vault on BSAFE API. [optional]
      * @returns thire is no return, but if an error is detected it is trigged
      */
-    static async instanceBSAFEVault(
-        BSAFEAuth: IBSAFEAuth,
-        existis: {
-            BSAFEPredicateId?: string;
-            predicateAddress?: string;
-        }
-    ) {
-        const { BSAFEPredicateId, predicateAddress } = existis;
-        if (predicateAddress == undefined && BSAFEPredicateId == undefined) {
-            throw new Error('predicateAddress or BSAFEPredicateId is required');
-        }
+    static async create(params: IPayloadVault | IBSAFEApi) {
+        const isWithApi = ('predicateAddress' in params || 'id' in params) && 'address' in params && 'token' in params;
+        const isNew = 'configurable' in params && 'provider';
+        if (isWithApi) {
+            const { id, predicateAddress, token, address } = params;
+            const hasId = 'id' in params && id;
 
-        const api = new PredicateService(BSAFEAuth);
-        const result = BSAFEPredicateId ? await api.findById(BSAFEPredicateId) : predicateAddress && (await api.findByAddress(predicateAddress));
+            if (predicateAddress == undefined && id == undefined) {
+                throw new Error('predicateAddress or BSAFEPredicateId is required');
+            }
 
-        if (!result) {
-            throw new Error('BSAFEVault not found');
+            const api = new PredicateService({
+                address,
+                token
+            });
+
+            const result = hasId ? await api.findById(id) : predicateAddress && (await api.findByAddress(predicateAddress));
+            if (!result) {
+                throw new Error('BSAFEVault not found');
+            }
+
+            const { configurable, abi, bytes, name, description, id: BSAFEVaultId, provider } = result;
+            return new Vault({
+                configurable: JSON.parse(configurable),
+                provider: await Provider.create(provider),
+                abi,
+                bytecode: bytes,
+                name,
+                description,
+                BSAFEVaultId
+            });
+        } else if (isNew) {
+            const { configurable, provider, name, description, abi, bytecode, BSAFEAuth, BSAFEVaultId } = params;
+            console.log('[IS_NEW]: ', BSAFEVaultId);
+            return new Vault({
+                configurable,
+                provider,
+                abi,
+                bytecode,
+                name,
+                description,
+                BSAFEAuth,
+                BSAFEVaultId
+            });
+        } else {
+            throw new Error('Required props to instance a vault');
         }
-
-        const { configurable, abi, bytes, name, description, id } = result;
-        return new Vault({
-            configurable: JSON.parse(configurable),
-            abi,
-            bytecode: bytes,
-            BSAFEAuth: BSAFEAuth,
-            name,
-            description,
-            BSAFEVaultId: id
-        });
     }
 
     /**
@@ -147,7 +163,7 @@ export class Vault extends Predicate<[]> implements IVault {
      *
      * @returns if auth is not defined, throw an error
      */
-    private async create() {
+    private async createOnService() {
         this.verifyAuth();
         const { id, ...rest } = await this.api.create({
             name: this.name,
@@ -175,11 +191,11 @@ export class Vault extends Predicate<[]> implements IVault {
      * @returns an formatted object to instance a new predicate
      */
     private static makePredicate(configurable: IConfVault) {
-        const hasExists = configurable.HASH_PREDUCATE;
+        const hasExists = configurable.HASH_PREDICATE;
         const _configurable: { [name: string]: unknown } = {
             SIGNATURES_COUNT: configurable.SIGNATURES_COUNT,
             SIGNERS: makeSubscribers(configurable.SIGNERS),
-            HASH_PREDUCATE: hasExists ? configurable.HASH_PREDUCATE : makeHashPredicate()
+            HASH_PREDICATE: hasExists ? configurable.HASH_PREDICATE : makeHashPredicate()
         };
 
         return _configurable;

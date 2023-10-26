@@ -4,6 +4,7 @@ import { IAuthService, IBSAFEAuth } from './types';
 import { IDefaultAccount } from '../../../mocks/accounts';
 import { v4 as uuidv4 } from 'uuid';
 import { defaultConfigurable } from '../../../configurables';
+import { LocalProvider } from '../../../utils';
 
 // woking to local node just fine
 export class AuthService implements IAuthService {
@@ -67,7 +68,8 @@ export class AuthService implements IAuthService {
 
     private async signer(message: string) {
         if (!this.user || !this.auth || !this.user.privateKey) return;
-        const signer = Wallet.fromPrivateKey(this.user.privateKey, this.auth.provider);
+
+        const signer = Wallet.fromPrivateKey(this.user.privateKey, new LocalProvider());
         return await signer.signMessage(message);
     }
 }

@@ -1,7 +1,7 @@
 import { Provider, TransactionStatus, bn } from 'fuels';
 import { IPayloadTransfer, IPayloadVault, Vault } from '../library';
 import { ITransferAsset } from '../library/assets';
-import { rootWallet, sendPredicateCoins, signin } from '../utils';
+import { rootWallet, sendPredicateCoins, signin, delay, newVault } from '../utils';
 import { defaultConfigurable } from '../configurables';
 
 import { accounts } from '../mocks/accounts';
@@ -10,66 +10,45 @@ import { IUserAuth, authService, assets } from '../mocks';
 describe('Test Vault', () => {
     let chainId: number;
     let auth: IUserAuth;
-
-    const fuelProvider = new Provider(defaultConfigurable['provider']);
-
-    const signers = [accounts['USER_1'].address, accounts['USER_2'].address, accounts['USER_3'].address];
+    let provider: Provider;
+    let signers: string[];
 
     beforeAll(async () => {
-        chainId = await fuelProvider.getChainId();
+        provider = await Provider.create(defaultConfigurable['provider']);
+        chainId = await provider.getChainId();
         auth = await authService(['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4']);
+        signers = [accounts['USER_1'].address, accounts['USER_2'].address, accounts['USER_3'].address];
     });
-
-    const delay = (ms: number): Promise<void> => {
-        return new Promise((resolve) => setTimeout(resolve, ms));
-    };
-
-    // -> create predicate with USER_1 owner
-    const newVault = async () => {
-        const VaultPayload: IPayloadVault = {
-            configurable: {
-                SIGNATURES_COUNT: 3,
-                SIGNERS: signers,
-                network: fuelProvider.url,
-                chainId: chainId
-            },
-            BSAFEAuth: auth['USER_1'].BSAFEAuth
-        };
-        const vault = new Vault(VaultPayload);
-
-        await sendPredicateCoins(vault, bn(1_000_000_000), 'sETH', rootWallet);
-        await sendPredicateCoins(vault, bn(1_000_000_000), 'ETH', rootWallet);
-
-        return vault;
-    };
 
     test('Create an inválid vault', async () => {
         const VaultPayload: IPayloadVault = {
             configurable: {
-                HASH_PREDUCATE: undefined,
+                HASH_PREDICATE: undefined,
                 SIGNATURES_COUNT: 3,
                 SIGNERS: signers,
-                network: fuelProvider.url,
+                network: provider.url,
                 chainId: chainId
             },
+            provider,
             BSAFEAuth: auth['USER_1'].BSAFEAuth
         };
 
         VaultPayload.configurable.SIGNATURES_COUNT = 0;
-        expect(() => new Vault(VaultPayload)).toThrow('SIGNATURES_COUNT is required must be granter than zero');
+
+        await expect(Vault.create(VaultPayload)).rejects.toThrow('SIGNATURES_COUNT is required must be granter than zero');
 
         VaultPayload.configurable.SIGNATURES_COUNT = 3;
         VaultPayload.configurable.SIGNERS = [];
-        expect(() => new Vault(VaultPayload)).toThrow('SIGNERS must be greater than zero');
+        await expect(Vault.create(VaultPayload)).rejects.toThrow('SIGNERS must be greater than zero');
 
         VaultPayload.configurable.SIGNERS = signers;
         VaultPayload.configurable.SIGNATURES_COUNT = 5;
 
-        expect(() => new Vault(VaultPayload)).toThrow('Required Signers must be less than signers');
+        await expect(Vault.create(VaultPayload)).rejects.toThrow('Required Signers must be less than signers');
     });
 
     test('Created an valid vault', async () => {
-        const vault = await newVault();
+        const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
         await sendPredicateCoins(vault, bn(1_000_000), 'sETH', rootWallet);
         await sendPredicateCoins(vault, bn(1_000_000), 'ETH', rootWallet);
 
@@ -86,12 +65,12 @@ describe('Test Vault', () => {
     });
 
     test(
-        'Instance an old Vault by predicate address',
+        'Instance an old Vault by BSAFEPredicate ID',
         async () => {
-            const vault = await newVault();
-
-            const auxVault = await Vault.instanceBSAFEVault(auth['USER_1'].BSAFEAuth, {
-                BSAFEPredicateId: vault.BSAFEVaultId
+            const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
+            const auxVault = await Vault.create({
+                ...auth['USER_1'].BSAFEAuth,
+                id: vault.BSAFEVaultId
             });
             expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
         },
@@ -101,9 +80,10 @@ describe('Test Vault', () => {
     test(
         'Instance an old Vault by predicate address',
         async () => {
-            const vault = await newVault();
+            const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
 
-            const auxVault = await Vault.instanceBSAFEVault(auth['USER_1'].BSAFEAuth, {
+            const auxVault = await Vault.create({
+                ...auth['USER_1'].BSAFEAuth,
                 predicateAddress: vault.address.toString()
             });
             expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
@@ -114,7 +94,8 @@ describe('Test Vault', () => {
     test(
         'Sign transactions with invalid users',
         async () => {
-            const vault = await newVault();
+            console.log('[INSTANCE] invalid');
+            const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
             const _assets: ITransferAsset[] = [
                 {
                     amount: bn(1_000_000).format(),
@@ -142,7 +123,7 @@ describe('Test Vault', () => {
     test(
         'Created an valid transaction to vault and instance old transaction',
         async () => {
-            const vault = await newVault();
+            const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
             const _assets: ITransferAsset[] = [
                 {
                     amount: bn(1_000).format(),
@@ -184,7 +165,7 @@ describe('Test Vault', () => {
     );
 
     test('Instance old transaction', async () => {
-        const vault = await newVault();
+        const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
         const _assetsA: IPayloadTransfer = {
             assets: [
                 {
@@ -208,7 +189,7 @@ describe('Test Vault', () => {
     });
 
     test('Send an transaction to with vault without balance', async () => {
-        const vault = await newVault();
+        const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
         const _assetsA: IPayloadTransfer = {
             assets: [
                 {
@@ -241,7 +222,7 @@ describe('Test Vault', () => {
     test(
         'Find a transactions of predicate and return an list of Transfer instances',
         async () => {
-            const vault = await newVault();
+            const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
             const _assetsA: IPayloadTransfer = {
                 assets: [
                     {
@@ -288,11 +269,12 @@ describe('Test Vault', () => {
             configurable: {
                 SIGNATURES_COUNT: 3,
                 SIGNERS: signers,
-                network: fuelProvider.url,
+                network: provider.url,
                 chainId: chainId
-            }
+            },
+            provider
         };
-        const vault = new Vault(VaultPayload);
+        const vault = await Vault.create(VaultPayload);
 
         await sendPredicateCoins(vault, bn(1_000_000_000), 'sETH', rootWallet);
         await sendPredicateCoins(vault, bn(1_000_000_000), 'ETH', rootWallet);
@@ -306,11 +288,12 @@ describe('Test Vault', () => {
             configurable: {
                 SIGNATURES_COUNT: 3,
                 SIGNERS: signers,
-                network: fuelProvider.url,
+                network: provider.url,
                 chainId: chainId
-            }
+            },
+            provider
         };
-        const vault = new Vault(VaultPayload);
+        const vault = await Vault.create(VaultPayload);
 
         await sendPredicateCoins(vault, bn(1_000_000_000), 'sETH', rootWallet);
         await sendPredicateCoins(vault, bn(1_000_000_000), 'ETH', rootWallet);

@@ -1,10 +1,11 @@
+import { Provider } from 'fuels';
 import { IBSAFEAuth } from '../api/auth/types';
 import { IListTransactions } from '../api/predicates';
 import { ITransferAsset } from '../assets';
 import { IPayloadTransfer, Transfer } from '../transfers';
 
 export interface IConfVault {
-    HASH_PREDUCATE?: number[];
+    HASH_PREDICATE?: number[];
     SIGNATURES_COUNT: number;
     SIGNERS: string[];
     network: string;
@@ -22,6 +23,7 @@ export interface IInstanceNewTransfer {
 
 export interface IPayloadVault {
     configurable: IConfVault;
+    provider: Provider;
     name?: string;
     description?: string;
     transactionRecursiveTimeout?: number;
@@ -29,6 +31,10 @@ export interface IPayloadVault {
     bytecode?: string;
     BSAFEAuth?: IBSAFEAuth;
     BSAFEVaultId?: string;
+}
+export interface IBSAFEApi extends IBSAFEAuth {
+    id?: string;
+    predicateAddress?: string;
 }
 
 export interface IVault {

@@ -227,6 +227,7 @@ export class Transfer implements ITransfer {
             return new TransactionResponse(transactionId, this.vault.provider);
         } else {
             const transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
+            console.log('[TRANSACTION_RESUME]: ', transaction.resume);
             switch (transaction.status) {
                 case TransactionStatus.PENDING_SENDER:
                     await this.service.send(this.BSAFETransactionId);
