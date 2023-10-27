@@ -146,6 +146,7 @@ export class Transfer implements ITransfer {
      * @param params - If string, instance old transaction, if object, instance new transaction
      */
     private async instanceOldTransaction() {
+        this.verifyAuth();
         const { witnesses, assets } = await this.service.findByTransactionID(this.BSAFETransactionId);
         const _witnesses: string[] = [];
         witnesses.map((item) => {
@@ -227,7 +228,6 @@ export class Transfer implements ITransfer {
             return new TransactionResponse(transactionId, this.vault.provider);
         } else {
             const transaction = await this.service.findByTransactionID(this.BSAFETransactionId);
-            console.log('[TRANSACTION_RESUME]: ', transaction.resume);
             switch (transaction.status) {
                 case TransactionStatus.PENDING_SENDER:
                     await this.service.send(this.BSAFETransactionId);
