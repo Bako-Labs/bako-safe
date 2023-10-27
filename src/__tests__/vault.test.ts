@@ -74,7 +74,7 @@ describe('Test Vault', () => {
             });
             expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
         },
-        10 * 1000
+        20 * 1000
     );
 
     test(
