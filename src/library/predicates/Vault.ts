@@ -34,7 +34,7 @@ export class Vault extends Predicate<[]> implements IVault {
      * @param BSAFEAuth - The auth to BSAFE API.
      **/
 
-    protected constructor({ configurable, provider, abi, bytecode, transactionRecursiveTimeout, BSAFEAuth, name, description, BSAFEVaultId }: IPayloadVault) {
+    protected constructor({ configurable, provider, abi, bytecode, transactionRecursiveTimeout, name, description, BSAFEVaultId }: IPayloadVault) {
         const _abi = abi ? JSON.parse(abi) : predicateABI;
         const _bin = bytecode ? bytecode : predicateBIN;
         const _network = configurable.network;
