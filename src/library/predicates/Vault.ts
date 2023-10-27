@@ -171,7 +171,7 @@ export class Vault extends Predicate<[]> implements IVault {
             predicateAddress: this.address.toString(),
             minSigners: this.configurable.SIGNATURES_COUNT,
             addresses: this.configurable.SIGNERS,
-            owner: this.address.toString(),
+            owner: this.auth.address,
             bytes: this.bin,
             abi: JSON.stringify(this.abi),
             configurable: JSON.stringify(this.configurable),
