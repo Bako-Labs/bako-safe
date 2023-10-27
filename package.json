@@ -15,7 +15,7 @@
     "build:cjs": "tsc --module CommonJS --outDir dist/cjs",
     "build:sway": "chmod +x ./scripts/build-sway.sh && ./scripts/build-sway.sh",
     "build:version": "chmod +x ./scripts/update-version.sh && ./scripts/update-version.sh",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles --forceExit --verbose",
     "chain:start": "make -C ./docker/chain start",
     "chain:stop": "make -C ./docker/chain stop",
     "chain:clean": "make -C ./docker/chain clean",

@@ -1,5 +1,4 @@
 import { AuthService, IBSAFEAuth } from '../library/api/auth';
-import { defaultConfigurable } from '../configurables';
 
 import { IAccountKeys, IDefaultAccount, accounts } from '../mocks/accounts';
 export interface IAuthAccount extends IDefaultAccount {
@@ -8,12 +7,12 @@ export interface IAuthAccount extends IDefaultAccount {
 export interface IUserAuth {
     [key: string]: IAuthAccount;
 }
-export const authService = async (_accounts: IAccountKeys[]) => {
+export const authService = async (_accounts: IAccountKeys[], provider: string) => {
     const result: { [key: string]: IAuthAccount } = {};
     for await (const acc of _accounts) {
         const account: IDefaultAccount = accounts[acc];
         const auth = new AuthService();
-        await auth.createUser(account, defaultConfigurable.provider);
+        await auth.createUser(account, provider);
         await auth.createSession();
 
         result[acc] = {
