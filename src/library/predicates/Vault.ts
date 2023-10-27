@@ -58,13 +58,6 @@ export class Vault extends Predicate<[]> implements IVault {
         this.description = description ? description : undefined;
         this.BSAFEVaultId = BSAFEVaultId!;
         this.transactionRecursiveTimeout = transactionRecursiveTimeout ? transactionRecursiveTimeout : 1000;
-
-        if (BSAFEAuth) {
-            const _auth = BSAFEAuth;
-            this.auth = _auth;
-            this.api = new PredicateService(_auth);
-            this.createOnService();
-        }
     }
 
     /**
@@ -129,7 +122,7 @@ export class Vault extends Predicate<[]> implements IVault {
             });
         } else if (isNew) {
             const { configurable, provider, name, description, abi, bytecode, BSAFEAuth, BSAFEVaultId } = params;
-            return new Vault({
+            const aux = new Vault({
                 configurable,
                 provider,
                 abi,
@@ -139,6 +132,14 @@ export class Vault extends Predicate<[]> implements IVault {
                 BSAFEAuth,
                 BSAFEVaultId
             });
+            if (BSAFEAuth) {
+                const _auth = BSAFEAuth;
+                aux.auth = _auth;
+                aux.api = new PredicateService(_auth);
+                await aux.createOnService();
+            }
+
+            return aux;
         } else {
             throw new Error('Required props to instance a vault');
         }
