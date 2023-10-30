@@ -114,7 +114,7 @@ export class Vault extends Predicate<[]> implements IVault {
             }
 
             const { configurable, abi, bytes, name, description, id: BSAFEVaultId, provider } = result;
-            return new Vault({
+            const vault = new Vault({
                 configurable: JSON.parse(configurable),
                 provider: await Provider.create(provider),
                 abi,
@@ -122,12 +122,16 @@ export class Vault extends Predicate<[]> implements IVault {
                 name,
                 description,
                 BSAFEVaultId,
-                BSAFEVault: result,
-                BSAFEAuth: {
-                    address,
-                    token
-                }
+                BSAFEVault: result
             });
+
+            vault.api = api;
+            vault.auth = {
+                address,
+                token
+            };
+
+            return vault;
         } else if (isNew) {
             const { configurable, provider, name, description, abi, bytecode, BSAFEAuth, BSAFEVaultId } = params;
             const aux = new Vault({
