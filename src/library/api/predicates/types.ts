@@ -18,7 +18,7 @@ export interface IListTransactions extends GetTransactionParams, Omit<GetTransac
 
 export interface IPredicate extends IPredicatePayload {
     id: string;
-    completeUser: {
+    completeAddress: {
         name?: string;
         avatar: string;
         address: string;
