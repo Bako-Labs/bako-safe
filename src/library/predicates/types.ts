@@ -1,6 +1,6 @@
 import { Provider } from 'fuels';
 import { IBSAFEAuth } from '../api/auth/types';
-import { IListTransactions } from '../api/predicates';
+import { IListTransactions, IPredicate } from '../api/predicates';
 import { ITransferAsset } from '../assets';
 import { IPayloadTransfer, Transfer } from '../transfers';
 
@@ -31,6 +31,7 @@ export interface IPayloadVault {
     bytecode?: string;
     BSAFEAuth?: IBSAFEAuth;
     BSAFEVaultId?: string;
+    BSAFEVault?: IPredicate;
 }
 export interface IBSAFEApi extends IBSAFEAuth {
     id?: string;

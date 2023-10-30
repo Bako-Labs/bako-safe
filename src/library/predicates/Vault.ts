@@ -34,7 +34,7 @@ export class Vault extends Predicate<[]> implements IVault {
      * @param BSAFEAuth - The auth to BSAFE API.
      **/
 
-    protected constructor({ configurable, provider, abi, bytecode, transactionRecursiveTimeout, name, description, BSAFEVaultId }: IPayloadVault) {
+    protected constructor({ configurable, provider, abi, bytecode, transactionRecursiveTimeout, name, description, BSAFEVaultId, BSAFEVault }: IPayloadVault) {
         const _abi = abi ? JSON.parse(abi) : predicateABI;
         const _bin = bytecode ? bytecode : predicateBIN;
         const _network = configurable.network;
@@ -58,6 +58,7 @@ export class Vault extends Predicate<[]> implements IVault {
         this.description = description ? description : undefined;
         this.BSAFEVaultId = BSAFEVaultId!;
         this.transactionRecursiveTimeout = transactionRecursiveTimeout ? transactionRecursiveTimeout : 1000;
+        this.BSAFEVault = BSAFEVault!;
     }
 
     /**
@@ -118,7 +119,8 @@ export class Vault extends Predicate<[]> implements IVault {
                 bytecode: bytes,
                 name,
                 description,
-                BSAFEVaultId
+                BSAFEVaultId,
+                BSAFEVault: result
             });
         } else if (isNew) {
             const { configurable, provider, name, description, abi, bytecode, BSAFEAuth, BSAFEVaultId } = params;

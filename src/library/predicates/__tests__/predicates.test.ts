@@ -72,6 +72,7 @@ describe('[PREDICATES]', () => {
                 id: vault.BSAFEVaultId
             });
             expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
+            expect(auxVault.BSAFEVault.id).toStrictEqual(vault.BSAFEVaultId);
         },
         20 * 1000
     );

@@ -1,6 +1,6 @@
 {
   "name": "bsafe",
-  "version": "0.0.79",
+  "version": "0.0.83",
   "description": "A signature validation package built based on sway in the fuel network",
   "author": "InfinityBase - Guilherme Roque",
   "license": "Apache-2.0",
