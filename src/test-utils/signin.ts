@@ -9,7 +9,7 @@ export const signin = async (tx_hash: string, account: 'FULL' | 'USER_1' | 'USER
     const signer = Wallet.fromPrivateKey(accounts[account].privateKey, fuelProvider);
     const tx = await signer.signMessage(tx_hash);
     if (!!auth && BSAFETransactionId) {
-        const acc = Address.fromString(accounts[account].address).toHexString();
+        const acc = Address.fromString(accounts[account].address).toString();
         const serviceTransactions = new TransactionService(auth);
         return await serviceTransactions.sign(BSAFETransactionId, acc, tx);
     }

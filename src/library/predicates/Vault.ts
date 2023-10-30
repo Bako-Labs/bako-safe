@@ -3,6 +3,7 @@ import { Predicate, Provider } from 'fuels';
 import { IListTransactions, IPredicate, IPredicateService, IBSAFEAuth, PredicateService } from '../api';
 import { IPayloadTransfer, Transfer, predicateABI, predicateBIN, makeHashPredicate, makeSubscribers, IConfVault, IPayloadVault, IVault, IBSAFEApi } from '../';
 import { v4 as uuidv4 } from 'uuid';
+import { AddressUtils } from '../address/Address';
 
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
@@ -172,7 +173,7 @@ export class Vault extends Predicate<[]> implements IVault {
             description: this.description,
             predicateAddress: this.address.toString(),
             minSigners: this.configurable.SIGNATURES_COUNT,
-            addresses: this.configurable.SIGNERS,
+            addresses: AddressUtils.hex2string(this.configurable.SIGNERS),
             owner: this.auth.address,
             bytes: this.bin,
             abi: JSON.stringify(this.abi),
