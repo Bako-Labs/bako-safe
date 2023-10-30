@@ -1,7 +1,7 @@
 import { ScriptTransactionRequest, TransactionRequest, TransactionResponse, bn, hashTransaction, hexlify, transactionRequestify } from 'fuels';
 import { ICreateTransactionPayload, ITransaction, ITransactionService, TransactionService, TransactionStatus, IBSAFEAuth, ITransactionResume } from '../api';
 import { Asset, Vault, IAssetGroupById, IAssetTransaction } from '../';
-import { delay } from '../../utils';
+import { delay } from '../../test-utils';
 import { defaultConfigurable } from '../../configurables';
 import { IPayloadTransfer, ITransfer } from './types';
 import { BSAFEScriptTransaction } from './ScriptTransaction';

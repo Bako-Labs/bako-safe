@@ -4,7 +4,7 @@ import { IAuthService, IBSAFEAuth } from './types';
 import { IDefaultAccount } from '../../../mocks/accounts';
 import { v4 as uuidv4 } from 'uuid';
 import { defaultConfigurable } from '../../../configurables';
-import { LocalProvider } from '../../../utils';
+import { LocalProvider } from '../../../test-utils';
 
 // woking to local node just fine
 export class AuthService implements IAuthService {

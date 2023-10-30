@@ -1,3 +1,3 @@
 export * from './accounts';
 export * from './assets';
-export * from '../utils';
+export * from '../test-utils';

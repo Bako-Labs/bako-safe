@@ -1,7 +1,7 @@
 import { Provider, TransactionStatus, bn } from 'fuels';
 import { IPayloadTransfer, IPayloadVault, Vault } from '../..';
 import { ITransferAsset } from '../../assets';
-import { rootWallet, sendPredicateCoins, signin, delay, newVault } from '../../../utils';
+import { rootWallet, sendPredicateCoins, signin, delay, newVault } from '../../../test-utils';
 import { defaultConfigurable } from '../../../configurables';
 
 import { accounts } from '../../../mocks/accounts';
