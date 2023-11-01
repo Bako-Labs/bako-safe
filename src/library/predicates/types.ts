@@ -3,6 +3,7 @@ import { IBSAFEAuth } from '../api/auth/types';
 import { IListTransactions, IPredicate } from '../api/predicates';
 import { ITransferAsset } from '../assets';
 import { IPayloadTransfer, Transfer } from '../transfers';
+import { ITransaction } from '../api';
 
 export interface IConfVault {
     HASH_PREDICATE?: number[];
@@ -42,6 +43,6 @@ export interface IVault {
     getAbi: () => { [name: string]: unknown };
     getBin: () => string;
     getConfigurable: () => IConfVault;
-    BSAFEGetTransactions: (params?: IListTransactions) => Promise<Transfer[]>;
+    BSAFEGetTransactions: (params?: IListTransactions) => Promise<ITransaction[]>;
     BSAFEIncludeTransaction: (params: IPayloadTransfer | string) => Promise<Transfer>;
 }

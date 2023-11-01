@@ -23,10 +23,17 @@ export interface ICreateTransactionPayload {
     gasUsed?: string;
 }
 
+export enum WitnessStatus {
+    REJECTED = 'REJECTED',
+    DONE = 'DONE',
+    PENDING = 'PENDING'
+}
+
 export interface IWitnesses {
     id: string;
     signature: string;
     account: string;
+    status: WitnessStatus;
     createdAt: string;
     updatedAt: string;
 }

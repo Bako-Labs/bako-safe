@@ -235,20 +235,11 @@ export class Vault extends Predicate<[]> implements IVault {
      */
     public async BSAFEGetTransactions(params?: IListTransactions) {
         this.verifyAuth();
-        const result: Transfer[] = [];
 
-        const BSAFEtransactions = await this.api.listPredicateTransactions({
+        return this.api.listPredicateTransactions({
             predicateId: [this.BSAFEVaultId],
             ...params
         });
-
-        for await (const BSAFEtransaction of BSAFEtransactions) {
-            const _transfer = new Transfer(this, this.auth);
-            await _transfer.instanceTransaction(BSAFEtransaction);
-            result.push(_transfer);
-        }
-
-        return result;
     }
 
     /**
