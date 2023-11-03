@@ -1,43 +1,84 @@
-import { TransactionRequest, TransactionStatus } from 'fuels';
+import {
+  ScriptTransactionRequest,
+  TransactionRequest,
+  TransactionRequestLike,
+  TransactionStatus,
+} from 'fuels';
 import { ITransferAsset } from '../assets/types';
-import { ITransactionResume, IWitnesses } from '../api/transactions';
+import {
+  ITransactionResume,
+  ITransactionService,
+  IWitnesses,
+} from '../api/transactions';
+import { Vault } from '../predicates';
+import { IBSAFEAuth } from '../api';
+
+export interface TransferContructor {
+  name: string;
+  service?: ITransactionService;
+  witnesses: string[];
+  BSAFEScript: ScriptTransactionRequest;
+  transactionRequest: TransactionRequest;
+}
+
+export type TransferFactoryParam =
+  | IFormatTransfer
+  | string
+  | TransactionRequestLike;
+
+export interface TransferFactory {
+  auth?: IBSAFEAuth;
+  transfer: TransferFactoryParam;
+  vault: Vault;
+}
 
 export interface IPayloadTransfer {
-    assets: ITransferAsset[];
-    witnesses?: string[];
-    name?: string;
+  assets: ITransferAsset[];
+  witnesses?: string[];
+  name?: string;
+}
+
+export interface IFormatTransfer {
+  name: string;
+  witnesses?: string[];
+  assets: ITransferAsset[];
 }
 
 export interface IInstanceTransfer {
-    txData: TransactionRequest;
-    hash: string;
+  txData: TransactionRequest;
+  hash: string;
 }
 
 export interface IRequiredWitnesses {
-    required: number;
-    signed: number;
-    witnesses: IWitnesses[];
+  required: number;
+  signed: number;
+  witnesses: IWitnesses[];
 }
 
 export interface ITransferResult {
-    status: TransactionStatus;
-    block?: string;
-    witnesses?: string[];
-    outputs?: ITransferAsset[];
-    bsafeID?: string;
-    fee?: string;
-    gasUsed?: string;
+  status: TransactionStatus;
+  block?: string;
+  witnesses?: string[];
+  outputs?: ITransferAsset[];
+  bsafeID?: string;
+  fee?: string;
+  gasUsed?: string;
 }
 
 export interface ISendTransaction {
-    status: string;
-    block: string;
-    gasUsed: string;
+  status: string;
+  block: string;
+  gasUsed: string;
+}
+
+export enum TransferInstanceError {
+  REQUIRED_AUTH = 'Required credentials',
+  INVALID_PARAMETER = 'Invalid instance parameters',
 }
 
 export interface ITransfer {
-    send(): void;
-    getHashTxId(): string;
-    getScript(): TransactionRequest;
-    wait(): Promise<ITransactionResume | undefined>;
+  send(): void;
+  getScript(): TransactionRequest;
+  wait(): Promise<ITransactionResume | undefined>;
+  getAssets(): ITransferAsset[];
 }

@@ -1,6 +1,6 @@
 import { Api } from '../api';
 import { IBSAFEAuth } from '../auth/types';
-import { ICreateTransactionPayload, ITransactionService } from './types';
+import {ICreateTransactionPayload, ITransaction, ITransactionService} from './types';
 
 export class TransactionService extends Api implements ITransactionService {
     constructor(auth: IBSAFEAuth) {
@@ -8,7 +8,7 @@ export class TransactionService extends Api implements ITransactionService {
     }
 
     public async create(payload: ICreateTransactionPayload) {
-        const { data } = await this.client.post('/transaction', payload);
+        const { data } = await this.client.post<ITransaction>('/transaction', payload);
 
         return data;
     }
@@ -20,7 +20,7 @@ export class TransactionService extends Api implements ITransactionService {
     }
 
     public async findByTransactionID(transactionId: string) {
-        const { data } = await this.client.get(`/transaction/${transactionId}`);
+        const { data } = await this.client.get<ITransaction>(`/transaction/${transactionId}`);
 
         return data;
     }
