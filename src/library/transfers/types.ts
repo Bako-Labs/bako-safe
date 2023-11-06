@@ -13,7 +13,7 @@ import {
 import { Vault } from '../predicates';
 import { IBSAFEAuth } from '../api';
 
-export interface TransferContructor {
+export interface TransferConstructor {
   name: string;
   service?: ITransactionService;
   witnesses: string[];
@@ -22,8 +22,8 @@ export interface TransferContructor {
 }
 
 export type TransferFactoryParam =
-  | IFormatTransfer
   | string
+  | IFormatTransfer
   | TransactionRequestLike;
 
 export interface TransferFactory {

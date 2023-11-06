@@ -19,7 +19,7 @@ import {
   Asset,
   IFormatTransfer,
   ITransferAsset,
-  TransferContructor,
+  TransferConstructor,
   TransferFactory,
   TransferInstanceError,
   Vault,
@@ -68,7 +68,7 @@ export class Transfer implements ITransfer {
     transactionRequest,
     BSAFEScript,
     service,
-  }: TransferContructor) {
+  }: TransferConstructor) {
     this.name = name!;
     this.service = service;
     this.witnesses = witnesses!;
@@ -104,11 +104,7 @@ export class Transfer implements ITransfer {
       });
     }
 
-    const isNew =
-      'id' in transfer &&
-      'assets' in transfer &&
-      'witnesses' in transfer &&
-      !!vault;
+    const isNew = 'assets' in transfer && 'witnesses' in transfer && !!vault;
     if (isNew) {
       const assets = transfer.assets.map((assest) => ({
         assetId: assest.assetId,
@@ -134,7 +130,7 @@ export class Transfer implements ITransfer {
           hash: hashTxId,
           name: transfer.name,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
-          predicateAddress: transfer.vault.address.toString(),
+          predicateAddress: vault.address.toString(),
         }));
 
       return new Transfer({
@@ -248,7 +244,7 @@ export class Transfer implements ITransfer {
     vault,
     assets,
     witnesses,
-  }: IFormatTransfer) {
+  }: IFormatTransfer & { vault: Vault }) {
     const outputs = await Asset.assetsGroupByTo(assets);
     const coins = await Asset.assetsGroupById(assets);
     const transactionCoins = await Asset.addTransactionFee(
