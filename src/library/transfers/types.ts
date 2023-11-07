@@ -34,6 +34,7 @@ export interface TransferFactory {
   auth?: IBSAFEAuth;
   transfer: TransferFactoryParam;
   vault: Vault;
+  isSave?: boolean;
 }
 
 export interface IPayloadTransfer {

@@ -281,6 +281,7 @@ export class Vault extends Predicate<[]> implements IVault {
       auth: this.auth,
       vault: this,
       transfer: param,
+      isSave: true,
     });
   }
 
@@ -305,6 +306,7 @@ export class Vault extends Predicate<[]> implements IVault {
           transfer: transactionRequestify(
             Transfer.toTransactionRequest(transaction),
           ),
+          isSave: false,
         }),
       ),
     );

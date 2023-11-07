@@ -84,7 +84,7 @@ describe('[TRANSFERS]', () => {
         ),
       ).toBe(false);
 
-      transaction.send();
+      await transaction.send();
       const result = await transaction.wait();
       expect(result.status).toBe(TransactionStatus.success);
     },
@@ -220,7 +220,7 @@ describe('[TRANSFERS]', () => {
       ],
       witnesses: [],
     };
-    // Create a transaction
+
     await expect(vault.BSAFEIncludeTransaction(_assetsA)).rejects.toThrow(
       /not enough/,
     );

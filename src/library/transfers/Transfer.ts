@@ -89,7 +89,12 @@ export class Transfer implements ITransfer {
     }));
   }
 
-  public static async instance({ transfer, auth, vault }: TransferFactory) {
+  public static async instance({
+    transfer,
+    auth,
+    vault,
+    isSave,
+  }: TransferFactory) {
     const service = auth && new TransactionService(auth!);
     const transactionName = `Random Vault Name - ${uuidv4()}`;
 
@@ -184,22 +189,24 @@ export class Transfer implements ITransfer {
         amount: coin.amount.toString(),
       }));
 
-      const transaction =
-        auth &&
-        service &&
-        (await service.create({
+      let transaction: ITransaction | undefined = undefined;
+
+      if (auth && service && isSave) {
+        transaction = await service.create({
           assets,
           hash: hashTxId,
           name: transactionName,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           predicateAddress: vault.address.toString(),
-        }));
+        });
+      }
 
-      const witnesses = transaction?.witnesses
-        ? transaction.witnesses
-            .map((witness) => witness.signature)
-            .filter((signature) => !!signature)
-        : [];
+      const witnesses =
+        transaction && transaction.witnesses
+          ? transaction.witnesses
+              .map((witness) => witness.signature)
+              .filter((signature) => !!signature)
+          : [];
 
       return new Transfer({
         vault,
