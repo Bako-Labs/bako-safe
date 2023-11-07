@@ -6,6 +6,7 @@ import {
 } from 'fuels';
 import { ITransferAsset } from '../assets/types';
 import {
+  ITransaction,
   ITransactionResume,
   ITransactionService,
   IWitnesses,
@@ -17,8 +18,11 @@ export interface TransferConstructor {
   name: string;
   service?: ITransactionService;
   witnesses: string[];
-  BSAFEScript: ScriptTransactionRequest;
   transactionRequest: TransactionRequest;
+  BSAFEScript: ScriptTransactionRequest;
+  BSAFETransaction?: ITransaction;
+  BSAFETransactionId?: string;
+  vault: Vault;
 }
 
 export type TransferFactoryParam =

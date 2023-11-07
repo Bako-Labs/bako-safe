@@ -1,11 +1,5 @@
 import { Provider, TransactionStatus, bn } from 'fuels';
-import {
-  IPayloadTransfer,
-  IPayloadVault,
-  IFormatTransfer,
-  Vault,
-  Transfer,
-} from '../..';
+import { IPayloadVault, IFormatTransfer, Vault, Transfer } from '../..';
 import { ITransferAsset } from '../../assets';
 import {
   rootWallet,
@@ -53,6 +47,7 @@ describe('[TRANSFERS]', () => {
       const newTransfer: IFormatTransfer = {
         name: 'transfer_assests',
         assets: _assets,
+        witnesses: [],
       };
 
       const transaction = await vault.BSAFEIncludeTransaction(newTransfer);
@@ -107,16 +102,17 @@ describe('[TRANSFERS]', () => {
           to: accounts['STORE'].address,
         },
       ];
-      const newTransfer: IFormatTransfer = {
+      let newTransfer: IFormatTransfer = {
         name: 'transfer_assests',
         assets: _assets,
+        witnesses: [],
       };
-      const transaction = await vault.BSAFEIncludeTransaction(newTransfer);
+      let transaction = await vault.BSAFEIncludeTransaction(newTransfer);
 
       const signTimeout = async () => {
         await delay(5000);
         await signin(
-          Transfer.getHashTxId(),
+          transaction.getHashTxId(),
           'USER_3',
           auth['USER_3'].BSAFEAuth,
           transaction.BSAFETransactionId,
@@ -131,12 +127,14 @@ describe('[TRANSFERS]', () => {
         );
       };
 
-      const newTransfer: IPayloadTransfer = {
+      newTransfer = {
         assets: _assets,
+        name: 'transfer_assests',
+        witnesses: [],
       };
 
       // Create a transaction
-      const transaction = await vault.BSAFEIncludeTransaction(newTransfer);
+      transaction = await vault.BSAFEIncludeTransaction(newTransfer);
 
       // Signin transaction
       await signin(
@@ -146,7 +144,7 @@ describe('[TRANSFERS]', () => {
         transaction.BSAFETransactionId,
       );
 
-      const oldTransaction = await vault.BSAFEIncludeTransaction(
+      const oldTransaction = await vault.BSAFEGetTransaction(
         transaction.BSAFETransactionId,
       );
 
@@ -164,7 +162,8 @@ describe('[TRANSFERS]', () => {
 
   test('Instance old transaction', async () => {
     const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
-    const _assetsA: IPayloadTransfer = {
+    const _assetsA = {
+      name: 'Transaction A',
       assets: [
         {
           amount: bn(1_000).format(),
@@ -177,11 +176,12 @@ describe('[TRANSFERS]', () => {
           to: accounts['STORE'].address,
         },
       ],
+      witnesses: [],
     };
 
     // Create a transaction
     const transaction = await vault.BSAFEIncludeTransaction(_assetsA);
-    const transaction_aux = await vault.BSAFEIncludeTransaction(
+    const transaction_aux = await vault.BSAFEGetTransaction(
       transaction.BSAFETransactionId,
     );
 
@@ -192,7 +192,8 @@ describe('[TRANSFERS]', () => {
 
   test('Send an transaction to with vault without balance', async () => {
     const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
-    const _assetsA: IPayloadTransfer = {
+    const _assetsA = {
+      name: 'Transaction A',
       assets: [
         {
           amount: bn(1_000_000_000_000_000).format(),
@@ -205,9 +206,11 @@ describe('[TRANSFERS]', () => {
           to: accounts['STORE'].address,
         },
       ],
+      witnesses: [],
     };
 
-    const _assetsB: IPayloadTransfer = {
+    const _assetsB = {
+      name: '',
       assets: [
         {
           amount: bn(1_000_000_000_000_000).format(),
@@ -215,13 +218,14 @@ describe('[TRANSFERS]', () => {
           to: accounts['STORE'].address,
         },
       ],
+      witnesses: [],
     };
     // Create a transaction
     await expect(vault.BSAFEIncludeTransaction(_assetsA)).rejects.toThrow(
-      `Insufficient balance for ${assets['ETH']}`,
+      /not enough/,
     );
     await expect(vault.BSAFEIncludeTransaction(_assetsB)).rejects.toThrow(
-      `Insufficient balance for ${assets['sETH']}`,
+      /not enough/,
     );
   });
   test('Sent a transaction without BSAFEAuth', async () => {
@@ -239,7 +243,8 @@ describe('[TRANSFERS]', () => {
     await sendPredicateCoins(vault, bn(1_000_000_000), 'sETH', rootWallet);
     await sendPredicateCoins(vault, bn(1_000_000_000), 'ETH', rootWallet);
 
-    const _assetsA: IPayloadTransfer = {
+    const _assetsA = {
+      name: 'Transaction A',
       assets: [
         {
           amount: bn(1_000).format(),

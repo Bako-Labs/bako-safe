@@ -25,20 +25,21 @@ import { AddressUtils } from '../address/Address';
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
  */
-
 export class Vault extends Predicate<[]> implements IVault {
+  // private readonly RECURSIVE_TIMEOUT = 10000;
+
   private bin: string;
-  public BSAFEVaultId!: string;
-  private configurable: IConfVault;
   private abi: { [name: string]: unknown };
   private api!: IPredicateService;
   private auth!: IBSAFEAuth;
+  private configurable: IConfVault;
 
-  public transactionRecursiveTimeout: number;
   public name!: string;
-  public description?: string;
-  public BSAFEVault!: IPredicate;
   public provider: Provider;
+  public BSAFEVault!: IPredicate;
+  public BSAFEVaultId!: string;
+  public description?: string;
+  public transactionRecursiveTimeout: number;
 
   /**
    * Creates an instance of the Predicate class.
@@ -58,12 +59,12 @@ export class Vault extends Predicate<[]> implements IVault {
     provider,
     abi,
     bytecode,
-    transactionRecursiveTimeout,
     name,
     description,
     BSAFEVaultId,
     BSAFEVault,
     BSAFEAuth,
+    transactionRecursiveTimeout,
   }: IPayloadVault) {
     const _abi = abi ? JSON.parse(abi) : predicateABI;
     const _bin = bytecode ? bytecode : predicateBIN;
@@ -301,11 +302,27 @@ export class Vault extends Predicate<[]> implements IVault {
         Transfer.instance({
           vault: this,
           auth: this.auth,
-          transfer: transactionRequestify(JSON.parse(transaction.txData)),
+          transfer: transactionRequestify(
+            Transfer.toTransactionRequest(transaction),
+          ),
         }),
       ),
     );
   }
+
+  /**
+   * Return an list of transaction of this vault
+   *
+   * @returns an transaction list
+   */
+  public async BSAFEGetTransaction(transactionId: string) {
+    return Transfer.instance({
+      vault: this,
+      auth: this.auth,
+      transfer: transactionId,
+    });
+  }
+
   /**
    * Return abi of this vault
    *

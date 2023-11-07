@@ -37,7 +37,7 @@ export class Transfer implements ITransfer {
   public name!: string;
   public witnesses!: string[];
   public BSAFEScript: ScriptTransactionRequest;
-  public BSAFETrsanction!: ITransaction;
+  public BSAFETransaction!: ITransaction;
   public transactionRequest: TransactionRequest;
   public BSAFETransactionId!: string;
 
@@ -63,17 +63,23 @@ export class Transfer implements ITransfer {
   // }
 
   protected constructor({
+    vault,
     name,
     witnesses,
     transactionRequest,
     BSAFEScript,
     service,
+    BSAFETransaction,
+    BSAFETransactionId,
   }: TransferConstructor) {
     this.name = name!;
+    this.vault = vault;
     this.service = service;
     this.witnesses = witnesses!;
     this.BSAFEScript = BSAFEScript;
     this.transactionRequest = transactionRequest;
+    this.BSAFETransaction = BSAFETransaction!;
+    this.BSAFETransactionId = BSAFETransactionId!;
 
     const coins = transactionRequest.getCoinOutputs();
     this.assets = coins.map((coin) => ({
@@ -84,23 +90,28 @@ export class Transfer implements ITransfer {
   }
 
   public static async instance({ transfer, auth, vault }: TransferFactory) {
-    const service = new TransactionService(auth!);
+    const service = auth && new TransactionService(auth!);
+    const transactionName = `Random Vault Name - ${uuidv4()}`;
 
     const isOld = typeof transfer === 'string';
     if (isOld) {
-      if (!auth) {
+      if (!auth || !service) {
         throw new Error(TransferInstanceError.REQUIRED_AUTH);
       }
 
       const transaction = await service.findByTransactionID(transfer);
-      const txData = JSON.parse(transaction.txData);
+      const scriptTransactionRequest =
+        Transfer.toTransactionRequest(transaction);
 
       return new Transfer({
+        vault,
         service,
         name: transaction.name!,
-        BSAFEScript: txData,
-        transactionRequest: transactionRequestify(txData),
+        BSAFEScript: scriptTransactionRequest,
+        transactionRequest: transactionRequestify(scriptTransactionRequest),
         witnesses: transaction.witnesses.map((witness) => witness.account),
+        BSAFETransactionId: transaction.id,
+        BSAFETransaction: transaction,
       });
     }
 
@@ -118,27 +129,36 @@ export class Transfer implements ITransfer {
         assets: assets,
         witnesses: transfer.witnesses ?? [],
       });
+
       const txData = transactionRequestify(scriptTransaction);
       const hashTxId = Transfer.getHashTxId(
         scriptTransaction,
         vault.provider.getChainId(),
       );
 
-      auth &&
+      const BSAFETransaction =
+        auth &&
+        service &&
         (await service.create({
-          assets,
+          assets: assets.map((asset) => ({
+            ...asset,
+            utxo: '',
+          })),
           hash: hashTxId,
-          name: transfer.name,
+          name: transfer.name ?? transactionName,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           predicateAddress: vault.address.toString(),
         }));
 
       return new Transfer({
+        vault,
         service,
-        name: transfer.name!,
-        witnesses: transfer.witnesses ?? [],
-        BSAFEScript: scriptTransaction,
+        BSAFETransaction,
+        name: transfer.name ?? transactionName,
         transactionRequest: txData,
+        BSAFEScript: scriptTransaction,
+        witnesses: transfer.witnesses ?? [],
+        BSAFETransactionId: BSAFETransaction?.id,
       });
     }
 
@@ -163,10 +183,10 @@ export class Transfer implements ITransfer {
         to: coin.to.toString(),
         amount: coin.amount.toString(),
       }));
-      const transactionName = `Random Vault Name - ${uuidv4()}`;
 
       const transaction =
         auth &&
+        service &&
         (await service.create({
           assets,
           hash: hashTxId,
@@ -175,18 +195,21 @@ export class Transfer implements ITransfer {
           predicateAddress: vault.address.toString(),
         }));
 
-      const witnesses = transaction
+      const witnesses = transaction?.witnesses
         ? transaction.witnesses
             .map((witness) => witness.signature)
             .filter((signature) => !!signature)
         : [];
 
       return new Transfer({
+        vault,
         service,
         witnesses: witnesses,
         name: transactionName,
         transactionRequest: txData,
         BSAFEScript: bsafeScriptTransaction,
+        BSAFETransaction: transaction,
+        BSAFETransactionId: transaction?.id,
       });
     }
 
@@ -210,10 +233,32 @@ export class Transfer implements ITransfer {
   /**
    * Generates and formats the transaction hash
    *
-   * @returns hash of this transaction
+   * @param script Script of transaction request
+   * @param chainId Chain ID of provider
+   *
+   * @returns Hash of this transaction
    */
   public static getHashTxId(script: ScriptTransactionRequest, chainId: number) {
     const txHash = hashTransaction(transactionRequestify(script), chainId);
+    return txHash.slice(2);
+  }
+
+  public static toTransactionRequest(transaction: ITransaction) {
+    return BSAFEScriptTransaction.from({
+      script: `0x${transaction.hash}`,
+    });
+  }
+
+  /**
+   * Generates and formats the transaction hash of transaction instance
+   *
+   * @returns Hash of this transaction
+   */
+  public getHashTxId() {
+    const txHash = hashTransaction(
+      transactionRequestify(this.BSAFEScript),
+      this.vault.provider.getChainId(),
+    );
     return txHash.slice(2);
   }
 
@@ -268,8 +313,8 @@ export class Transfer implements ITransfer {
   //  * @param _coins - Vault to which this transaction belongs
   //  * @returns If one of the assets is not enough, an error will be returned
   //  */
-  // private async validateBalance(_coins: IAssetGroupById) {
-  //   const balances = await this.vault.getBalances();
+  // private static async validateBalance(_coins: IAssetGroupById, vault: Vault) {
+  //   const balances = await vault.getBalances();
   //   const coins = await Asset.assetsGroupById(
   //     balances.map((item) => {
   //       return {
