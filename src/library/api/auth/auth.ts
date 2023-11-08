@@ -8,68 +8,71 @@ import { LocalProvider } from '../../../test-utils';
 
 // woking to local node just fine
 export class AuthService implements IAuthService {
-    private client: AxiosInstance;
-    private user?: IDefaultAccount;
-    private auth?: {
-        id: string;
-        address: string;
-        provider: string;
-        token?: string;
+  private client: AxiosInstance;
+  private user?: IDefaultAccount;
+  private auth?: {
+    id: string;
+    address: string;
+    provider: string;
+    token?: string;
+  };
+  public BSAFEAuth?: IBSAFEAuth;
+
+  constructor() {
+    this.client = axios.create({
+      baseURL: defaultConfigurable.api_url,
+    });
+  }
+
+  async createUser(user: IDefaultAccount, provider: string) {
+    this.user = user;
+
+    const { data } = await this.client.post('/user', {
+      address: user.address,
+      provider,
+    });
+    this.auth = {
+      address: user.address,
+      id: data.id,
+      provider,
     };
-    public BSAFEAuth?: IBSAFEAuth;
 
-    constructor() {
-        this.client = axios.create({
-            baseURL: defaultConfigurable.api_url
-        });
-    }
+    return;
+  }
 
-    async createUser(user: IDefaultAccount, provider: string) {
-        this.user = user;
+  async createSession() {
+    if (!this.auth) return;
+    const { address, provider, id } = this.auth;
+    const message = {
+      address,
+      hash: uuidv4(),
+      createdAt: new Date().toISOString(),
+      provider,
+      encoder: defaultConfigurable.encoder,
+      user_id: id,
+    };
 
-        const { data } = await this.client.post('/user', {
-            address: user.address,
-            provider
-        });
-        this.auth = {
-            address: user.address,
-            id: data.id,
-            provider
-        };
+    const tx = await this.signer(JSON.stringify(message));
 
-        return;
-    }
+    const { data } = await this.client.post('/auth/sign-in', {
+      ...message,
+      signature: tx,
+    });
 
-    async createSession() {
-        if (!this.auth) return;
-        const { address, provider, id } = this.auth;
-        const message = {
-            address,
-            hash: uuidv4(),
-            createdAt: new Date().toISOString(),
-            provider,
-            encoder: defaultConfigurable.encoder,
-            user_id: id
-        };
+    this.auth.token = data.token;
+    this.BSAFEAuth = {
+      address,
+      token: data.accessToken,
+    };
+  }
 
-        const tx = await this.signer(JSON.stringify(message));
+  private async signer(message: string) {
+    if (!this.user || !this.auth || !this.user.privateKey) return;
 
-        const { data } = await this.client.post('/auth/sign-in', {
-            ...message,
-            signature: tx
-        });
-
-        this.auth.token = data.token;
-        this.BSAFEAuth = {
-            address,
-            token: data.accessToken
-        };
-    }
-
-    private async signer(message: string) {
-        if (!this.user || !this.auth || !this.user.privateKey) return;
-
-        const signer = Wallet.fromPrivateKey(this.user.privateKey, new LocalProvider());
-        return await signer.signMessage(message);
-    }
+    const signer = Wallet.fromPrivateKey(
+      this.user.privateKey,
+      new LocalProvider(),
+    );
+    return await signer.signMessage(message);
+  }
 }

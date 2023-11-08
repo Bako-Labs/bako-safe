@@ -120,7 +120,11 @@ export class Transfer implements ITransfer {
       });
     }
 
-    const isNew = 'assets' in transfer && 'witnesses' in transfer && !!vault;
+    const isNew =
+      !('id' in transfer) &&
+      'assets' in transfer &&
+      'witnesses' in transfer &&
+      !!vault;
     if (isNew) {
       const assets = transfer.assets.map((assest) => ({
         assetId: assest.assetId,
@@ -164,6 +168,23 @@ export class Transfer implements ITransfer {
         BSAFEScript: scriptTransaction,
         witnesses: transfer.witnesses ?? [],
         BSAFETransactionId: BSAFETransaction?.id,
+      });
+    }
+
+    const isAPITransaction =
+      'id' in transfer && 'hash' in transfer && 'name' in transfer;
+    if (isAPITransaction) {
+      const scriptTransactionRequest = Transfer.toTransactionRequest(transfer);
+
+      return new Transfer({
+        vault,
+        service,
+        name: transfer.name!,
+        BSAFEScript: scriptTransactionRequest,
+        transactionRequest: transactionRequestify(scriptTransactionRequest),
+        witnesses: transfer.witnesses.map((witness) => witness.account),
+        BSAFETransactionId: transfer.id,
+        BSAFETransaction: transfer,
       });
     }
 

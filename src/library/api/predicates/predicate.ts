@@ -4,41 +4,45 @@ import { GetTransactionParams } from '../transactions';
 import { IPredicatePayload, IPredicateService } from './types';
 
 export class PredicateService extends Api implements IPredicateService {
-    constructor(auth: IBSAFEAuth) {
-        super(auth);
-    }
+  constructor(auth: IBSAFEAuth) {
+    super(auth);
+  }
 
-    public async create(payload: IPredicatePayload) {
-        const { data } = await this.client.post('/predicate', payload);
+  public async create(payload: IPredicatePayload) {
+    const { data } = await this.client.post('/predicate', payload);
 
-        return data;
-    }
+    return data;
+  }
 
-    public async findByAddress(predicateAddress: string) {
-        const { data } = await this.client.get(`/predicate/by-address/${predicateAddress}`);
+  public async findByAddress(predicateAddress: string) {
+    const { data } = await this.client.get(
+      `/predicate/by-address/${predicateAddress}`,
+    );
 
-        return data;
-    }
+    return data;
+  }
 
-    public async findById(predicateId: string) {
-        const { data } = await this.client.get(`/predicate/${predicateId}`);
+  public async findById(predicateId: string) {
+    const { data } = await this.client.get(`/predicate/${predicateId}`);
 
-        return data;
-    }
+    return data;
+  }
 
-    public async hasReservedCoins(predicateAddress: string) {
-        const { data } = await this.client.get(`/predicate/reserved-coins/${predicateAddress}`);
+  public async hasReservedCoins(predicateAddress: string) {
+    const { data } = await this.client.get(
+      `/predicate/reserved-coins/${predicateAddress}`,
+    );
 
-        return data;
-    }
+    return data;
+  }
 
-    public async listPredicateTransactions(params?: GetTransactionParams) {
-        const { data } = await this.client.get('/transaction', {
-            params: {
-                ...params
-            }
-        });
+  public async listPredicateTransactions(params?: GetTransactionParams) {
+    const { data } = await this.client.get('/transaction', {
+      params: {
+        ...params,
+      },
+    });
 
-        return data;
-    }
+    return data;
+  }
 }

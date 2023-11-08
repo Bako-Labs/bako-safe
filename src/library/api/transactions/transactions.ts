@@ -1,49 +1,69 @@
 import { Api } from '../api';
 import { IBSAFEAuth } from '../auth/types';
-import {ICreateTransactionPayload, ITransaction, ITransactionService} from './types';
+import {
+  ICreateTransactionPayload,
+  ITransaction,
+  ITransactionService,
+} from './types';
 
 export class TransactionService extends Api implements ITransactionService {
-    constructor(auth: IBSAFEAuth) {
-        super(auth);
-    }
+  constructor(auth: IBSAFEAuth) {
+    super(auth);
+  }
 
-    public async create(payload: ICreateTransactionPayload) {
-        const { data } = await this.client.post<ITransaction>('/transaction', payload);
+  public async create(payload: ICreateTransactionPayload) {
+    const { data } = await this.client.post<ITransaction>(
+      '/transaction',
+      payload,
+    );
 
-        return data;
-    }
+    return data;
+  }
 
-    public async findByHash(hash: string) {
-        const { data } = await this.client.get(`/transaction/by-hash/${hash}`);
+  public async findByHash(hash: string) {
+    const { data } = await this.client.get(`/transaction/by-hash/${hash}`);
 
-        return data;
-    }
+    return data;
+  }
 
-    public async findByTransactionID(transactionId: string) {
-        const { data } = await this.client.get<ITransaction>(`/transaction/${transactionId}`);
+  public async findByTransactionID(transactionId: string) {
+    const { data } = await this.client.get<ITransaction>(
+      `/transaction/${transactionId}`,
+    );
 
-        return data;
-    }
+    return data;
+  }
 
-    public async sign(BSAFETransactionId: string, account: string, signer: string) {
-        const { data } = await this.client.put(`/transaction/signer/${BSAFETransactionId}`, {
-            account,
-            signer,
-            confirm: true
-        });
+  public async sign(
+    BSAFETransactionId: string,
+    account: string,
+    signer: string,
+  ) {
+    const { data } = await this.client.put(
+      `/transaction/signer/${BSAFETransactionId}`,
+      {
+        account,
+        signer,
+        confirm: true,
+      },
+    );
 
-        return data;
-    }
+    return data;
+  }
 
-    public async send(BSAFETransactionId: string) {
-        const { data } = await this.client.post(`/transaction/send/${BSAFETransactionId}`);
+  public async send(BSAFETransactionId: string) {
+    const { data } = await this.client.post(
+      `/transaction/send/${BSAFETransactionId}`,
+    );
 
-        return data;
-    }
+    return data;
+  }
 
-    public async verify(BSAFETransactionId: string) {
-        const { data } = await this.client.post(`/transaction/verify/${BSAFETransactionId}`);
+  public async verify(BSAFETransactionId: string) {
+    const { data } = await this.client.post(
+      `/transaction/verify/${BSAFETransactionId}`,
+    );
 
-        return data;
-    }
+    return data;
+  }
 }

@@ -28,7 +28,8 @@ export interface TransferConstructor {
 export type TransferFactoryParam =
   | string
   | IFormatTransfer
-  | TransactionRequestLike;
+  | TransactionRequestLike
+  | ITransaction;
 
 export interface TransferFactory {
   auth?: IBSAFEAuth;

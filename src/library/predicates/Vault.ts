@@ -1,4 +1,4 @@
-import { Predicate, Provider, transactionRequestify } from 'fuels';
+import { Predicate, Provider } from 'fuels';
 
 import {
   IBSAFEAuth,
@@ -303,9 +303,7 @@ export class Vault extends Predicate<[]> implements IVault {
         Transfer.instance({
           vault: this,
           auth: this.auth,
-          transfer: transactionRequestify(
-            Transfer.toTransactionRequest(transaction),
-          ),
+          transfer: transaction,
           isSave: false,
         }),
       ),
