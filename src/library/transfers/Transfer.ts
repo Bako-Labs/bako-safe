@@ -105,8 +105,14 @@ export class Transfer implements ITransfer {
       }
 
       const transaction = await service.findByTransactionID(transfer);
-      const scriptTransactionRequest =
-        Transfer.toTransactionRequest(transaction);
+      const scriptTransactionRequest = await Transfer.formatTransaction({
+        name: transaction.name!,
+        vault: vault,
+        assets: transaction.assets,
+        witnesses: transaction.witnesses
+          .map((witness) => witness.signature)
+          .filter((witness) => !!witness),
+      });
 
       return new Transfer({
         vault,
@@ -174,7 +180,12 @@ export class Transfer implements ITransfer {
     const isAPITransaction =
       'id' in transfer && 'hash' in transfer && 'name' in transfer;
     if (isAPITransaction) {
-      const scriptTransactionRequest = Transfer.toTransactionRequest(transfer);
+      const scriptTransactionRequest = await Transfer.formatTransaction({
+        name: transfer.name!,
+        vault: vault,
+        assets: transfer.assets,
+        witnesses: transfer.witnesses.map((witness) => witness.signature) ?? [],
+      });
 
       return new Transfer({
         vault,

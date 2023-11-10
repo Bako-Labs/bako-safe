@@ -110,6 +110,29 @@ describe('[PREDICATES]', () => {
   );
 
   test(
+    'Instance an old Vault by payload',
+    async () => {
+      const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
+
+      const providerByPayload = await Provider.create(
+        vault.BSAFEVault.provider,
+      );
+      const vaultByPayload = await Vault.create({
+        configurable: JSON.parse(vault.BSAFEVault.configurable),
+        provider: providerByPayload,
+      });
+
+      const [vaultAddress, vaultByPayloadAddress] = [
+        vault.address.toString(),
+        vaultByPayload.address.toString(),
+      ];
+
+      expect(vaultAddress).toEqual(vaultByPayloadAddress);
+    },
+    10 * 1000,
+  );
+
+  test(
     'Find a transactions of predicate and return an list of Transfer instances',
     async () => {
       const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);

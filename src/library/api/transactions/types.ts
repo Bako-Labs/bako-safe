@@ -70,7 +70,6 @@ export interface ITransaction extends ICreateTransactionPayload {
   predicateID: string;
   assets: IAssetTransaction[];
   witnesses: IWitnesses[];
-  txData: string;
   resume: string; // RESULT
 }
 
