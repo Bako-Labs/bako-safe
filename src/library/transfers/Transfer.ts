@@ -180,20 +180,25 @@ export class Transfer implements ITransfer {
     const isAPITransaction =
       'id' in transfer && 'hash' in transfer && 'name' in transfer;
     if (isAPITransaction) {
+      const witnesses =
+        transfer.witnesses
+          .map((witness) => witness.signature)
+          .filter((signature) => !!signature) ?? [];
+
       const scriptTransactionRequest = await Transfer.formatTransaction({
         name: transfer.name!,
         vault: vault,
         assets: transfer.assets,
-        witnesses: transfer.witnesses.map((witness) => witness.signature) ?? [],
+        witnesses,
       });
 
       return new Transfer({
         vault,
         service,
+        witnesses,
         name: transfer.name!,
         BSAFEScript: scriptTransactionRequest,
         transactionRequest: transactionRequestify(scriptTransactionRequest),
-        witnesses: transfer.witnesses.map((witness) => witness.account),
         BSAFETransactionId: transfer.id,
         BSAFETransaction: transfer,
       });
