@@ -160,6 +160,7 @@ export class Transfer implements ITransfer {
             utxo: '',
           })),
           hash: hashTxId,
+          txData: txData,
           name: transfer.name ?? transactionName,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           predicateAddress: vault.address.toString(),
@@ -232,6 +233,7 @@ export class Transfer implements ITransfer {
         transaction = await service.create({
           assets,
           hash: hashTxId,
+          txData: txData,
           name: transactionName,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           predicateAddress: vault.address.toString(),
@@ -382,6 +384,8 @@ export class Transfer implements ITransfer {
    */
   public async send() {
     if (!this.service) {
+      //caso nao exista conexao com a BSAFEAPI
+      // RETORNA UM ENVIO, PARA O USUÁRIO APENAS USAR .wait()
       const tx: TransactionRequest = transactionRequestify(this.BSAFEScript!);
       const tx_est = await this.vault.provider.estimatePredicates(tx);
       const encodedTransaction = hexlify(tx_est.toTransactionBytes());
@@ -390,10 +394,12 @@ export class Transfer implements ITransfer {
       } = await this.vault.provider.operations.submit({ encodedTransaction });
       return new TransactionResponse(transactionId, this.vault.provider);
     } else {
-      const transaction = await this.service.findByTransactionID(
+      //caso a conexao exista
+      // Atualiza a transação dessa instancia
+      this.BSAFETransaction = await this.service.findByTransactionID(
         this.BSAFETransactionId,
       );
-      switch (transaction.status) {
+      switch (this.BSAFETransaction.status) {
         case TransactionStatus.PENDING_SENDER:
           await this.service.send(this.BSAFETransactionId);
           break;
@@ -405,14 +411,17 @@ export class Transfer implements ITransfer {
           break;
       }
       return {
-        ...JSON.parse(transaction.resume),
-        bsafeID: transaction.id,
+        ...JSON.parse(this.BSAFETransaction.resume),
+        bsafeID: this.BSAFETransactionId,
       };
     }
   }
 
   /**
-   * An recursive function, to wait for transaction to be processed
+   * Promise to return result of function
+   * Connect to api socket using name: [TRANSACTION_WAIT]:${transactionId}
+   * Await an message on event [TRANSACTION_WAIT]:${transactionId}
+   * and resolves a promise returns a result (returned on content of message)
    *
    * @returns an resume for transaction
    */

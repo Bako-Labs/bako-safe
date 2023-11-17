@@ -133,7 +133,6 @@ export class Vault extends Predicate<[]> implements IVault {
     if (isWithApi) {
       const { id, predicateAddress, token, address } = params;
       const hasId = 'id' in params && id;
-
       if (predicateAddress == undefined && id == undefined) {
         throw new Error('predicateAddress or BSAFEPredicateId is required');
       }
@@ -145,7 +144,8 @@ export class Vault extends Predicate<[]> implements IVault {
 
       const result = hasId
         ? await api.findById(id)
-        : predicateAddress && (await api.findByAddress(predicateAddress));
+        : await api.findByAddress(predicateAddress!);
+
       if (!result) {
         throw new Error('BSAFEVault not found');
       }

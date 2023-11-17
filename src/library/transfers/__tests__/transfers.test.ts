@@ -97,16 +97,17 @@ describe('[TRANSFERS]', () => {
       const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
       const _assets: ITransferAsset[] = [
         {
-          amount: bn(1_000_000).format(),
-          assetId: assets['sETH'],
+          amount: bn(1_000_000_00).format(),
+          assetId: assets['ETH'],
           to: accounts['STORE'].address,
         },
       ];
       let newTransfer: IFormatTransfer = {
-        name: 'transfer_assests',
+        name: 'Created an valid transaction to vault and instance old transaction',
         assets: _assets,
         witnesses: [],
       };
+
       let transaction = await vault.BSAFEIncludeTransaction(newTransfer);
 
       const signTimeout = async () => {
@@ -126,15 +127,6 @@ describe('[TRANSFERS]', () => {
           transaction.BSAFETransactionId,
         );
       };
-
-      newTransfer = {
-        assets: _assets,
-        name: 'transfer_assests',
-        witnesses: [],
-      };
-
-      // Create a transaction
-      transaction = await vault.BSAFEIncludeTransaction(newTransfer);
 
       // Signin transaction
       await signin(

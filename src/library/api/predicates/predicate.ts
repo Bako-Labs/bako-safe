@@ -18,7 +18,6 @@ export class PredicateService extends Api implements IPredicateService {
     const { data } = await this.client.get(
       `/predicate/by-address/${predicateAddress}`,
     );
-
     return data;
   }
 

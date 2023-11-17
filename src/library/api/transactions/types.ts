@@ -1,3 +1,4 @@
+import { TransactionRequest } from 'fuels';
 import { IAssetTransaction, ITransferAsset } from '../../assets';
 
 export enum SortOption {
@@ -17,6 +18,7 @@ export interface ICreateTransactionPayload {
   predicateAddress: string; // ADDRESS OF PREDICATE
   name?: string;
   hash: string; // HASH OF TRANSACTION
+  txData: TransactionRequest;
   status: TransactionStatus;
   assets: ITransferAsset[];
   sendTime?: Date;

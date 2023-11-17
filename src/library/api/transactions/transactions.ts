@@ -12,12 +12,17 @@ export class TransactionService extends Api implements ITransactionService {
   }
 
   public async create(payload: ICreateTransactionPayload) {
-    const { data } = await this.client.post<ITransaction>(
-      '/transaction',
-      payload,
-    );
+    try {
+      const { data } = await this.client.post<ITransaction>(
+        '/transaction',
+        payload,
+      );
 
-    return data;
+      return data;
+    } catch (e) {
+      console.log(e);
+      throw new Error('ERRO AO CRIAR');
+    }
   }
 
   public async findByHash(hash: string) {
