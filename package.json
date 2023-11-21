@@ -1,6 +1,6 @@
 {
   "name": "bsafe",
-  "version": "0.0.92",
+  "version": "0.0.94",
   "description": "A signature validation package built based on sway in the fuel network",
   "author": "InfinityBase - Guilherme Roque",
   "license": "Apache-2.0",
@@ -19,7 +19,8 @@
     "chain:start": "make -C ./docker/chain start",
     "chain:stop": "make -C ./docker/chain stop",
     "chain:clean": "make -C ./docker/chain clean",
-    "chain:restart": "make -C ./docker/chain restart"
+    "chain:restart": "make -C ./docker/chain restart",
+    "postinstall": "patch-package --use-yarn"
   },
   "resolutions": {
     "wrap-ansi": "7.0.0",
@@ -44,6 +45,7 @@
   },
   "dependencies": {
     "@types/mocha": "^10.0.1",
+    "patch-package": "8.0.0",
     "@types/uuid": "^9.0.6",
     "axios": "^1.5.1",
     "elliptic": "^6.5.4",
