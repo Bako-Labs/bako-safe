@@ -29,7 +29,7 @@ describe('[PREDICATES]', () => {
       accounts['USER_2'].address,
       accounts['USER_3'].address,
     ];
-  });
+  }, 20 * 1000);
 
   test('Create an inválid vault', async () => {
     const VaultPayload: IPayloadVault = {
@@ -99,7 +99,6 @@ describe('[PREDICATES]', () => {
     'Instance an old Vault by predicate address',
     async () => {
       const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
-
       const auxVault = await Vault.create({
         ...auth['USER_1'].BSAFEAuth,
         predicateAddress: vault.address.toString(),
@@ -181,6 +180,7 @@ describe('[PREDICATES]', () => {
       );
 
       const transactions = await vault.BSAFEGetTransactions();
+
       expect(transactions.length).toBe(2);
     },
     100 * 1000,

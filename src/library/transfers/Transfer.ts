@@ -409,6 +409,9 @@ export class Transfer implements ITransfer {
 
         case TransactionStatus.FAILED || TransactionStatus.SUCCESS:
           break;
+
+        default:
+          break;
       }
       return {
         ...JSON.parse(this.BSAFETransaction.resume),

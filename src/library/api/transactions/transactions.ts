@@ -20,7 +20,6 @@ export class TransactionService extends Api implements ITransactionService {
 
       return data;
     } catch (e) {
-      console.log(e);
       throw new Error('ERRO AO CRIAR');
     }
   }

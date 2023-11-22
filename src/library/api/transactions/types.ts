@@ -59,12 +59,14 @@ export enum TransactionProcessStatus {
 }
 
 export interface ITransactionResume {
-  status: TransactionProcessStatus;
+  status: TransactionStatus;
   hash?: string;
   gasUsed?: string;
   sendTime?: Date;
   witnesses?: string[];
+  outputs?: ITransferAsset[];
 }
+
 export interface ITransaction extends ICreateTransactionPayload {
   id: string;
   createdAt: string;

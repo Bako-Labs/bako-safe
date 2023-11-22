@@ -6,7 +6,6 @@ export interface IPredicatePayload {
   predicateAddress: string;
   minSigners: number;
   addresses: string[];
-  owner: string;
   bytes: string;
   abi: string;
   configurable: string;
@@ -20,11 +19,16 @@ export interface IListTransactions
 
 export interface IPredicate extends IPredicatePayload {
   id: string;
-  completeAddress: {
-    name?: string;
+  members: {
+    id: string;
     avatar: string;
     address: string;
+    nickname: string;
   }[];
+  owner: {
+    id: string;
+    address: string;
+  };
   createdAt: string;
   updatedAt: string;
 }

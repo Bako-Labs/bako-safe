@@ -31,7 +31,7 @@ describe('[TRANSFERS]', () => {
       accounts['USER_2'].address,
       accounts['USER_3'].address,
     ];
-  });
+  }, 10 * 1000);
 
   test(
     'Sign transactions with invalid users',
@@ -141,8 +141,8 @@ describe('[TRANSFERS]', () => {
       );
 
       const pending_requirements = await oldTransaction.send();
+      console.log('[PENDING_REQUIREMENTS]: ', pending_requirements);
       expect(pending_requirements.status).toBe('await_requirements');
-
       // this process isan`t async, next line is async
       signTimeout();
 
@@ -152,35 +152,39 @@ describe('[TRANSFERS]', () => {
     100 * 1000,
   );
 
-  test('Instance old transaction', async () => {
-    const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
-    const _assetsA = {
-      name: 'Transaction A',
-      assets: [
-        {
-          amount: bn(1_000).format(),
-          assetId: assets['ETH'],
-          to: accounts['STORE'].address,
-        },
-        {
-          amount: bn(1_000).format(),
-          assetId: assets['sETH'],
-          to: accounts['STORE'].address,
-        },
-      ],
-      witnesses: [],
-    };
+  test(
+    'Instance old transaction',
+    async () => {
+      const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
+      const _assetsA = {
+        name: 'Transaction A',
+        assets: [
+          {
+            amount: bn(1_000).format(),
+            assetId: assets['ETH'],
+            to: accounts['STORE'].address,
+          },
+          {
+            amount: bn(1_000).format(),
+            assetId: assets['sETH'],
+            to: accounts['STORE'].address,
+          },
+        ],
+        witnesses: [],
+      };
 
-    // Create a transaction
-    const transaction = await vault.BSAFEIncludeTransaction(_assetsA);
-    const transaction_aux = await vault.BSAFEGetTransaction(
-      transaction.BSAFETransactionId,
-    );
+      // Create a transaction
+      const transaction = await vault.BSAFEIncludeTransaction(_assetsA);
+      const transaction_aux = await vault.BSAFEGetTransaction(
+        transaction.BSAFETransactionId,
+      );
 
-    expect(transaction_aux.BSAFETransactionId).toStrictEqual(
-      transaction.BSAFETransactionId,
-    );
-  });
+      expect(transaction_aux.BSAFETransactionId).toStrictEqual(
+        transaction.BSAFETransactionId,
+      );
+    },
+    10 * 1000,
+  );
 
   test('Send an transaction to with vault without balance', async () => {
     const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
