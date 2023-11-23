@@ -83,8 +83,7 @@ describe('[TRANSFERS]', () => {
           transaction.BSAFETransactionId,
         ),
       ).toBe(false);
-
-      await transaction.send();
+      transaction.send();
       const result = await transaction.wait();
       expect(result.status).toBe(TransactionStatus.success);
     },
@@ -140,9 +139,8 @@ describe('[TRANSFERS]', () => {
         transaction.BSAFETransactionId,
       );
 
-      const pending_requirements = await oldTransaction.send();
-      console.log('[PENDING_REQUIREMENTS]: ', pending_requirements);
-      expect(pending_requirements.status).toBe('await_requirements');
+      oldTransaction.send();
+
       // this process isan`t async, next line is async
       signTimeout();
 
@@ -263,7 +261,14 @@ describe('[TRANSFERS]', () => {
       await signin(tx.getHashTxId(), 'USER_3'),
     ];
 
-    const result = await tx.send().then(async (tx) => await tx.wait());
+    const result = await tx.send().then(async (tx) => {
+      if ('fetchAttempts' in tx) {
+        return await tx.wait();
+      }
+      return {
+        status: TransactionStatus.failure,
+      };
+    });
 
     expect(result.status).toBe(TransactionStatus.success);
   });

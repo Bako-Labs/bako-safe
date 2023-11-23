@@ -414,7 +414,7 @@ export class Transfer implements ITransfer {
           break;
       }
       return {
-        ...JSON.parse(this.BSAFETransaction.resume),
+        ...this.BSAFETransaction.resume,
         bsafeID: this.BSAFETransactionId,
       };
     }
@@ -453,9 +453,8 @@ export class Transfer implements ITransfer {
     }
 
     const result: ITransactionResume = {
-      ...JSON.parse(transaction.resume),
+      ...transaction.resume,
       status: transaction.status,
-      bsafeID: transaction.id,
     };
     return result;
   }

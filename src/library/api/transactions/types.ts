@@ -74,7 +74,7 @@ export interface ITransaction extends ICreateTransactionPayload {
   predicateID: string;
   assets: IAssetTransaction[];
   witnesses: IWitnesses[];
-  resume: string; // RESULT
+  resume: ITransactionResume; // RESULT
 }
 
 export interface ITransactionService {
