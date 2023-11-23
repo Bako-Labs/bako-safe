@@ -11,7 +11,7 @@ use libraries::{ascii::b256_to_ascii_bytes};
 
     - SIGNERS: address of required signatures
     - SIGNATURES_COUNT: required signatures to approval
-    - HASH_PREDUCATE: hash of the predicate 
+    - HASH_PREDICATE: hash of the predicate 
 */
 
 configurable {
@@ -28,7 +28,7 @@ configurable {
         0x0000000000000000000000000000000000000000000000000000000000000000,
     ],
     SIGNATURES_COUNT: u64 = 0,
-    HASH_PREDUCATE: [u64; 20] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    HASH_PREDICATE: [u64; 20] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 }
 
 /*
@@ -51,18 +51,15 @@ fn check_signature(index: u64, tx_hash: b256) -> u64 {
     // is one of the signers list
     if let Result::Ok(pub_key_sig) = ec_recover_address(signature, tx_hash) {
         let address = pub_key_sig.value;
-        if (address == SIGNERS[0] ||
-            address == SIGNERS[1] ||
-            address == SIGNERS[2] ||
-            address == SIGNERS[3] ||
-            address == SIGNERS[4] ||
-            address == SIGNERS[5] ||
-            address == SIGNERS[6] ||
-            address == SIGNERS[7] ||
-            address == SIGNERS[8] ||
-            address == SIGNERS[9]) {
-            return 1;
+        let mut i = 0;
+
+        while i < 10 {
+            if (address == SIGNERS[i]) {
+                return 1;
+            }
+            i += 1;
         }
+    
     }
     return 0;
 }
@@ -71,10 +68,14 @@ fn main() -> bool {
     let mut verified = 0;
 
     // this line existis with use and include configurable HASH_PREDICATE on build
-    let hash_predicate = HASH_PREDUCATE;
+    let hash_predicate = HASH_PREDICATE;
     let tx_id_hash = tx_id();
     let tx_hash = b256_to_ascii_bytes(tx_id_hash).sha256();
     let witness_count = tx_witnesses_count();
+
+    if (HASH_PREDICATE[0] != hash_predicate[0]) {
+        return false;
+    }
 
     // If there are no signatures, return false
     if (witness_count < SIGNATURES_COUNT) {
@@ -85,16 +86,11 @@ fn main() -> bool {
     // check if wich ones are valid
     // We need to check if the signature exists before
     // trying to access it
-    verified = verified + check_signature(0, tx_hash);
-    verified = verified + check_signature(1, tx_hash);
-    verified = verified + check_signature(2, tx_hash);
-    verified = verified + check_signature(3, tx_hash);
-    verified = verified + check_signature(4, tx_hash);
-    verified = verified + check_signature(5, tx_hash);
-    verified = verified + check_signature(6, tx_hash);
-    verified = verified + check_signature(7, tx_hash);
-    verified = verified + check_signature(8, tx_hash);
-    verified = verified + check_signature(9, tx_hash);
+    let mut i = 0;
+    while i < 10 {
+        verified += check_signature(i, tx_hash);
+        i += 1;
+    }
 
     return verified >= SIGNATURES_COUNT;
 }
