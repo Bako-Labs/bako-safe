@@ -127,7 +127,9 @@ export class Transfer implements ITransfer {
     }
 
     const isNew =
-      !('id' in transfer) &&
+      transfer &&
+      Object.entries(transfer).length <= 3 &&
+      Object.entries(transfer).length > 0 &&
       'assets' in transfer &&
       'witnesses' in transfer &&
       !!vault;
@@ -142,7 +144,7 @@ export class Transfer implements ITransfer {
         name: transfer.name ? transfer.name : `Random Vault Name - ${uuidv4()}`,
         vault: vault,
         assets: assets,
-        witnesses: transfer.witnesses ?? [],
+        //witnesses: transfer.witnesses ?? [],
       });
 
       const txData = transactionRequestify(scriptTransaction);
@@ -173,39 +175,13 @@ export class Transfer implements ITransfer {
         name: transfer.name ?? transactionName,
         transactionRequest: txData,
         BSAFEScript: scriptTransaction,
-        witnesses: transfer.witnesses ?? [],
+        witnesses: [],
         BSAFETransactionId: BSAFETransaction?.id,
       });
     }
 
-    const isAPITransaction =
-      'id' in transfer && 'hash' in transfer && 'name' in transfer;
-    if (isAPITransaction) {
-      const witnesses =
-        transfer.witnesses
-          .map((witness) => witness.signature)
-          .filter((signature) => !!signature) ?? [];
-
-      const scriptTransactionRequest = await Transfer.formatTransaction({
-        name: transfer.name!,
-        vault: vault,
-        assets: transfer.assets,
-        witnesses,
-      });
-
-      return new Transfer({
-        vault,
-        service,
-        witnesses,
-        name: transfer.name!,
-        BSAFEScript: scriptTransactionRequest,
-        transactionRequest: transactionRequestify(scriptTransactionRequest),
-        BSAFETransactionId: transfer.id,
-        BSAFETransaction: transfer,
-      });
-    }
-
-    const isRequestLike = 'type' in transfer;
+    const isRequestLike =
+      transfer && Object.entries(transfer).length > 3 && 'type' in transfer;
     if (isRequestLike) {
       const isTransactionScript = transfer.type === TransactionType.Script;
       const bsafeScriptTransaction = isTransactionScript
@@ -343,7 +319,9 @@ export class Transfer implements ITransfer {
       defaultConfigurable['gasPrice'],
     );
 
-    // await this.validtateBalance(coins);
+    // await this.validateBalance(coins, vault).catch((error) => {
+    //   return undefined;
+    // });
     const _coins = await vault.getResourcesToSpend(transactionCoins);
 
     // const _assets = _coins.length > 0 ? Asset.includeSpecificAmount(_coins, assets) : [];

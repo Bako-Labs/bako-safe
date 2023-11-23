@@ -296,16 +296,10 @@ export class Vault extends Predicate<[]> implements IVault {
       predicateId: [this.BSAFEVaultId],
       ...params,
     });
-
     return Promise.all(
-      transactions.map((transaction) =>
-        Transfer.instance({
-          vault: this,
-          auth: this.auth,
-          transfer: transaction,
-          isSave: false,
-        }),
-      ),
+      transactions
+        .map((transaction) => this.BSAFEGetTransaction(transaction.id))
+        .filter((transfer) => !!transfer),
     );
   }
 

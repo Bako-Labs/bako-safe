@@ -59,19 +59,23 @@ export enum TransactionProcessStatus {
 }
 
 export interface ITransactionResume {
+  predicate: string;
+  totalSigners: number;
+  requiredSigners: number;
+  outputs: ITransferAsset[];
   status: TransactionStatus;
   hash?: string;
   gasUsed?: string;
   sendTime?: Date;
   witnesses?: string[];
-  outputs?: ITransferAsset[];
 }
 
 export interface ITransaction extends ICreateTransactionPayload {
   id: string;
+  name: string;
   createdAt: string;
   updatedAt: string;
-  predicateID: string;
+  predicateId: string;
   assets: IAssetTransaction[];
   witnesses: IWitnesses[];
   resume: ITransactionResume; // RESULT

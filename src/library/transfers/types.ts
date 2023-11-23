@@ -46,8 +46,8 @@ export interface IPayloadTransfer {
 
 export interface IFormatTransfer {
   name: string;
-  witnesses?: string[];
   assets: ITransferAsset[];
+  witnesses?: string[];
 }
 
 export interface IInstanceTransfer {
