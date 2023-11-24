@@ -41,19 +41,6 @@ export class Vault extends Predicate<[]> implements IVault {
   public description?: string;
   public transactionRecursiveTimeout: number;
 
-  /**
-   * Creates an instance of the Predicate class.
-   *
-   * @param configurable - The parameters of signature requirements.
-   *      @param HASH_PREDICATE - Hash to works an unic predicate, is not required, but to instance old predicate is an number array
-   *      @param SIGNATURES_COUNT - Number of signatures required of predicate
-   *      @param SIGNERS - Array string of predicate signers
-   * @param abi - The JSON abi to BSAFE multisig.
-   * @param bytecode - The binary code of preficate BSAFE multisig.
-   * @param transactionRecursiveTimeout - The time to refetch transaction on BSAFE API.
-   * @param BSAFEAuth - The auth to BSAFE API.
-   **/
-
   protected constructor({
     configurable,
     provider,
@@ -116,14 +103,19 @@ export class Vault extends Predicate<[]> implements IVault {
   }
 
   /**
+   * Creates an instance of the Predicate class.
    *
-   * Constructor method to instance a vault from BSAFE API.
+   * @param configurable - The parameters of signature requirements.
+   *      @param HASH_PREDICATE - Hash to works an unic predicate, is not required, but to instance old predicate is an number array
+   *      @param SIGNATURES_COUNT - Number of signatures required of predicate
+   *      @param SIGNERS - Array string of predicate signers
+   * @param abi - The JSON abi to BSAFE multisig.
+   * @param bytecode - The binary code of preficate BSAFE multisig.
+   * @param transactionRecursiveTimeout - The time to refetch transaction on BSAFE API.
+   * @param BSAFEAuth - The auth to BSAFE API.
    *
-   * @param BSAFEAuth - Auth of bsafe API.
-   * @param BSAFEPredicateId - id of vault on BSAFE API. [optional]
-   * @param predicateAddress - address of vault on BSAFE API. [optional]
-   * @returns thire is no return, but if an error is detected it is trigged
-   */
+   * @returns an instance of Vault
+   **/
   static async create(params: IPayloadVault | IBSAFEApi) {
     const isWithApi =
       ('predicateAddress' in params || 'id' in params) &&
@@ -305,6 +297,7 @@ export class Vault extends Predicate<[]> implements IVault {
 
   /**
    * Return an list of transaction of this vault
+   * @param transactionId - The transaction id on BSAFEApi
    *
    * @returns an transaction list
    */

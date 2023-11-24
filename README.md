@@ -6,19 +6,19 @@ A streamlined solution within the Fuel ecosystem, enabling seamless implementati
 
 ## Links
 
--   [Bsafe](https://www.bsafe.pro)
--   [BSAFE beta version](https://app.bsafe.pro)
--   [Fuel Wallet](https://chrome.google.com/webstore/detail/fuel-wallet/dldjpboieedgcmpkchcjcbijingjcgok)
--   [Simple app exemple](https://github.com/infinitybase/bsafe-example)
--   [Implementation details](https://github.com/infinitybase/bsafe/blob/d56523ab905d4749fa22787936db41a100be08c9/src/__tests__/vault.test.ts)
+- [Bsafe](https://www.bsafe.pro)
+- [BSAFE beta version](https://app.bsafe.pro)
+- [Fuel Wallet](https://chrome.google.com/webstore/detail/fuel-wallet/dldjpboieedgcmpkchcjcbijingjcgok)
+- [Simple app exemple](https://github.com/infinitybase/bsafe-example)
+- [Implementation details](https://github.com/infinitybase/bsafe/blob/d56523ab905d4749fa22787936db41a100be08c9/src/__tests__/vault.test.ts)
 
 ### Resources
 
--   Create shared wallets 💰
--   Set up sending requirements 🔧
--   Validate signatures 🔏
--   Send different assets to different destinations in the same transaction 📤
--   Data persistence for transactions with the BSAFE API 📝
+- Create shared wallets 💰
+- Set up sending requirements 🔧
+- Validate signatures 🔏
+- Send different assets to different destinations in the same transaction 📤
+- Data persistence for transactions with the BSAFE API 📝
 
 ## Install
 
@@ -32,8 +32,8 @@ npm install bsafe
 
 ## Requirements
 
--   [Rust](https://www.rust-lang.org/tools/install)
--   [Fuel toochain](https://github.com/FuelLabs/fuelup)
+- [Rust](https://www.rust-lang.org/tools/install)
+- [Fuel toochain](https://github.com/FuelLabs/fuelup)
 
 ## The guist
 
@@ -63,9 +63,12 @@ const VaultPayload: IPayloadVault = {
         SIGNERS: signers, // witnesses account
         network: fuelProvider.url // your network connected wallet
         chainId: await fuelProvider.getChainId()
-    }
+    },
+    provider: fuelProvider,
 };
-const vault = new Vault(VaultPayload);
+
+const vault = await Vault.create(VaultPayload);
+
 
 // Include transaction coins
 const transfer: IPayloadTransfer[] = [
@@ -106,6 +109,7 @@ const VaultPayload: IPayloadVault = {
         network: fuelProvider.url // your network connected wallet
         chainId: await fuelProvider.getChainId()
     },
+    provider: fuelProvider,
     BSAFEAuth: auth.BSAFEAuth
 };
 const vault = new Vault(VaultPayload);
@@ -132,8 +136,10 @@ const transf: IPayloadTransfer = {
 };
 
 //You can also instantiate a transaction at any time, passing the bsafe api id to it
+//transaction and _transaction is equal transfer instances
 const transaction = await vault.BSAFEIncludeTransaction(transf)
 const _transaction = await vault.BSAFEIncludeTransaction(transaction.BSAFETransactionId)
+
 
 await transaction.send()
 const result = await transaction.wait()

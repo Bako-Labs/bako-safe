@@ -45,23 +45,6 @@ export class Transfer implements ITransfer {
   private assets!: ITransferAsset[];
   private service?: ITransactionService;
 
-  /**
-   * Creates an instance of the Transfer class.
-   *
-   * @param vault - Vault to which this transaction belongs
-   * @param assets - Asset output of transaction
-   * @param witnesses - Signatures on the hash of this transaction, signed by the vault subscribers
-   */
-  // constructor(vault: Vault, auth?: IBSAFEAuth) {
-  //     this.vault = vault;
-  //     if (auth) {
-  //         this.service = new TransactionService(auth);
-  //     }
-  //
-  //     const _configurable = this.vault.getConfigurable();
-  //     this.chainId = _configurable.chainId;
-  // }
-
   protected constructor({
     vault,
     name,
@@ -88,7 +71,16 @@ export class Transfer implements ITransfer {
       assetId: coin.assetId.toString(),
     }));
   }
-
+  /**
+   * Create a new transaction instance
+   *
+   * @param {TransferFactory} param - TransferFactory params
+   *        @param {string | ITransfer | ITransaction} transfer - Transaction ID or ITransfer or ITransaction
+   *        @param {IBSAFEAuth} auth - BSAFEAuth instance
+   *        @param {Vault} vault - Vault instance
+   *        @param {boolean} isSave - Save transaction on BSAFEAPI
+   * @returns return a new Transfer instance
+   */
   public static async instance({
     transfer,
     auth,
@@ -356,14 +348,12 @@ export class Transfer implements ITransfer {
   // }
 
   /**
-   * Using BSAFEauth, send this transaction to chain
+   * Using BSAFEauth or default send of predicate, send this transaction to chain
    *
    * @returns an resume for transaction
    */
   public async send() {
     if (!this.service) {
-      //caso nao exista conexao com a BSAFEAPI
-      // RETORNA UM ENVIO, PARA O USUÁRIO APENAS USAR .wait()
       const tx: TransactionRequest = transactionRequestify(this.BSAFEScript!);
       const tx_est = await this.vault.provider.estimatePredicates(tx);
       const encodedTransaction = hexlify(tx_est.toTransactionBytes());
@@ -371,35 +361,35 @@ export class Transfer implements ITransfer {
         submit: { id: transactionId },
       } = await this.vault.provider.operations.submit({ encodedTransaction });
       return new TransactionResponse(transactionId, this.vault.provider);
-    } else {
-      //caso a conexao exista
-      // Atualiza a transação dessa instancia
-      this.BSAFETransaction = await this.service.findByTransactionID(
-        this.BSAFETransactionId,
-      );
-      switch (this.BSAFETransaction.status) {
-        case TransactionStatus.PENDING_SENDER:
-          await this.service.send(this.BSAFETransactionId);
-          break;
-
-        case TransactionStatus.PROCESS_ON_CHAIN:
-          return await this.wait();
-
-        case TransactionStatus.FAILED || TransactionStatus.SUCCESS:
-          break;
-
-        default:
-          break;
-      }
-      return {
-        ...this.BSAFETransaction.resume,
-        bsafeID: this.BSAFETransactionId,
-      };
     }
+
+    this.BSAFETransaction = await this.service.findByTransactionID(
+      this.BSAFETransactionId,
+    );
+    switch (this.BSAFETransaction.status) {
+      case TransactionStatus.PENDING_SENDER:
+        await this.service.send(this.BSAFETransactionId);
+        break;
+
+      case TransactionStatus.PROCESS_ON_CHAIN:
+        return await this.wait();
+
+      case TransactionStatus.FAILED || TransactionStatus.SUCCESS:
+        break;
+
+      default:
+        break;
+    }
+    return {
+      ...this.BSAFETransaction.resume,
+      bsafeID: this.BSAFETransactionId,
+    };
   }
 
   /**
    * Promise to return result of function
+   *
+   * todo: monitore send with an socket server
    * Connect to api socket using name: [TRANSACTION_WAIT]:${transactionId}
    * Await an message on event [TRANSACTION_WAIT]:${transactionId}
    * and resolves a promise returns a result (returned on content of message)
