@@ -25,7 +25,9 @@ export class TransactionService extends Api implements ITransactionService {
   }
 
   public async findByHash(hash: string) {
-    const { data } = await this.client.get(`/transaction/by-hash/${hash}`);
+    const { data } = await this.client.get<ITransaction>(
+      `/transaction/by-hash/${hash}`,
+    );
 
     return data;
   }

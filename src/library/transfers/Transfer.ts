@@ -96,7 +96,13 @@ export class Transfer implements ITransfer {
         throw new Error(TransferInstanceError.REQUIRED_AUTH);
       }
 
-      const transaction = await service.findByTransactionID(transfer);
+      //if transfer min length is 36, is an transaction id
+      //else is an hash
+      const transaction =
+        transfer.length <= 36
+          ? await service.findByTransactionID(transfer)
+          : await service.findByHash(transfer);
+
       const scriptTransactionRequest = await Transfer.formatTransaction({
         name: transaction.name!,
         vault: vault,

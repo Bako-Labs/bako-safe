@@ -3,6 +3,7 @@ import { IBSAFEAuth } from '../api/auth/types';
 import { IListTransactions, IPredicate } from '../api/predicates';
 import { ITransferAsset } from '../assets';
 import { IFormatTransfer, Transfer } from '../transfers';
+import { ITransactionResume, IWitnesses } from '../api';
 
 export interface IConfVault {
   HASH_PREDICATE?: number[];
@@ -39,12 +40,17 @@ export interface IBSAFEApi extends IBSAFEAuth {
   id?: string;
   predicateAddress?: string;
 }
-
+export interface IBSAFEGetTransactions {
+  resume: ITransactionResume;
+  witnesses: IWitnesses[];
+}
 export interface IVault {
   getAbi: () => { [name: string]: unknown };
   getBin: () => string;
   getConfigurable: () => IConfVault;
-  BSAFEGetTransactions: (params?: IListTransactions) => Promise<Transfer[]>;
+  BSAFEGetTransactions: (
+    params?: IListTransactions,
+  ) => Promise<IBSAFEGetTransactions[]>;
   BSAFEIncludeTransaction: (
     params: IBSAFEIncludeTransaction,
   ) => Promise<Transfer>;

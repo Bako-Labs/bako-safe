@@ -176,8 +176,14 @@ describe('[TRANSFERS]', () => {
       const transaction_aux = await vault.BSAFEGetTransaction(
         transaction.BSAFETransactionId,
       );
+      const transaction_aux_byhash = await vault.BSAFEGetTransaction(
+        transaction.getHashTxId(),
+      );
 
       expect(transaction_aux.BSAFETransactionId).toStrictEqual(
+        transaction.BSAFETransactionId,
+      );
+      expect(transaction_aux_byhash.BSAFETransactionId).toStrictEqual(
         transaction.BSAFETransactionId,
       );
     },

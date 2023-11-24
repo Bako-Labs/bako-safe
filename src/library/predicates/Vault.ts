@@ -289,9 +289,10 @@ export class Vault extends Predicate<[]> implements IVault {
       ...params,
     });
     return Promise.all(
-      transactions
-        .map((transaction) => this.BSAFEGetTransaction(transaction.id))
-        .filter((transfer) => !!transfer),
+      transactions.map((transaction) => ({
+        resume: transaction.resume,
+        witnesses: transaction.witnesses,
+      })),
     );
   }
 
