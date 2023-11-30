@@ -1,5 +1,5 @@
 import { Provider, TransactionStatus, bn } from 'fuels';
-import { IPayloadVault, IFormatTransfer, Vault, Transfer } from '../..';
+import { IPayloadVault, IFormatTransfer, Vault } from '../..';
 import { ITransferAsset } from '../../assets';
 import {
   rootWallet,
@@ -53,7 +53,7 @@ describe('[TRANSFERS]', () => {
       const transaction = await vault.BSAFEIncludeTransaction(newTransfer);
       expect(
         await signin(
-          Transfer.getHashTxId(transaction.BSAFEScript, chainId),
+          transaction.getHashTxId(),
           'USER_2',
           auth['USER_2'].BSAFEAuth,
           transaction.BSAFETransactionId,
@@ -61,7 +61,7 @@ describe('[TRANSFERS]', () => {
       ).toBe(true);
       expect(
         await signin(
-          Transfer.getHashTxId(transaction.BSAFEScript, chainId),
+          transaction.getHashTxId(),
           'USER_1',
           auth['USER_1'].BSAFEAuth,
           transaction.BSAFETransactionId,
@@ -69,7 +69,7 @@ describe('[TRANSFERS]', () => {
       ).toBe(true);
       expect(
         await signin(
-          Transfer.getHashTxId(transaction.BSAFEScript, chainId),
+          transaction.getHashTxId(),
           'USER_3',
           auth['USER_3'].BSAFEAuth,
           transaction.BSAFETransactionId,
@@ -77,9 +77,9 @@ describe('[TRANSFERS]', () => {
       ).toBe(true);
       expect(
         await signin(
-          Transfer.getHashTxId(transaction.BSAFEScript, chainId),
-          'USER_5',
-          auth['USER_5'].BSAFEAuth,
+          transaction.getHashTxId(),
+          'USER_4',
+          auth['USER_4'].BSAFEAuth,
           transaction.BSAFETransactionId,
         ),
       ).toBe(false);

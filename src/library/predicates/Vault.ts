@@ -280,6 +280,10 @@ export class Vault extends Predicate<[]> implements IVault {
    * Return an list of transaction of this vault
    *
    * @returns an transaction list
+   *
+   * TODO:
+   * return a complete transaction, without instance
+   * implement default pagintation ({perPage: 10, page: 1, orderBy: 'createdAt', order: 'DESC'})
    */
   public async BSAFEGetTransactions(params?: IListTransactions) {
     this.verifyAuth();
@@ -301,6 +305,18 @@ export class Vault extends Predicate<[]> implements IVault {
    * @param transactionId - The transaction id on BSAFEApi
    *
    * @returns an transaction list
+   *
+   *
+   * TODO:
+   * split this function in others:
+   * - create a class extended of TransactionRequest, and implement the save in BSAFEApi method
+   *
+   * - newTransaction -> (IPayload) => TransactionRequest
+   *
+   * - BSAFETransaction -> (TransactionRequest | string[bsafeId, hash]) => TransactionRequest
+   *       - Save the transaction in BSAFEApi if it is of type TransactionRequest
+   *       - If the vault has not been instantiated with the Auth, it doesn't save in BSAFEApi
+   *       - If it receives a string, it fetches from the API and returns the TransactionRequest
    */
   public async BSAFEGetTransaction(transactionId: string) {
     return Transfer.instance({

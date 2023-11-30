@@ -26,9 +26,9 @@ export interface TransferConstructor {
 }
 
 export type TransferFactoryParam =
-  | string
-  | IFormatTransfer
-  | TransactionRequestLike
+  | string // id e txhash
+  | IFormatTransfer // payload
+  | TransactionRequestLike // request like formatado da fuel
   | ITransaction;
 
 export interface TransferFactory {

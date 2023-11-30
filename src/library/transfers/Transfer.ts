@@ -5,8 +5,8 @@ import {
   ScriptTransactionRequest,
   TransactionRequest,
   transactionRequestify,
+  TransactionRequestLike,
   TransactionResponse,
-  TransactionType,
 } from 'fuels';
 import {
   ITransaction,
@@ -18,7 +18,6 @@ import {
 import {
   Asset,
   IFormatTransfer,
-  ITransferAsset,
   TransferConstructor,
   TransferFactory,
   TransferInstanceError,
@@ -26,14 +25,13 @@ import {
 } from '../';
 import { delay } from '../../test-utils';
 import { defaultConfigurable } from '../../configurables';
-import { ITransfer } from './types';
 import { BSAFEScriptTransaction } from './ScriptTransaction';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
  * `Transfer` are extension of ScriptTransactionRequest, to create and send transactions
  */
-export class Transfer implements ITransfer {
+export class Transfer {
   public name!: string;
   public witnesses!: string[];
   public BSAFEScript: ScriptTransactionRequest;
@@ -42,7 +40,6 @@ export class Transfer implements ITransfer {
   public BSAFETransactionId!: string;
 
   private vault!: Vault;
-  private assets!: ITransferAsset[];
   private service?: ITransactionService;
 
   protected constructor({
@@ -63,13 +60,6 @@ export class Transfer implements ITransfer {
     this.transactionRequest = transactionRequest;
     this.BSAFETransaction = BSAFETransaction!;
     this.BSAFETransactionId = BSAFETransactionId!;
-
-    const coins = transactionRequest.getCoinOutputs();
-    this.assets = coins.map((coin) => ({
-      to: coin.to.toString(),
-      amount: coin.amount.toString(),
-      assetId: coin.assetId.toString(),
-    }));
   }
   /**
    * Create a new transaction instance
@@ -87,6 +77,11 @@ export class Transfer implements ITransfer {
     vault,
     isSave,
   }: TransferFactory) {
+    const getHashTxId = (script: TransactionRequestLike, chainId: number) => {
+      const txHash = hashTransaction(transactionRequestify(script), chainId);
+      return txHash.slice(2);
+    };
+
     const service = auth && new TransactionService(auth!);
     const transactionName = `Random Vault Name - ${uuidv4()}`;
 
@@ -132,6 +127,7 @@ export class Transfer implements ITransfer {
       'witnesses' in transfer &&
       !!vault;
     if (isNew) {
+      console.log('IS NEW TRANSACTION');
       const assets = transfer.assets.map((assest) => ({
         assetId: assest.assetId,
         amount: assest.amount.toString(),
@@ -142,14 +138,10 @@ export class Transfer implements ITransfer {
         name: transfer.name ? transfer.name : `Random Vault Name - ${uuidv4()}`,
         vault: vault,
         assets: assets,
-        //witnesses: transfer.witnesses ?? [],
       });
 
       const txData = transactionRequestify(scriptTransaction);
-      const hashTxId = Transfer.getHashTxId(
-        scriptTransaction,
-        vault.provider.getChainId(),
-      );
+      const hashTxId = getHashTxId(txData, vault.provider.getChainId());
 
       const BSAFETransaction =
         auth &&
@@ -181,28 +173,34 @@ export class Transfer implements ITransfer {
     const isRequestLike =
       transfer && Object.entries(transfer).length > 3 && 'type' in transfer;
     if (isRequestLike) {
-      const isTransactionScript = transfer.type === TransactionType.Script;
-      const bsafeScriptTransaction = isTransactionScript
-        ? new BSAFEScriptTransaction({
-            script: transfer.script!,
-            gasLimit: bn(transfer.gasLimit),
-            gasPrice: bn(transfer.gasPrice),
-          })
-        : new BSAFEScriptTransaction();
-
-      const txData = transactionRequestify(bsafeScriptTransaction);
-      const hashTxId = Transfer.getHashTxId(
-        bsafeScriptTransaction,
-        vault.provider.getChainId(),
-      );
-      const assets = bsafeScriptTransaction.getCoinOutputs().map((coin) => ({
+      console.log('IS NEW SCRIPT');
+      // const isTransactionScript = transfer.type === TransactionType.Script;
+      // const bsafeScriptTransaction = isTransactionScript
+      //   ? new BSAFEScriptTransaction({
+      //       script: transfer.script!,
+      //       gasLimit: bn(transfer.gasLimit),
+      //       gasPrice: bn(transfer.gasPrice),
+      //     })
+      //   : new BSAFEScriptTransaction();
+      vault.populateTransactionPredicateData(transfer);
+      const txData = transactionRequestify(transfer);
+      const hashTxId = getHashTxId(txData, vault.provider.getChainId());
+      const assets = txData.getCoinOutputs().map((coin) => ({
         assetId: coin.assetId.toString(),
         to: coin.to.toString(),
-        amount: coin.amount.toString(),
+        amount: bn(coin.amount).format().toString(),
+        utxo: '',
       }));
 
       let transaction: ITransaction | undefined = undefined;
-
+      console.log('[TRANSACTION]: ', {
+        assets,
+        hash: hashTxId,
+        txData: txData,
+        name: transactionName,
+        status: TransactionStatus.AWAIT_REQUIREMENTS,
+        predicateAddress: vault.address.toString(),
+      });
       if (auth && service && isSave) {
         transaction = await service.create({
           assets,
@@ -227,7 +225,7 @@ export class Transfer implements ITransfer {
         witnesses: witnesses,
         name: transactionName,
         transactionRequest: txData,
-        BSAFEScript: bsafeScriptTransaction,
+        BSAFEScript: new ScriptTransactionRequest(), // TODO: Remove this one
         BSAFETransaction: transaction,
         BSAFETransactionId: transaction?.id,
       });
@@ -243,31 +241,30 @@ export class Transfer implements ITransfer {
    */
   public makeBlockUrl(block: string | undefined) {
     return block
-      ? `https://fuellabs.github.io/block-explorer-v2/transaction/${Transfer.getHashTxId(
-          this.BSAFEScript,
-          this.vault.provider.getChainId(),
-        )}?providerUrl=${encodeURIComponent(this.vault.provider.url)}`
+      ? `https://fuellabs.github.io/block-explorer-v2/transaction/${this.getHashTxId()}?providerUrl=${encodeURIComponent(
+          this.vault.provider.url,
+        )}`
       : '';
   }
 
-  /**
-   * Generates and formats the transaction hash
-   *
-   * @param script Script of transaction request
-   * @param chainId Chain ID of provider
-   *
-   * @returns Hash of this transaction
-   */
-  public static getHashTxId(script: ScriptTransactionRequest, chainId: number) {
-    const txHash = hashTransaction(transactionRequestify(script), chainId);
-    return txHash.slice(2);
-  }
+  // /**
+  //  * Generates and formats the transaction hash
+  //  *
+  //  * @param script Script of transaction request
+  //  * @param chainId Chain ID of provider
+  //  *
+  //  * @returns Hash of this transaction
+  //  */
+  // public static getHashTxId(script: TransactionRequestLike, chainId: number) {
+  //   const txHash = hashTransaction(transactionRequestify(script), chainId);
+  //   return txHash.slice(2);
+  // }
 
-  public static toTransactionRequest(transaction: ITransaction) {
-    return BSAFEScriptTransaction.from({
-      script: `0x${transaction.hash}`,
-    });
-  }
+  // public static toTransactionRequest(transaction: ITransaction) {
+  //   return BSAFEScriptTransaction.from({
+  //     script: `0x${transaction.hash}`,
+  //   });
+  // }
 
   /**
    * Generates and formats the transaction hash of transaction instance
@@ -276,29 +273,29 @@ export class Transfer implements ITransfer {
    */
   public getHashTxId() {
     const txHash = hashTransaction(
-      transactionRequestify(this.BSAFEScript),
+      this.transactionRequest,
       this.vault.provider.getChainId(),
     );
     return txHash.slice(2);
   }
 
-  /**
-   * Encapsulation of this transaction
-   *
-   * @returns this transaction
-   */
-  public getScript() {
-    return this.BSAFEScript!;
-  }
+  // /**
+  //  * Encapsulation of this transaction
+  //  *
+  //  * @returns this transaction
+  //  */
+  // public getScript() {
+  //   return this.BSAFEScript!;
+  // }
 
-  /**
-   * Encapsulation of this transaction assets
-   *
-   * @returns this transaction assets
-   */
-  public getAssets() {
-    return this.assets;
-  }
+  // /**
+  //  * Encapsulation of this transaction assets
+  //  *
+  //  * @returns this transaction assets
+  //  */
+  // public getAssets() {
+  //   return this.assets;
+  // }
 
   /**
    * Configure outputs and parameters of transaction instance.
