@@ -73,6 +73,12 @@ export interface ITransactionResume {
   sendTime?: Date;
 }
 
+export interface ITransactionSummary {
+  origin: string;
+  name: string;
+  image?: string;
+}
+
 export interface ITransaction extends ICreateTransactionPayload {
   id: string;
   name: string;
@@ -82,6 +88,7 @@ export interface ITransaction extends ICreateTransactionPayload {
   witnesses: IWitnesses[];
   resume: ITransactionResume; // RESULT
   assets: IAssetTransaction[];
+  summary: ITransactionSummary;
 }
 
 export interface ITransactionService {
