@@ -3,3 +3,4 @@ export * from './sway';
 export * from './transfers';
 export * from './assets';
 export * from './api';
+export * from './connector';
