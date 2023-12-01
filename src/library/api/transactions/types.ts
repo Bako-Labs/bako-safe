@@ -88,7 +88,7 @@ export interface ITransaction extends ICreateTransactionPayload {
   witnesses: IWitnesses[];
   resume: ITransactionResume; // RESULT
   assets: IAssetTransaction[];
-  summary: ITransactionSummary;
+  summary?: ITransactionSummary;
 }
 
 export interface ITransactionService {
