@@ -11,6 +11,7 @@ export enum TransactionStatus {
   PENDING_SENDER = 'pending_sender', // -> AWAIT SENDER, BEFORE AWAIT STATUS
   PROCESS_ON_CHAIN = 'process_on_chain', // -> AWAIT DONE ON CHAIN
   SUCCESS = 'success', // -> SENDED
+  DECLINED = 'declined', // -> DECLINED
   FAILED = 'failed', // -> FAILED
 }
 
