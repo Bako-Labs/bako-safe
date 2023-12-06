@@ -1,6 +1,6 @@
 {
   "name": "bsafe",
-  "version": "0.0.23",
+  "version": "0.0.26",
   "description": "A signature validation package built based on sway in the fuel network",
   "author": "InfinityBase - Guilherme Roque",
   "license": "Apache-2.0",
@@ -34,10 +34,7 @@
     "prettier": "3.0.3",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1",
-    "typescript": "^4.9.4",
-    "socket.io": "^4.7.2",
-    "socket.io-client": "^4.7.2",
-    "@fuel-wallet/react": "0.14.0-preview-a651bbe"
+    "typescript": "^4.9.4"
   },
   "peerDependencies": {
     "fuels": "0.67.0",
@@ -54,6 +51,9 @@
     "elliptic": "^6.5.4",
     "fuels": "0.67.0",
     "tsup": "^7.2.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2",
+    "@fuel-wallet/react": "0.14.0-preview-a651bbe"
   }
 }

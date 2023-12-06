@@ -5,3 +5,4 @@ export * from './assets';
 export * from './api/auth';
 export * from './connector';
 export * from './api/transactions/types';
+export * from './api/predicates/types';
