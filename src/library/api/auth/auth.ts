@@ -1,78 +1,99 @@
 import axios, { AxiosInstance } from 'axios';
-import { Wallet } from 'fuels';
-import { IAuthService, IBSAFEAuth } from './types';
-import { IDefaultAccount } from '../../../mocks/accounts';
-import { v4 as uuidv4 } from 'uuid';
+import { Provider, Wallet } from 'fuels';
+import { IAuthService, IBSAFEAuth, IBSAFEAuthPayload } from './types';
 import { defaultConfigurable } from '../../../configurables';
-import { LocalProvider } from '../../../test-utils';
+import { FuelWalletLocked } from '@fuel-wallet/sdk';
+import { v4 as uuidv4 } from 'uuid';
+import { ITransaction } from '../transactions';
 
 // woking to local node just fine
 export class AuthService implements IAuthService {
   private client: AxiosInstance;
-  private user?: IDefaultAccount;
-  private auth?: {
-    id: string;
-    address: string;
-    provider: string;
-    token?: string;
-  };
+  private payloadSession: IBSAFEAuthPayload;
+  private signature?: string;
   public BSAFEAuth?: IBSAFEAuth;
 
-  constructor() {
+  protected constructor(payload: IBSAFEAuthPayload) {
     this.client = axios.create({
       baseURL: defaultConfigurable.api_url,
     });
+    this.payloadSession = payload;
   }
 
-  async createUser(user: IDefaultAccount, provider: string) {
-    this.user = user;
+  static async create(user: string, provider: string) {
+    const { data } = await axios
+      .create({
+        baseURL: defaultConfigurable.api_url,
+      })
+      .post('/user', {
+        address: user,
+        provider,
+      });
 
-    const { data } = await this.client.post('/user', {
-      address: user.address,
-      provider,
-    });
-    this.auth = {
-      address: user.address,
-      id: data.id,
-      provider,
-    };
-
-    return;
-  }
-
-  async createSession() {
-    if (!this.auth) return;
-    const { address, provider, id } = this.auth;
-    const message = {
-      address,
+    return new AuthService({
+      address: user,
       hash: uuidv4(),
       createdAt: new Date().toISOString(),
       provider,
-      encoder: defaultConfigurable.encoder,
-      user_id: id,
-    };
+      encoder: 'fuel',
+      user_id: data.id,
+    });
+  }
 
-    const tx = await this.signer(JSON.stringify(message));
+  //todo: verify date of payloadSession
+  async createSession() {
+    if (!this.signature) throw new Error('Signature not found');
+    const { address } = this.payloadSession;
 
     const { data } = await this.client.post('/auth/sign-in', {
-      ...message,
-      signature: tx,
+      ...this.payloadSession,
+      signature: this.signature,
     });
 
-    this.auth.token = data.token;
-    this.BSAFEAuth = {
+    const result: IBSAFEAuth = {
       address,
       token: data.accessToken,
     };
+
+    this.client.defaults.headers.common['Authorization'] = data.accessToken;
+    this.client.defaults.headers.common['Signeraddress'] = address;
+
+    this.BSAFEAuth = result;
+
+    return result;
   }
 
-  private async signer(message: string) {
-    if (!this.user || !this.auth || !this.user.privateKey) return;
-
+  async signerByPk(pk: string) {
     const signer = Wallet.fromPrivateKey(
-      this.user.privateKey,
-      new LocalProvider(),
+      pk,
+      await Provider.create(defaultConfigurable['provider']),
     );
-    return await signer.signMessage(message);
+    const msg = await signer.signMessage(JSON.stringify(this.payloadSession));
+    this.signature = msg;
+  }
+
+  async signerByAccount(wallet: FuelWalletLocked) {
+    const msg = await wallet.signMessage(JSON.stringify(this.payloadSession));
+    this.signature = msg;
+  }
+
+  async signTransaction(
+    wallet: FuelWalletLocked,
+    BSAFETransactionId: string,
+    approve?: boolean,
+  ) {
+    const { data } = await this.client.get<ITransaction>(
+      `/transaction/${BSAFETransactionId}`,
+    );
+    const msg = await wallet.signMessage(data.hash);
+
+    await this.client
+      .put(`/transaction/signer/${BSAFETransactionId}`, {
+        account: wallet.address.toString(),
+        signer: msg,
+        confirm: approve ?? true,
+      })
+      .then(() => true)
+      .catch(() => false);
   }
 }
