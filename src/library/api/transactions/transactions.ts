@@ -44,13 +44,14 @@ export class TransactionService extends Api implements ITransactionService {
     BSAFETransactionId: string,
     account: string,
     signer: string,
+    approve?: boolean,
   ) {
     const { data } = await this.client.put(
       `/transaction/signer/${BSAFETransactionId}`,
       {
         account,
         signer,
-        confirm: true,
+        confirm: approve ?? true,
       },
     );
 

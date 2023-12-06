@@ -124,10 +124,8 @@ export class Transfer {
       Object.entries(transfer).length <= 3 &&
       Object.entries(transfer).length > 0 &&
       'assets' in transfer &&
-      'witnesses' in transfer &&
       !!vault;
     if (isNew) {
-      console.log('IS NEW TRANSACTION');
       const assets = transfer.assets.map((assest) => ({
         assetId: assest.assetId,
         amount: assest.amount.toString(),
@@ -173,15 +171,6 @@ export class Transfer {
     const isRequestLike =
       transfer && Object.entries(transfer).length > 3 && 'type' in transfer;
     if (isRequestLike) {
-      console.log('IS NEW SCRIPT');
-      // const isTransactionScript = transfer.type === TransactionType.Script;
-      // const bsafeScriptTransaction = isTransactionScript
-      //   ? new BSAFEScriptTransaction({
-      //       script: transfer.script!,
-      //       gasLimit: bn(transfer.gasLimit),
-      //       gasPrice: bn(transfer.gasPrice),
-      //     })
-      //   : new BSAFEScriptTransaction();
       vault.populateTransactionPredicateData(transfer);
       const txData = transactionRequestify(transfer);
       const hashTxId = getHashTxId(txData, vault.provider.getChainId());
@@ -193,14 +182,6 @@ export class Transfer {
       }));
 
       let transaction: ITransaction | undefined = undefined;
-      console.log('[TRANSACTION]: ', {
-        assets,
-        hash: hashTxId,
-        txData: txData,
-        name: transactionName,
-        status: TransactionStatus.AWAIT_REQUIREMENTS,
-        predicateAddress: vault.address.toString(),
-      });
       if (auth && service && isSave) {
         transaction = await service.create({
           assets,

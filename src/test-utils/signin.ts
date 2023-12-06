@@ -1,5 +1,6 @@
 import { Wallet, Address } from 'fuels';
-import { IBSAFEAuth, TransactionService } from '../library';
+import { IBSAFEAuth } from '../library';
+import { TransactionService } from '../library/api';
 import { accounts } from '../mocks';
 import { LocalProvider } from './provider';
 

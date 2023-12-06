@@ -100,6 +100,7 @@ export interface ITransactionService {
     BSAFETransactionId: string,
     account: string,
     signer: string,
+    approve?: boolean,
   ) => Promise<ITransaction>;
   send: (BSAFETransactionId: string) => Promise<ITransactionResume>;
   verify: (BSAFETransactionId: string) => Promise<ITransactionResume>;

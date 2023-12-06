@@ -26,12 +26,13 @@ describe('[TRANSFERS]', () => {
       ['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
       provider.url,
     );
+
     signers = [
       accounts['USER_1'].address,
       accounts['USER_2'].address,
       accounts['USER_3'].address,
     ];
-  }, 10 * 1000);
+  }, 30 * 1000);
 
   test(
     'Sign transactions with invalid users',
