@@ -9,7 +9,7 @@ export const defaultConfigurable = {
   //bsafe_url: 'https://bsafe-ui-git-staging-infinity-base.vercel.app/',
   provider: 'https://beta-4.fuel.network/graphql',
   //prd
-  api_url: 'https://app.bsafe.pro/',
+  api_url: 'https://api-multsig.infinitybase.com',
   bsafe_url: 'https://app.bsafe.pro/',
   encoder: 'fuel',
   gasPrice: bn(100),
