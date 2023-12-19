@@ -1,5 +1,9 @@
 import { bn } from 'fuels';
 
+type DefaultConfigurables = Partial<
+  Pick<typeof defaultConfigurable, 'api_url' | 'bsafe_url' | 'provider'>
+>;
+
 export const defaultConfigurable = {
   // api_url: 'http://localhost:3333',
   // bsafe_url: 'http://localhost:5174',
@@ -16,4 +20,18 @@ export const defaultConfigurable = {
   gasLimit: bn(100000),
   chainId: 0,
   refetchTimeout: 1000,
+};
+
+export const BSafe = {
+  setup: (params: DefaultConfigurables) => {
+    const configurableKeys = Object.keys(
+      params,
+    ) as unknown as (keyof DefaultConfigurables)[];
+
+    configurableKeys.forEach((key) => {
+      if (key in defaultConfigurable) {
+        defaultConfigurable[key] = params[key]!;
+      }
+    });
+  },
 };
