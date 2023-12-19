@@ -8,7 +8,7 @@ import {
   delay,
   newVault,
 } from '../../../test-utils';
-import { defaultConfigurable } from '../../../configurables';
+import { BSafe, defaultConfigurable } from '../../../configurables';
 
 import { accounts } from '../../../mocks/accounts';
 import { IUserAuth, authService, assets } from '../../../mocks';
@@ -19,7 +19,14 @@ describe('[TRANSFERS]', () => {
   let provider: Provider;
   let signers: string[];
 
+  BSafe.setup({
+    provider: 'http://localhost:4000/graphql',
+    api_url: 'https://localhost:3333',
+    bsafe_url: 'https://localhost:5174',
+  });
+
   beforeAll(async () => {
+    console.log(defaultConfigurable);
     provider = await Provider.create(defaultConfigurable['provider']);
     chainId = await provider.getChainId();
     auth = await authService(
