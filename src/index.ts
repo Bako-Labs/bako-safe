@@ -1,4 +1,3 @@
 //export * from './hooks';
-export * from './library';
-export * from './test-utils';
-export * from './configurables';
+export * from '../packages/sdk/src';
+export * from '../packages/tests/utils';

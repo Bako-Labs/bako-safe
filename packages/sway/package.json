@@ -1,0 +1,32 @@
+{
+  "name": "@bsafe/sway",
+  "description": "",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "peerDependencies": {
+    "fuels": "0.73.0"
+  },
+  "scripts": {
+    "build": "yarn fuels build"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.1"
+  },
+  "dependencies": {
+    "fuels": "0.73.0"
+  }
+}
