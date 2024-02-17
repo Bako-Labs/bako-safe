@@ -22,7 +22,7 @@ import {
   TransferInstanceError,
   Vault,
 } from '../';
-import { delay } from '../../../tests/utils';
+import { delay } from '../../tests/utils';
 
 import { BSAFEScriptTransaction } from './ScriptTransaction';
 import { v4 as uuidv4 } from 'uuid';

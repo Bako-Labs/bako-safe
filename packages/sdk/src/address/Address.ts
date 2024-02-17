@@ -1,4 +1,4 @@
-import { assets } from '../../../tests/mocks';
+import { assets } from '../../tests/mocks';
 import { Address } from 'fuels';
 
 export class AddressUtils {

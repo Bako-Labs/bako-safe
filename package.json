@@ -13,11 +13,11 @@
     "./packages/*"
   ],
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run prebuild && turbo run build",
     "chain:start": "make -C ./docker/chain up"
   },
   "devDependencies": {
-    "turbo": "1.8.8"
+    "turbo": "^1.10.0"
   },
   "dependencies": {
     "@fuel-wallet/sdk": "^0.13.10",

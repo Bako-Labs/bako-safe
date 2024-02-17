@@ -21,7 +21,7 @@
     "fuels": "0.73.0"
   },
   "scripts": {
-    "build": "yarn fuels build"
+    "prebuild": "yarn fuels build"
   },
   "devDependencies": {
     "dotenv": "^16.4.1"
