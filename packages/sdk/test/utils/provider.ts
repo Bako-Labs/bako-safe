@@ -1,8 +1,9 @@
 import { Provider } from 'fuels';
-import { defaultConfigurable } from '../configurables';
+
+const { PROVIDER } = process.env;
 
 export class LocalProvider extends Provider {
   constructor() {
-    super(defaultConfigurable.provider);
+    super(PROVIDER!);
   }
 }

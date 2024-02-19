@@ -16,9 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
-    "test": "jest --verbose",
-    "test:watch": "jest --verbose --watch"
+    "build": "tsup"
   },
   "keywords": [],
   "author": "Infinybase - Guilherme Roque",

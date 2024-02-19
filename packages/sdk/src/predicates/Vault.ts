@@ -60,8 +60,17 @@ export class Vault extends Predicate<[]> implements IVault {
     const _chainId = configurable.chainId;
     Vault.validations(configurable);
 
+    console.log('configurable', configurable);
+
     const _configurable = Vault.makePredicate(configurable);
-    super(_bin, provider, _abi, _configurable);
+
+    console.log(_bin, provider, _abi, configurable);
+
+    try {
+      super(_bin, provider, _abi, _configurable);
+    } catch (e) {
+      console.log(e);
+    }
 
     this.bin = _bin;
     this.abi = _abi;

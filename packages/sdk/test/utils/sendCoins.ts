@@ -1,11 +1,12 @@
-import { BN, WalletUnlocked } from 'fuels';
+import { BN, WalletUnlocked, bn } from 'fuels';
 
 import { assets } from '../mocks';
-import { Vault } from '../library';
-import { defaultConfigurable } from '../configurables';
+import { Vault } from '../../src/predicates/Vault';
+
+const { GAS_PRICE } = process.env;
 
 export const txParams = {
-  gasPrice: defaultConfigurable.gasPrice,
+  gasPrice: bn(GAS_PRICE),
 };
 
 export const sendPredicateCoins = async (
@@ -14,6 +15,7 @@ export const sendPredicateCoins = async (
   asset: 'ETH' | 'DAI' | 'sETH',
   rootWallet: WalletUnlocked,
 ) => {
+  console.log(predicate);
   const deposit = await rootWallet.transfer(
     predicate.address,
     amount,

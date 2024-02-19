@@ -11,6 +11,12 @@
       "outputs": ["dist/**"],
       "outputMode": "new-only",
       "cache": false
+    },
+    "test": {
+      "dependsOn": ["^prebuild"],
+      "outputs": ["dist/**"],
+      "outputMode": "new-only",
+      "cache": false
     }
   }
 }

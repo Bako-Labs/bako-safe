@@ -1,4 +1,4 @@
-import { AuthService, IBSAFEAuth } from '@bsafe/sdk';
+import { AuthService, IBSAFEAuth } from '../../src/api';
 
 import { IAccountKeys, IDefaultAccount, accounts } from '../mocks';
 export interface IAuthAccount extends IDefaultAccount {
