@@ -16,12 +16,15 @@ import {
   makeHashPredicate,
   makeSubscribers,
   Transfer,
-} from '../';
+} from '..';
 import { v4 as uuidv4 } from 'uuid';
 import { AddressUtils } from '../address/Address';
 
-import { PredicateAbi__factory as predicateABI } from '../contracts';
-import predicateBIN from '../contracts/contracts/PredicateAbi.hex';
+import {
+  PredicateAbi__factory as predicateABI,
+  _bin as predicateBIN,
+} from '../predicates';
+
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
  */

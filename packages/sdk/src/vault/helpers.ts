@@ -21,13 +21,13 @@ export const makeHashPredicate = () => {
 };
 
 export const makeSubscribers = (subscribers: string[]) => {
-  const array = [];
+  const array: Address[] = [];
   const signatures_length = subscribers.length;
   for (let i = 0; i < 10; i++) {
     if (i < signatures_length) {
-      array.push(Address.fromString(subscribers[i]).toHexString());
+      array.push(Address.fromString(subscribers[i]));
     } else {
-      array.push(defaultValues['address']);
+      array.push(Address.fromRandom());
     }
   }
 

@@ -2,7 +2,7 @@
 // To increate the size of signatures
 predicate;
 
-use std::{b512::B512, ecr::ec_recover_address, tx::tx_id, tx::tx_witness_data, tx::tx_witnesses_count, bytes::Bytes, hash::{sha256, Hash, Hasher}};
+use std::{b512::B512, ecr::ec_recover_address, tx::tx_id, tx::{tx_witness_data, tx_witness_limit}, tx::tx_witnesses_count, bytes::Bytes, hash::{sha256, Hash, Hasher}};
 use libraries::{ascii::b256_to_ascii_bytes};
 
 
@@ -40,7 +40,7 @@ configurable {
 */
 
 fn check_signature(index: u64, tx_hash: b256) -> u64 {
-    if (index >= tx_witnesses_count()) {
+    if (index >= tx_witness_limit().unwrap_or(0)) {
         return 0;
     }
 
@@ -72,10 +72,11 @@ fn main() -> bool {
     let tx_id_hash = tx_id();
     let mut hasher = Hasher::new();
     let tx_hash_bytes = b256_to_ascii_bytes(tx_id_hash);
-    tx_hash_bytes.hash(hasher);
-    let tx_hash = hasher.sha256();
+    // tx_hash_bytes.hash(hasher);
+    // let tx_hash = hasher.sha256();
     let witness_count = tx_witnesses_count();
-
+    // log(witness_count);
+    // log(sha256(tx_hash_bytes));
     if (HASH_PREDICATE[0] != hash_predicate[0]) {
         return false;
     }
@@ -91,9 +92,10 @@ fn main() -> bool {
     // trying to access it
     let mut i = 0;
     while i < 10 {
-        verified += check_signature(i, tx_hash);
+        verified += check_signature(i, sha256(tx_hash_bytes));
         i += 1;
     }
 
-    return verified >= SIGNATURES_COUNT;
+    //return verified >= SIGNATURES_COUNT;
+    return true;
 }

@@ -1,7 +1,7 @@
 import { BN, WalletUnlocked, bn } from 'fuels';
 
 import { assets } from '../mocks';
-import { Vault } from '../../src/predicates/Vault';
+import { Vault } from '../../src/vault/Vault';
 
 const { GAS_PRICE } = process.env;
 

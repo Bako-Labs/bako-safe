@@ -11,7 +11,7 @@ import {
   ITransactionService,
   IWitnesses,
 } from '../api/transactions';
-import { Vault } from '../predicates';
+import { Vault } from '../vault';
 import { IBSAFEAuth } from '../api';
 
 export interface TransferConstructor {

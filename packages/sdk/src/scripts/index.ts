@@ -9,4 +9,4 @@
   Fuel-Core version: 0.22.0
 */
 
-export { PredicateAbi__factory } from './factories/PredicateAbi__factory';
+export { ScriptAbi__factory } from './factories/ScriptAbi__factory';
