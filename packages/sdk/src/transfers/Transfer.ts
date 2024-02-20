@@ -15,17 +15,16 @@ import {
   TransactionStatus,
 } from '../api';
 import {
-  Asset,
   IFormatTransfer,
   TransferConstructor,
   TransferFactory,
   TransferInstanceError,
-  Vault,
-} from '../';
+} from './types';
+import { Vault } from '../vault';
 import { delay } from '../../test/utils';
-
 import { BSAFEScriptTransaction } from './ScriptTransaction';
 import { v4 as uuidv4 } from 'uuid';
+import { Asset } from '../assets';
 
 const { GAS_PRICE } = process.env;
 
@@ -62,6 +61,7 @@ export class Transfer {
     this.BSAFETransaction = BSAFETransaction!;
     this.BSAFETransactionId = BSAFETransactionId!;
   }
+
   /**
    * Create a new transaction instance
    *
@@ -79,7 +79,7 @@ export class Transfer {
     isSave,
   }: TransferFactory) {
     const getHashTxId = (script: TransactionRequestLike, chainId: number) => {
-      const txHash = hashTransaction(transactionRequestify(script), chainId);
+      const txHash = transactionRequestify(script).getTransactionId(chainId);
       return txHash.slice(2);
     };
 
@@ -254,8 +254,7 @@ export class Transfer {
    * @returns Hash of this transaction
    */
   public getHashTxId() {
-    const txHash = hashTransaction(
-      this.transactionRequest,
+    const txHash = this.transactionRequest.getTransactionId(
       this.vault.provider.getChainId(),
     );
     return txHash.slice(2);
