@@ -16,7 +16,6 @@ export const sendPredicateCoins = async (
   asset: 'ETH' | 'DAI' | 'sETH',
   rootWallet: WalletUnlocked,
 ) => {
-  console.log(predicate);
   const deposit = await rootWallet.transfer(
     predicate.address,
     amount,

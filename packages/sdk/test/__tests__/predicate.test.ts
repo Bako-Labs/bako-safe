@@ -84,20 +84,19 @@ describe('[PREDICATES]', () => {
     ]);
   });
 
-  //
-  // test(
-  //   'Instance an old Vault by BSAFEPredicate ID',
-  //   async () => {
-  //     const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
-  //     const auxVault = await Vault.create({
-  //       ...auth['USER_1'].BSAFEAuth,
-  //       id: vault.BSAFEVaultId,
-  //     });
-  //     expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
-  //     expect(auxVault.BSAFEVault.id).toStrictEqual(vault.BSAFEVaultId);
-  //   },
-  //   20 * 1000,
-  // );
+  test(
+    'Instance an old Vault by BSAFEPredicate ID',
+    async () => {
+      const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
+      const auxVault = await Vault.create({
+        ...auth['USER_1'].BSAFEAuth,
+        id: vault.BSAFEVaultId,
+      });
+      expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
+      expect(auxVault.BSAFEVault.id).toStrictEqual(vault.BSAFEVaultId);
+    },
+    20 * 1000,
+  );
   //
   // test(
   //   'Instance an old Vault by predicate address',
