@@ -1,16 +1,13 @@
 import { Provider, bn } from 'fuels';
-// import { IPayloadVault, Vault } from '../../src';
-// import { rootWallet, sendPredicateCoins, signin, newVault } from '../utils';
-
-import { accounts, assets } from '../mocks';
 import {
-  IUserAuth,
-  authService,
-  newVault,
-  sendPredicateCoins,
-  rootWallet,
   signin,
+  newVault,
+  IUserAuth,
+  rootWallet,
+  authService,
+  sendPredicateCoins,
 } from '../utils';
+import { accounts, assets } from '../mocks';
 import { IPayloadVault, Vault } from '../../src/vault';
 
 const { PROVIDER } = process.env;
