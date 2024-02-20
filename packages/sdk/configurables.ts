@@ -29,7 +29,7 @@ export const defaultConfig = {
 };
 
 export const BSafe = {
-  setup: (params: DefaultConfigurables) => {
+  setup: (params: Partial<DefaultConfigurables>) => {
     const configurableKeys = Object.keys(
       params,
     ) as unknown as (keyof DefaultConfigurables)[];
