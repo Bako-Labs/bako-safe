@@ -1,138 +1,146 @@
 import {
+  AbstractAddress,
   Address,
+  BN,
   BaseAssetId,
-  hashMessage,
+  InputType,
   InputValue,
   Predicate,
   Provider,
+  ScriptTransactionRequest,
+  TransactionRequest,
+  TransactionResponse,
   Wallet,
   WalletUnlocked,
-  Signer,
-  bn,
-  ScriptTransactionRequest,
-  transactionRequestify,
+  ZeroBytes32,
   arrayify,
+  bn,
+  hexlify,
 } from 'fuels';
+
 import { PredicateAbi__factory } from '../../../sdk/src/predicates';
-import {
-  ScriptAbi__factory,
-  bin,
-} from '../../../sdk/src/scripts/factories/ScriptAbi__factory';
-const { PROVIDER, PRIVATE_KEY, GAS_PRICE, GAS_LIMIT } = process.env;
 
-describe('[PREDICATE]', () => {
-  let provider: Provider;
-  let wallet: WalletUnlocked;
-  let predicate: Predicate<InputValue[]>;
+const { PROVIDER } = process.env;
 
-  beforeAll(async () => {
-    //console.log(PROVIDER, PRIVATE_KEY, GAS_PRICE, GAS_LIMIT);
-    provider = await Provider.create(PROVIDER!, {});
-    wallet = await Wallet.fromPrivateKey(PRIVATE_KEY!, provider);
+async function seedAccount(
+  address: AbstractAddress,
+  amount: BN,
+  provider: Provider,
+) {
+  const genisesWallet = Wallet.fromPrivateKey(
+    '0xa449b1ffee0e2205fa924c6740cc48b3b473aa28587df6dab12abc245d1f5298',
+    provider,
+  );
+  const resp = await genisesWallet.transfer(address, amount, BaseAssetId, {
+    gasLimit: 100_000,
+    gasPrice: 1,
+  });
+  await resp.waitForResult();
+}
 
-    predicate = PredicateAbi__factory.createInstance(provider, {
-      HASH_PREDICATE: [
-        // todo: fix to use a salt
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      ],
-      SIGNATURES_COUNT: 1,
-      //@ts-ignore
-      SIGNERS: [
-        wallet.address.toHexString(),
-        ...Array.from({ length: 9 }, () => Address.fromRandom().toHexString()),
-      ],
-    });
+async function sendTransaction(
+  provider: Provider,
+  tx: TransactionRequest,
+  signatures: Array<string>,
+) {
+  tx.witnesses = signatures;
+  await provider.estimatePredicates(tx);
+  const encodedTransaction = hexlify(tx.toTransactionBytes());
+  const {
+    submit: { id: transactionId },
+  } = await provider.operations.submit({ encodedTransaction });
 
-    //predicate.predicateData[0] = bin;
+  const response = new TransactionResponse(transactionId, provider);
+  return response;
+}
 
-    //send coins to predicate
-    const w_tx = await wallet.transfer(
-      predicate.address,
-      bn.parseUnits('1'),
-      BaseAssetId,
-      {
-        gasPrice: Number(GAS_PRICE),
-        gasLimit: Number(GAS_LIMIT),
-      },
-    );
-    await w_tx.wait();
+async function signTransaction(
+  wallet: WalletUnlocked,
+  tx: TransactionRequest,
+  provider: Provider,
+) {
+  const txHash = tx.getTransactionId(provider.getChainId());
+  const hash = txHash.slice(2).toLowerCase();
+  const signature = await wallet.signMessage(hash);
+
+  console.log('[SIG]', {
+    hash,
+    signature,
   });
 
-  test('Send a valid transaction ', async () => {
-    const { minGasPrice, maxGasPerPredicate, gasPriceFactor, maxGasPerTx } =
-      provider.getGasConfig();
+  return signature;
+}
 
-    // console.log({
-    //   minGasPrice: minGasPrice.toString(),
-    //   maxGasPerPredicate: maxGasPerPredicate.toString(),
-    //   gasPriceFactor: gasPriceFactor.toString(),
-    // });
-    // const tx = await predicate.createTransfer(
-    //   Address.fromRandom(),
-    //   bn.parseUnits('0.01'),
-    //   BaseAssetId,
-    //   {
-    //     gasPrice: minGasPrice,
-    //     gasLimit: 2000,
-    //     // gasLimit: Number(GAS_LIMIT),
-    //     // witnessLimit: bn.parseUnits('2'),
-    //     maxFee: maxGasPerTx,
-    //     //witnessLimit: bn.parseUnits('10'),
-    //   },
-    // );
+async function createTransaction(predicate: Predicate<InputValue[]>) {
+  const tx = new ScriptTransactionRequest();
+  tx.gasPrice = bn(1);
+  tx.gasLimit = bn(100_001);
+  const coins = await predicate.getResourcesToSpend([
+    {
+      amount: bn(100),
+      assetId: BaseAssetId,
+    },
+  ]);
+  tx.addResources(coins);
 
-    const script = new ScriptTransactionRequest();
-    script.script = arrayify(ScriptAbi__factory.bin);
-    script.gasPrice = bn(1);
-    script.gasLimit = bn(10000);
+  // Add predicate data to the input
+  tx.inputs?.forEach((input) => {
+    if (
+      input.type === InputType.Coin &&
+      hexlify(input.owner) === predicate.address.toB256()
+    ) {
+      // eslint-disable-next-line no-param-reassign
+      input.predicate = arrayify(predicate.bytes);
+      // eslint-disable-next-line no-param-reassign
+      input.predicateData = arrayify(predicate.predicateData);
+    }
+  });
 
-    const sig = await wallet.signMessage(
-      script.getTransactionId(provider.getChainId()),
-    );
-    script.witnesses = [sig];
-    //script.witnessLimit = bn(script.witnesses.length.toString());
+  return tx;
+}
 
-    //script.maxFee = maxGasPerTx;
-    //script.witnessLimit = bn.parseUnits('2');
+describe('Test Predicate', () => {
+  let provider: Provider;
+  let chainId: number;
 
-    // const s_tx = new ScriptTransactionRequest(tx);
-    // s_tx.script = bin;
+  beforeAll(async () => {
+    provider = await Provider.create(PROVIDER!);
+    chainId = provider.getChainId();
+  });
 
-    // const tx_id = transactionRequestify(s_tx).getTransactionId(
-    //   provider.getChainId(),
-    // );
-
-    script.witnesses = [sig];
-    await wallet.fund(
-      script,
-      [
-        {
-          amount: bn.parseUnits('1'),
-          assetId: BaseAssetId,
-        },
-      ],
-      bn(1),
-    );
-
-    console.log((await provider.call(script)).receipts);
-
-    console.log({
-      sig,
-      tx_id: script.getTransactionId(provider.getChainId()),
+  test('Send transfer using predicate', async () => {
+    const wallet = Wallet.generate({
+      provider,
     });
+    const predicate = PredicateAbi__factory.createInstance(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [
+        wallet.address.toB256(),
+        ZeroBytes32,
+        ZeroBytes32,
+        ZeroBytes32,
+        ZeroBytes32,
+        ZeroBytes32,
+        ZeroBytes32,
+        ZeroBytes32,
+        ZeroBytes32,
+        ZeroBytes32,
+      ],
+      HASH_PREDICATE: Address.fromRandom().toB256(),
+    });
+    await seedAccount(predicate.address, bn.parseUnits('0.1'), provider);
 
-    // const tx = await transactionRequestify(script);
+    // Add signatures
+    console.log('Create transaction');
 
-    //console.log(Signer.recoverAddress(hashMessage(tx_id), sig), wallet.address);
+    const tx = await createTransaction(predicate);
 
-    // tx.witnesses.push(sig);
+    const response = await sendTransaction(provider, tx, [
+      await signTransaction(wallet, tx, provider),
+    ]);
+    const result = await response.waitForResult();
+    console.log(result.status);
 
-    // console.log((await wallet.sendTransaction(tx)).wait());
-
-    // tx.witnessLimit = bn.parseUnits(tx.witnesses.length.toString());
-
-    //console.log('->', tx.witnesses);
-    //const res = (await provider.sendTransaction(tx)).wait();
-    //console.log((await res).receipts);
+    expect(result.status).toBe('success');
   });
 });
