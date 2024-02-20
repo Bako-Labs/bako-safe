@@ -1,4 +1,4 @@
-import { Address } from 'fuels';
+import { Address, B256Address, ZeroBytes32 } from 'fuels';
 
 export const defaultValues: { [name: string]: string } = {
   signature:
@@ -6,30 +6,12 @@ export const defaultValues: { [name: string]: string } = {
   address: '0x0000000000000000000000000000000000000000000000000000000000000000',
 };
 
-export const makeHashPredicate = () => {
-  const array = [];
-
-  const random = () => {
-    return Math.round(Math.random() * 10);
-  };
-
-  for (let i = 0; i < 20; i++) {
-    array.push(random());
-  }
-
-  return array;
-};
+export const makeHashPredicate = () => Address.fromRandom().toB256();
 
 export const makeSubscribers = (subscribers: string[]) => {
-  const array: Address[] = [];
-  const signatures_length = subscribers.length;
-  for (let i = 0; i < 10; i++) {
-    if (i < signatures_length) {
-      array.push(Address.fromString(subscribers[i]));
-    } else {
-      array.push(Address.fromRandom());
-    }
-  }
-
+  const array: B256Address[] = Array(10).fill(ZeroBytes32);
+  subscribers.forEach((value, index) => {
+    array[index] = Address.fromString(value).toB256();
+  });
   return array;
 };

@@ -1,4 +1,4 @@
-import { Predicate, Provider } from 'fuels';
+import { Address, arrayify, Predicate, Provider } from 'fuels';
 
 import {
   IBSAFEAuth,
@@ -13,17 +13,12 @@ import {
   IConfVault,
   IPayloadVault,
   IVault,
-  makeHashPredicate,
-  makeSubscribers,
-  Transfer,
-} from '..';
+} from './types';
+import { makeHashPredicate, makeSubscribers } from './helpers';
+import { Transfer } from '../transfers';
 import { v4 as uuidv4 } from 'uuid';
 import { AddressUtils } from '../address/Address';
-
-import {
-  PredicateAbi__factory as predicateABI,
-  _bin as predicateBIN,
-} from '../predicates';
+import { PredicateAbi__factory } from '../predicates';
 
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
@@ -57,23 +52,15 @@ export class Vault extends Predicate<[]> implements IVault {
     BSAFEAuth,
     transactionRecursiveTimeout,
   }: IPayloadVault) {
-    const _abi = abi ? JSON.parse(abi) : predicateABI;
-    const _bin = bytecode ? bytecode : predicateBIN;
+    const _abi = abi ? JSON.parse(abi) : PredicateAbi__factory.abi;
+    const _bin = bytecode ? bytecode : PredicateAbi__factory.bin;
     const _network = configurable.network;
     const _chainId = configurable.chainId;
     Vault.validations(configurable);
 
-    console.log('configurable', configurable);
-
     const _configurable = Vault.makePredicate(configurable);
 
-    console.log(_bin, provider, _abi, configurable);
-
-    try {
-      super(_bin, provider, _abi, _configurable);
-    } catch (e) {
-      console.log(e);
-    }
+    super(arrayify(_bin), provider, _abi, _configurable);
 
     this.bin = _bin;
     this.abi = _abi;
@@ -261,13 +248,10 @@ export class Vault extends Predicate<[]> implements IVault {
    * @returns an formatted object to instance a new predicate
    */
   private static makePredicate(configurable: IConfVault) {
-    const hasExists = configurable.HASH_PREDICATE;
     const _configurable: { [name: string]: unknown } = {
       SIGNATURES_COUNT: configurable.SIGNATURES_COUNT,
       SIGNERS: makeSubscribers(configurable.SIGNERS),
-      HASH_PREDICATE: hasExists
-        ? configurable.HASH_PREDICATE
-        : makeHashPredicate(),
+      HASH_PREDICATE: configurable.HASH_PREDICATE ?? makeHashPredicate(),
     };
 
     return _configurable;

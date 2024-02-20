@@ -3,7 +3,14 @@ import { Provider, bn } from 'fuels';
 // import { rootWallet, sendPredicateCoins, signin, newVault } from '../utils';
 
 import { accounts, assets } from '../mocks';
-import { IUserAuth, authService } from '../utils';
+import {
+  IUserAuth,
+  authService,
+  newVault,
+  sendPredicateCoins,
+  rootWallet,
+} from '../utils';
+import { IPayloadVault, Vault } from '../../src/vault';
 
 const { PROVIDER } = process.env;
 
@@ -27,61 +34,57 @@ describe('[PREDICATES]', () => {
     ];
   }, 20 * 1000);
 
-  test('[valid]: ', () => {
-    expect(true).toBe(true);
+  test('Create an inválid vault', async () => {
+    const VaultPayload: IPayloadVault = {
+      configurable: {
+        HASH_PREDICATE: undefined,
+        SIGNATURES_COUNT: 3,
+        SIGNERS: signers,
+        network: provider.url,
+        chainId: chainId,
+      },
+      provider,
+      BSAFEAuth: auth['USER_1'].BSAFEAuth,
+    };
+
+    VaultPayload.configurable.SIGNATURES_COUNT = 0;
+
+    await expect(Vault.create(VaultPayload)).rejects.toThrow(
+      'SIGNATURES_COUNT is required must be granter than zero',
+    );
+
+    VaultPayload.configurable.SIGNATURES_COUNT = 3;
+    VaultPayload.configurable.SIGNERS = [];
+    await expect(Vault.create(VaultPayload)).rejects.toThrow(
+      'SIGNERS must be greater than zero',
+    );
+
+    VaultPayload.configurable.SIGNERS = signers;
+    VaultPayload.configurable.SIGNATURES_COUNT = 5;
+
+    await expect(Vault.create(VaultPayload)).rejects.toThrow(
+      'Required Signers must be less than signers',
+    );
   });
 
-  // test('Create an inválid vault', async () => {
-  //   const VaultPayload: IPayloadVault = {
-  //     configurable: {
-  //       HASH_PREDICATE: undefined,
-  //       SIGNATURES_COUNT: 3,
-  //       SIGNERS: signers,
-  //       network: provider.url,
-  //       chainId: chainId,
-  //     },
-  //     provider,
-  //     BSAFEAuth: auth['USER_1'].BSAFEAuth,
-  //   };
+  test('Created an valid vault', async () => {
+    const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
+    await sendPredicateCoins(vault, bn(1_000_000), 'sETH', rootWallet);
+    await sendPredicateCoins(vault, bn(1_000_000), 'ETH', rootWallet);
 
-  //   VaultPayload.configurable.SIGNATURES_COUNT = 0;
+    expect(await vault.getBalances()).toStrictEqual([
+      {
+        assetId: assets['ETH'],
+        amount: bn(1_000_000).add(1_000_000_000),
+      },
+      {
+        assetId: assets['sETH'],
+        amount: bn(1_000_000).add(1_000_000_000),
+      },
+    ]);
+  });
 
-  //   await expect(Vault.create(VaultPayload)).rejects.toThrow(
-  //     'SIGNATURES_COUNT is required must be granter than zero',
-  //   );
-
-  //   VaultPayload.configurable.SIGNATURES_COUNT = 3;
-  //   VaultPayload.configurable.SIGNERS = [];
-  //   await expect(Vault.create(VaultPayload)).rejects.toThrow(
-  //     'SIGNERS must be greater than zero',
-  //   );
-
-  //   VaultPayload.configurable.SIGNERS = signers;
-  //   VaultPayload.configurable.SIGNATURES_COUNT = 5;
-
-  //   await expect(Vault.create(VaultPayload)).rejects.toThrow(
-  //     'Required Signers must be less than signers',
-  //   );
-  // });
-
-  // test('Created an valid vault', async () => {
-  //   const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
-  //   console.log(vault);
-  //   // await sendPredicateCoins(vault, bn(1_000_000), 'sETH', rootWallet);
-  //   // await sendPredicateCoins(vault, bn(1_000_000), 'ETH', rootWallet);
-
-  //   // expect(await vault.getBalances()).toStrictEqual([
-  //   //   {
-  //   //     assetId: assets['ETH'],
-  //   //     amount: bn(1_000_000).add(1_000_000_000),
-  //   //   },
-  //   //   {
-  //   //     assetId: assets['sETH'],
-  //   //     amount: bn(1_000_000).add(1_000_000_000),
-  //   //   },
-  //   // ]);
-  // });
-
+  //
   // test(
   //   'Instance an old Vault by BSAFEPredicate ID',
   //   async () => {
@@ -95,7 +98,7 @@ describe('[PREDICATES]', () => {
   //   },
   //   20 * 1000,
   // );
-
+  //
   // test(
   //   'Instance an old Vault by predicate address',
   //   async () => {
@@ -108,12 +111,12 @@ describe('[PREDICATES]', () => {
   //   },
   //   10 * 1000,
   // );
-
+  //
   // test(
   //   'Instance an old Vault by payload',
   //   async () => {
   //     const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
-
+  //
   //     const providerByPayload = await Provider.create(
   //       vault.BSAFEVault.provider,
   //     );
@@ -121,17 +124,17 @@ describe('[PREDICATES]', () => {
   //       configurable: JSON.parse(vault.BSAFEVault.configurable),
   //       provider: providerByPayload,
   //     });
-
+  //
   //     const [vaultAddress, vaultByPayloadAddress] = [
   //       vault.address.toString(),
   //       vaultByPayload.address.toString(),
   //     ];
-
+  //
   //     expect(vaultAddress).toEqual(vaultByPayloadAddress);
   //   },
   //   10 * 1000,
   // );
-
+  //
   // test(
   //   'Find a transactions of predicate and return an list of Transfer instances',
   //   async () => {
@@ -152,7 +155,7 @@ describe('[PREDICATES]', () => {
   //         },
   //       ],
   //     };
-
+  //
   //     const _assetsB = {
   //       name: 'Transaction A',
   //       witnesses: [],
@@ -169,24 +172,24 @@ describe('[PREDICATES]', () => {
   //         },
   //       ],
   //     };
-
+  //
   //     const transaction = await vault.BSAFEIncludeTransaction(_assetsA);
   //     await vault.BSAFEIncludeTransaction(_assetsB);
-
+  //
   //     await signin(
   //       transaction.getHashTxId(),
   //       'USER_2',
   //       auth['USER_2'].BSAFEAuth,
   //       transaction.BSAFETransactionId,
   //     );
-
+  //
   //     const transactions = await vault.BSAFEGetTransactions();
-
+  //
   //     expect(transactions.length).toBe(2);
   //   },
   //   100 * 1000,
   // );
-
+  //
   // test('Call an method of vault depends of auth without credentials', async () => {
   //   const VaultPayload: IPayloadVault = {
   //     configurable: {
@@ -198,10 +201,10 @@ describe('[PREDICATES]', () => {
   //     provider,
   //   };
   //   const vault = await Vault.create(VaultPayload);
-
+  //
   //   await sendPredicateCoins(vault, bn(1_000_000_000), 'sETH', rootWallet);
   //   await sendPredicateCoins(vault, bn(1_000_000_000), 'ETH', rootWallet);
-
+  //
   //   await expect(vault.getConfigurable().SIGNATURES_COUNT).toBe(3);
   //   await expect(vault.BSAFEGetTransactions()).rejects.toThrow(
   //     'Auth is required',
