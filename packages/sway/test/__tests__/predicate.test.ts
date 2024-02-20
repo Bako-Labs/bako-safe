@@ -20,20 +20,17 @@ import {
 
 import { PredicateAbi__factory } from '../../../sdk/src/predicates';
 
-const { PROVIDER } = process.env;
+const { PROVIDER, PRIVATE_KEY, GAS_LIMIT, GAS_PRICE } = process.env;
 
 async function seedAccount(
   address: AbstractAddress,
   amount: BN,
   provider: Provider,
 ) {
-  const genisesWallet = Wallet.fromPrivateKey(
-    '0xa449b1ffee0e2205fa924c6740cc48b3b473aa28587df6dab12abc245d1f5298',
-    provider,
-  );
+  const genisesWallet = Wallet.fromPrivateKey(PRIVATE_KEY!, provider);
   const resp = await genisesWallet.transfer(address, amount, BaseAssetId, {
-    gasLimit: 100_000,
-    gasPrice: 1,
+    gasLimit: Number(GAS_LIMIT),
+    gasPrice: Number(GAS_PRICE),
   });
   await resp.waitForResult();
 }
@@ -73,8 +70,8 @@ async function signTransaction(
 
 async function createTransaction(predicate: Predicate<InputValue[]>) {
   const tx = new ScriptTransactionRequest();
-  tx.gasPrice = bn(1);
-  tx.gasLimit = bn(100_001);
+  tx.gasPrice = bn(GAS_LIMIT);
+  tx.gasLimit = bn(GAS_LIMIT);
   const coins = await predicate.getResourcesToSpend([
     {
       amount: bn(100),
@@ -99,16 +96,14 @@ async function createTransaction(predicate: Predicate<InputValue[]>) {
   return tx;
 }
 
-describe('Test Predicate', () => {
+describe('[SWAY_PREDICATE]', () => {
   let provider: Provider;
-  let chainId: number;
 
   beforeAll(async () => {
     provider = await Provider.create(PROVIDER!);
-    chainId = provider.getChainId();
   });
 
-  test('Send transfer using predicate', async () => {
+  test('Send transfer by predicate', async () => {
     const wallet = Wallet.generate({
       provider,
     });
@@ -129,9 +124,6 @@ describe('Test Predicate', () => {
       HASH_PREDICATE: Address.fromRandom().toB256(),
     });
     await seedAccount(predicate.address, bn.parseUnits('0.1'), provider);
-
-    // Add signatures
-    console.log('Create transaction');
 
     const tx = await createTransaction(predicate);
 
