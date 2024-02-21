@@ -5,8 +5,7 @@ import { IAuthService, IBSAFEAuth, IBSAFEAuthPayload } from './types';
 import { FuelWalletLocked } from '@fuel-wallet/sdk';
 import { v4 as uuidv4 } from 'uuid';
 import { ITransaction } from '../transactions';
-
-const { API_URL, PROVIDER } = process.env;
+import { defaultConfig } from '../../../configurables';
 
 // woking to local node just fine
 export class AuthService implements IAuthService {
@@ -17,7 +16,7 @@ export class AuthService implements IAuthService {
 
   protected constructor(payload: IBSAFEAuthPayload) {
     this.client = axios.create({
-      baseURL: API_URL,
+      baseURL: defaultConfig['API_URL'],
     });
     this.payloadSession = payload;
   }
@@ -25,7 +24,7 @@ export class AuthService implements IAuthService {
   static async create(user: string, provider: string) {
     const { data } = await axios
       .create({
-        baseURL: API_URL,
+        baseURL: defaultConfig['API_URL'],
       })
       .post('/user', {
         address: user,
@@ -66,7 +65,10 @@ export class AuthService implements IAuthService {
   }
 
   async signerByPk(pk: string) {
-    const signer = Wallet.fromPrivateKey(pk, await Provider.create(PROVIDER!));
+    const signer = Wallet.fromPrivateKey(
+      pk,
+      await Provider.create(defaultConfig['PROVIDER']!),
+    );
     const msg = await signer.signMessage(JSON.stringify(this.payloadSession));
     this.signature = msg;
   }
