@@ -1,4 +1,4 @@
-import { Address, arrayify, Predicate, Provider } from 'fuels';
+import { arrayify, Predicate, Provider } from 'fuels';
 
 import {
   IBSAFEAuth,
@@ -34,7 +34,6 @@ export class Vault extends Predicate<[]> implements IVault {
 
   public name!: string;
   //@ts-ignore
-  public provider: Provider;
   public BSAFEVault!: IPredicate;
   public BSAFEVaultId!: string;
   public description?: string;

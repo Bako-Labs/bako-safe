@@ -37,7 +37,7 @@
   },
   "peerDependencies": {
     "@fuel-wallet/react": "0.14.0-preview-a651bbe",
-    "@bsafe/sdk": "0.0.36",
+    "@bsafe/sdk": "workspace:^",
     "socket.io-client": "^4.7.2",
     "socket.io": "^4.7.2",
     "axios": "^1.5.1",

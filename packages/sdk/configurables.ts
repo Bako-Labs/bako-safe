@@ -8,16 +8,6 @@ const {
   REFETCH_TIMEOUT,
 } = process.env;
 
-type DefaultConfigurables = {
-  PROVIDER: string;
-  API_URL: string;
-  BSAFE_URL: string;
-  ENCODER: string;
-  GAS_PRICE: string;
-  GAS_LIMIT: string;
-  REFETCH_TIMEOUT: string;
-};
-
 export const defaultConfig = {
   PROVIDER,
   API_URL,
@@ -28,11 +18,12 @@ export const defaultConfig = {
   REFETCH_TIMEOUT,
 };
 
+export type DefaultConfigurables = typeof defaultConfig;
+export type DefaultConfigurablesKeys = keyof DefaultConfigurables;
+
 export const BSafe = {
   setup: (params: Partial<DefaultConfigurables>) => {
-    const configurableKeys = Object.keys(
-      params,
-    ) as unknown as (keyof DefaultConfigurables)[];
+    const configurableKeys = Object.keys(params);
 
     configurableKeys.forEach((key) => {
       if (key in defaultConfig) {

@@ -42,65 +42,65 @@ describe('[TRANSFERS]', () => {
     ];
   }, 30 * 1000);
 
-  // test(
-  //   'Created an valid transaction to vault and instance old transaction',
-  //   async () => {
-  //     const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
-  //     const _assets: ITransferAsset[] = [
-  //       {
-  //         amount: bn(1_000_000_00).format(),
-  //         assetId: assets['ETH'],
-  //         to: accounts['STORE'].address,
-  //       },
-  //     ];
-  //     let newTransfer: IFormatTransfer = {
-  //       name: 'Created an valid transaction to vault and instance old transaction',
-  //       assets: _assets,
-  //       witnesses: [],
-  //     };
-  //
-  //     let transaction = await vault.BSAFEIncludeTransaction(newTransfer);
-  //
-  //     const signTimeout = async () => {
-  //       await delay(5000);
-  //       await signin(
-  //         transaction.getHashTxId(),
-  //         'USER_3',
-  //         auth['USER_3'].BSAFEAuth,
-  //         transaction.BSAFETransactionId,
-  //       );
-  //
-  //       await delay(5000);
-  //       await signin(
-  //         transaction.getHashTxId(),
-  //         'USER_2',
-  //         auth['USER_2'].BSAFEAuth,
-  //         transaction.BSAFETransactionId,
-  //       );
-  //     };
-  //
-  //     // Signin transaction
-  //     await signin(
-  //       transaction.getHashTxId(),
-  //       'USER_1',
-  //       auth['USER_1'].BSAFEAuth,
-  //       transaction.BSAFETransactionId,
-  //     );
-  //
-  //     const oldTransaction = await vault.BSAFEGetTransaction(
-  //       transaction.BSAFETransactionId,
-  //     );
-  //
-  //     oldTransaction.send();
-  //
-  //     // this process isan`t async, next line is async
-  //     signTimeout();
-  //
-  //     const result = await transaction.wait();
-  //     expect(result.status).toBe(TransactionStatus.success);
-  //   },
-  //   100 * 1000,
-  // );
+  test(
+    'Created an valid transaction to vault and instance old transaction',
+    async () => {
+      const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
+      const _assets: ITransferAsset[] = [
+        {
+          amount: bn(1_000_000_00).format(),
+          assetId: assets['ETH'],
+          to: accounts['STORE'].address,
+        },
+      ];
+      let newTransfer: IFormatTransfer = {
+        name: 'Created an valid transaction to vault and instance old transaction',
+        assets: _assets,
+        witnesses: [],
+      };
+
+      let transaction = await vault.BSAFEIncludeTransaction(newTransfer);
+
+      const signTimeout = async () => {
+        await delay(5000);
+        await signin(
+          transaction.getHashTxId(),
+          'USER_3',
+          auth['USER_3'].BSAFEAuth,
+          transaction.BSAFETransactionId,
+        );
+
+        await delay(5000);
+        await signin(
+          transaction.getHashTxId(),
+          'USER_2',
+          auth['USER_2'].BSAFEAuth,
+          transaction.BSAFETransactionId,
+        );
+      };
+
+      // Signin transaction
+      await signin(
+        transaction.getHashTxId(),
+        'USER_1',
+        auth['USER_1'].BSAFEAuth,
+        transaction.BSAFETransactionId,
+      );
+
+      const oldTransaction = await vault.BSAFEGetTransaction(
+        transaction.BSAFETransactionId,
+      );
+
+      oldTransaction.send();
+
+      // this process isan`t async, next line is async
+      signTimeout();
+
+      const result = await transaction.wait();
+      expect(result.status).toBe(TransactionStatus.success);
+    },
+    100 * 1000,
+  );
 
   test(
     'Sign transactions with invalid users',
