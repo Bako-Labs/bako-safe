@@ -1,14 +1,17 @@
-start:
-	docker compose --env-file .env up -d --build
+up:
+	docker compose -p dev --env-file .env up -d --build 
+
+up-test:
+	docker compose -p test --env-file .env.test up -d --build
 
 down:
-	docker compose stop
+	docker compose -p dev stop
+
+down-test:
+	docker compose -p test stop
 
 clean:
-	docker compose down --rmi local -v --remove-orphans
+	docker compose -p dev down --rmi local -v --remove-orphans
 
-stop:
-	docker compose pause
-
-restart:
-	docker compose unpause
+clean-test:
+	docker compose -p test down --rmi local -v --remove-orphans

@@ -1,0 +1,18 @@
+{
+  "extends": "@fuels/ts-config/base.json",
+  "compilerOptions": {
+    "keyofStringsOnly": true,
+    "ignoreDeprecations": "5.0",
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "rootDir": "../"
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  },
+  "include": ["**/*.ts", "../sway/fuels.config.ts"],
+  "exclude": ["**/*.test.ts", "dist"]
+}
