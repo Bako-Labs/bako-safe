@@ -145,17 +145,3 @@ await transaction.send()
 const result = await transaction.wait()
 
 ```
-
-## Run tests on this repo
-
-```
-sudo pnpm chain:start
-```
-
-```
-pnpm prebuild:env
-```
-
-```
-// add command of tests
-```
