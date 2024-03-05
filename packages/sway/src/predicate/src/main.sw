@@ -34,6 +34,8 @@ configurable {
     HASH_PREDICATE: b256 = 0x0000000000000000000000000000000000000000000000000000000000000000
 }
 
+const MAX_SIGNERS: u64 = 10;
+
 /*
     Validate signature:
 
@@ -45,7 +47,7 @@ configurable {
 fn verify_signer_exists(public_key: b256) -> u64 {
     //verify if the public key is one of the signers
     let mut i_signer = 0;
-    while i_signer < tx_witnesses_count() {
+    while i_signer <  MAX_SIGNERS {
         if (public_key == SIGNERS[i_signer]) {
             return 1;
         }
