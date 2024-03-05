@@ -1,7 +1,7 @@
-const { BSAFE_URL } = process.env;
+const { APP_BSAFE_URL } = process.env;
 
 export class DAppWindow {
-  BSAFEAPP = BSAFE_URL;
+  BSAFEAPP = APP_BSAFE_URL;
   constructor(
     private config: {
       popup: {

@@ -138,23 +138,21 @@ export class BSafeConnector extends EventEmitter {
   }
 
   async isConnected() {
-    const { data } = await this.api.get(
-      `${URL}/connections/${this.sessionId}/state`,
-    );
+    const { data } = await this.api.get(`/connections/${this.sessionId}/state`);
 
     return data;
   }
 
   async accounts() {
     const { data } = await this.api.get(
-      `${URL}/connections/${this.sessionId}/accounts`,
+      `/connections/${this.sessionId}/accounts`,
     );
     return data;
   }
 
   async currentAccount() {
     const { data } = await this.api.get(
-      `${URL}/connections/${this.sessionId}/currentAccount`,
+      `/connections/${this.sessionId}/currentAccount`,
     );
     return data;
   }
@@ -174,7 +172,7 @@ export class BSafeConnector extends EventEmitter {
 
   async currentNetwork() {
     const { data } = await this.api.get(
-      `${URL}/connections/${this.sessionId}/currentNetwork`,
+      `/connections/${this.sessionId}/currentNetwork`,
     );
     return data;
   }
