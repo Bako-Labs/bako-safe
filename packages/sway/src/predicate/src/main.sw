@@ -3,8 +3,10 @@
 predicate;
 
 use std::{b512::B512, ecr::ec_recover_address, tx::tx_id, tx::tx_witness_data, tx::tx_witnesses_count, bytes::Bytes};
-use libraries::{ascii::b256_to_ascii_bytes};
+use libraries::{ascii::b256_to_ascii_bytes, recover_signature::{fuel_verify, secp256r1_verify}, webauthn_digest::{get_webauthn_digest, WebAuthn} };
 use std::hash::{Hash, Hasher};
+use std::tx::GTF_WITNESS_DATA;
+use std::tx::GTF_SCRIPT_WITNESS_AT_INDEX;
 
 
 /*
@@ -32,6 +34,8 @@ configurable {
     HASH_PREDICATE: b256 = 0x0000000000000000000000000000000000000000000000000000000000000000
 }
 
+const MAX_SIGNERS: u64 = 10;
+
 /*
     Validate signature:
 
@@ -40,60 +44,56 @@ configurable {
         - TX_HASH: hash of signature
 */
 
-fn check_signature(index: u64, tx_hash: b256) -> u64 {
-    if (index >= tx_witnesses_count()) {
-        return 0;
-    }
-
-    // Get the singature from the witness field
-    let signature = tx_witness_data::<B512>(index);
-
-    // Check if the signature is valid and if the address
-    // is one of the signers list
-    if let Result::Ok(pub_key_sig) = ec_recover_address(signature, tx_hash) {
-        let address = pub_key_sig.value;
-        let mut i = 0;
-
-        while i < 10 {
-            if (address == SIGNERS[i]) {
-                return 1;
-            }
-            i += 1;
+fn verify_signer_exists(public_key: b256) -> u64 {
+    //verify if the public key is one of the signers
+    let mut i_signer = 0;
+    while i_signer <  MAX_SIGNERS {
+        if (public_key == SIGNERS[i_signer]) {
+            return 1;
         }
-    
+        i_signer += 1;
     }
     return 0;
 }
 
+enum Signature {
+  webauth: WebAuthn, // 0
+}
+
+
+
 fn main() -> bool {
-    let mut verified = 0;
+  // Get the transaction hash on bytes format
+  let tx_bytes = b256_to_ascii_bytes(tx_id());
+  let witness_count = tx_witnesses_count();
 
-    // this line existis with use and include configurable HASH_PREDICATE on build
-    let tx_id_hash = tx_id();
-    let mut hasher = Hasher::new();
-    let tx_hash_bytes = b256_to_ascii_bytes(tx_id_hash);
-    tx_hash_bytes.hash(hasher);
-    let tx_hash = hasher.sha256();
-    let witness_count = tx_witnesses_count();
+  let mut i_witnesses = 0;
+  let mut valid_signatures:u64 = 0;
 
-    // If there are no signatures, return false
-    if (witness_count < SIGNATURES_COUNT) {
-        return false;
+  if(HASH_PREDICATE != HASH_PREDICATE) {
+      return false;
+  }
+
+  //recover the public key from the signature
+  while i_witnesses < witness_count {
+    let sig_ptr:raw_ptr = __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA);
+    
+    match sig_ptr.read::<Signature>() {
+    Signature::webauth(webauthn) => {
+      let digest = get_webauthn_digest(webauthn, sig_ptr, tx_bytes);
+      let public_key = secp256r1_verify(webauthn.signature, digest);
+      valid_signatures += verify_signer_exists(public_key);
     }
-
-    if(HASH_PREDICATE != HASH_PREDICATE) {
-        return false;
+    _ => {
+      let signature = tx_witness_data::<B512>(i_witnesses);
+      let public_key = fuel_verify(signature, tx_bytes);
+      valid_signatures += verify_signer_exists(public_key);
     }
+  };
 
-    // If there are more signatures
-    // check if wich ones are valid
-    // We need to check if the signature exists before
-    // trying to access it
-    let mut i = 0;
-    while i < 10 {
-        verified += check_signature(i, tx_hash);
-        i += 1;
-    }
+    i_witnesses += 1;
+  }
 
-    return verified >= SIGNATURES_COUNT;
+  // Check if the number of valid signatures is greater than the required
+  return valid_signatures >= SIGNATURES_COUNT;
 }

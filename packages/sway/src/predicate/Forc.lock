@@ -12,4 +12,3 @@ dependencies = ['std']
 name = "std"
 source = "git+https://github.com/fuellabs/sway?tag=v0.49.2#a70c746d27b3300beef896ccd1dcce1299836192"
 dependencies = ["core"]
-
