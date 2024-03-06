@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { EventEmitter } from 'events';
 import { io, Socket } from 'socket.io-client';
 import axios, { AxiosInstance } from 'axios';
-import { JsonAbi, TransactionRequestLike } from 'fuels';
-import { Asset } from '@fuel-wallet/types';
+import {
+  Asset,
+  JsonAbi,
+  FuelConnector,
+  FuelConnectorEventTypes,
+  TransactionRequestLike,
+} from 'fuels';
 
 import { BSAFEConnectorEvents } from './types';
 import { DAppWindow } from './DAPPWindow';
@@ -23,21 +27,26 @@ type Network = {
   chainId: number;
 };
 
-export class BSafeConnector extends EventEmitter {
-  name = APP_NAME;
+export class BSafeConnector extends FuelConnector {
+  name = APP_NAME!;
   metadata = {
     image: {
-      ligth: APP_IMAGE_LIGHT,
-      dark: APP_IMAGE_DARK,
+      light: APP_IMAGE_LIGHT!,
+      dark: APP_IMAGE_DARK!,
     },
     install: {
-      action: APP_BSAFE_URL,
-      link: APP_BSAFE_URL,
-      description: APP_DESCRIPTION,
+      action: APP_BSAFE_URL!,
+      link: APP_BSAFE_URL!,
+      description: APP_DESCRIPTION!,
     },
   };
   installed: boolean = true;
   connected: boolean = false;
+
+  events = {
+    ...FuelConnectorEventTypes,
+    ...BSAFEConnectorEvents,
+  };
 
   private readonly socket: Socket;
   private readonly sessionId: string;
@@ -83,12 +92,14 @@ export class BSafeConnector extends EventEmitter {
   }
 
   async connect() {
-    return new Promise((resolve) => {
-      const w = this.dAppWindow.open('/');
-      w?.addEventListener('close', () => {
+    return new Promise<boolean>((resolve) => {
+      const dappWindow = this.dAppWindow.open('/');
+      dappWindow?.addEventListener('close', () => {
         resolve(false);
       });
-      this.on(BSAFEConnectorEvents.CONNECTION, (connection) => {
+
+      // @ts-ignore
+      this.on(BSAFEConnectorEvents.CONNECTION, (connection: boolean) => {
         this.connected = connection;
         resolve(connection);
       });
@@ -105,11 +116,12 @@ export class BSafeConnector extends EventEmitter {
     _address: string,
     _transaction: TransactionRequestLike,
   ) {
-    return new Promise((resolve, reject) => {
-      const w = this.dAppWindow.open(`/dapp/transaction`);
-      w?.addEventListener('close', () => {
+    return new Promise<string>((resolve, reject) => {
+      const dappWindow = this.dAppWindow.open(`/dapp/transaction`);
+      dappWindow?.addEventListener('close', () => {
         reject('closed');
       });
+      // @ts-ignore
       this.on(BSAFEConnectorEvents.POPUP_TRANSFER, () => {
         this.socket.emit(BSAFEConnectorEvents.TRANSACTION_SEND, {
           to: `${this.sessionId}:${window.origin}`,
@@ -119,6 +131,7 @@ export class BSafeConnector extends EventEmitter {
           },
         });
       });
+      // @ts-ignore
       this.on(BSAFEConnectorEvents.TRANSACTION_CREATED, (content) => {
         resolve(`0x${content}`);
       });
@@ -177,7 +190,7 @@ export class BSafeConnector extends EventEmitter {
     return data;
   }
 
-  async assets(): Promise<Array<Asset>> {
+  async assets(): Promise<Asset[]> {
     return [];
   }
 
