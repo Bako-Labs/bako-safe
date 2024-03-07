@@ -16,6 +16,18 @@ export default defineConfig({
     APP_DESCRIPTION: process.env.APP_DESCRIPTION!,
     APP_IMAGE_LIGHT: process.env.APP_IMAGE_LIGHT!,
   },
+  esbuildOptions: (options, context) => {
+    options.define = {
+      'process.env': JSON.stringify({
+        API_URL: process.env.API_URL!,
+        APP_NAME: process.env.APP_NAME!,
+        APP_BSAFE_URL: process.env.APP_BSAFE_URL!,
+        APP_IMAGE_DARK: process.env.APP_IMAGE_DARK!,
+        APP_DESCRIPTION: process.env.APP_DESCRIPTION!,
+        APP_IMAGE_LIGHT: process.env.APP_IMAGE_LIGHT!,
+      }),
+    };
+  },
   format: ['cjs', 'esm'],
   minify: true,
   entry: ['./src/index.ts'],
