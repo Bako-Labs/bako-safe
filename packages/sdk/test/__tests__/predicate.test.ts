@@ -143,16 +143,7 @@ describe('[PREDICATES]', () => {
   );
 
   test('Call an method of vault depends of auth without credentials', async () => {
-    const VaultPayload: IPayloadVault = {
-      configurable: {
-        SIGNATURES_COUNT: 3,
-        SIGNERS: signers,
-        network: provider.url,
-        chainId: chainId,
-      },
-      provider,
-    };
-    const vault = await Vault.create(VaultPayload);
+    const vault = await newVault(signers, provider);
 
     await expect(vault.getConfigurable().SIGNATURES_COUNT).toBe(3);
     await expect(vault.BSAFEGetTransactions()).rejects.toThrow(
