@@ -135,9 +135,6 @@ export const identifyCreateParams = async (
       payload: newData!,
     };
   } catch (e: any) {
-    return {
-      type: ECreationtype.ERROR,
-      payload: e.message,
-    };
+    throw new Error(e.message);
   }
 };

@@ -20,7 +20,6 @@ export interface IConfVault {
 export enum ECreationtype {
   IS_OLD = 'IS_OLD',
   IS_NEW = 'IS_NEW',
-  ERROR = 'ERROR',
 }
 
 export interface ICreationOld {
@@ -33,12 +32,7 @@ export interface ICreationNew {
   payload: IPayloadVault;
 }
 
-export interface ICreationError {
-  type: ECreationtype.ERROR;
-  payload: string;
-}
-
-export type ICreation = ICreationOld | ICreationNew | ICreationError;
+export type ICreation = ICreationOld | ICreationNew;
 
 export interface ITransferList {
   [id: string]: Transfer;
