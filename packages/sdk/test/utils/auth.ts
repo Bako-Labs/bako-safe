@@ -14,9 +14,7 @@ export const authService = async (
   const result: { [key: string]: IAuthAccount } = {};
   for await (const acc of _accounts) {
     const account: IDefaultAccount = accounts[acc];
-    const auth = await AuthService.create(account.address, provider);
-    await auth.signerByPk(account.privateKey!);
-    await auth.createSession();
+    const auth = await AuthService.create(acc, provider);
 
     result[acc] = {
       ...account,

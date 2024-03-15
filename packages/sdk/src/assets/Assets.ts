@@ -1,11 +1,6 @@
 import { BN, Coin, Resource, bn } from 'fuels';
 import { assets } from '../../test/mocks';
-import {
-  IAssetGroupById,
-  IAssetGroupByTo,
-  IAssetTransaction,
-  ITransferAsset,
-} from './types';
+import { IAssetGroupById, IAssetGroupByTo, ITransferAsset } from './types';
 
 export class Asset {
   /**
@@ -85,7 +80,7 @@ export class Asset {
   public static includeSpecificAmount(
     predicateCoins: Resource[],
     assets: ITransferAsset[],
-  ): IAssetTransaction[] {
+  ): ITransferAsset[] {
     return assets.map((asset: ITransferAsset) => {
       const predicateCoin: Coin = predicateCoins.find(
         (coin: Resource) => coin,
@@ -93,13 +88,13 @@ export class Asset {
       if (predicateCoin) {
         return {
           ...asset,
-          utxo: predicateCoin.id,
+          //utxo: predicateCoin.id,
         };
       } else {
         return {
           ...asset,
           onPredicate: '',
-          utxo: '',
+          //utxo: '',
         };
       }
     });

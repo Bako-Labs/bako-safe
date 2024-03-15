@@ -1,20 +1,24 @@
-import { arrayify, Predicate, Provider } from 'fuels';
+import { arrayify, Predicate } from 'fuels';
 
 import {
   IBSAFEAuth,
   IListTransactions,
   IPredicate,
   IPredicateService,
-  PredicateService,
 } from '../api';
 import {
+  ECreationtype,
   IBSAFEApi,
   IBSAFEIncludeTransaction,
   IConfVault,
   IPayloadVault,
   IVault,
 } from './types';
-import { makeHashPredicate, makeSubscribers } from './helpers';
+import {
+  identifyCreateParams,
+  makeHashPredicate,
+  makeSubscribers,
+} from './helpers';
 import { Transfer } from '../transfers';
 import { v4 as uuidv4 } from 'uuid';
 import { AddressUtils } from '../address/Address';
@@ -42,28 +46,26 @@ export class Vault extends Predicate<[]> implements IVault {
   protected constructor({
     configurable,
     provider,
-    abi,
-    bytecode,
+    abi = PredicateAbi__factory.abi,
+    bytecode = PredicateAbi__factory.bin,
     name,
     description,
     BSAFEVaultId,
     BSAFEVault,
     BSAFEAuth,
-    transactionRecursiveTimeout,
+    transactionRecursiveTimeout = 1000,
+    api,
   }: IPayloadVault) {
-    const _abi = abi ? JSON.parse(abi) : PredicateAbi__factory.abi;
-    const _bin = bytecode ? bytecode : PredicateAbi__factory.bin;
-    const _network = configurable.network;
-    const _chainId = configurable.chainId;
-    Vault.validations(configurable);
+    const _abi = typeof abi === 'string' ? JSON.parse(abi) : abi;
+    const _bin = bytecode;
 
+    const { network: _network, chainId: _chainId } = configurable;
     const _configurable = Vault.makePredicate(configurable);
-
     super(arrayify(_bin), provider, _abi, _configurable);
 
     this.bin = _bin;
     this.abi = _abi;
-    this.configurable = this.configurable = {
+    this.configurable = {
       HASH_PREDICATE: _configurable.HASH_PREDICATE as number[],
       SIGNATURES_COUNT: _configurable.SIGNATURES_COUNT as number,
       SIGNERS: _configurable.SIGNERS as string[],
@@ -71,34 +73,13 @@ export class Vault extends Predicate<[]> implements IVault {
       chainId: _chainId,
     };
     this.provider = provider;
-    this.name = name ? name : `Random Vault Name - ${uuidv4()}`;
-    this.description = description ? description : undefined;
+    this.name = name || `Vault - ${uuidv4()}`;
+    this.description = description;
     this.BSAFEVaultId = BSAFEVaultId!;
-    this.transactionRecursiveTimeout = transactionRecursiveTimeout
-      ? transactionRecursiveTimeout
-      : 1000;
+    this.transactionRecursiveTimeout = transactionRecursiveTimeout;
     this.BSAFEVault = BSAFEVault!;
     this.auth = BSAFEAuth!;
-  }
-
-  /**
-   *
-   * Validate creation parameters.
-   *
-   * @param configurable - The parameters of signature requirements.
-   * @returns thire is no return, but if an error is detected it is trigged
-   */
-  private static validations(configurable: IConfVault) {
-    const { SIGNATURES_COUNT, SIGNERS } = configurable;
-    if (!SIGNATURES_COUNT || Number(SIGNATURES_COUNT) == 0) {
-      throw new Error('SIGNATURES_COUNT is required must be granter than zero');
-    }
-    if (!SIGNERS || SIGNERS.length === 0) {
-      throw new Error('SIGNERS must be greater than zero');
-    }
-    if (SIGNERS.length < Number(SIGNATURES_COUNT)) {
-      throw new Error('Required Signers must be less than signers');
-    }
+    this.api = api!;
   }
 
   /**
@@ -116,89 +97,21 @@ export class Vault extends Predicate<[]> implements IVault {
    * @returns an instance of Vault
    **/
   static async create(params: IPayloadVault | IBSAFEApi) {
-    const isWithApi =
-      ('predicateAddress' in params || 'id' in params) &&
-      'address' in params &&
-      'token' in params;
-    const isNew = 'configurable' in params && 'provider';
-    if (isWithApi) {
-      const { id, predicateAddress, token, address } = params;
-      const hasId = 'id' in params && id;
-      if (predicateAddress == undefined && id == undefined) {
-        throw new Error('predicateAddress or BSAFEPredicateId is required');
-      }
+    const _params = await identifyCreateParams(params);
 
-      const api = new PredicateService({
-        address,
-        token,
-      });
-
-      const result = hasId
-        ? await api.findById(id)
-        : await api.findByAddress(predicateAddress!);
-
-      if (!result) {
-        throw new Error('BSAFEVault not found');
-      }
-
-      const {
-        configurable,
-        abi,
-        bytes,
-        name,
-        description,
-        id: BSAFEVaultId,
-        provider,
-      } = result;
-      const vault = new Vault({
-        configurable: JSON.parse(configurable),
-        provider: await Provider.create(provider),
-        abi,
-        bytecode: bytes,
-        name,
-        description,
-        BSAFEVaultId,
-        BSAFEVault: result,
-      });
-
-      vault.api = api;
-      vault.auth = {
-        address,
-        token,
-      };
-
-      return vault;
-    } else if (isNew) {
-      const {
-        configurable,
-        provider,
-        name,
-        description,
-        abi,
-        bytecode,
-        BSAFEAuth,
-        BSAFEVaultId,
-      } = params;
-      const aux = new Vault({
-        configurable,
-        provider,
-        abi,
-        bytecode,
-        name,
-        description,
-        BSAFEAuth,
-        BSAFEVaultId,
-      });
-      if (BSAFEAuth) {
-        const _auth = BSAFEAuth;
-        aux.auth = _auth;
-        aux.api = new PredicateService(_auth);
-        await aux.createOnService();
-      }
-
-      return aux;
-    } else {
-      throw new Error('Required props to instance a vault');
+    switch (
+      _params.type // todo: formatt to include api and auth
+    ) {
+      case ECreationtype.IS_OLD:
+        return new Vault(_params.payload);
+      case ECreationtype.IS_NEW:
+        const vault = new Vault(_params.payload);
+        !!vault.api && (await vault.createOnService());
+        return vault;
+      case ECreationtype.ERROR:
+        throw new Error(_params.payload);
+      default:
+        throw new Error('Tipo não reconhecido');
     }
   }
 

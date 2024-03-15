@@ -1,16 +1,9 @@
 import { Provider, bn } from 'fuels';
-import {
-  signin,
-  newVault,
-  IUserAuth,
-  rootWallet,
-  authService,
-  sendPredicateCoins,
-} from '../utils';
-import { accounts, assets } from '../mocks';
+import { signin, newVault, IUserAuth, authService } from '../utils';
+import { DEFAULT_BALANCES, accounts, assets } from '../mocks';
 import { IPayloadVault, Vault } from '../../src/vault';
-
-const { PROVIDER } = process.env;
+import { BSafe } from '../../configurables';
+import { DEFAULT_TRANSACTION_PAYLOAD } from '../mocks/transactions';
 
 describe('[PREDICATES]', () => {
   let chainId: number;
@@ -19,7 +12,7 @@ describe('[PREDICATES]', () => {
   let signers: string[];
 
   beforeAll(async () => {
-    provider = await Provider.create(PROVIDER!);
+    provider = await Provider.create(BSafe.get('PROVIDER')!);
     chainId = await provider.getChainId();
     auth = await authService(
       ['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
@@ -67,19 +60,7 @@ describe('[PREDICATES]', () => {
 
   test('Created an valid vault', async () => {
     const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
-    await sendPredicateCoins(vault, bn(1_000_000), 'sETH', rootWallet);
-    await sendPredicateCoins(vault, bn(1_000_000), 'ETH', rootWallet);
-
-    expect(await vault.getBalances()).toStrictEqual([
-      {
-        assetId: assets['ETH'],
-        amount: bn(1_000_000).add(1_000_000_000),
-      },
-      {
-        assetId: assets['sETH'],
-        amount: bn(1_000_000).add(1_000_000_000),
-      },
-    ]);
+    expect(await vault.getBalances()).toStrictEqual(DEFAULT_BALANCES);
   });
 
   test(
@@ -113,10 +94,10 @@ describe('[PREDICATES]', () => {
     'Instance an old Vault by payload',
     async () => {
       const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
-
       const providerByPayload = await Provider.create(
         vault.BSAFEVault.provider,
       );
+
       const vaultByPayload = await Vault.create({
         configurable: JSON.parse(vault.BSAFEVault.configurable),
         provider: providerByPayload,
@@ -135,43 +116,17 @@ describe('[PREDICATES]', () => {
   test(
     'Find a transactions of predicate and return an list of Transfer instances',
     async () => {
-      const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
-      const _assetsA = {
-        name: 'Transaction A',
-        witnesses: [],
-        assets: [
-          {
-            amount: bn(1_000).format(),
-            assetId: assets['ETH'],
-            to: accounts['STORE'].address,
-          },
-          {
-            amount: bn(1_000).format(),
-            assetId: assets['sETH'],
-            to: accounts['STORE'].address,
-          },
-        ],
-      };
+      const vault = await newVault(
+        signers,
+        provider,
+        auth['USER_1'].BSAFEAuth,
+        5,
+      );
+      const tx_1 = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
+      const tx_2 = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
-      const _assetsB = {
-        name: 'Transaction A',
-        witnesses: [],
-        assets: [
-          {
-            amount: bn(1_000_00).format(),
-            assetId: assets['ETH'],
-            to: accounts['STORE'].address,
-          },
-          {
-            amount: bn(1_000_00).format(),
-            assetId: assets['sETH'],
-            to: accounts['STORE'].address,
-          },
-        ],
-      };
-
-      const transaction = await vault.BSAFEIncludeTransaction(_assetsA);
-      await vault.BSAFEIncludeTransaction(_assetsB);
+      const transaction = await vault.BSAFEIncludeTransaction(tx_1);
+      await vault.BSAFEIncludeTransaction(tx_2);
 
       await signin(
         transaction.getHashTxId(),
@@ -198,9 +153,6 @@ describe('[PREDICATES]', () => {
       provider,
     };
     const vault = await Vault.create(VaultPayload);
-
-    await sendPredicateCoins(vault, bn(1_000_000_000), 'sETH', rootWallet);
-    await sendPredicateCoins(vault, bn(1_000_000_000), 'ETH', rootWallet);
 
     await expect(vault.getConfigurable().SIGNATURES_COUNT).toBe(3);
     await expect(vault.BSAFEGetTransactions()).rejects.toThrow(

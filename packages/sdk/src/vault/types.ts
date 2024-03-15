@@ -1,6 +1,10 @@
 import { Provider, TransactionRequestLike } from 'fuels';
 import { IBSAFEAuth } from '../api/auth/types';
-import { IListTransactions, IPredicate } from '../api/predicates';
+import {
+  IListTransactions,
+  IPredicate,
+  IPredicateService,
+} from '../api/predicates';
 import { ITransferAsset } from '../assets';
 import { IFormatTransfer, Transfer } from '../transfers';
 import { ITransactionResume, IWitnesses } from '../api';
@@ -12,6 +16,29 @@ export interface IConfVault {
   network: string;
   chainId: number;
 }
+
+export enum ECreationtype {
+  IS_OLD = 'IS_OLD',
+  IS_NEW = 'IS_NEW',
+  ERROR = 'ERROR',
+}
+
+export interface ICreationOld {
+  type: ECreationtype.IS_NEW;
+  payload: IPayloadVault;
+}
+
+export interface ICreationNew {
+  type: ECreationtype.IS_OLD;
+  payload: IPayloadVault;
+}
+
+export interface ICreationError {
+  type: ECreationtype.ERROR;
+  payload: string;
+}
+
+export type ICreation = ICreationOld | ICreationNew | ICreationError;
 
 export interface ITransferList {
   [id: string]: Transfer;
@@ -35,6 +62,7 @@ export interface IPayloadVault {
   BSAFEAuth?: IBSAFEAuth;
   BSAFEVaultId?: string;
   BSAFEVault?: IPredicate;
+  api?: IPredicateService;
 }
 export interface IBSAFEApi extends IBSAFEAuth {
   id?: string;

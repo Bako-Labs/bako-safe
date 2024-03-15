@@ -146,10 +146,7 @@ export class Transfer {
         auth &&
         service &&
         (await service.create({
-          assets: assets.map((asset) => ({
-            ...asset,
-            utxo: '',
-          })),
+          assets,
           hash: hashTxId,
           txData: txData,
           name: transfer.name ?? transactionName,
@@ -179,7 +176,6 @@ export class Transfer {
         assetId: coin.assetId.toString(),
         to: coin.to.toString(),
         amount: bn(coin.amount).format().toString(),
-        utxo: '',
       }));
 
       let transaction: ITransaction | undefined = undefined;

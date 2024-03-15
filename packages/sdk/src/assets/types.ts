@@ -12,10 +12,6 @@ export type ITransferAsset = {
   to: string;
 };
 
-export interface IAssetTransaction extends ITransferAsset {
-  utxo: string;
-}
-
 export type IAssetGroupById = {
   [name: string]: BN;
 };
