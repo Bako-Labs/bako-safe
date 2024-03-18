@@ -37,14 +37,6 @@ export interface IPredicate extends IPredicatePayload {
   createdAt: string;
   updatedAt: string;
 }
-
-export const defaultListParams = {
-  perPage: 10,
-  page: 0,
-  orderBy: 'createdAt',
-  sort: SortOption.DESC,
-};
-
 export interface IPredicateService {
   create: (payload: IPredicatePayload) => Promise<IPredicate>;
   findByAddress: (predicateAddress: string) => Promise<IPredicate>;

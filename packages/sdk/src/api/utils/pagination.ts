@@ -1,3 +1,5 @@
+import { SortOption } from '../transactions';
+
 export interface IPagination<T> {
   currentPage: number;
   totalPages: number;
@@ -12,3 +14,10 @@ export interface PaginationParams {
   page: string;
   perPage: string;
 }
+
+export const defaultListParams = {
+  perPage: 10,
+  page: 0,
+  orderBy: 'createdAt',
+  sort: SortOption.DESC,
+};
