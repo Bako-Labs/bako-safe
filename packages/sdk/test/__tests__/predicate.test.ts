@@ -135,9 +135,22 @@ describe('[PREDICATES]', () => {
         transaction.BSAFETransactionId,
       );
 
+      //default pagination
       const transactions = await vault.BSAFEGetTransactions();
+      expect(transactions.data.length).toBe(2);
+      expect(transactions.currentPage).toBe(0);
+      expect(transactions.perPage).toBe(10);
 
-      expect(transactions.length).toBe(2);
+      //custom pagination
+      const perPage = 1;
+      const page = 1;
+      const ptransations = await vault.BSAFEGetTransactions({
+        perPage,
+        page,
+      });
+      expect(ptransations.currentPage).toBe(page);
+      expect(ptransations.perPage).toBe(perPage);
+      expect(ptransations.data.length).toBe(1);
     },
     100 * 1000,
   );

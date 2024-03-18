@@ -1,6 +1,7 @@
 import { arrayify, Predicate } from 'fuels';
 
 import {
+  defaultListParams,
   IBSAFEAuth,
   IListTransactions,
   IPredicate,
@@ -46,7 +47,7 @@ export class Vault extends Predicate<[]> implements IVault {
   protected constructor({
     configurable,
     provider,
-    abi = PredicateAbi__factory.abi,
+    abi = PredicateAbi__factory.abi as unknown as string,
     bytecode = PredicateAbi__factory.bin,
     name,
     description,
@@ -152,7 +153,7 @@ export class Vault extends Predicate<[]> implements IVault {
   /**
    * Make configurable of predicate
    *
-   * @param configurable - The parameters of signature requirements.
+   * @param {IConfVault} configurable - The parameters of signature requirements.
    * @returns an formatted object to instance a new predicate
    */
   private static makePredicate(configurable: IConfVault) {
@@ -184,25 +185,37 @@ export class Vault extends Predicate<[]> implements IVault {
   /**
    * Return an list of transaction of this vault
    *
-   * @returns an transaction list
    *
-   * TODO:
-   * return a complete transaction, without instance
-   * implement default pagintation ({perPage: 10, page: 1, orderBy: 'createdAt', order: 'DESC'})
+   * @param {IListTransactions} params - The params to list transactions
+   *  - has optional params
+   *  - by default, it returns the first 10 transactions
+   *
+   *
+   * @returns {Promise<IPagination<IBSAFEGetTransactions>>} an transaction paginated transaction list
+   *
+   *
    */
   public async BSAFEGetTransactions(params?: IListTransactions) {
     this.verifyAuth();
 
-    const transactions = await this.api.listPredicateTransactions({
-      predicateId: [this.BSAFEVaultId],
-      ...params,
-    });
-    return Promise.all(
-      transactions.map((transaction) => ({
-        resume: transaction.resume,
-        witnesses: transaction.witnesses,
-      })),
-    );
+    const tx = await this.api
+      .listPredicateTransactions({
+        predicateId: [this.BSAFEVaultId],
+        ...(params ?? defaultListParams),
+      })
+      .then((data) => {
+        return {
+          ...data,
+          data: data.data.map((tx) => {
+            return {
+              resume: tx.resume,
+              witnesses: tx.witnesses,
+            };
+          }),
+        };
+      });
+
+    return tx;
   }
 
   /**
@@ -212,16 +225,6 @@ export class Vault extends Predicate<[]> implements IVault {
    * @returns an transaction list
    *
    *
-   * TODO:
-   * split this function in others:
-   * - create a class extended of TransactionRequest, and implement the save in BSAFEApi method
-   *
-   * - newTransaction -> (IPayload) => TransactionRequest
-   *
-   * - BSAFETransaction -> (TransactionRequest | string[bsafeId, hash]) => TransactionRequest
-   *       - Save the transaction in BSAFEApi if it is of type TransactionRequest
-   *       - If the vault has not been instantiated with the Auth, it doesn't save in BSAFEApi
-   *       - If it receives a string, it fetches from the API and returns the TransactionRequest
    */
   public async BSAFEGetTransaction(transactionId: string) {
     return Transfer.instance({

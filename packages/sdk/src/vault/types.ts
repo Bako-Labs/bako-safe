@@ -8,6 +8,7 @@ import {
 import { ITransferAsset } from '../assets';
 import { IFormatTransfer, Transfer } from '../transfers';
 import { ITransactionResume, IWitnesses } from '../api';
+import { IPagination } from 'src/api/utils/pagination';
 
 export interface IConfVault {
   HASH_PREDICATE?: number[];
@@ -72,7 +73,7 @@ export interface IVault {
   getConfigurable: () => IConfVault;
   BSAFEGetTransactions: (
     params?: IListTransactions,
-  ) => Promise<IBSAFEGetTransactions[]>;
+  ) => Promise<IPagination<IBSAFEGetTransactions>>;
   BSAFEIncludeTransaction: (
     params: IBSAFEIncludeTransaction,
   ) => Promise<Transfer>;
