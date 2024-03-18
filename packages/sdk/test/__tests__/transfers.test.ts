@@ -88,8 +88,8 @@ describe('[TRANSFERS]', () => {
 
       // this process isan`t async, next line is async
       signTimeout();
-
       const result = await transaction.wait();
+
       expect(result.status).toBe(TransactionStatus.success);
     },
     100 * 1000,
