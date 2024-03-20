@@ -1,5 +1,5 @@
 import { Operation, TransactionRequest } from 'fuels';
-import { IAssetTransaction, ITransferAsset } from '../../assets';
+import { ITransferAsset } from '../../assets';
 
 export enum SortOption {
   ASC = 'ASC',
@@ -89,7 +89,7 @@ export interface ITransaction extends ICreateTransactionPayload {
   predicateId: string;
   witnesses: IWitnesses[];
   resume: ITransactionResume; // RESULT
-  assets: IAssetTransaction[];
+  assets: ITransferAsset[];
   summary?: ITransactionSummary;
 }
 

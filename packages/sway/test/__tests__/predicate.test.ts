@@ -19,6 +19,7 @@ import {
 } from 'fuels';
 
 import { PredicateAbi__factory } from '../../../sdk/src/predicates';
+import { BSafe } from '../../../sdk/configurables';
 
 const { PROVIDER, PRIVATE_KEY, GAS_LIMIT, GAS_PRICE } = process.env;
 
@@ -100,13 +101,14 @@ describe('[SWAY_PREDICATE]', () => {
   let provider: Provider;
 
   beforeAll(async () => {
-    provider = await Provider.create(PROVIDER!);
+    provider = await Provider.create(BSafe.get('PROVIDER')!);
   });
 
   test('Send transfer by predicate', async () => {
     const wallet = Wallet.generate({
       provider,
     });
+    // to fix this test, resolve dependence conflict on fuels
     const predicate = PredicateAbi__factory.createInstance(provider, {
       SIGNATURES_COUNT: 1,
       SIGNERS: [
@@ -131,7 +133,6 @@ describe('[SWAY_PREDICATE]', () => {
       await signTransaction(wallet, tx, provider),
     ]);
     const result = await response.waitForResult();
-    console.log(result.status);
 
     expect(result.status).toBe('success');
   });

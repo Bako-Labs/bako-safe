@@ -1,4 +1,9 @@
-import { GetTransactionParams, ITransaction } from '../transactions';
+import {
+  GetTransactionParams,
+  ITransaction,
+  SortOption,
+} from '../transactions';
+import { IPagination } from '../utils/pagination';
 
 export interface IPredicatePayload {
   name: string;
@@ -32,13 +37,12 @@ export interface IPredicate extends IPredicatePayload {
   createdAt: string;
   updatedAt: string;
 }
-
 export interface IPredicateService {
   create: (payload: IPredicatePayload) => Promise<IPredicate>;
   findByAddress: (predicateAddress: string) => Promise<IPredicate>;
   findById: (predicateAddress: string) => Promise<IPredicate>;
   hasReservedCoins: (predicateAddress: string) => Promise<string[]>;
   listPredicateTransactions: (
-    params?: GetTransactionParams,
-  ) => Promise<ITransaction[]>;
+    params: GetTransactionParams,
+  ) => Promise<IPagination<ITransaction>>;
 }

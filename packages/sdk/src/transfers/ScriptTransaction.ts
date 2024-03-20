@@ -10,10 +10,9 @@ import {
   BytesLike,
   bn,
 } from 'fuels';
-import { transactionScript } from './helpers';
 import { IAssetGroupByTo } from '../assets';
-
-const { GAS_LIMIT, GAS_PRICE } = process.env;
+import { BSafe } from '../../configurables';
+import { transactionScript } from './helpers';
 
 interface BSAFEScriptTransactionConstructor {
   gasPrice: BN;
@@ -25,8 +24,8 @@ export class BSAFEScriptTransaction extends ScriptTransactionRequest {
   constructor(
     { script, gasLimit, gasPrice }: BSAFEScriptTransactionConstructor = {
       script: transactionScript,
-      gasPrice: bn(GAS_PRICE),
-      gasLimit: bn(GAS_LIMIT),
+      gasPrice: bn(BSafe.get('GAS_PRICE')!),
+      gasLimit: bn(BSafe.get('GAS_LIMIT')!),
     },
   ) {
     super({

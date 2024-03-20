@@ -3,11 +3,13 @@ import { IPayloadVault, Vault } from '../../src/vault';
 import { rootWallet } from './rootWallet';
 import { sendPredicateCoins } from './sendCoins';
 import { IBSAFEAuth } from '../../src/api';
+import { DEFAULT_BALANCE_VALUE, VALUES_DEFAULT_TO_MUL } from '../mocks/assets';
 
 export const newVault = async (
   signers: string[],
   fuelProvider: Provider,
   auth?: IBSAFEAuth,
+  reason?: keyof typeof VALUES_DEFAULT_TO_MUL,
 ) => {
   const VaultPayload: IPayloadVault = {
     configurable: {
@@ -20,7 +22,11 @@ export const newVault = async (
     BSAFEAuth: auth,
   };
   const vault = await Vault.create(VaultPayload);
-  await sendPredicateCoins(vault!, bn(1_000_000_000), 'sETH', rootWallet);
-  await sendPredicateCoins(vault!, bn(1_000_000_000), 'ETH', rootWallet);
+  const new_balance = DEFAULT_BALANCE_VALUE.mul(
+    VALUES_DEFAULT_TO_MUL[reason ?? 1],
+  );
+
+  await sendPredicateCoins(vault!, new_balance, 'sETH', rootWallet);
+  await sendPredicateCoins(vault!, new_balance, 'ETH', rootWallet);
   return vault;
 };

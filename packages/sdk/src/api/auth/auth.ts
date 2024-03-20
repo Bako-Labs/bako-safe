@@ -1,81 +1,68 @@
 import axios, { AxiosInstance } from 'axios';
 import { Provider, Wallet } from 'fuels';
-import { IAuthService, IBSAFEAuth, IBSAFEAuthPayload } from './types';
+import { IAuthService, IBSAFEAuth, TypeUser } from './types';
 
 import { FuelWalletLocked } from '@fuel-wallet/sdk';
-import { v4 as uuidv4 } from 'uuid';
+
 import { ITransaction } from '../transactions';
-import { defaultConfig } from '../../../configurables';
+import { BSafe } from '../../../configurables';
+import { IAccountKeys, accounts } from '../../../test/mocks';
 
 // woking to local node just fine
 export class AuthService implements IAuthService {
-  private client: AxiosInstance;
-  private payloadSession: IBSAFEAuthPayload;
-  private signature?: string;
   public BSAFEAuth?: IBSAFEAuth;
+  public client: AxiosInstance;
 
-  protected constructor(payload: IBSAFEAuthPayload) {
+  protected constructor({ address, token }: IBSAFEAuth) {
+    this.BSAFEAuth = {
+      address,
+      token,
+    };
     this.client = axios.create({
-      baseURL: defaultConfig['API_URL'],
+      baseURL: BSafe.get('API_URL'),
+      headers: {
+        Authorization: token,
+        Signeraddress: address,
+      },
     });
-    this.payloadSession = payload;
   }
 
-  static async create(user: string, provider: string) {
-    const { data } = await axios
-      .create({
-        baseURL: defaultConfig['API_URL'],
-      })
-      .post('/user', {
-        address: user,
-        provider,
-      });
+  static async create(account: IAccountKeys, provider: string) {
+    const address = accounts[account].address;
+    const pk = accounts[account].privateKey;
+    const client = axios.create({
+      baseURL: BSafe.get('API_URL'),
+    });
+    const {
+      data: { code },
+    } = await client.post('/user', { address, provider, type: TypeUser.FUEL });
+
+    if (!code) throw new Error('Account not created');
+
+    const { data } = await client.post('/auth/sign-in', {
+      digest: code,
+      encoder: TypeUser.FUEL,
+      signature: await AuthService.signerByPk(pk, code),
+    });
 
     return new AuthService({
-      address: user,
-      hash: uuidv4(),
-      createdAt: new Date().toISOString(),
-      provider,
-      encoder: 'fuel',
-      user_id: data.id,
-    });
-  }
-
-  //todo: verify date of payloadSession
-  async createSession() {
-    if (!this.signature) throw new Error('Signature not found');
-    const { address } = this.payloadSession;
-
-    const { data } = await this.client.post('/auth/sign-in', {
-      ...this.payloadSession,
-      signature: this.signature,
-    });
-
-    const result: IBSAFEAuth = {
       address,
       token: data.accessToken,
-    };
-
-    this.client.defaults.headers.common['Authorization'] = data.accessToken;
-    this.client.defaults.headers.common['Signeraddress'] = address;
-
-    this.BSAFEAuth = result;
-
-    return result;
+    });
   }
 
-  async signerByPk(pk: string) {
+  static async signerByPk(pk: string, code: string) {
     const signer = Wallet.fromPrivateKey(
       pk,
-      await Provider.create(defaultConfig['PROVIDER']!),
+      await Provider.create(BSafe.get('PROVIDER')!),
     );
-    const msg = await signer.signMessage(JSON.stringify(this.payloadSession));
-    this.signature = msg;
+    const msg = await signer.signMessage(code);
+    return msg;
   }
 
-  async signerByAccount(wallet: FuelWalletLocked) {
-    const msg = await wallet.signMessage(JSON.stringify(this.payloadSession));
-    this.signature = msg;
+  static async signerByAccount(wallet: FuelWalletLocked, code: string) {
+    const msg = await wallet.signMessage(code);
+    return msg;
   }
 
   async signTransaction(

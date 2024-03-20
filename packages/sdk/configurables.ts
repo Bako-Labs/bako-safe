@@ -31,4 +31,5 @@ export const BSafe = {
       }
     });
   },
+  get: (key: DefaultConfigurablesKeys) => defaultConfig[key],
 };

@@ -25,6 +25,32 @@ export interface TransferConstructor {
   vault: Vault;
 }
 
+export enum ECreationTransactiontype {
+  IS_OLD = 'IS_OLD',
+  IS_NEW = 'IS_NEW',
+  IS_SCRIPT = 'IS_SCRIPT',
+}
+
+export interface ICreationOld {
+  type: ECreationTransactiontype.IS_NEW;
+  payload: TransferConstructor;
+}
+
+export interface ICreationNew {
+  type: ECreationTransactiontype.IS_OLD;
+  payload: TransferConstructor;
+}
+
+export interface ICreationScript {
+  type: ECreationTransactiontype.IS_SCRIPT;
+  payload: TransferConstructor;
+}
+
+export type ICreationTransaction =
+  | ICreationOld
+  | ICreationNew
+  | ICreationScript;
+
 export type TransferFactoryParam =
   | string // id e txhash
   | IFormatTransfer // payload
