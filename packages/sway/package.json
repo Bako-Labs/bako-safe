@@ -32,6 +32,6 @@
     "@types/jest": "^29.5.4"
   },
   "dependencies": {
-    "fuels": "0.73.0"
+    "fuels": "0.74.0"
   }
 }
