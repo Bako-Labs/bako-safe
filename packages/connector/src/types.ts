@@ -1,4 +1,4 @@
-enum BSAFEConnectorEvents {
+enum BakoSafeConnectors {
   //accounts
   ACCOUNTS = 'accounts',
   CURRENT_ACCOUNT = 'currentAccount',
@@ -21,4 +21,4 @@ enum BSAFEConnectorEvents {
   //default
   DEFAULT = 'message',
 }
-export { BSAFEConnectorEvents };
+export { BakoSafeConnectors };

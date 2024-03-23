@@ -1,8 +1,4 @@
-# BSAFE 🐢
-
-### Fuel Shared Wallet
-
-A streamlined solution within the Fuel ecosystem, enabling seamless implementation and effortless coin transfers in a collaborative wallet environment.
+# 📦 SDK
 
 ## Links
 

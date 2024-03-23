@@ -1,4 +1,4 @@
-const { APP_BSAFE_URL } = process.env;
+import { APP_BSAFE_URL } from './constants';
 
 export class DAppWindow {
   BSAFEAPP = APP_BSAFE_URL;

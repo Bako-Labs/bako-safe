@@ -1,4 +1,6 @@
-# Multi-Signature Smart Contract Package for Fuel Ecosystem
+# 📑 Smart Contract
+
+## Multi-Signature Smart Contract Package for Fuel Ecosystem
 
 This package is designed to operate within the Fuel ecosystem, ensuring compatibility with beta5. It utilizes a predicate contract type to construct a multi-signature mechanism. This mechanism allows for pre-configuring the individuals required to witness a transaction, along with specifying the minimum number of witnesses needed for transaction confirmation.
 

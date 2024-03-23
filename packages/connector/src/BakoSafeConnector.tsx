@@ -9,17 +9,17 @@ import {
   TransactionRequestLike,
 } from 'fuels';
 
-import { BSAFEConnectorEvents } from './types';
+import { BakoSafeConnectors } from './types';
 import { DAppWindow } from './DAPPWindow';
 
-const {
+import {
   API_URL,
-  APP_NAME,
   APP_BSAFE_URL,
-  APP_IMAGE_DARK,
   APP_DESCRIPTION,
+  APP_IMAGE_DARK,
   APP_IMAGE_LIGHT,
-} = process.env;
+  APP_NAME,
+} from './constants';
 
 type FuelABI = JsonAbi;
 type Network = {
@@ -28,16 +28,16 @@ type Network = {
 };
 
 export class BSafeConnector extends FuelConnector {
-  name = APP_NAME!;
+  name = APP_NAME;
   metadata = {
     image: {
-      light: APP_IMAGE_LIGHT!,
-      dark: APP_IMAGE_DARK!,
+      light: APP_IMAGE_LIGHT,
+      dark: APP_IMAGE_DARK,
     },
     install: {
-      action: APP_BSAFE_URL!,
-      link: APP_BSAFE_URL!,
-      description: APP_DESCRIPTION!,
+      action: APP_BSAFE_URL,
+      link: APP_BSAFE_URL,
+      description: APP_DESCRIPTION,
     },
   };
   installed: boolean = true;
@@ -45,7 +45,7 @@ export class BSafeConnector extends FuelConnector {
 
   events = {
     ...FuelConnectorEventTypes,
-    ...BSAFEConnectorEvents,
+    ...BakoSafeConnectors,
   };
 
   private readonly socket: Socket;
@@ -86,7 +86,7 @@ export class BSafeConnector extends FuelConnector {
       },
     });
 
-    this.socket.on(BSAFEConnectorEvents.DEFAULT, (message) => {
+    this.socket.on(BakoSafeConnectors.DEFAULT, (message) => {
       this.emit(message.type, ...message.data);
     });
   }
@@ -99,7 +99,7 @@ export class BSafeConnector extends FuelConnector {
       });
 
       // @ts-ignore
-      this.on(BSAFEConnectorEvents.CONNECTION, (connection: boolean) => {
+      this.on(BakoSafeConnectors.CONNECTION, (connection: boolean) => {
         this.connected = connection;
         resolve(connection);
       });
@@ -122,8 +122,8 @@ export class BSafeConnector extends FuelConnector {
         reject('closed');
       });
       // @ts-ignore
-      this.on(BSAFEConnectorEvents.POPUP_TRANSFER, () => {
-        this.socket.emit(BSAFEConnectorEvents.TRANSACTION_SEND, {
+      this.on(BakoSafeConnectors.POPUP_TRANSFER, () => {
+        this.socket.emit(BakoSafeConnectors.TRANSACTION_SEND, {
           to: `${this.sessionId}:${window.origin}`,
           content: {
             address: _address,
@@ -132,7 +132,7 @@ export class BSafeConnector extends FuelConnector {
         });
       });
       // @ts-ignore
-      this.on(BSAFEConnectorEvents.TRANSACTION_CREATED, (content) => {
+      this.on(BakoSafeConnectors.TRANSACTION_CREATED, (content) => {
         resolve(`0x${content}`);
       });
     });
@@ -171,15 +171,15 @@ export class BSafeConnector extends FuelConnector {
   }
 
   async disconnect() {
-    this.socket.emit(BSAFEConnectorEvents.AUTH_DISCONECT_DAPP, {
+    this.socket.emit(BakoSafeConnectors.AUTH_DISCONECT_DAPP, {
       to: `${this.sessionId}:${window.origin}`,
       content: {
         sessionId: this.sessionId,
       },
     });
-    this.emit(BSAFEConnectorEvents.CONNECTION, false);
-    this.emit(BSAFEConnectorEvents.ACCOUNTS, []);
-    this.emit(BSAFEConnectorEvents.CURRENT_ACCOUNT, null);
+    this.emit(BakoSafeConnectors.CONNECTION, false);
+    this.emit(BakoSafeConnectors.ACCOUNTS, []);
+    this.emit(BakoSafeConnectors.CURRENT_ACCOUNT, null);
     return false;
   }
 
