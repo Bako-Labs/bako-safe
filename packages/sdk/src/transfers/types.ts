@@ -31,25 +31,25 @@ export enum ECreationTransactiontype {
   IS_SCRIPT = 'IS_SCRIPT',
 }
 
-export interface ICreationOld {
+export interface ICreationOldTransfer {
   type: ECreationTransactiontype.IS_NEW;
   payload: TransferConstructor;
 }
 
-export interface ICreationNew {
+export interface ICreationNewTransfer {
   type: ECreationTransactiontype.IS_OLD;
   payload: TransferConstructor;
 }
 
-export interface ICreationScript {
+export interface ICreationScriptTransfer {
   type: ECreationTransactiontype.IS_SCRIPT;
   payload: TransferConstructor;
 }
 
 export type ICreationTransaction =
-  | ICreationOld
-  | ICreationNew
-  | ICreationScript;
+  | ICreationOldTransfer
+  | ICreationNewTransfer
+  | ICreationScriptTransfer;
 
 export type TransferFactoryParam =
   | string // id e txhash

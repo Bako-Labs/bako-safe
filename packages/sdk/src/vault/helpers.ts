@@ -117,7 +117,7 @@ export const validations = (configurable: IConfVault) => {
   }
 };
 
-export const identifyCreateParams = async (
+export const identifyCreateVaultParams = async (
   param: IPayloadVault | IBSAFEApi,
 ): Promise<ICreation> => {
   try {

@@ -17,9 +17,6 @@
   "keywords": [],
   "author": "",
   "license": "Apache-2.0",
-  "peerDependencies": {
-    "fuels": "0.73.0"
-  },
   "scripts": {
     "prebuild": "yarn fuels build",
     "test": "jest --verbose"
@@ -32,6 +29,6 @@
     "@types/jest": "^29.5.4"
   },
   "dependencies": {
-    "fuels": "0.74.0"
+    "fuels": "0.76.0"
   }
 }

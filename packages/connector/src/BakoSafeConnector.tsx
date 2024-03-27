@@ -217,7 +217,7 @@ export class BSafeConnector extends FuelConnector {
     throw new Error('Method not implemented.');
   }
 
-  async addABI(contractId: string, abi: FuelABI): Promise<boolean> {
+  async addABI(_contractId: string, _abi: JsonAbi): Promise<boolean> {
     throw new Error('Method not implemented.');
   }
 

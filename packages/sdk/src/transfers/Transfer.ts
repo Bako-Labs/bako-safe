@@ -19,7 +19,7 @@ import {
 } from './types';
 import { Vault } from '../vault';
 import { delay } from '../../test/utils';
-import { identifyCreateParams } from './helpers';
+import { identifyCreateTransactionParams } from './helpers';
 
 /**
  * `Transfer` are extension of ScriptTransactionRequest, to create and send transactions
@@ -66,7 +66,7 @@ export class Transfer {
    * @returns return a new Transfer instance
    */
   public static async instance(param: TransferFactory) {
-    const item = await identifyCreateParams(param);
+    const item = await identifyCreateTransactionParams(param);
 
     switch (item.type) {
       case ECreationTransactiontype.IS_OLD: {

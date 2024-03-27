@@ -24,8 +24,8 @@ export class BSAFEScriptTransaction extends ScriptTransactionRequest {
   constructor(
     { script, gasLimit, gasPrice }: BSAFEScriptTransactionConstructor = {
       script: transactionScript,
-      gasPrice: bn(BSafe.get('GAS_PRICE')!),
-      gasLimit: bn(BSafe.get('GAS_LIMIT')!),
+      gasPrice: bn(BSafe.getChainConfig('GAS_PRICE')),
+      gasLimit: bn(BSafe.getChainConfig('GAS_LIMIT')),
     },
   ) {
     super({

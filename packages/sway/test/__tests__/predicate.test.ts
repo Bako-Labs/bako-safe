@@ -21,7 +21,7 @@ import {
 import { PredicateAbi__factory } from '../../../sdk/src/predicates';
 import { BSafe } from '../../../sdk/configurables';
 
-const { PROVIDER, PRIVATE_KEY, GAS_LIMIT, GAS_PRICE } = process.env;
+const { PRIVATE_KEY, GAS_LIMIT, GAS_PRICE } = process.env;
 
 async function seedAccount(
   address: AbstractAddress,
@@ -101,7 +101,7 @@ describe('[SWAY_PREDICATE]', () => {
   let provider: Provider;
 
   beforeAll(async () => {
-    provider = await Provider.create(BSafe.get('PROVIDER')!);
+    provider = await Provider.create(BSafe.get('PROVIDER'));
   });
 
   test('Send transfer by predicate', async () => {
