@@ -1,6 +1,3 @@
-import { FuelWalletLocked } from '@fuel-wallet/sdk';
-import { AuthService } from './auth';
-
 export interface IAuthService {}
 
 export interface IApiConfig {

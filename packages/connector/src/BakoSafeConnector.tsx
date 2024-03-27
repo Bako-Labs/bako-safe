@@ -27,7 +27,7 @@ type Network = {
   chainId: number;
 };
 
-export class BSafeConnector extends FuelConnector {
+export class BakoSafeConnector extends FuelConnector {
   name = APP_NAME;
   metadata = {
     image: {
