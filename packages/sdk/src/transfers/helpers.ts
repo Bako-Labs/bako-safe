@@ -49,7 +49,7 @@ export const formatTransaction = async ({
   const coins = await Asset.assetsGroupById(assets);
   const transactionCoins = await Asset.addTransactionFee(
     coins,
-    bn(BSafe.get('GAS_PRICE')!),
+    bn(BSafe.getChainConfig('GAS_PRICE')),
   );
 
   const _coins = await vault.getResourcesToSpend(transactionCoins);
@@ -230,7 +230,7 @@ export const isNewTransactionByScript = async ({
   };
 };
 
-export const identifyCreateParams = async (
+export const identifyCreateTransactionParams = async (
   param: TransferFactory,
 ): Promise<ICreationTransaction> => {
   try {

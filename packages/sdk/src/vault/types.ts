@@ -23,17 +23,17 @@ export enum ECreationtype {
   IS_NEW = 'IS_NEW',
 }
 
-export interface ICreationOld {
+export interface ICreationOldVault {
   type: ECreationtype.IS_NEW;
   payload: IPayloadVault;
 }
 
-export interface ICreationNew {
+export interface ICreationNewVault {
   type: ECreationtype.IS_OLD;
   payload: IPayloadVault;
 }
 
-export type ICreation = ICreationOld | ICreationNew;
+export type ICreation = ICreationOldVault | ICreationNewVault;
 
 export interface ITransferList {
   [id: string]: Transfer;

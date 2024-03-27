@@ -16,7 +16,7 @@ import {
   IVault,
 } from './types';
 import {
-  identifyCreateParams,
+  identifyCreateVaultParams,
   makeHashPredicate,
   makeSubscribers,
 } from './helpers';
@@ -98,7 +98,7 @@ export class Vault extends Predicate<[]> implements IVault {
    * @returns an instance of Vault
    **/
   static async create(params: IPayloadVault | IBSAFEApi) {
-    const _params = await identifyCreateParams(params);
+    const _params = await identifyCreateVaultParams(params);
 
     switch (_params.type) {
       case ECreationtype.IS_OLD:
