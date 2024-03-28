@@ -1,14 +1,14 @@
 import { Provider, TransactionRequestLike } from 'fuels';
-import { IBSAFEAuth } from '../api/auth/types';
+import { IBSAFEAuth } from '../../api/auth/types';
 import {
   IListTransactions,
   IPredicate,
   IPredicateService,
-} from '../api/predicates';
-import { ITransferAsset } from '../assets';
+} from '../../api/predicates';
+import { ITransferAsset } from '../../utils/assets';
 import { IFormatTransfer, Transfer } from '../transfers';
-import { ITransactionResume, IWitnesses } from '../api';
-import { IPagination } from 'src/api/utils/pagination';
+import { ITransactionResume, IWitnesses } from '../../api';
+import { IPagination } from '../../api/utils/pagination';
 
 export interface IConfVault {
   HASH_PREDICATE?: number[];

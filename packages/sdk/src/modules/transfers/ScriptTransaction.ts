@@ -10,8 +10,8 @@ import {
   BytesLike,
   bn,
 } from 'fuels';
-import { IAssetGroupByTo } from '../assets';
-import { BSafe } from '../../configurables';
+import { IAssetGroupByTo } from '../../utils/assets';
+import { BSafe } from '../../../configurables';
 import { transactionScript } from './helpers';
 
 interface BSAFEScriptTransactionConstructor {

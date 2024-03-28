@@ -1,7 +1,7 @@
 export * from './api';
-export * from './assets';
-export * from './transfers';
-export * from './vault';
+export * from './utils/assets';
+export * from './modules';
+export * from './utils';
 export * from '../configurables';
 
 //mocks

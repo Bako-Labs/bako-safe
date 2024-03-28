@@ -10,7 +10,7 @@ import {
 } from '../utils';
 import { BSafe } from '../../configurables';
 import { accounts } from '../mocks';
-import { IPayloadVault, Vault } from '../../src/vault';
+import { IPayloadVault, Vault } from '../../src/modules/vault';
 import { DEFAULT_TRANSACTION_PAYLOAD } from '../mocks/transactions';
 
 describe('[TRANSFERS]', () => {

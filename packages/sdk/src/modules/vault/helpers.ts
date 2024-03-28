@@ -6,7 +6,7 @@ import {
   ICreation,
   IPayloadVault,
 } from './types';
-import { PredicateService } from '../api/predicates/predicate';
+import { PredicateService } from '../../api/predicates';
 
 export const defaultValues: { [name: string]: string } = {
   signature:

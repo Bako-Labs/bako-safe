@@ -8,17 +8,18 @@ import {
   ScriptTransactionRequest,
 } from 'fuels';
 import { defaultValues } from '../vault/helpers';
-import { ITransaction, TransactionService, TransactionStatus } from '../api';
+import { ITransaction, TransactionService, TransactionStatus } from '../../api';
 import {
   ECreationTransactiontype,
   ICreationTransaction,
   IFormatTransfer,
+  TransferConstructor,
   TransferFactory,
   TransferInstanceError,
 } from './types';
-import { Vault } from '../vault';
-import { Asset } from '../assets';
-import { BSafe } from '../../configurables';
+import { Vault } from '../vault/Vault';
+import { Asset } from '../../utils/assets';
+import { BSafe } from '../../../configurables';
 import { BSAFEScriptTransaction } from './ScriptTransaction';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -73,7 +74,7 @@ export const isNewTransaction = async ({
     'assets' in transfer &&
     !!vault;
   const isNew = validation;
-  let data = undefined;
+
   if (isNew) {
     const { assets: _assets } = transfer;
     const service = auth && new TransactionService(auth);
@@ -105,7 +106,7 @@ export const isNewTransaction = async ({
         predicateAddress: vault.address.toString(),
       }));
 
-    data = {
+    const data = {
       vault,
       service,
       BSAFETransaction,
@@ -115,11 +116,16 @@ export const isNewTransaction = async ({
       witnesses: [],
       BSAFETransactionId: BSAFETransaction?.id,
     };
+
+    return {
+      is: isNew,
+      data,
+    };
   }
 
   return {
     is: isNew,
-    data: data ?? null,
+    data: undefined,
   };
 };
 
@@ -129,7 +135,7 @@ export const isOldTransaction = async ({
   vault,
 }: TransferFactory) => {
   const isOld = typeof transfer === 'string';
-  let data = undefined;
+
   if (isOld) {
     if (!auth) {
       throw new Error(TransferInstanceError.REQUIRED_AUTH);
@@ -151,7 +157,7 @@ export const isOldTransaction = async ({
         .filter((witness) => !!witness),
     });
 
-    data = {
+    const data: TransferConstructor = {
       vault,
       service,
       name: transaction.name!,
@@ -161,10 +167,16 @@ export const isOldTransaction = async ({
       BSAFETransactionId: transaction.id,
       BSAFETransaction: transaction,
     };
+
+    return {
+      is: isOld,
+      data,
+    };
   }
+
   return {
     is: isOld,
-    data,
+    data: undefined,
   };
 };
 
@@ -179,7 +191,7 @@ export const isNewTransactionByScript = async ({
     Object.entries(transfer).length > 3 &&
     typeof transfer != 'string' &&
     'type' in transfer;
-  let data = undefined;
+
   const transactionName = `tx_${uuidv4()}`;
   const service = auth && new TransactionService(auth);
 
@@ -212,7 +224,7 @@ export const isNewTransactionByScript = async ({
             .filter((signature) => !!signature)
         : [];
 
-    data = {
+    const data = {
       vault,
       service,
       witnesses: witnesses,
@@ -222,11 +234,16 @@ export const isNewTransactionByScript = async ({
       BSAFETransaction: transaction,
       BSAFETransactionId: transaction?.id,
     };
+
+    return {
+      is: isScript,
+      data,
+    };
   }
 
   return {
     is: isScript,
-    data,
+    data: undefined,
   };
 };
 

@@ -1,7 +1,7 @@
 import { BN, WalletUnlocked, bn } from 'fuels';
 import { BSafe } from '../../configurables';
 import { assets } from '../mocks';
-import { Vault } from '../../src/vault/Vault';
+import { Vault } from '../../src/modules/vault/Vault';
 
 export const txParams = {
   gasPrice: bn(BSafe.getChainConfig('GAS_PRICE')),

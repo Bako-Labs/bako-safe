@@ -4,15 +4,15 @@ import {
   TransactionRequestLike,
   TransactionStatus,
 } from 'fuels';
-import { ITransferAsset } from '../assets/types';
+import { ITransferAsset } from '../../utils/assets/types';
 import {
   ITransaction,
   ITransactionResume,
   ITransactionService,
   IWitnesses,
-} from '../api/transactions';
+} from '../../api/transactions';
 import { Vault } from '../vault';
-import { IBSAFEAuth } from '../api';
+import { IBSAFEAuth } from '../../api';
 
 export interface TransferConstructor {
   name: string;

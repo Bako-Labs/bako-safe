@@ -1,5 +1,5 @@
 import { Provider, bn } from 'fuels';
-import { IPayloadVault, Vault } from '../../src/vault';
+import { IPayloadVault, Vault } from '../../src/modules';
 import { rootWallet } from './rootWallet';
 import { sendPredicateCoins } from './sendCoins';
 import { IBSAFEAuth } from '../../src/api';

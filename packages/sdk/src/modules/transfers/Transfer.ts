@@ -11,14 +11,14 @@ import {
   ITransactionResume,
   ITransactionService,
   TransactionStatus,
-} from '../api';
+} from '../../api';
 import {
   ECreationTransactiontype,
   TransferConstructor,
   TransferFactory,
 } from './types';
-import { Vault } from '../vault';
-import { delay } from '../../test/utils';
+import { Vault } from '../vault/Vault';
+import { delay } from '../../../test/utils';
 import { identifyCreateTransactionParams } from './helpers';
 
 /**

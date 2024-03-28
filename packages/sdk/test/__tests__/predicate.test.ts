@@ -1,9 +1,12 @@
-import { Provider, bn } from 'fuels';
+import { Provider } from 'fuels';
 import { signin, newVault, IUserAuth, authService } from '../utils';
-import { DEFAULT_BALANCES, accounts, assets } from '../mocks';
-import { IPayloadVault, Vault } from '../../src/vault';
+import { IPayloadVault, Vault } from '../../src/modules';
 import { BSafe } from '../../configurables';
-import { DEFAULT_TRANSACTION_PAYLOAD } from '../mocks/transactions';
+import {
+  DEFAULT_BALANCES,
+  accounts,
+  DEFAULT_TRANSACTION_PAYLOAD,
+} from '../mocks';
 
 describe('[PREDICATES]', () => {
   let chainId: number;
