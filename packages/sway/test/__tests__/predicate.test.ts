@@ -18,22 +18,27 @@ import {
   hexlify,
 } from 'fuels';
 
-import { PredicateAbi__factory } from '../../../sdk/src/predicates';
+import { PredicateAbi__factory } from '../../../sdk/src/sway/predicates';
 import { BSafe } from '../../../sdk/configurables';
 
-const { PRIVATE_KEY, GAS_LIMIT, GAS_PRICE } = process.env;
+import { PRIVATE_KEY, GAS_LIMIT, GAS_PRICE } from '../constants';
 
 async function seedAccount(
   address: AbstractAddress,
   amount: BN,
   provider: Provider,
 ) {
-  const genisesWallet = Wallet.fromPrivateKey(PRIVATE_KEY!, provider);
-  const resp = await genisesWallet.transfer(address, amount, BaseAssetId, {
-    gasLimit: Number(GAS_LIMIT),
-    gasPrice: Number(GAS_PRICE),
-  });
-  await resp.waitForResult();
+  try {
+    const genisesWallet = Wallet.fromPrivateKey(PRIVATE_KEY, provider);
+    const resp = await genisesWallet.transfer(address, amount, BaseAssetId, {
+      gasLimit: Number(GAS_LIMIT),
+      gasPrice: Number(GAS_PRICE),
+    });
+    await resp.waitForResult();
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
 }
 
 async function sendTransaction(
@@ -61,10 +66,10 @@ async function signTransaction(
   const hash = txHash.slice(2).toLowerCase();
   const signature = await wallet.signMessage(hash);
 
-  console.log('[SIG]', {
-    hash,
-    signature,
-  });
+  // console.log('[SIG]', {
+  //   hash,
+  //   signature,
+  // });
 
   return signature;
 }
