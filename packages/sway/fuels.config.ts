@@ -9,5 +9,5 @@ export default createConfig({
   useBuiltinForc: false,
   providerUrl: process.env.PROVIDER_URL,
   privateKey: process.env.PRIVATE_KEY,
-  output: '../sdk/src',
+  output: '../sdk/src/sway',
 });
