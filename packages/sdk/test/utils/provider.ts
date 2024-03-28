@@ -3,6 +3,6 @@ import { Provider } from 'fuels';
 
 export class LocalProvider extends Provider {
   constructor() {
-    super(BSafe.get('PROVIDER')!);
+    super(BSafe.get('PROVIDER'));
   }
 }

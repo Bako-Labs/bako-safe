@@ -54,7 +54,7 @@ export class AuthService implements IAuthService {
   static async signerByPk(pk: string, code: string) {
     const signer = Wallet.fromPrivateKey(
       pk,
-      await Provider.create(BSafe.get('PROVIDER')!),
+      await Provider.create(BSafe.get('PROVIDER')),
     );
     const msg = await signer.signMessage(code);
     return msg;
