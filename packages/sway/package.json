@@ -1,5 +1,5 @@
 {
-  "name": "@bsafe/sway",
+  "name": "@bako-safe/sway",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

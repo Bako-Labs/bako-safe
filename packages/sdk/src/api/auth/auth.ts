@@ -1,25 +1,25 @@
 import axios, { AxiosInstance } from 'axios';
 import { Provider, Wallet } from 'fuels';
-import { IAuthService, IBSAFEAuth, TypeUser } from './types';
+import { IAuthService, IBakoSafeAuth, TypeUser } from './types';
 
 import { FuelWalletLocked } from '@fuel-wallet/sdk';
 
 import { ITransaction } from '../transactions';
-import { BSafe } from '../../../configurables';
+import { BakoSafe } from '../../../configurables';
 import { IAccountKeys, accounts } from '../../../test/mocks';
 
 // woking to local node just fine
 export class AuthService implements IAuthService {
-  public BSAFEAuth?: IBSAFEAuth;
+  public BakoSafeAuth?: IBakoSafeAuth;
   public client: AxiosInstance;
 
-  protected constructor({ address, token }: IBSAFEAuth) {
-    this.BSAFEAuth = {
+  protected constructor({ address, token }: IBakoSafeAuth) {
+    this.BakoSafeAuth = {
       address,
       token,
     };
     this.client = axios.create({
-      baseURL: BSafe.get('API_URL'),
+      baseURL: BakoSafe.get('SERVER_URL'),
       headers: {
         Authorization: token,
         Signeraddress: address,
@@ -31,7 +31,7 @@ export class AuthService implements IAuthService {
     const address = accounts[account].address;
     const pk = accounts[account].privateKey;
     const client = axios.create({
-      baseURL: BSafe.get('API_URL'),
+      baseURL: BakoSafe.get('SERVER_URL'),
     });
     const {
       data: { code },
@@ -54,7 +54,7 @@ export class AuthService implements IAuthService {
   static async signerByPk(pk: string, code: string) {
     const signer = Wallet.fromPrivateKey(
       pk,
-      await Provider.create(BSafe.get('PROVIDER')),
+      await Provider.create(BakoSafe.get('PROVIDER')),
     );
     const msg = await signer.signMessage(code);
     return msg;
@@ -67,16 +67,16 @@ export class AuthService implements IAuthService {
 
   async signTransaction(
     wallet: FuelWalletLocked,
-    BSAFETransactionId: string,
+    BakoSafeAuthTransactionId: string,
     approve?: boolean,
   ) {
     const { data } = await this.client.get<ITransaction>(
-      `/transaction/${BSAFETransactionId}`,
+      `/transaction/${BakoSafeAuthTransactionId}`,
     );
     const msg = await wallet.signMessage(data.hash);
 
     await this.client
-      .put(`/transaction/signer/${BSAFETransactionId}`, {
+      .put(`/transaction/signer/${BakoSafeAuthTransactionId}`, {
         account: wallet.address.toString(),
         signer: msg,
         confirm: approve ?? true,

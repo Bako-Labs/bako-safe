@@ -1,7 +1,7 @@
 export const defaultConfig = {
   PROVIDER: 'http://localhost:4000/graphql',
-  API_URL: 'http://localhost:3333/',
-  BSAFE_URL: 'https://safe.bako.global',
+  SERVER_URL: 'http://localhost:3333/',
+  CLIENT_URL: 'https://safe.bako.global',
   ENCODER: 'Fuel',
 };
 
@@ -17,7 +17,7 @@ export type DefaultConfigurablesKeys = keyof DefaultConfigurables;
 export type GasConfigurables = typeof gasConfig;
 export type GasConfigurablesKeys = keyof GasConfigurables;
 
-export const BSafe = {
+export const BakoSafe = {
   setup: (params: Partial<DefaultConfigurables>) => {
     const configurableKeys = Object.keys(params);
 

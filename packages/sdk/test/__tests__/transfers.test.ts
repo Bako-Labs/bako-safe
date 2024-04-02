@@ -1,16 +1,7 @@
 import { Provider, TransactionStatus, bn } from 'fuels';
-import {
-  authService,
-  delay,
-  IUserAuth,
-  newVault,
-  rootWallet,
-  sendPredicateCoins,
-  signin,
-} from '../utils';
-import { BSafe } from '../../configurables';
+import { authService, delay, IUserAuth, newVault, signin } from '../utils';
+import { BakoSafe } from '../../configurables';
 import { accounts } from '../mocks';
-import { IPayloadVault, Vault } from '../../src/vault';
 import { DEFAULT_TRANSACTION_PAYLOAD } from '../mocks/transactions';
 
 describe('[TRANSFERS]', () => {
@@ -20,14 +11,14 @@ describe('[TRANSFERS]', () => {
   let signers: string[];
 
   //example to sett up the provider
-  BSafe.setup({
+  BakoSafe.setup({
     PROVIDER: 'http://localhost:4000/graphql',
-    API_URL: 'http://localhost:3333',
-    BSAFE_URL: 'http://localhost:5174',
+    SERVER_URL: 'http://localhost:3333',
+    CLIENT_URL: 'http://localhost:5174',
   });
 
   beforeAll(async () => {
-    provider = await Provider.create(BSafe.get('PROVIDER'));
+    provider = await Provider.create(BakoSafe.get('PROVIDER'));
     chainId = provider.getChainId();
     auth = await authService(
       ['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
@@ -47,28 +38,28 @@ describe('[TRANSFERS]', () => {
       const vault = await newVault(
         signers,
         provider,
-        auth['USER_1'].BSAFEAuth,
+        auth['USER_1'].BakoSafeAuth,
         2,
       );
       const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
-      const transaction = await vault.BSAFEIncludeTransaction(tx);
+      const transaction = await vault.BakoSafeIncludeTransaction(tx);
 
       const signTimeout = async () => {
         await delay(5000);
         await signin(
           transaction.getHashTxId(),
           'USER_3',
-          auth['USER_3'].BSAFEAuth,
-          transaction.BSAFETransactionId,
+          auth['USER_3'].BakoSafeAuth,
+          transaction.BakoSafeTransactionId,
         );
 
         await delay(5000);
         await signin(
           transaction.getHashTxId(),
           'USER_2',
-          auth['USER_2'].BSAFEAuth,
-          transaction.BSAFETransactionId,
+          auth['USER_2'].BakoSafeAuth,
+          transaction.BakoSafeTransactionId,
         );
       };
 
@@ -76,12 +67,12 @@ describe('[TRANSFERS]', () => {
       await signin(
         transaction.getHashTxId(),
         'USER_1',
-        auth['USER_1'].BSAFEAuth,
-        transaction.BSAFETransactionId,
+        auth['USER_1'].BakoSafeAuth,
+        transaction.BakoSafeTransactionId,
       );
 
-      const oldTransaction = await vault.BSAFEGetTransaction(
-        transaction.BSAFETransactionId,
+      const oldTransaction = await vault.BakoSafeGetTransaction(
+        transaction.BakoSafeTransactionId,
       );
 
       oldTransaction.send();
@@ -101,42 +92,42 @@ describe('[TRANSFERS]', () => {
       const vault = await newVault(
         signers,
         provider,
-        auth['USER_1'].BSAFEAuth,
+        auth['USER_1'].BakoSafeAuth,
         2,
       );
       const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
-      const transaction = await vault.BSAFEIncludeTransaction(tx);
+      const transaction = await vault.BakoSafeIncludeTransaction(tx);
       expect(
         await signin(
           transaction.getHashTxId(),
           'USER_2',
-          auth['USER_2'].BSAFEAuth,
-          transaction.BSAFETransactionId,
+          auth['USER_2'].BakoSafeAuth,
+          transaction.BakoSafeTransactionId,
         ),
       ).toBe(true);
       expect(
         await signin(
           transaction.getHashTxId(),
           'USER_1',
-          auth['USER_1'].BSAFEAuth,
-          transaction.BSAFETransactionId,
+          auth['USER_1'].BakoSafeAuth,
+          transaction.BakoSafeTransactionId,
         ),
       ).toBe(true);
       expect(
         await signin(
           transaction.getHashTxId(),
           'USER_3',
-          auth['USER_3'].BSAFEAuth,
-          transaction.BSAFETransactionId,
+          auth['USER_3'].BakoSafeAuth,
+          transaction.BakoSafeTransactionId,
         ),
       ).toBe(true);
       expect(
         await signin(
           transaction.getHashTxId(),
           'USER_4',
-          auth['USER_4'].BSAFEAuth,
-          transaction.BSAFETransactionId,
+          auth['USER_4'].BakoSafeAuth,
+          transaction.BakoSafeTransactionId,
         ),
       ).toBe(false);
       transaction.send();
@@ -152,68 +143,59 @@ describe('[TRANSFERS]', () => {
       const vault = await newVault(
         signers,
         provider,
-        auth['USER_1'].BSAFEAuth,
+        auth['USER_1'].BakoSafeAuth,
         2,
       );
       const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
       // Create a transaction
-      const transaction = await vault.BSAFEIncludeTransaction(tx);
-      const transaction_aux = await vault.BSAFEGetTransaction(
-        transaction.BSAFETransactionId,
+      const transaction = await vault.BakoSafeIncludeTransaction(tx);
+      const transaction_aux = await vault.BakoSafeGetTransaction(
+        transaction.BakoSafeTransactionId,
       );
-      const transaction_aux_byhash = await vault.BSAFEGetTransaction(
+      const transaction_aux_byhash = await vault.BakoSafeGetTransaction(
         transaction.getHashTxId(),
       );
 
-      expect(transaction_aux.BSAFETransactionId).toStrictEqual(
-        transaction.BSAFETransactionId,
+      expect(transaction_aux.BakoSafeTransactionId).toStrictEqual(
+        transaction.BakoSafeTransactionId,
       );
-      expect(transaction_aux_byhash.BSAFETransactionId).toStrictEqual(
-        transaction.BSAFETransactionId,
+      expect(transaction_aux_byhash.BakoSafeTransactionId).toStrictEqual(
+        transaction.BakoSafeTransactionId,
       );
     },
     10 * 1000,
   );
 
   test('Send an transaction to with vault without balance', async () => {
-    const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
+    const vault = await newVault(
+      signers,
+      provider,
+      auth['USER_1'].BakoSafeAuth,
+    );
     const tx_a = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
     const tx_b = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
-    await expect(vault.BSAFEIncludeTransaction(tx_a)).rejects.toThrow(
+    await expect(vault.BakoSafeIncludeTransaction(tx_a)).rejects.toThrow(
       /not enough/,
     );
-    await expect(vault.BSAFEIncludeTransaction(tx_b)).rejects.toThrow(
+    await expect(vault.BakoSafeIncludeTransaction(tx_b)).rejects.toThrow(
       /not enough/,
     );
   });
 
-  test('Sent a transaction without BSAFEAuth', async () => {
-    const VaultPayload: IPayloadVault = {
-      configurable: {
-        SIGNATURES_COUNT: 3,
-        SIGNERS: signers,
-        network: provider.url,
-        chainId: chainId,
-      },
-      provider,
-    };
-    const vault = await Vault.create(VaultPayload);
+  test('Sent a transaction without BakoSafeAuth', async () => {
+    const vault = await newVault(signers, provider, undefined, 5);
+    const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
-    await sendPredicateCoins(vault, bn(1_000_000_000), 'sETH', rootWallet);
-    await sendPredicateCoins(vault, bn(1_000_000_000), 'ETH', rootWallet);
-
-    const _tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
-
-    const tx = await vault.BSAFEIncludeTransaction(_tx);
-    tx.BSAFEScript.witnesses = [
-      await signin(tx.getHashTxId(), 'USER_1'),
-      await signin(tx.getHashTxId(), 'USER_2'),
-      await signin(tx.getHashTxId(), 'USER_3'),
+    const transaction = await vault.BakoSafeIncludeTransaction(tx);
+    transaction.witnesses = [
+      await signin(transaction.getHashTxId(), 'USER_1'),
+      await signin(transaction.getHashTxId(), 'USER_2'),
+      await signin(transaction.getHashTxId(), 'USER_3'),
     ];
 
-    const result = await tx.send().then(async (tx) => {
+    const result = await transaction.send().then(async (tx) => {
       if ('wait' in tx) {
         return await tx.wait();
       }

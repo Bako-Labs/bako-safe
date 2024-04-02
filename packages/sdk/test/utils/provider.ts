@@ -1,8 +1,8 @@
-import { BSafe } from '../../configurables';
+import { BakoSafe } from '../../configurables';
 import { Provider } from 'fuels';
 
 export class LocalProvider extends Provider {
   constructor() {
-    super(BSafe.get('PROVIDER'));
+    super(BakoSafe.get('PROVIDER'));
   }
 }

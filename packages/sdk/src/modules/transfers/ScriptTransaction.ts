@@ -10,22 +10,22 @@ import {
   BytesLike,
   bn,
 } from 'fuels';
-import { IAssetGroupByTo } from '../assets';
-import { BSafe } from '../../configurables';
+import { IAssetGroupByTo } from '../../utils/assets';
+import { BakoSafe } from '../../../configurables';
 import { transactionScript } from './helpers';
 
-interface BSAFEScriptTransactionConstructor {
+interface BakoSafeScriptTransactionConstructor {
   gasPrice: BN;
   gasLimit: BN;
   script: BytesLike;
 }
 
-export class BSAFEScriptTransaction extends ScriptTransactionRequest {
+export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
   constructor(
-    { script, gasLimit, gasPrice }: BSAFEScriptTransactionConstructor = {
+    { script, gasLimit, gasPrice }: BakoSafeScriptTransactionConstructor = {
       script: transactionScript,
-      gasPrice: bn(BSafe.getChainConfig('GAS_PRICE')),
-      gasLimit: bn(BSafe.getChainConfig('GAS_LIMIT')),
+      gasPrice: bn(BakoSafe.getChainConfig('GAS_PRICE')),
+      gasLimit: bn(BakoSafe.getChainConfig('GAS_LIMIT')),
     },
   ) {
     super({
@@ -49,7 +49,7 @@ export class BSAFEScriptTransaction extends ScriptTransactionRequest {
       );
     });
 
-    //todo: invalidate used coins [make using bsafe api assets?]
+    //todo: invalidate used coins [make using BakoSafe api assets?]
     this.addResources(_coins);
 
     this.inputs?.forEach((input) => {
@@ -58,7 +58,7 @@ export class BSAFEScriptTransaction extends ScriptTransactionRequest {
         hexlify(input.owner) === vault.address.toB256()
       ) {
         input.predicate = arrayify(vault.bytes);
-        input.predicateData = arrayify(vault.predicateData);
+        //input.predicateData = arrayify();
       }
     });
 

@@ -1,13 +1,13 @@
 import axios, { AxiosInstance } from 'axios';
-import { IBSAFEAuth } from './auth/types';
-import { BSafe } from '../../configurables';
+import { IBakoSafeAuth } from './auth/types';
+import { BakoSafe } from '../../configurables';
 
 export class Api {
   public client: AxiosInstance;
 
-  constructor(auth: IBSAFEAuth) {
+  constructor(auth: IBakoSafeAuth) {
     this.client = axios.create({
-      baseURL: BSafe.get('API_URL'),
+      baseURL: BakoSafe.get('SERVER_URL'),
       headers: {
         Authorization: auth.token,
         Signeraddress: auth.address,

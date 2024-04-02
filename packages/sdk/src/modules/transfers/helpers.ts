@@ -8,23 +8,24 @@ import {
   ScriptTransactionRequest,
 } from 'fuels';
 import { defaultValues } from '../vault/helpers';
-import { ITransaction, TransactionService, TransactionStatus } from '../api';
+import { ITransaction, TransactionService, TransactionStatus } from '../../api';
 import {
   ECreationTransactiontype,
   ICreationTransaction,
   IFormatTransfer,
+  TransferConstructor,
   TransferFactory,
   TransferInstanceError,
 } from './types';
-import { Vault } from '../vault';
-import { Asset } from '../assets';
-import { BSafe } from '../../configurables';
-import { BSAFEScriptTransaction } from './ScriptTransaction';
+import { Vault } from '../vault/Vault';
+import { Asset } from '../../utils/assets';
+import { BakoSafe } from '../../../configurables';
+import { BakoSafeScriptTransaction } from './ScriptTransaction';
 import { v4 as uuidv4 } from 'uuid';
 
 export const transactionScript = arrayify(
   '0x9000000447000000000000000000003c5dfcc00110fff3001a485000910000201a440000724000202849140072400020340004902400000047000000',
-); // TODO: MAKE IT DYNAMIC, Create a default script for the BSAFE transactions
+); // TODO: MAKE IT DYNAMIC, Create a default script for the BakoSafe transactions
 
 export function recoverSigner(signer: string, tx_id: string) {
   if (tx_id == '0x') return;
@@ -49,12 +50,12 @@ export const formatTransaction = async ({
   const coins = await Asset.assetsGroupById(assets);
   const transactionCoins = await Asset.addTransactionFee(
     coins,
-    bn(BSafe.getChainConfig('GAS_PRICE')),
+    bn(BakoSafe.getChainConfig('GAS_PRICE')),
   );
 
   const _coins = await vault.getResourcesToSpend(transactionCoins);
 
-  const script_t = new BSAFEScriptTransaction();
+  const script_t = new BakoSafeScriptTransaction();
   await script_t.instanceTransaction(_coins, vault, outputs, witnesses);
 
   return script_t;
@@ -73,7 +74,7 @@ export const isNewTransaction = async ({
     'assets' in transfer &&
     !!vault;
   const isNew = validation;
-  let data = undefined;
+
   if (isNew) {
     const { assets: _assets } = transfer;
     const service = auth && new TransactionService(auth);
@@ -93,7 +94,7 @@ export const isNewTransaction = async ({
     const txData = transactionRequestify(scriptTransaction);
     const hashTxId = getHashTxId(txData, vault.provider.getChainId());
 
-    const BSAFETransaction =
+    const BakoSafeTransaction =
       auth &&
       service &&
       (await service.create({
@@ -105,21 +106,26 @@ export const isNewTransaction = async ({
         predicateAddress: vault.address.toString(),
       }));
 
-    data = {
+    const data = {
       vault,
       service,
-      BSAFETransaction,
+      BakoSafeTransaction,
       name: transfer.name ?? transactionName,
       transactionRequest: txData,
-      BSAFEScript: scriptTransaction,
+      BakoSafeScript: scriptTransaction,
       witnesses: [],
-      BSAFETransactionId: BSAFETransaction?.id,
+      BakoSafeTransactionId: BakoSafeTransaction?.id,
+    };
+
+    return {
+      is: isNew,
+      data,
     };
   }
 
   return {
     is: isNew,
-    data: data ?? null,
+    data: undefined,
   };
 };
 
@@ -129,7 +135,7 @@ export const isOldTransaction = async ({
   vault,
 }: TransferFactory) => {
   const isOld = typeof transfer === 'string';
-  let data = undefined;
+
   if (isOld) {
     if (!auth) {
       throw new Error(TransferInstanceError.REQUIRED_AUTH);
@@ -151,20 +157,26 @@ export const isOldTransaction = async ({
         .filter((witness) => !!witness),
     });
 
-    data = {
+    const data: TransferConstructor = {
       vault,
       service,
       name: transaction.name!,
-      BSAFEScript: scriptTransactionRequest,
+      BakoSafeScript: scriptTransactionRequest,
       transactionRequest: transactionRequestify(scriptTransactionRequest),
       witnesses: transaction.witnesses.map((witness) => witness.account),
-      BSAFETransactionId: transaction.id,
-      BSAFETransaction: transaction,
+      BakoSafeTransactionId: transaction.id,
+      BakoSafeTransaction: transaction,
+    };
+
+    return {
+      is: isOld,
+      data,
     };
   }
+
   return {
     is: isOld,
-    data,
+    data: undefined,
   };
 };
 
@@ -179,7 +191,7 @@ export const isNewTransactionByScript = async ({
     Object.entries(transfer).length > 3 &&
     typeof transfer != 'string' &&
     'type' in transfer;
-  let data = undefined;
+
   const transactionName = `tx_${uuidv4()}`;
   const service = auth && new TransactionService(auth);
 
@@ -212,21 +224,26 @@ export const isNewTransactionByScript = async ({
             .filter((signature) => !!signature)
         : [];
 
-    data = {
+    const data = {
       vault,
       service,
       witnesses: witnesses,
       name: transactionName,
       transactionRequest: txData,
-      BSAFEScript: new ScriptTransactionRequest(),
-      BSAFETransaction: transaction,
-      BSAFETransactionId: transaction?.id,
+      BakoSafeScript: new ScriptTransactionRequest(),
+      BakoSafeTransaction: transaction,
+      BakoSafeTransactionId: transaction?.id,
+    };
+
+    return {
+      is: isScript,
+      data,
     };
   }
 
   return {
     is: isScript,
-    data,
+    data: undefined,
   };
 };
 

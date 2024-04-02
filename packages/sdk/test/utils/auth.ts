@@ -1,8 +1,8 @@
-import { AuthService, IBSAFEAuth } from '../../src/api';
+import { AuthService, IBakoSafeAuth } from '../../src/api';
 
 import { IAccountKeys, IDefaultAccount, accounts } from '../mocks';
 export interface IAuthAccount extends IDefaultAccount {
-  BSAFEAuth: IBSAFEAuth;
+  BakoSafeAuth: IBakoSafeAuth;
 }
 export interface IUserAuth {
   [key: string]: IAuthAccount;
@@ -18,7 +18,7 @@ export const authService = async (
 
     result[acc] = {
       ...account,
-      BSAFEAuth: auth.BSAFEAuth!,
+      BakoSafeAuth: auth.BakoSafeAuth!,
     };
   }
 
