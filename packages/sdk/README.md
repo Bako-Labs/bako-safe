@@ -36,13 +36,21 @@ You can find more information about this time in the [official documentation](ht
 There are currently two ways to use this package, the first of which is with the data persistence of the API built Bako Safe and used in the dApp [Bako Safe](https://safe.bako.global/) and there is another without
 the data persistence, only to generate and validate transactions.
 
-To better understand this guide, you can refer to the implementation of our [example dApp](https://youtube.com) [ADD link oficial on github]
-
 In a simple way, we can implement use without data persistence
 
 ```typescript
 import { BN, Provider, Wallet, bn, Address } from 'fuels';
-import {Vault, IPayloadVault, IPayloadTransfer, sign, defaultConfigurable, mocks, accounts, IFormatTransfer, NativeAssetId} from 'bsafe'
+import {
+    Vault,
+    IPayloadVault,
+    IPayloadTransfer,
+    sign,
+    defaultConfigurable,
+    mocks,
+    accounts,
+    IFormatTransfer,
+    NativeAssetId
+} from 'bsafe'
 
 // if you run a local node of FuelVm use http://localhost:4000/graphql
 const fuelProvider = new Provider('https://beta-5.fuel.network/graphql');
