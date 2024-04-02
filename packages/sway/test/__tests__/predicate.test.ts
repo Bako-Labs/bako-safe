@@ -19,7 +19,7 @@ import {
 } from 'fuels';
 
 import { PredicateAbi__factory } from '../../../sdk/src/sway/predicates';
-import { BSafe } from '../../../sdk/configurables';
+import { BakoSafe } from '../../../sdk/configurables';
 
 import { PRIVATE_KEY, GAS_LIMIT, GAS_PRICE } from '../constants';
 
@@ -106,7 +106,7 @@ describe('[SWAY_PREDICATE]', () => {
   let provider: Provider;
 
   beforeAll(async () => {
-    provider = await Provider.create(BSafe.get('PROVIDER'));
+    provider = await Provider.create(BakoSafe.get('PROVIDER'));
   });
 
   test('Send transfer by predicate', async () => {
