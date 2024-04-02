@@ -1,5 +1,5 @@
 {
-  "name": "bako-safe",
+  "name": "bakosafe",
   "version": "0.0.50",
   "description": "A signature validation package built based on sway in the fuel network",
   "main": "dist/index.js",
