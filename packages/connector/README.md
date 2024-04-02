@@ -1,4 +1,4 @@
-# 🔗 Connector
+# 🔗 Bako Safe Connector
 
 ## What is connector?
 

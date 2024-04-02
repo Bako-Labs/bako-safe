@@ -95,7 +95,7 @@ async function createTransaction(predicate: Predicate<InputValue[]>) {
       // eslint-disable-next-line no-param-reassign
       input.predicate = arrayify(predicate.bytes);
       // eslint-disable-next-line no-param-reassign
-      input.predicateData = arrayify(predicate.predicateData);
+      //input.predicateData = arrayify(predicate.predicateData);
     }
   });
 

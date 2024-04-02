@@ -190,30 +190,17 @@ describe('[TRANSFERS]', () => {
   });
 
   test('Sent a transaction without BSAFEAuth', async () => {
-    const VaultPayload: IPayloadVault = {
-      configurable: {
-        SIGNATURES_COUNT: 3,
-        SIGNERS: signers,
-        network: provider.url,
-        chainId: chainId,
-      },
-      provider,
-    };
-    const vault = await Vault.create(VaultPayload);
+    const vault = await newVault(signers, provider, undefined, 5);
+    const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
-    await sendPredicateCoins(vault, bn(1_000_000_000), 'sETH', rootWallet);
-    await sendPredicateCoins(vault, bn(1_000_000_000), 'ETH', rootWallet);
-
-    const _tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
-
-    const tx = await vault.BSAFEIncludeTransaction(_tx);
-    tx.BSAFEScript.witnesses = [
-      await signin(tx.getHashTxId(), 'USER_1'),
-      await signin(tx.getHashTxId(), 'USER_2'),
-      await signin(tx.getHashTxId(), 'USER_3'),
+    const transaction = await vault.BSAFEIncludeTransaction(tx);
+    transaction.witnesses = [
+      await signin(transaction.getHashTxId(), 'USER_1'),
+      await signin(transaction.getHashTxId(), 'USER_2'),
+      await signin(transaction.getHashTxId(), 'USER_3'),
     ];
 
-    const result = await tx.send().then(async (tx) => {
+    const result = await transaction.send().then(async (tx) => {
       if ('wait' in tx) {
         return await tx.wait();
       }

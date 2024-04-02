@@ -1,4 +1,4 @@
-# 📑 Smart Contract
+# 📑 Bako Safe Contracts
 
 ## Multi-Signature Smart Contract Package for Fuel Ecosystem
 

@@ -26,7 +26,7 @@ import { identifyCreateTransactionParams } from './helpers';
  */
 export class Transfer {
   public name!: string;
-  public witnesses!: string[];
+  public witnesses: string[];
   public BSAFEScript: ScriptTransactionRequest;
   public BSAFETransaction!: ITransaction;
   public transactionRequest: TransactionRequest;
@@ -48,7 +48,7 @@ export class Transfer {
     this.name = name!;
     this.vault = vault;
     this.service = service;
-    this.witnesses = witnesses!;
+    this.witnesses = [];
     this.BSAFEScript = BSAFEScript;
     this.transactionRequest = transactionRequest;
     this.BSAFETransaction = BSAFETransaction!;
@@ -125,6 +125,8 @@ export class Transfer {
   public async send() {
     if (!this.service) {
       const tx: TransactionRequest = transactionRequestify(this.BSAFEScript!);
+      tx.witnesses = this.witnesses;
+
       const tx_est = await this.vault.provider.estimatePredicates(tx);
       const encodedTransaction = hexlify(tx_est.toTransactionBytes());
       const {

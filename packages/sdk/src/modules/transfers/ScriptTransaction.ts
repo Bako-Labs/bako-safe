@@ -58,7 +58,7 @@ export class BSAFEScriptTransaction extends ScriptTransactionRequest {
         hexlify(input.owner) === vault.address.toB256()
       ) {
         input.predicate = arrayify(vault.bytes);
-        input.predicateData = arrayify(vault.predicateData);
+        //input.predicateData = arrayify();
       }
     });
 
