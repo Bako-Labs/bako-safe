@@ -1,5 +1,5 @@
 import { Api } from '../api';
-import { IBSAFEAuth } from '../auth/types';
+import { IBakoSafeAuth } from '../auth/types';
 import {
   ICreateTransactionPayload,
   ITransaction,
@@ -7,7 +7,7 @@ import {
 } from './types';
 
 export class TransactionService extends Api implements ITransactionService {
-  constructor(auth: IBSAFEAuth) {
+  constructor(auth: IBakoSafeAuth) {
     super(auth);
   }
 
@@ -41,13 +41,13 @@ export class TransactionService extends Api implements ITransactionService {
   }
 
   public async sign(
-    BSAFETransactionId: string,
+    BakoSafeTransactionId: string,
     account: string,
     signer: string,
     approve?: boolean,
   ) {
     const { data } = await this.client.put(
-      `/transaction/signer/${BSAFETransactionId}`,
+      `/transaction/signer/${BakoSafeTransactionId}`,
       {
         account,
         signer,
@@ -58,17 +58,17 @@ export class TransactionService extends Api implements ITransactionService {
     return data;
   }
 
-  public async send(BSAFETransactionId: string) {
+  public async send(BakoSafeTransactionId: string) {
     const { data } = await this.client.post(
-      `/transaction/send/${BSAFETransactionId}`,
+      `/transaction/send/${BakoSafeTransactionId}`,
     );
 
     return data;
   }
 
-  public async verify(BSAFETransactionId: string) {
+  public async verify(BakoSafeTransactionId: string) {
     const { data } = await this.client.post(
-      `/transaction/verify/${BSAFETransactionId}`,
+      `/transaction/verify/${BakoSafeTransactionId}`,
     );
 
     return data;

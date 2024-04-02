@@ -27,10 +27,10 @@ import { identifyCreateTransactionParams } from './helpers';
 export class Transfer {
   public name!: string;
   public witnesses: string[];
-  public BSAFEScript: ScriptTransactionRequest;
-  public BSAFETransaction!: ITransaction;
+  public BakoSafeScript: ScriptTransactionRequest;
+  public BakoSafeTransaction!: ITransaction;
   public transactionRequest: TransactionRequest;
-  public BSAFETransactionId!: string;
+  public BakoSafeTransactionId!: string;
 
   private vault!: Vault;
   private service?: ITransactionService;
@@ -38,21 +38,20 @@ export class Transfer {
   protected constructor({
     vault,
     name,
-    witnesses,
     transactionRequest,
-    BSAFEScript,
+    BakoSafeScript,
     service,
-    BSAFETransaction,
-    BSAFETransactionId,
+    BakoSafeTransaction,
+    BakoSafeTransactionId,
   }: TransferConstructor) {
     this.name = name!;
     this.vault = vault;
     this.service = service;
     this.witnesses = [];
-    this.BSAFEScript = BSAFEScript;
+    this.BakoSafeScript = BakoSafeScript;
     this.transactionRequest = transactionRequest;
-    this.BSAFETransaction = BSAFETransaction!;
-    this.BSAFETransactionId = BSAFETransactionId!;
+    this.BakoSafeTransaction = BakoSafeTransaction!;
+    this.BakoSafeTransactionId = BakoSafeTransactionId!;
   }
 
   /**
@@ -60,9 +59,9 @@ export class Transfer {
    *
    * @param {TransferFactory} param - TransferFactory params
    *        @param {string | ITransfer | ITransaction} transfer - Transaction ID or ITransfer or ITransaction
-   *        @param {IBSAFEAuth} auth - BSAFEAuth instance
+   *        @param {IBakoSafeAuth} auth - BakoSafeAuth instance
    *        @param {Vault} vault - Vault instance
-   *        @param {boolean} isSave - Save transaction on BSAFEAPI
+   *        @param {boolean} isSave - Save transaction on BakoSafeAPI
    * @returns return a new Transfer instance
    */
   public static async instance(param: TransferFactory) {
@@ -118,13 +117,15 @@ export class Transfer {
    */
 
   /**
-   * Using BSAFEauth or default send of predicate, send this transaction to chain
+   * Using BakoSafe auth or default send of predicate, send this transaction to chain
    *
    * @returns an resume for transaction
    */
   public async send() {
     if (!this.service) {
-      const tx: TransactionRequest = transactionRequestify(this.BSAFEScript!);
+      const tx: TransactionRequest = transactionRequestify(
+        this.BakoSafeScript!,
+      );
       tx.witnesses = this.witnesses;
 
       const tx_est = await this.vault.provider.estimatePredicates(tx);
@@ -135,12 +136,12 @@ export class Transfer {
       return new TransactionResponse(transactionId, this.vault.provider);
     }
 
-    this.BSAFETransaction = await this.service.findByTransactionID(
-      this.BSAFETransactionId,
+    this.BakoSafeTransaction = await this.service.findByTransactionID(
+      this.BakoSafeTransactionId,
     );
-    switch (this.BSAFETransaction.status) {
+    switch (this.BakoSafeTransaction.status) {
       case TransactionStatus.PENDING_SENDER:
-        await this.service.send(this.BSAFETransactionId);
+        await this.service.send(this.BakoSafeTransactionId);
         break;
 
       case TransactionStatus.PROCESS_ON_CHAIN:
@@ -153,8 +154,8 @@ export class Transfer {
         break;
     }
     return {
-      ...this.BSAFETransaction.resume,
-      bsafeID: this.BSAFETransactionId,
+      ...this.BakoSafeTransaction.resume,
+      BakoSafeID: this.BakoSafeTransactionId,
     };
   }
 
@@ -174,7 +175,7 @@ export class Transfer {
     }
 
     let transaction = await this.service.findByTransactionID(
-      this.BSAFETransactionId,
+      this.BakoSafeTransactionId,
     );
     while (
       transaction.status !== TransactionStatus.SUCCESS &&
@@ -182,14 +183,14 @@ export class Transfer {
     ) {
       await delay(this.vault.transactionRecursiveTimeout); // todo: make time to dynamic
       transaction = await this.service.findByTransactionID(
-        this.BSAFETransactionId,
+        this.BakoSafeTransactionId,
       );
 
       if (transaction.status == TransactionStatus.PENDING_SENDER)
         await this.send();
 
       if (transaction.status == TransactionStatus.PROCESS_ON_CHAIN)
-        await this.service.verify(this.BSAFETransactionId);
+        await this.service.verify(this.BakoSafeTransactionId);
     }
 
     const result: ITransactionResume = {

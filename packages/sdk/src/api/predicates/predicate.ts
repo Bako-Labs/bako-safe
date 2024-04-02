@@ -1,10 +1,10 @@
 import { Api } from '../api';
-import { IBSAFEAuth } from '../auth/types';
+import { IBakoSafeAuth } from '../auth/types';
 import { GetTransactionParams } from '../transactions';
 import { IPredicatePayload, IPredicateService } from './types';
 
 export class PredicateService extends Api implements IPredicateService {
-  constructor(auth: IBSAFEAuth) {
+  constructor(auth: IBakoSafeAuth) {
     super(auth);
   }
 

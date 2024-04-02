@@ -1,11 +1,11 @@
 import { BN, WalletUnlocked, bn } from 'fuels';
-import { BSafe } from '../../configurables';
+import { BakoSafe } from '../../configurables';
 import { assets } from '../mocks';
 import { Vault } from '../../src/modules/vault/Vault';
 
 export const txParams = {
-  gasPrice: bn(BSafe.getChainConfig('GAS_PRICE')),
-  gasLimit: bn(BSafe.getChainConfig('GAS_LIMIT')),
+  gasPrice: bn(BakoSafe.getChainConfig('GAS_PRICE')),
+  gasLimit: bn(BakoSafe.getChainConfig('GAS_LIMIT')),
 };
 
 export const sendPredicateCoins = async (

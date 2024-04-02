@@ -11,12 +11,12 @@ export enum TypeUser {
   WEB_AUTHN = 'WEB_AUTHN',
 }
 
-export interface IBSAFEAuth {
+export interface IBakoSafeAuth {
   address: string;
   token: string;
 }
 
-export interface IBSAFEAuthPayload {
+export interface IBakoSafeAuthPayload {
   address: string;
   hash: string;
   createdAt: string;

@@ -1,7 +1,7 @@
 {
-  "name": "bsafe",
+  "name": "bako-safe",
   "version": "0.0.50",
-  "description": "",
+  "description": "A signature validation package built based on sway in the fuel network",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -46,7 +46,7 @@
     "elliptic": "^6.5.4",
     "tsup": "^7.2.0",
     "axios": "^1.5.1",
-    "fuels": "0.76.0",
+    "fuels": "0.76.12",
     "uuid": "^9.0.1"
   }
 }

@@ -1,7 +1,7 @@
 import { Provider } from 'fuels';
 import { signin, newVault, IUserAuth, authService } from '../utils';
 import { IPayloadVault, Vault } from '../../src/modules';
-import { BSafe } from '../../configurables';
+import { BakoSafe } from '../../configurables';
 import {
   DEFAULT_BALANCES,
   accounts,
@@ -15,7 +15,7 @@ describe('[PREDICATES]', () => {
   let signers: string[];
 
   beforeAll(async () => {
-    provider = await Provider.create(BSafe.get('PROVIDER'));
+    provider = await Provider.create(BakoSafe.get('PROVIDER'));
     chainId = await provider.getChainId();
     auth = await authService(
       ['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
@@ -38,7 +38,7 @@ describe('[PREDICATES]', () => {
         chainId: chainId,
       },
       provider,
-      BSAFEAuth: auth['USER_1'].BSAFEAuth,
+      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
     };
 
     VaultPayload.configurable.SIGNATURES_COUNT = 0;
@@ -62,20 +62,28 @@ describe('[PREDICATES]', () => {
   });
 
   test('Created an valid vault', async () => {
-    const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
+    const vault = await newVault(
+      signers,
+      provider,
+      auth['USER_1'].BakoSafeAuth,
+    );
     expect(await vault.getBalances()).toStrictEqual(DEFAULT_BALANCES);
   });
 
   test(
-    'Instance an old Vault by BSAFEPredicate ID',
+    'Instance an old Vault by BakoSafe Predicate ID',
     async () => {
-      const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
+      const vault = await newVault(
+        signers,
+        provider,
+        auth['USER_1'].BakoSafeAuth,
+      );
       const auxVault = await Vault.create({
-        ...auth['USER_1'].BSAFEAuth,
-        id: vault.BSAFEVaultId,
+        ...auth['USER_1'].BakoSafeAuth,
+        id: vault.BakoSafeVaultId,
       });
-      expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
-      expect(auxVault.BSAFEVault.id).toStrictEqual(vault.BSAFEVaultId);
+      expect(auxVault.BakoSafeVaultId).toStrictEqual(vault.BakoSafeVaultId);
+      expect(auxVault.BakoSafeVault.id).toStrictEqual(vault.BakoSafeVaultId);
     },
     20 * 1000,
   );
@@ -83,12 +91,16 @@ describe('[PREDICATES]', () => {
   test(
     'Instance an old Vault by predicate address',
     async () => {
-      const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
+      const vault = await newVault(
+        signers,
+        provider,
+        auth['USER_1'].BakoSafeAuth,
+      );
       const auxVault = await Vault.create({
-        ...auth['USER_1'].BSAFEAuth,
+        ...auth['USER_1'].BakoSafeAuth,
         predicateAddress: vault.address.toString(),
       });
-      expect(auxVault.BSAFEVaultId).toStrictEqual(vault.BSAFEVaultId);
+      expect(auxVault.BakoSafeVaultId).toStrictEqual(vault.BakoSafeVaultId);
     },
     10 * 1000,
   );
@@ -96,13 +108,17 @@ describe('[PREDICATES]', () => {
   test(
     'Instance an old Vault by payload',
     async () => {
-      const vault = await newVault(signers, provider, auth['USER_1'].BSAFEAuth);
+      const vault = await newVault(
+        signers,
+        provider,
+        auth['USER_1'].BakoSafeAuth,
+      );
       const providerByPayload = await Provider.create(
-        vault.BSAFEVault.provider,
+        vault.BakoSafeVault.provider,
       );
 
       const vaultByPayload = await Vault.create({
-        configurable: JSON.parse(vault.BSAFEVault.configurable),
+        configurable: JSON.parse(vault.BakoSafeVault.configurable),
         provider: providerByPayload,
       });
 
@@ -122,24 +138,24 @@ describe('[PREDICATES]', () => {
       const vault = await newVault(
         signers,
         provider,
-        auth['USER_1'].BSAFEAuth,
+        auth['USER_1'].BakoSafeAuth,
         5,
       );
       const tx_1 = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
       const tx_2 = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
-      const transaction = await vault.BSAFEIncludeTransaction(tx_1);
-      await vault.BSAFEIncludeTransaction(tx_2);
+      const transaction = await vault.BakoSafeIncludeTransaction(tx_1);
+      await vault.BakoSafeIncludeTransaction(tx_2);
 
       await signin(
         transaction.getHashTxId(),
         'USER_2',
-        auth['USER_2'].BSAFEAuth,
-        transaction.BSAFETransactionId,
+        auth['USER_2'].BakoSafeAuth,
+        transaction.BakoSafeTransactionId,
       );
 
       //default pagination
-      const transactions = await vault.BSAFEGetTransactions();
+      const transactions = await vault.BakoSafeGetTransactions();
       expect(transactions.data.length).toBe(2);
       expect(transactions.currentPage).toBe(0);
       expect(transactions.perPage).toBe(10);
@@ -147,7 +163,7 @@ describe('[PREDICATES]', () => {
       //custom pagination
       const perPage = 1;
       const page = 1;
-      const ptransations = await vault.BSAFEGetTransactions({
+      const ptransations = await vault.BakoSafeGetTransactions({
         perPage,
         page,
       });
@@ -162,7 +178,7 @@ describe('[PREDICATES]', () => {
     const vault = await newVault(signers, provider);
 
     await expect(vault.getConfigurable().SIGNATURES_COUNT).toBe(3);
-    await expect(vault.BSAFEGetTransactions()).rejects.toThrow(
+    await expect(vault.BakoSafeGetTransactions()).rejects.toThrow(
       'Auth is required',
     );
   });

@@ -19,13 +19,13 @@ import {
 } from './types';
 import { Vault } from '../vault/Vault';
 import { Asset } from '../../utils/assets';
-import { BSafe } from '../../../configurables';
-import { BSAFEScriptTransaction } from './ScriptTransaction';
+import { BakoSafe } from '../../../configurables';
+import { BakoSafeScriptTransaction } from './ScriptTransaction';
 import { v4 as uuidv4 } from 'uuid';
 
 export const transactionScript = arrayify(
   '0x9000000447000000000000000000003c5dfcc00110fff3001a485000910000201a440000724000202849140072400020340004902400000047000000',
-); // TODO: MAKE IT DYNAMIC, Create a default script for the BSAFE transactions
+); // TODO: MAKE IT DYNAMIC, Create a default script for the BakoSafe transactions
 
 export function recoverSigner(signer: string, tx_id: string) {
   if (tx_id == '0x') return;
@@ -50,12 +50,12 @@ export const formatTransaction = async ({
   const coins = await Asset.assetsGroupById(assets);
   const transactionCoins = await Asset.addTransactionFee(
     coins,
-    bn(BSafe.getChainConfig('GAS_PRICE')),
+    bn(BakoSafe.getChainConfig('GAS_PRICE')),
   );
 
   const _coins = await vault.getResourcesToSpend(transactionCoins);
 
-  const script_t = new BSAFEScriptTransaction();
+  const script_t = new BakoSafeScriptTransaction();
   await script_t.instanceTransaction(_coins, vault, outputs, witnesses);
 
   return script_t;
@@ -94,7 +94,7 @@ export const isNewTransaction = async ({
     const txData = transactionRequestify(scriptTransaction);
     const hashTxId = getHashTxId(txData, vault.provider.getChainId());
 
-    const BSAFETransaction =
+    const BakoSafeTransaction =
       auth &&
       service &&
       (await service.create({
@@ -109,12 +109,12 @@ export const isNewTransaction = async ({
     const data = {
       vault,
       service,
-      BSAFETransaction,
+      BakoSafeTransaction,
       name: transfer.name ?? transactionName,
       transactionRequest: txData,
-      BSAFEScript: scriptTransaction,
+      BakoSafeScript: scriptTransaction,
       witnesses: [],
-      BSAFETransactionId: BSAFETransaction?.id,
+      BakoSafeTransactionId: BakoSafeTransaction?.id,
     };
 
     return {
@@ -161,11 +161,11 @@ export const isOldTransaction = async ({
       vault,
       service,
       name: transaction.name!,
-      BSAFEScript: scriptTransactionRequest,
+      BakoSafeScript: scriptTransactionRequest,
       transactionRequest: transactionRequestify(scriptTransactionRequest),
       witnesses: transaction.witnesses.map((witness) => witness.account),
-      BSAFETransactionId: transaction.id,
-      BSAFETransaction: transaction,
+      BakoSafeTransactionId: transaction.id,
+      BakoSafeTransaction: transaction,
     };
 
     return {
@@ -230,9 +230,9 @@ export const isNewTransactionByScript = async ({
       witnesses: witnesses,
       name: transactionName,
       transactionRequest: txData,
-      BSAFEScript: new ScriptTransactionRequest(),
-      BSAFETransaction: transaction,
-      BSAFETransactionId: transaction?.id,
+      BakoSafeScript: new ScriptTransactionRequest(),
+      BakoSafeTransaction: transaction,
+      BakoSafeTransactionId: transaction?.id,
     };
 
     return {

@@ -1,7 +1,7 @@
 import { Address, B256Address, Provider, ZeroBytes32 } from 'fuels';
 import {
   ECreationtype,
-  IBSAFEApi,
+  IBakoSafeApi,
   IConfVault,
   ICreation,
   IPayloadVault,
@@ -25,13 +25,13 @@ export const makeSubscribers = (subscribers: string[]) => {
 };
 
 export const instanceByOldUtil = async (
-  params: IBSAFEApi,
+  params: IBakoSafeApi,
 ): Promise<IPayloadVault> => {
   const { id, predicateAddress, token, address } = params;
   const hasId = 'id' in params && id;
 
   if (predicateAddress == undefined && id == undefined) {
-    throw new Error('predicateAddress or BSAFEPredicateId is required');
+    throw new Error('predicateAddress or BakoSafePredicateId is required');
   }
 
   const api = new PredicateService({
@@ -44,7 +44,7 @@ export const instanceByOldUtil = async (
     : await api.findByAddress(predicateAddress!);
 
   if (!result) {
-    throw new Error('BSAFEVault not found');
+    throw new Error('BakoSafeVault not found');
   }
 
   return {
@@ -54,20 +54,20 @@ export const instanceByOldUtil = async (
     description: result.description,
     abi: result.abi,
     bytecode: result.bytes,
-    BSAFEAuth: {
+    BakoSafeAuth: {
       address,
       token,
     },
-    BSAFEVaultId: result.id,
-    BSAFEVault: result,
+    BakoSafeVaultId: result.id,
+    BakoSafeVault: result,
     api,
   };
 };
 
 export const instanceByNewUtil = (params: IPayloadVault): IPayloadVault => {
-  const hasAuth = 'BSAFEAuth' in params && params.BSAFEAuth;
+  const hasAuth = 'BakoSafeAuth' in params && params.BakoSafeAuth;
   if (hasAuth) {
-    const { address, token } = params.BSAFEAuth!;
+    const { address, token } = params.BakoSafeAuth!;
     params['api'] = new PredicateService({
       address,
       token,
@@ -77,7 +77,7 @@ export const instanceByNewUtil = (params: IPayloadVault): IPayloadVault => {
 };
 
 export const isOldPredicate = async (
-  param: IBSAFEApi | IPayloadVault,
+  param: IBakoSafeApi | IPayloadVault,
 ): Promise<{ is: boolean; data: IPayloadVault | undefined }> => {
   const is =
     ('predicateAddress' in param || 'id' in param) &&
@@ -91,7 +91,7 @@ export const isOldPredicate = async (
 };
 
 export const isNewPredicate = async (
-  param: IBSAFEApi | IPayloadVault,
+  param: IBakoSafeApi | IPayloadVault,
 ): Promise<{
   is: boolean;
   data: IPayloadVault | undefined;
@@ -118,7 +118,7 @@ export const validations = (configurable: IConfVault) => {
 };
 
 export const identifyCreateVaultParams = async (
-  param: IPayloadVault | IBSAFEApi,
+  param: IPayloadVault | IBakoSafeApi,
 ): Promise<ICreation> => {
   try {
     const { data: oldData, is: isOld } = await isOldPredicate(param);

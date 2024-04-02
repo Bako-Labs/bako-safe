@@ -12,16 +12,16 @@ import {
   IWitnesses,
 } from '../../api/transactions';
 import { Vault } from '../vault';
-import { IBSAFEAuth } from '../../api';
+import { IBakoSafeAuth } from '../../api';
 
 export interface TransferConstructor {
   name: string;
   service?: ITransactionService;
   witnesses: string[];
   transactionRequest: TransactionRequest;
-  BSAFEScript: ScriptTransactionRequest;
-  BSAFETransaction?: ITransaction;
-  BSAFETransactionId?: string;
+  BakoSafeScript: ScriptTransactionRequest;
+  BakoSafeTransaction?: ITransaction;
+  BakoSafeTransactionId?: string;
   vault: Vault;
 }
 
@@ -58,7 +58,7 @@ export type TransferFactoryParam =
   | ITransaction;
 
 export interface TransferFactory {
-  auth?: IBSAFEAuth;
+  auth?: IBakoSafeAuth;
   transfer: TransferFactoryParam;
   vault: Vault;
   isSave?: boolean;
@@ -92,7 +92,7 @@ export interface ITransferResult {
   block?: string;
   witnesses?: string[];
   outputs?: ITransferAsset[];
-  bsafeID?: string;
+  BakoSafeID?: string;
   fee?: string;
   gasUsed?: string;
 }

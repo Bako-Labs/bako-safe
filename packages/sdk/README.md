@@ -50,7 +50,7 @@ import {
     accounts,
     IFormatTransfer,
     NativeAssetId
-} from 'bsafe'
+} from 'bako-safe'
 
 // if you run a local node of FuelVm use http://localhost:4000/graphql
 const fuelProvider = new Provider('https://beta-5.fuel.network/graphql');

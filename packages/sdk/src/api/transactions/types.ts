@@ -98,11 +98,11 @@ export interface ITransactionService {
   findByHash: (hash: string) => Promise<ITransaction>;
   findByTransactionID: (transactionId: string) => Promise<ITransaction>;
   sign: (
-    BSAFETransactionId: string,
+    BakoSafeTransactionId: string,
     account: string,
     signer: string,
     approve?: boolean,
   ) => Promise<ITransaction>;
-  send: (BSAFETransactionId: string) => Promise<ITransactionResume>;
-  verify: (BSAFETransactionId: string) => Promise<ITransactionResume>;
+  send: (BakoSafeTransactionId: string) => Promise<ITransactionResume>;
+  verify: (BakoSafeTransactionId: string) => Promise<ITransactionResume>;
 }

@@ -2,15 +2,15 @@ import { arrayify, Predicate } from 'fuels';
 
 import {
   defaultListParams,
-  IBSAFEAuth,
+  IBakoSafeAuth,
   IListTransactions,
   IPredicate,
   IPredicateService,
 } from '../../api';
 import {
   ECreationtype,
-  IBSAFEApi,
-  IBSAFEIncludeTransaction,
+  IBakoSafeApi,
+  IBakoSafeIncludeTransaction,
   IConfVault,
   IPayloadVault,
   IVault,
@@ -34,13 +34,13 @@ export class Vault extends Predicate<[]> implements IVault {
   private bin: string;
   private abi: { [name: string]: unknown };
   private api!: IPredicateService;
-  private auth!: IBSAFEAuth;
+  private auth!: IBakoSafeAuth;
   private configurable: IConfVault;
 
   public name!: string;
   //@ts-ignore
-  public BSAFEVault!: IPredicate;
-  public BSAFEVaultId!: string;
+  public BakoSafeVault!: IPredicate;
+  public BakoSafeVaultId!: string;
   public description?: string;
   public transactionRecursiveTimeout: number;
 
@@ -51,9 +51,9 @@ export class Vault extends Predicate<[]> implements IVault {
     bytecode = PredicateAbi__factory.bin,
     name,
     description,
-    BSAFEVaultId,
-    BSAFEVault,
-    BSAFEAuth,
+    BakoSafeVaultId,
+    BakoSafeVault,
+    BakoSafeAuth,
     transactionRecursiveTimeout = 1000,
     api,
   }: IPayloadVault) {
@@ -76,10 +76,10 @@ export class Vault extends Predicate<[]> implements IVault {
     this.provider = provider;
     this.name = name || `Vault - ${uuidv4()}`;
     this.description = description;
-    this.BSAFEVaultId = BSAFEVaultId!;
+    this.BakoSafeVaultId = BakoSafeVaultId!;
     this.transactionRecursiveTimeout = transactionRecursiveTimeout;
-    this.BSAFEVault = BSAFEVault!;
-    this.auth = BSAFEAuth!;
+    this.BakoSafeVault = BakoSafeVault!;
+    this.auth = BakoSafeAuth!;
     this.api = api!;
   }
 
@@ -90,14 +90,14 @@ export class Vault extends Predicate<[]> implements IVault {
    *      @param HASH_PREDICATE - Hash to works an unic predicate, is not required, but to instance old predicate is an number array
    *      @param SIGNATURES_COUNT - Number of signatures required of predicate
    *      @param SIGNERS - Array string of predicate signers
-   * @param abi - The JSON abi to BSAFE multisig.
-   * @param bytecode - The binary code of preficate BSAFE multisig.
-   * @param transactionRecursiveTimeout - The time to refetch transaction on BSAFE API.
-   * @param BSAFEAuth - The auth to BSAFE API.
+   * @param abi - The JSON abi to BakoSafe multisig.
+   * @param bytecode - The binary code of preficate BakoSafe multisig.
+   * @param transactionRecursiveTimeout - The time to refetch transaction on BakoSafe API.
+   * @param BakoSafeAuth - The auth to BakoSafe API.
    *
    * @returns an instance of Vault
    **/
-  static async create(params: IPayloadVault | IBSAFEApi) {
+  static async create(params: IPayloadVault | IBakoSafeApi) {
     const _params = await identifyCreateVaultParams(params);
 
     switch (_params.type) {
@@ -113,7 +113,7 @@ export class Vault extends Predicate<[]> implements IVault {
   }
 
   /**
-   * To use bsafe API, auth is required
+   * To use BakoSafe API, auth is required
    *
    * @returns if auth is not defined, throw an error
    */
@@ -124,8 +124,8 @@ export class Vault extends Predicate<[]> implements IVault {
   }
 
   /**
-   * Send a caller to BSAFE API to save predicate
-   * Set BSAFEVaultId and BSAFEVault
+   * Send a caller to BakoSafe API to save predicate
+   * Set BakoSafeVaultId and BakoSafeVault
    *
    *
    * @returns if auth is not defined, throw an error
@@ -143,11 +143,11 @@ export class Vault extends Predicate<[]> implements IVault {
       configurable: JSON.stringify(this.configurable),
       provider: this.provider.url,
     });
-    this.BSAFEVault = {
+    this.BakoSafeVault = {
       ...rest,
       id,
     };
-    this.BSAFEVaultId = id;
+    this.BakoSafeVaultId = id;
   }
 
   /**
@@ -173,7 +173,7 @@ export class Vault extends Predicate<[]> implements IVault {
    * @param {TransactionRequestLike} param - IFormatTransaction or TransactionRequestLike
    * @returns return a new Transfer instance
    */
-  public async BSAFEIncludeTransaction(param: IBSAFEIncludeTransaction) {
+  public async BakoSafeIncludeTransaction(param: IBakoSafeIncludeTransaction) {
     return Transfer.instance({
       auth: this.auth,
       vault: this,
@@ -191,16 +191,16 @@ export class Vault extends Predicate<[]> implements IVault {
    *  - by default, it returns the first 10 transactions
    *
    *
-   * @returns {Promise<IPagination<IBSAFEGetTransactions>>} an transaction paginated transaction list
+   * @returns {Promise<IPagination<IBakoSafeGetTransactions>>} an transaction paginated transaction list
    *
    *
    */
-  public async BSAFEGetTransactions(params?: IListTransactions) {
+  public async BakoSafeGetTransactions(params?: IListTransactions) {
     this.verifyAuth();
 
     const tx = await this.api
       .listPredicateTransactions({
-        predicateId: [this.BSAFEVaultId],
+        predicateId: [this.BakoSafeVaultId],
         ...(params ?? defaultListParams),
       })
       .then((data) => {
@@ -220,13 +220,13 @@ export class Vault extends Predicate<[]> implements IVault {
 
   /**
    * Return an list of transaction of this vault
-   * @param transactionId - The transaction id on BSAFEApi
+   * @param transactionId - The transaction id on BakoSafeApi
    *
    * @returns an transaction list
    *
    *
    */
-  public async BSAFEGetTransaction(transactionId: string) {
+  public async BakoSafeGetTransaction(transactionId: string) {
     return Transfer.instance({
       vault: this,
       auth: this.auth,

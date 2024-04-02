@@ -2,13 +2,14 @@ import { Provider, bn } from 'fuels';
 import { IPayloadVault, Vault } from '../../src/modules';
 import { rootWallet } from './rootWallet';
 import { sendPredicateCoins } from './sendCoins';
-import { IBSAFEAuth } from '../../src/api';
+import { IBakoSafeAuth } from '../../src/api';
 import { DEFAULT_BALANCE_VALUE, VALUES_DEFAULT_TO_MUL } from '../mocks/assets';
+import { BakoSafe } from '../../configurables';
 
 export const newVault = async (
   signers: string[],
   fuelProvider: Provider,
-  auth?: IBSAFEAuth,
+  auth?: IBakoSafeAuth,
   reason?: keyof typeof VALUES_DEFAULT_TO_MUL,
 ) => {
   const VaultPayload: IPayloadVault = {
@@ -19,7 +20,7 @@ export const newVault = async (
       chainId: fuelProvider.getChainId(),
     },
     provider: fuelProvider,
-    BSAFEAuth: auth,
+    BakoSafeAuth: auth,
   };
   const vault = await Vault.create(VaultPayload);
   const new_balance = DEFAULT_BALANCE_VALUE.mul(

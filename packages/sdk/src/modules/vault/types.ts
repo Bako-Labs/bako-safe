@@ -1,5 +1,5 @@
 import { Provider, TransactionRequestLike } from 'fuels';
-import { IBSAFEAuth } from '../../api/auth/types';
+import { IBakoSafeAuth } from '../../api/auth/types';
 import {
   IListTransactions,
   IPredicate,
@@ -44,7 +44,9 @@ export interface IInstanceNewTransfer {
   witnesses: string[];
 }
 
-export type IBSAFEIncludeTransaction = IFormatTransfer | TransactionRequestLike;
+export type IBakoSafeIncludeTransaction =
+  | IFormatTransfer
+  | TransactionRequestLike;
 
 export interface IPayloadVault {
   configurable: IConfVault;
@@ -54,16 +56,16 @@ export interface IPayloadVault {
   transactionRecursiveTimeout?: number;
   abi?: string;
   bytecode?: string;
-  BSAFEAuth?: IBSAFEAuth;
-  BSAFEVaultId?: string;
-  BSAFEVault?: IPredicate;
+  BakoSafeAuth?: IBakoSafeAuth;
+  BakoSafeVaultId?: string;
+  BakoSafeVault?: IPredicate;
   api?: IPredicateService;
 }
-export interface IBSAFEApi extends IBSAFEAuth {
+export interface IBakoSafeApi extends IBakoSafeAuth {
   id?: string;
   predicateAddress?: string;
 }
-export interface IBSAFEGetTransactions {
+export interface IBakoSafeGetTransactions {
   resume: ITransactionResume;
   witnesses: IWitnesses[];
 }
@@ -71,10 +73,10 @@ export interface IVault {
   getAbi: () => { [name: string]: unknown };
   getBin: () => string;
   getConfigurable: () => IConfVault;
-  BSAFEGetTransactions: (
+  BakoSafeGetTransactions: (
     params?: IListTransactions,
-  ) => Promise<IPagination<IBSAFEGetTransactions>>;
-  BSAFEIncludeTransaction: (
-    params: IBSAFEIncludeTransaction,
+  ) => Promise<IPagination<IBakoSafeGetTransactions>>;
+  BakoSafeIncludeTransaction: (
+    params: IBakoSafeIncludeTransaction,
   ) => Promise<Transfer>;
 }
