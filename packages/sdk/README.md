@@ -17,11 +17,11 @@
 ## Install
 
 ```
-yarn add bako-safe
+yarn add bakosafe
 ```
 
 ```
-npm install bako-safe
+npm install bakosafe
 ```
 
 ## Requirements
@@ -50,7 +50,7 @@ import {
     accounts,
     IFormatTransfer,
     NativeAssetId
-} from 'bako-safe'
+} from 'bakosafe'
 
 // if you run a local node of FuelVm use http://localhost:4000/graphql
 const fuelProvider = new Provider('https://beta-5.fuel.network/graphql');
