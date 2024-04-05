@@ -1,10 +1,12 @@
-import { AuthService } from 'src/api';
+import { AuthService } from '../../api/auth';
+
 import {
   IAuthCreateRequest,
   IAuthService,
   IBakoSafeAuth,
   TypeUser,
   ISelectWorkspaceResponse,
+  Workspace,
 } from './types';
 
 export class Auth {
@@ -13,6 +15,7 @@ export class Auth {
   code: string;
   address: string;
   type: TypeUser;
+  workspace?: Workspace;
 
   protected constructor(address: string, code: string, type: TypeUser) {
     this.code = code;
@@ -32,7 +35,7 @@ export class Auth {
   }
 
   async sign(signature: string) {
-    const { accessToken } = await this.client.sign({
+    const { accessToken, workspace } = await this.client.sign({
       digest: this.code,
       encoder: this.type,
       signature,
@@ -41,6 +44,7 @@ export class Auth {
     this.BakoSafeAuth = {
       address: this.address,
       token: accessToken,
+      worksapce: workspace.id,
     };
 
     this.client.setAuth(this.BakoSafeAuth);
@@ -51,6 +55,15 @@ export class Auth {
   async selectWorkspace(
     workspaceId: string,
   ): Promise<ISelectWorkspaceResponse> {
-    return this.client.selectWorkspace(workspaceId);
+    const workspace = await this.client.selectWorkspace(workspaceId);
+
+    this.workspace = workspace;
+
+    if (this.BakoSafeAuth) this.BakoSafeAuth.worksapce = workspace.id;
+    return workspace;
+  }
+
+  async getWorkspaces() {
+    return this.client.getWorkspaces();
   }
 }

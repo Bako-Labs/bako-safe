@@ -9,9 +9,16 @@ export enum TypeUser {
   WEB_AUTHN = 'WEB_AUTHN',
 }
 
+export interface Workspace {
+  id: string;
+  name: string;
+  avatar: string;
+}
+
 export interface IBakoSafeAuth {
   address: string;
   token: string;
+  worksapce?: string;
 }
 
 export interface IBakoSafeAuthPayload {
@@ -46,21 +53,15 @@ export interface IAuthSignResponse {
   address: string;
   avatar: string;
   user_id: string;
+  workspace: Workspace;
 }
 
-export interface ISelectWorkspaceResponse {
-  workspace: {
-    id: string;
-    name: string;
-    avatar: string;
-  };
-  single: boolean;
-}
+export interface ISelectWorkspaceResponse extends Workspace {}
 
 export interface IAuthService {
   auth: (params: IAuthCreateRequest) => Promise<IAuthCreateResponse>;
   sign: (params: IAuthSignRequest) => Promise<IAuthSignResponse>;
   setAuth: (auth: IBakoSafeAuth) => Promise<void>;
   selectWorkspace: (workspaceId: string) => Promise<ISelectWorkspaceResponse>;
-  getWorkspaces: () => Promise<ISelectWorkspaceResponse>;
+  getWorkspaces: () => Promise<ISelectWorkspaceResponse[]>;
 }

@@ -34,7 +34,7 @@ export class AuthService extends Api implements IAuthService {
     if (!this.client.defaults.headers['Signeraddress'])
       throw new Error('Auth is required');
 
-    const { data } = await this.client.put('/workspace', {
+    const { data } = await this.client.put('/auth/workspace', {
       workspaceId,
       userId: this.client.defaults.headers['Signeraddress'],
     });
@@ -44,7 +44,7 @@ export class AuthService extends Api implements IAuthService {
   public async getWorkspaces() {
     if (!this.client.defaults.headers['Signeraddress'])
       throw new Error('Auth is required');
-    const { data } = await this.client.get(`/workspace`);
+    const { data } = await this.client.get(`/workspace/by-user`);
     return data;
   }
 }
