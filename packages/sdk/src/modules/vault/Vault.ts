@@ -12,6 +12,7 @@ import {
   IBakoSafeApi,
   IBakoSafeIncludeTransaction,
   IConfVault,
+  ICreationPayload,
   IPayloadVault,
   IVault,
 } from './types';
@@ -56,7 +57,7 @@ export class Vault extends Predicate<[]> implements IVault {
     BakoSafeAuth,
     transactionRecursiveTimeout = 1000,
     api,
-  }: IPayloadVault) {
+  }: ICreationPayload) {
     const _abi = typeof abi === 'string' ? JSON.parse(abi) : abi;
     const _bin = bytecode;
 
@@ -99,7 +100,6 @@ export class Vault extends Predicate<[]> implements IVault {
    **/
   static async create(params: IPayloadVault | IBakoSafeApi) {
     const _params = await identifyCreateVaultParams(params);
-
     switch (_params.type) {
       case ECreationtype.IS_OLD:
         return new Vault(_params.payload);

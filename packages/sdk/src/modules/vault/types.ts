@@ -23,14 +23,19 @@ export enum ECreationtype {
   IS_NEW = 'IS_NEW',
 }
 
+export interface ICreationPayload extends IPayloadVault {
+  provider: Provider;
+  configurable: IConfVault;
+}
+
 export interface ICreationOldVault {
   type: ECreationtype.IS_NEW;
-  payload: IPayloadVault;
+  payload: ICreationPayload;
 }
 
 export interface ICreationNewVault {
   type: ECreationtype.IS_OLD;
-  payload: IPayloadVault;
+  payload: ICreationPayload;
 }
 
 export type ICreation = ICreationOldVault | ICreationNewVault;
@@ -49,8 +54,7 @@ export type IBakoSafeIncludeTransaction =
   | TransactionRequestLike;
 
 export interface IPayloadVault {
-  configurable: IConfVault;
-  provider: Provider;
+  configurable: Omit<IConfVault, 'chainId'>;
   name?: string;
   description?: string;
   transactionRecursiveTimeout?: number;

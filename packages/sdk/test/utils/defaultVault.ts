@@ -17,9 +17,7 @@ export const newVault = async (
       SIGNATURES_COUNT: 3,
       SIGNERS: signers,
       network: fuelProvider.url,
-      chainId: fuelProvider.getChainId(),
     },
-    provider: fuelProvider,
     BakoSafeAuth: auth,
   };
   const vault = await Vault.create(VaultPayload);
