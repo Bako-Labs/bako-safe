@@ -11,7 +11,7 @@ import { ITransactionResume, IWitnesses } from '../../api';
 import { IPagination } from '../../api/utils/pagination';
 
 export interface IConfVault {
-  HASH_PREDICATE?: number[];
+  HASH_PREDICATE?: string;
   SIGNATURES_COUNT: number;
   SIGNERS: string[];
   network: string;
