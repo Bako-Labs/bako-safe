@@ -106,7 +106,7 @@ describe('[SWAY_PREDICATE]', () => {
   let provider: Provider;
 
   beforeAll(async () => {
-    provider = await Provider.create(BakoSafe.get('PROVIDER'));
+    provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
   });
 
   test('Send transfer by predicate', async () => {

@@ -11,14 +11,14 @@ describe('[TRANSFERS]', () => {
   let signers: string[];
 
   //example to sett up the provider
-  BakoSafe.setup({
-    PROVIDER: 'http://localhost:4000/graphql',
+  BakoSafe.setProviders({
+    CHAIN_URL: 'http://localhost:4000/graphql',
     SERVER_URL: 'http://localhost:3333',
     CLIENT_URL: 'http://localhost:5174',
   });
 
   beforeAll(async () => {
-    provider = await Provider.create(BakoSafe.get('PROVIDER'));
+    provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
     chainId = provider.getChainId();
     auth = await authService(
       ['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],

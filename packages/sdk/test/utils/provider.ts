@@ -3,6 +3,6 @@ import { Provider } from 'fuels';
 
 export class LocalProvider extends Provider {
   constructor() {
-    super(BakoSafe.get('PROVIDER'));
+    super(BakoSafe.getProviders('CHAIN_URL'));
   }
 }

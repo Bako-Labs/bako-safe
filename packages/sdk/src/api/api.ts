@@ -7,7 +7,7 @@ export class Api {
 
   constructor(auth?: IBakoSafeAuth) {
     this.client = axios.create({
-      baseURL: BakoSafe.get('SERVER_URL'),
+      baseURL: BakoSafe.getProviders('SERVER_URL'),
       headers: {
         Authorization: auth?.token,
         Signeraddress: auth?.address,

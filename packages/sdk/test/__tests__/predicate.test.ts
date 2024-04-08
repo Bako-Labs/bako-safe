@@ -14,7 +14,7 @@ describe('[PREDICATES]', () => {
   let signers: string[];
 
   beforeAll(async () => {
-    provider = await Provider.create(BakoSafe.get('PROVIDER'));
+    provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
     auth = await authService(
       ['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
       provider.url,

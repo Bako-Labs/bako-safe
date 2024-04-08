@@ -72,7 +72,7 @@ export class Auth {
   static async signerByPk(pk: string, code: string) {
     const signer = Wallet.fromPrivateKey(
       pk,
-      await Provider.create(BakoSafe.get('PROVIDER')),
+      await Provider.create(BakoSafe.getProviders('CHAIN_URL')),
     );
     const msg = await signer.signMessage(code);
     return msg;

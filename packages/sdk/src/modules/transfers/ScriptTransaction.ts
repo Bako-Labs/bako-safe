@@ -24,8 +24,8 @@ export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
   constructor(
     { script, gasLimit, gasPrice }: BakoSafeScriptTransactionConstructor = {
       script: transactionScript,
-      gasPrice: bn(BakoSafe.getChainConfig('GAS_PRICE')),
-      gasLimit: bn(BakoSafe.getChainConfig('GAS_LIMIT')),
+      gasPrice: bn(BakoSafe.getGasConfig('GAS_PRICE')),
+      gasLimit: bn(BakoSafe.getGasConfig('GAS_LIMIT')),
     },
   ) {
     super({

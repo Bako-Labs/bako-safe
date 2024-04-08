@@ -78,7 +78,7 @@ export const instanceByNewUtil = async (
     });
   }
   const provider = await Provider.create(
-    params.configurable.network ?? BakoSafe.get('PROVIDER'),
+    params.configurable.network ?? BakoSafe.getProviders('CHAIN_URL'),
   );
   return {
     ...params,

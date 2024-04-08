@@ -6,8 +6,8 @@ import { AuthTestUtil } from '../utils';
 describe('[AUTH]', () => {
   beforeAll(() => {
     // set up BakoSafe
-    BakoSafe.setup({
-      PROVIDER: networks['LOCAL'],
+    BakoSafe.setProviders({
+      CHAIN_URL: networks['LOCAL'],
       SERVER_URL: 'http://localhost:3333',
       CLIENT_URL: 'http://localhost:5174',
     });
@@ -16,7 +16,7 @@ describe('[AUTH]', () => {
   test('Authenticate', async () => {
     const params: IAuthCreateRequest = {
       address: accounts['USER_1'].address,
-      provider: BakoSafe.get('PROVIDER'),
+      provider: BakoSafe.getProviders('CHAIN_URL'),
       type: TypeUser.FUEL,
     };
 
@@ -36,7 +36,7 @@ describe('[AUTH]', () => {
   test('Select workspace', async () => {
     const params: IAuthCreateRequest = {
       address: accounts['USER_1'].address,
-      provider: BakoSafe.get('PROVIDER'),
+      provider: BakoSafe.getProviders('CHAIN_URL'),
       type: TypeUser.FUEL,
     };
 
@@ -59,7 +59,7 @@ describe('[AUTH]', () => {
   test('Sign by PK', async () => {
     const params: IAuthCreateRequest = {
       address: accounts['USER_1'].address,
-      provider: BakoSafe.get('PROVIDER'),
+      provider: BakoSafe.getProviders('CHAIN_URL'),
       type: TypeUser.FUEL,
     };
 

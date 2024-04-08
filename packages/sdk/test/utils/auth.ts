@@ -23,7 +23,7 @@ export class AuthTestUtil {
       token,
     };
     this.client = axios.create({
-      baseURL: BakoSafe.get('SERVER_URL'),
+      baseURL: BakoSafe.getProviders('SERVER_URL'),
       headers: {
         Authorization: token,
         Signeraddress: address,
@@ -35,7 +35,7 @@ export class AuthTestUtil {
     const address = accounts[account].address;
     const pk = accounts[account].privateKey;
     const client = axios.create({
-      baseURL: BakoSafe.get('SERVER_URL'),
+      baseURL: BakoSafe.getProviders('SERVER_URL'),
     });
     const {
       data: { code },
@@ -58,7 +58,7 @@ export class AuthTestUtil {
   static async signerByPk(pk: string, code: string) {
     const signer = Wallet.fromPrivateKey(
       pk,
-      await Provider.create(BakoSafe.get('PROVIDER')),
+      await Provider.create(BakoSafe.getProviders('CHAIN_URL')),
     );
     const msg = await signer.signMessage(code);
     return msg;
