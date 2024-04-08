@@ -1,3 +1,5 @@
+import { BakoSafe } from '../../../configurables';
+import { Wallet, Provider } from 'fuels';
 import { AuthService } from '../../api/auth';
 
 import {
@@ -65,5 +67,14 @@ export class Auth {
 
   async getWorkspaces() {
     return this.client.getWorkspaces();
+  }
+
+  static async signerByPk(pk: string, code: string) {
+    const signer = Wallet.fromPrivateKey(
+      pk,
+      await Provider.create(BakoSafe.get('PROVIDER')),
+    );
+    const msg = await signer.signMessage(code);
+    return msg;
   }
 }

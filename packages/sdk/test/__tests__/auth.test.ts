@@ -55,4 +55,23 @@ describe('[AUTH]', () => {
 
     expect(auth.workspace?.id).toBe(auth.BakoSafeAuth?.worksapce);
   });
+
+  test('Sign by PK', async () => {
+    const params: IAuthCreateRequest = {
+      address: accounts['USER_1'].address,
+      provider: BakoSafe.get('PROVIDER'),
+      type: TypeUser.FUEL,
+    };
+
+    const auth = await Auth.create(params);
+    const signature = await Auth.signerByPk(
+      accounts['USER_1'].privateKey,
+      auth.code,
+    );
+
+    const { token: sig } = await auth.sign(signature);
+
+    expect(auth.BakoSafeAuth?.address).toBe(accounts['USER_1'].address);
+    expect(sig).toBe(auth.BakoSafeAuth?.token);
+  });
 });
