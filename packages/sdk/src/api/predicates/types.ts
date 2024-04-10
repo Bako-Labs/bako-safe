@@ -1,8 +1,4 @@
-import {
-  GetTransactionParams,
-  ITransaction,
-  SortOption,
-} from '../transactions';
+import { GetTransactionParams, ITransaction } from '../transactions';
 import { IPagination } from '../utils/pagination';
 
 export interface IPredicatePayload {

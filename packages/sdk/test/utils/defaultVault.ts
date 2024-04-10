@@ -1,10 +1,9 @@
-import { Provider, bn } from 'fuels';
+import { Provider } from 'fuels';
 import { IPayloadVault, Vault } from '../../src/modules';
 import { rootWallet } from './rootWallet';
 import { sendPredicateCoins } from './sendCoins';
 import { IBakoSafeAuth } from '../../src/api';
 import { DEFAULT_BALANCE_VALUE, VALUES_DEFAULT_TO_MUL } from '../mocks/assets';
-import { BakoSafe } from '../../configurables';
 
 export const newVault = async (
   signers: string[],

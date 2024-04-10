@@ -2,14 +2,12 @@ import {
   ScriptTransactionRequest,
   TransactionRequest,
   TransactionRequestLike,
-  TransactionStatus,
 } from 'fuels';
 import { ITransferAsset } from '../../utils/assets/types';
 import {
   ITransaction,
   ITransactionResume,
   ITransactionService,
-  IWitnesses,
 } from '../../api/transactions';
 import { Vault } from '../vault';
 import { IBakoSafeAuth } from '../../api';
@@ -74,33 +72,6 @@ export interface IFormatTransfer {
   name: string;
   assets: ITransferAsset[];
   witnesses?: string[];
-}
-
-export interface IInstanceTransfer {
-  txData: TransactionRequest;
-  hash: string;
-}
-
-export interface IRequiredWitnesses {
-  required: number;
-  signed: number;
-  witnesses: IWitnesses[];
-}
-
-export interface ITransferResult {
-  status: TransactionStatus;
-  block?: string;
-  witnesses?: string[];
-  outputs?: ITransferAsset[];
-  BakoSafeID?: string;
-  fee?: string;
-  gasUsed?: string;
-}
-
-export interface ISendTransaction {
-  status: string;
-  block: string;
-  gasUsed: string;
 }
 
 export enum TransferInstanceError {

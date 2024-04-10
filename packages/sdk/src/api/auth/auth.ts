@@ -5,6 +5,7 @@ import {
   IAuthSignRequest,
   IAuthSignResponse,
   IBakoSafeAuth,
+  ISelectWorkspaceResponse,
 } from './types';
 
 import { Api } from '../api';
@@ -30,7 +31,9 @@ export class AuthService extends Api implements IAuthService {
     return data;
   }
 
-  public async selectWorkspace(workspaceId: string) {
+  public async selectWorkspace(
+    workspaceId: string,
+  ): Promise<ISelectWorkspaceResponse> {
     if (!this.client.defaults.headers['Signeraddress'])
       throw new Error('Auth is required');
 
@@ -41,7 +44,7 @@ export class AuthService extends Api implements IAuthService {
     return data;
   }
 
-  public async getWorkspaces() {
+  public async getWorkspaces(): Promise<ISelectWorkspaceResponse[]> {
     if (!this.client.defaults.headers['Signeraddress'])
       throw new Error('Auth is required');
     const { data } = await this.client.get(`/workspace/by-user`);

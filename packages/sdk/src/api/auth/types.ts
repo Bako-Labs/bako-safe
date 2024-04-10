@@ -1,9 +1,3 @@
-export interface IApiConfig {
-  apiUrl: string;
-  authToken?: string;
-  account?: string;
-}
-
 export enum TypeUser {
   FUEL = 'FUEL',
   WEB_AUTHN = 'WEB_AUTHN',
@@ -21,15 +15,6 @@ export interface IBakoSafeAuth {
   worksapce?: string;
 }
 
-export interface IBakoSafeAuthPayload {
-  address: string;
-  hash: string;
-  createdAt: string;
-  provider: string;
-  encoder: string;
-  user_id: string;
-}
-
 export interface IAuthCreateRequest {
   address: string;
   provider: string;
@@ -44,7 +29,7 @@ export interface IAuthCreateResponse {
 
 export interface IAuthSignRequest {
   digest: string;
-  encoder: string;
+  encoder: TypeUser;
   signature: string;
 }
 

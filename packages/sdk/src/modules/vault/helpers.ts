@@ -70,9 +70,10 @@ export const instanceByNewUtil = async (
   params: IPayloadVault,
 ): Promise<ICreationPayload> => {
   const hasAuth = 'BakoSafeAuth' in params && params.BakoSafeAuth;
+  let api;
   if (hasAuth) {
     const { address, token } = params.BakoSafeAuth!;
-    params['api'] = new PredicateService({
+    api = new PredicateService({
       address,
       token,
     });
@@ -82,6 +83,7 @@ export const instanceByNewUtil = async (
   );
   return {
     ...params,
+    api,
     configurable: {
       ...params.configurable,
       chainId: await provider.getChainId(),

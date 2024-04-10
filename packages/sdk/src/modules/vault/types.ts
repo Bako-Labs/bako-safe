@@ -5,7 +5,6 @@ import {
   IPredicate,
   IPredicateService,
 } from '../../api/predicates';
-import { ITransferAsset } from '../../utils/assets';
 import { IFormatTransfer, Transfer } from '../transfers';
 import { ITransactionResume, IWitnesses } from '../../api';
 import { IPagination } from '../../api/utils/pagination';
@@ -26,6 +25,9 @@ export enum ECreationtype {
 export interface ICreationPayload extends IPayloadVault {
   provider: Provider;
   configurable: IConfVault;
+  BakoSafeVaultId?: string;
+  BakoSafeVault?: IPredicate;
+  api?: IPredicateService;
 }
 
 export interface ICreationOldVault {
@@ -40,15 +42,6 @@ export interface ICreationNewVault {
 
 export type ICreation = ICreationOldVault | ICreationNewVault;
 
-export interface ITransferList {
-  [id: string]: Transfer;
-}
-
-export interface IInstanceNewTransfer {
-  assets: ITransferAsset[];
-  witnesses: string[];
-}
-
 export type IBakoSafeIncludeTransaction =
   | IFormatTransfer
   | TransactionRequestLike;
@@ -61,9 +54,6 @@ export interface IPayloadVault {
   abi?: string;
   bytecode?: string;
   BakoSafeAuth?: IBakoSafeAuth;
-  BakoSafeVaultId?: string;
-  BakoSafeVault?: IPredicate;
-  api?: IPredicateService;
 }
 export interface IBakoSafeApi extends IBakoSafeAuth {
   id?: string;
