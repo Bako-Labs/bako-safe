@@ -4,8 +4,8 @@ import { assets } from '../mocks';
 import { Vault } from '../../src/modules/vault/Vault';
 
 export const txParams = {
-  gasPrice: bn(BakoSafe.getChainConfig('GAS_PRICE')),
-  gasLimit: bn(BakoSafe.getChainConfig('GAS_LIMIT')),
+  gasPrice: bn(BakoSafe.getGasConfig('GAS_PRICE')),
+  gasLimit: bn(BakoSafe.getGasConfig('GAS_LIMIT')),
 };
 
 export const sendPredicateCoins = async (

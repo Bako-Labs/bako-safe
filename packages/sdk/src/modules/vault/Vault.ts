@@ -4,14 +4,17 @@ import {
   defaultListParams,
   IBakoSafeAuth,
   IListTransactions,
+  IPagination,
   IPredicate,
   IPredicateService,
 } from '../../api';
 import {
   ECreationtype,
   IBakoSafeApi,
+  IBakoSafeGetTransactions,
   IBakoSafeIncludeTransaction,
   IConfVault,
+  ICreationPayload,
   IPayloadVault,
   IVault,
 } from './types';
@@ -56,7 +59,7 @@ export class Vault extends Predicate<[]> implements IVault {
     BakoSafeAuth,
     transactionRecursiveTimeout = 1000,
     api,
-  }: IPayloadVault) {
+  }: ICreationPayload) {
     const _abi = typeof abi === 'string' ? JSON.parse(abi) : abi;
     const _bin = bytecode;
 
@@ -67,9 +70,7 @@ export class Vault extends Predicate<[]> implements IVault {
     this.bin = _bin;
     this.abi = _abi;
     this.configurable = {
-      HASH_PREDICATE: _configurable.HASH_PREDICATE as number[],
-      SIGNATURES_COUNT: _configurable.SIGNATURES_COUNT as number,
-      SIGNERS: _configurable.SIGNERS as string[],
+      ..._configurable,
       network: _network,
       chainId: _chainId,
     };
@@ -97,9 +98,8 @@ export class Vault extends Predicate<[]> implements IVault {
    *
    * @returns an instance of Vault
    **/
-  static async create(params: IPayloadVault | IBakoSafeApi) {
+  static async create(params: IPayloadVault | IBakoSafeApi): Promise<Vault> {
     const _params = await identifyCreateVaultParams(params);
-
     switch (_params.type) {
       case ECreationtype.IS_OLD:
         return new Vault(_params.payload);
@@ -117,7 +117,7 @@ export class Vault extends Predicate<[]> implements IVault {
    *
    * @returns if auth is not defined, throw an error
    */
-  private verifyAuth() {
+  private verifyAuth(): void {
     if (!this.auth) {
       throw new Error('Auth is required');
     }
@@ -130,7 +130,7 @@ export class Vault extends Predicate<[]> implements IVault {
    *
    * @returns if auth is not defined, throw an error
    */
-  private async createOnService() {
+  private async createOnService(): Promise<void> {
     this.verifyAuth();
     const { id, ...rest } = await this.api.create({
       name: this.name,
@@ -157,13 +157,12 @@ export class Vault extends Predicate<[]> implements IVault {
    * @returns an formatted object to instance a new predicate
    */
   private static makePredicate(configurable: IConfVault) {
-    const _configurable: { [name: string]: unknown } = {
-      SIGNATURES_COUNT: configurable.SIGNATURES_COUNT,
-      SIGNERS: makeSubscribers(configurable.SIGNERS),
-      HASH_PREDICATE: configurable.HASH_PREDICATE ?? makeHashPredicate(),
+    return {
+      SIGNATURES_COUNT: configurable.SIGNATURES_COUNT as number,
+      SIGNERS: makeSubscribers(configurable.SIGNERS) as string[],
+      HASH_PREDICATE: (configurable.HASH_PREDICATE ??
+        makeHashPredicate()) as string,
     };
-
-    return _configurable;
   }
 
   /**
@@ -173,7 +172,9 @@ export class Vault extends Predicate<[]> implements IVault {
    * @param {TransactionRequestLike} param - IFormatTransaction or TransactionRequestLike
    * @returns return a new Transfer instance
    */
-  public async BakoSafeIncludeTransaction(param: IBakoSafeIncludeTransaction) {
+  public async BakoSafeIncludeTransaction(
+    param: IBakoSafeIncludeTransaction,
+  ): Promise<Transfer> {
     return Transfer.instance({
       auth: this.auth,
       vault: this,
@@ -195,7 +196,9 @@ export class Vault extends Predicate<[]> implements IVault {
    *
    *
    */
-  public async BakoSafeGetTransactions(params?: IListTransactions) {
+  public async BakoSafeGetTransactions(
+    params?: IListTransactions,
+  ): Promise<IPagination<IBakoSafeGetTransactions>> {
     this.verifyAuth();
 
     const tx = await this.api
@@ -226,7 +229,9 @@ export class Vault extends Predicate<[]> implements IVault {
    *
    *
    */
-  public async BakoSafeGetTransaction(transactionId: string) {
+  public async BakoSafeGetTransaction(
+    transactionId: string,
+  ): Promise<Transfer> {
     return Transfer.instance({
       vault: this,
       auth: this.auth,
@@ -239,7 +244,7 @@ export class Vault extends Predicate<[]> implements IVault {
    *
    * @returns an abi
    */
-  public getAbi() {
+  public getAbi(): { [name: string]: unknown } {
     return this.abi;
   }
 
@@ -248,7 +253,7 @@ export class Vault extends Predicate<[]> implements IVault {
    *
    * @returns an binary
    */
-  public getBin() {
+  public getBin(): string {
     return this.bin;
   }
 
@@ -257,7 +262,7 @@ export class Vault extends Predicate<[]> implements IVault {
    *
    * @returns configurables [signers, signers requested, hash]
    */
-  public getConfigurable() {
+  public getConfigurable(): IConfVault {
     return this.configurable;
   }
 }

@@ -69,6 +69,7 @@ export interface ITransactionResume {
   };
   outputs: ITransferAsset[];
   status: TransactionStatus;
+  BakoSafeID: string;
   witnesses?: string[];
   gasUsed?: string;
   sendTime?: Date;

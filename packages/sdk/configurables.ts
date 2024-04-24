@@ -1,5 +1,5 @@
 export const defaultConfig = {
-  PROVIDER: 'http://localhost:4000/graphql',
+  CHAIN_URL: 'http://localhost:4000/graphql',
   SERVER_URL: 'http://localhost:3333/',
   CLIENT_URL: 'https://safe.bako.global',
   ENCODER: 'Fuel',
@@ -18,7 +18,7 @@ export type GasConfigurables = typeof gasConfig;
 export type GasConfigurablesKeys = keyof GasConfigurables;
 
 export const BakoSafe = {
-  setup: (params: Partial<DefaultConfigurables>) => {
+  setProviders: (params: Partial<DefaultConfigurables>) => {
     const configurableKeys = Object.keys(params);
 
     configurableKeys.forEach((key) => {
@@ -28,7 +28,7 @@ export const BakoSafe = {
       }
     });
   },
-  setChainConfig: (params: Partial<GasConfigurables>) => {
+  setGasConfig: (params: Partial<GasConfigurables>) => {
     const configurableKeys = Object.keys(params);
 
     configurableKeys.forEach((key) => {
@@ -38,6 +38,6 @@ export const BakoSafe = {
       }
     });
   },
-  get: (key: DefaultConfigurablesKeys) => defaultConfig[key],
-  getChainConfig: (key: GasConfigurablesKeys): number => gasConfig[key],
+  getProviders: (key: DefaultConfigurablesKeys) => defaultConfig[key],
+  getGasConfig: (key: GasConfigurablesKeys): number => gasConfig[key],
 };

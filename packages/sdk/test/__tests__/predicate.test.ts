@@ -9,14 +9,12 @@ import {
 } from '../mocks';
 
 describe('[PREDICATES]', () => {
-  let chainId: number;
   let auth: IUserAuth;
   let provider: Provider;
   let signers: string[];
 
   beforeAll(async () => {
-    provider = await Provider.create(BakoSafe.get('PROVIDER'));
-    chainId = await provider.getChainId();
+    provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
     auth = await authService(
       ['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
       provider.url,
@@ -35,9 +33,7 @@ describe('[PREDICATES]', () => {
         SIGNATURES_COUNT: 3,
         SIGNERS: signers,
         network: provider.url,
-        chainId: chainId,
       },
-      provider,
       BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
     };
 
@@ -113,13 +109,9 @@ describe('[PREDICATES]', () => {
         provider,
         auth['USER_1'].BakoSafeAuth,
       );
-      const providerByPayload = await Provider.create(
-        vault.BakoSafeVault.provider,
-      );
 
       const vaultByPayload = await Vault.create({
         configurable: JSON.parse(vault.BakoSafeVault.configurable),
-        provider: providerByPayload,
       });
 
       const [vaultAddress, vaultByPayloadAddress] = [

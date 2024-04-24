@@ -1,5 +1,4 @@
 import {
-  bn,
   hexlify,
   ScriptTransactionRequest,
   TransactionRequest,
@@ -64,7 +63,7 @@ export class Transfer {
    *        @param {boolean} isSave - Save transaction on BakoSafeAPI
    * @returns return a new Transfer instance
    */
-  public static async instance(param: TransferFactory) {
+  public static async instance(param: TransferFactory): Promise<Transfer> {
     const item = await identifyCreateTransactionParams(param);
 
     switch (item.type) {
@@ -90,7 +89,7 @@ export class Transfer {
    *
    * @returns link of transaction block
    */
-  public makeBlockUrl(block: string | undefined) {
+  public makeBlockUrl(block: string | undefined): string {
     return block
       ? `https://fuellabs.github.io/block-explorer-v2/transaction/${this.getHashTxId()}?providerUrl=${encodeURIComponent(
           this.vault.provider.url,
@@ -103,7 +102,7 @@ export class Transfer {
    *
    * @returns Hash of this transaction
    */
-  public getHashTxId() {
+  public getHashTxId(): string {
     const txHash = this.transactionRequest.getTransactionId(
       this.vault.provider.getChainId(),
     );
@@ -121,7 +120,7 @@ export class Transfer {
    *
    * @returns an resume for transaction
    */
-  public async send() {
+  public async send(): Promise<ITransactionResume | TransactionResponse> {
     if (!this.service) {
       const tx: TransactionRequest = transactionRequestify(
         this.BakoSafeScript!,
@@ -169,7 +168,7 @@ export class Transfer {
    *
    * @returns an resume for transaction
    */
-  public async wait() {
+  public async wait(): Promise<ITransactionResume> {
     if (!this.service) {
       throw Error('Implement this.');
     }

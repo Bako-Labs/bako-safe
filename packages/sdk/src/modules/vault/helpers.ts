@@ -4,9 +4,11 @@ import {
   IBakoSafeApi,
   IConfVault,
   ICreation,
+  ICreationPayload,
   IPayloadVault,
 } from './types';
 import { PredicateService } from '../../api/predicates';
+import { BakoSafe } from '../../../configurables';
 
 export const defaultValues: { [name: string]: string } = {
   signature:
@@ -26,7 +28,7 @@ export const makeSubscribers = (subscribers: string[]) => {
 
 export const instanceByOldUtil = async (
   params: IBakoSafeApi,
-): Promise<IPayloadVault> => {
+): Promise<ICreationPayload> => {
   const { id, predicateAddress, token, address } = params;
   const hasId = 'id' in params && id;
 
@@ -64,21 +66,35 @@ export const instanceByOldUtil = async (
   };
 };
 
-export const instanceByNewUtil = (params: IPayloadVault): IPayloadVault => {
+export const instanceByNewUtil = async (
+  params: IPayloadVault,
+): Promise<ICreationPayload> => {
   const hasAuth = 'BakoSafeAuth' in params && params.BakoSafeAuth;
+  let api;
   if (hasAuth) {
     const { address, token } = params.BakoSafeAuth!;
-    params['api'] = new PredicateService({
+    api = new PredicateService({
       address,
       token,
     });
   }
-  return params;
+  const provider = await Provider.create(
+    params.configurable.network ?? BakoSafe.getProviders('CHAIN_URL'),
+  );
+  return {
+    ...params,
+    api,
+    configurable: {
+      ...params.configurable,
+      chainId: await provider.getChainId(),
+    },
+    provider,
+  };
 };
 
 export const isOldPredicate = async (
   param: IBakoSafeApi | IPayloadVault,
-): Promise<{ is: boolean; data: IPayloadVault | undefined }> => {
+): Promise<{ is: boolean; data: ICreationPayload | undefined }> => {
   const is =
     ('predicateAddress' in param || 'id' in param) &&
     'address' in param &&
@@ -94,17 +110,17 @@ export const isNewPredicate = async (
   param: IBakoSafeApi | IPayloadVault,
 ): Promise<{
   is: boolean;
-  data: IPayloadVault | undefined;
+  data: ICreationPayload | undefined;
 }> => {
-  const is = 'configurable' in param && 'provider' in param;
+  const is = 'configurable' in param;
   is && validations(param.configurable);
   return {
     is,
-    data: is ? instanceByNewUtil(param) : undefined,
+    data: is ? await instanceByNewUtil(param) : undefined,
   };
 };
 
-export const validations = (configurable: IConfVault) => {
+export const validations = (configurable: Omit<IConfVault, 'chainId'>) => {
   const { SIGNATURES_COUNT, SIGNERS } = configurable;
   if (!SIGNATURES_COUNT || Number(SIGNATURES_COUNT) == 0) {
     throw new Error('SIGNATURES_COUNT is required must be granter than zero');
