@@ -49,7 +49,7 @@ fn verify_signer_exists(public_key: b256, verified_signatures: Vec::<b256>) -> u
     let mut i_signer = 0;
     while i_signer <  MAX_SIGNERS {
         if (public_key == SIGNERS[i_signer]) {
-            // verificar se a assinatura já foi verificada
+            // verify if the public key is not already verified
             let mut i_verified = 0;
             while i_verified < verified_signatures.len() {
                 if (verified_signatures.get(i_verified).unwrap() == public_key) {
