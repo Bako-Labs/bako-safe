@@ -36,6 +36,15 @@ describe('[PREDICATES]', () => {
       },
       BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
     };
+    const duplicated = [
+      ...VaultPayload.configurable.SIGNERS.slice(0, 2),
+      VaultPayload.configurable.SIGNERS[0],
+    ];
+    VaultPayload.configurable.SIGNERS = duplicated;
+
+    await expect(Vault.create(VaultPayload)).rejects.toThrow(
+      'SIGNERS must be unique',
+    );
 
     VaultPayload.configurable.SIGNATURES_COUNT = 0;
 

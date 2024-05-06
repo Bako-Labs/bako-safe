@@ -122,14 +122,21 @@ export const isNewPredicate = async (
 
 export const validations = (configurable: Omit<IConfVault, 'chainId'>) => {
   const { SIGNATURES_COUNT, SIGNERS } = configurable;
+  const _SIGNERS = SIGNERS.filter((value) => value !== ZeroBytes32);
+
   if (!SIGNATURES_COUNT || Number(SIGNATURES_COUNT) == 0) {
     throw new Error('SIGNATURES_COUNT is required must be granter than zero');
   }
-  if (!SIGNERS || SIGNERS.length === 0) {
+  if (!_SIGNERS || _SIGNERS.length === 0) {
     throw new Error('SIGNERS must be greater than zero');
   }
-  if (SIGNERS.length < Number(SIGNATURES_COUNT)) {
+  if (_SIGNERS.length < Number(SIGNATURES_COUNT)) {
     throw new Error('Required Signers must be less than signers');
+  }
+
+  const unique = new Set(_SIGNERS);
+  if (unique.size !== _SIGNERS.length) {
+    throw new Error('SIGNERS must be unique');
   }
 };
 
