@@ -1,6 +1,11 @@
 import { GetTransactionParams, ITransaction } from '../transactions';
 import { IPagination } from '../utils/pagination';
 
+export enum SortOption {
+  asc = 'ASC',
+  desc = 'DESC',
+}
+
 export interface IPredicatePayload {
   name: string;
   description?: string;
@@ -12,6 +17,16 @@ export interface IPredicatePayload {
   configurable: string;
   provider: string;
   chainId?: number;
+}
+
+export interface GetVersionParams {
+  q?: string;
+  rootAddress?: string;
+  active?: boolean;
+  perPage?: number;
+  page?: number;
+  orderBy?: string;
+  sort?: SortOption;
 }
 
 export interface IListTransactions
