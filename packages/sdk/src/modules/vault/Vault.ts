@@ -2,11 +2,14 @@ import { arrayify, Predicate } from 'fuels';
 
 import {
   defaultListParams,
+  GetPredicateVersionParams,
   IBakoSafeAuth,
   IListTransactions,
   IPagination,
   IPredicate,
   IPredicateService,
+  IPredicateVersion,
+  PredicateService,
 } from '../../api';
 import {
   ECreationtype,
@@ -235,6 +238,53 @@ export class Vault extends Predicate<[]> implements IVault {
       auth: this.auth,
       transfer: transactionId,
     });
+  }
+
+  /**
+   * Return the last predicate version created
+   *
+   * @returns an instance of predicate version
+   */
+  static async BakoSafeGetCurrentPredicateVersion(): Promise<IPredicateVersion> {
+    const api = new PredicateService();
+    return await api.findCurrentVersion();
+  }
+
+  /**
+   * Return the predicate version that has a given code
+   *
+   * @returns an instance of predicate version
+   */
+  static async BakoSafeGetPredicateVersionByCode(
+    code: string,
+  ): Promise<IPredicateVersion> {
+    const api = new PredicateService();
+    return await api.findVersionByCode(code);
+  }
+
+  /**
+   * Return an list of predicate versions
+   *
+   * @returns a paginated list of predicate versions
+   */
+  static async BakoSafeGetPredicateVersions(
+    params: GetPredicateVersionParams,
+  ): Promise<IPagination<Partial<IPredicateVersion>>> {
+    const api = new PredicateService();
+    const predicateVersions = await api.listVersions(params).then((data) => {
+      return {
+        ...data,
+        data: data.data.map((version: IPredicateVersion) => {
+          return {
+            description: version.description,
+            code: version.code,
+            abi: version.abi,
+          };
+        }),
+      };
+    });
+
+    return predicateVersions;
   }
 
   /**

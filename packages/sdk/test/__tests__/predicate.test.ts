@@ -174,4 +174,46 @@ describe('[PREDICATES]', () => {
       'Auth is required',
     );
   });
+
+  test('Find current predicate version', async () => {
+    const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
+
+    expect(currentVersion).toHaveProperty('id');
+    expect(currentVersion).toHaveProperty('name');
+    expect(currentVersion).toHaveProperty('description');
+    expect(currentVersion).toHaveProperty('code');
+    expect(currentVersion).toHaveProperty('abi');
+    expect(currentVersion).toHaveProperty('bytes');
+    expect(currentVersion).toHaveProperty('active');
+  });
+
+  test('Find current predicate version by code', async () => {
+    const code =
+      '0x379cc51194ba4c6288b1dae9cfe7e758a95d268cf5525c3ffb6b0c3bef941872';
+    const predicateVersion =
+      await Vault.BakoSafeGetPredicateVersionByCode(code);
+
+    expect(predicateVersion).toHaveProperty('id');
+    expect(predicateVersion).toHaveProperty('name');
+    expect(predicateVersion).toHaveProperty('description');
+    expect(predicateVersion).toHaveProperty('code', code);
+    expect(predicateVersion).toHaveProperty('abi');
+    expect(predicateVersion).toHaveProperty('bytes');
+    expect(predicateVersion).toHaveProperty('active');
+  });
+
+  test('List predicate versions with pagination', async () => {
+    const page = 1;
+    const perPage = 8;
+    const paginatedVersions = await Vault.BakoSafeGetPredicateVersions({
+      page,
+      perPage,
+    });
+
+    expect(paginatedVersions).toHaveProperty('data');
+    expect(paginatedVersions).toHaveProperty('total');
+    expect(paginatedVersions.data.length).toBeLessThanOrEqual(perPage);
+    expect(paginatedVersions).toHaveProperty('currentPage', page);
+    expect(paginatedVersions).toHaveProperty('perPage', perPage);
+  });
 });

@@ -18,7 +18,7 @@ export interface IPredicatePayload {
   code?: string;
 }
 
-export interface GetVersionParams {
+export interface GetPredicateVersionParams {
   q?: string;
   code?: string;
   active?: boolean;
@@ -66,4 +66,11 @@ export interface IPredicateService {
   listPredicateTransactions: (
     params: GetTransactionParams,
   ) => Promise<IPagination<ITransaction>>;
+
+  //Version
+  findVersionByCode: (code: string) => Promise<IPredicateVersion>;
+  findCurrentVersion: () => Promise<IPredicateVersion>;
+  listVersions: (
+    params: GetPredicateVersionParams,
+  ) => Promise<IPagination<IPredicateVersion>>;
 }
