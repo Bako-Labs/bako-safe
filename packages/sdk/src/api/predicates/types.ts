@@ -15,12 +15,12 @@ export interface IPredicatePayload {
   configurable: string;
   provider: string;
   chainId?: number;
-  rootAddress?: string;
+  code?: string;
 }
 
 export interface GetVersionParams {
   q?: string;
-  rootAddress?: string;
+  code?: string;
   active?: boolean;
   perPage?: number;
   page?: number;
@@ -36,7 +36,7 @@ export interface IPredicateVersion {
   id: string;
   name: string;
   description?: string;
-  rootAddress: string;
+  code: string;
   bytes: string;
   abi: string;
   active: boolean;

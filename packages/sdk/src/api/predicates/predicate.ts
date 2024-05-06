@@ -50,9 +50,9 @@ export class PredicateService extends Api implements IPredicateService {
   }
 
   // Version
-  public async findVersionByRootAddress(predicateVersionRootAddress: string) {
+  public async findVersionByCode(predicateVersionCode: string) {
     const { data } = await this.client.get(
-      `/predicate/version/${predicateVersionRootAddress}`,
+      `/predicate/version/${predicateVersionCode}`,
     );
     return data;
   }
