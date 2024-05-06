@@ -54,8 +54,8 @@ export const instanceByOldUtil = async (
     provider: await Provider.create(result.provider),
     name: result.name,
     description: result.description,
-    abi: result.abi,
-    bytecode: result.bytes,
+    abi: result.version.abi,
+    bytecode: result.version.bytes,
     BakoSafeAuth: {
       address,
       token,
