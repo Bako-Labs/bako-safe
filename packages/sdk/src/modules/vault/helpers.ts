@@ -64,6 +64,7 @@ export const instanceByOldUtil = async (
     BakoSafeVaultId: result.id,
     BakoSafeVault: result,
     api,
+    version: result.version.code,
   };
 };
 
