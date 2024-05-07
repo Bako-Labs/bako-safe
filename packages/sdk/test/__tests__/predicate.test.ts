@@ -230,18 +230,18 @@ describe('[PREDICATES]', () => {
   });
 
   test('Find current predicate version by code', async () => {
-    const code =
-      '0x379cc51194ba4c6288b1dae9cfe7e758a95d268cf5525c3ffb6b0c3bef941872';
-    const predicateVersion =
-      await Vault.BakoSafeGetPredicateVersionByCode(code);
+    const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
+    const version = await Vault.BakoSafeGetPredicateVersionByCode(
+      currentVersion.code,
+    );
 
-    expect(predicateVersion).toHaveProperty('id');
-    expect(predicateVersion).toHaveProperty('name');
-    expect(predicateVersion).toHaveProperty('description');
-    expect(predicateVersion).toHaveProperty('code', code);
-    expect(predicateVersion).toHaveProperty('abi');
-    expect(predicateVersion).toHaveProperty('bytes');
-    expect(predicateVersion).toHaveProperty('active');
+    expect(version).toHaveProperty('id', currentVersion.id);
+    expect(version).toHaveProperty('name', currentVersion.name);
+    expect(version).toHaveProperty('description', currentVersion.description);
+    expect(version).toHaveProperty('code', currentVersion.code);
+    expect(version).toHaveProperty('abi', currentVersion.abi);
+    expect(version).toHaveProperty('bytes', currentVersion.bytes);
+    expect(version).toHaveProperty('active', currentVersion.active);
   });
 
   test('List predicate versions with pagination', async () => {
