@@ -97,8 +97,6 @@ export class Vault extends Predicate<[]> implements IVault {
    *      @param HASH_PREDICATE - Hash to works an unic predicate, is not required, but to instance old predicate is an number array
    *      @param SIGNATURES_COUNT - Number of signatures required of predicate
    *      @param SIGNERS - Array string of predicate signers
-   * @param abi - The JSON abi to BakoSafe multisig.
-   * @param bytecode - The binary code of preficate BakoSafe multisig.
    * @param transactionRecursiveTimeout - The time to refetch transaction on BakoSafe API.
    * @param BakoSafeAuth - The auth to BakoSafe API.
    * @param version - The identifier of predicate version to BakoSafe API.

@@ -53,8 +53,6 @@ export interface IPayloadVault {
   name?: string;
   description?: string;
   transactionRecursiveTimeout?: number;
-  abi?: string;
-  bytecode?: string;
   BakoSafeAuth?: IBakoSafeAuth;
   version?: string;
 }
