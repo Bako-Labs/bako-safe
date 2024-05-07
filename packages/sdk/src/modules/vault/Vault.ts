@@ -283,21 +283,28 @@ export class Vault extends Predicate<[]> implements IVault {
    * @returns a paginated list of predicate version details
    */
   static async BakoSafeGetPredicateVersions(
-    params: GetPredicateVersionParams,
+    params?: GetPredicateVersionParams,
   ): Promise<IPagination<Partial<IPredicateVersion>>> {
+    const _params = {
+      page: 0,
+      perPage: 10,
+    };
     const api = this.getPredicateServiceInstance();
-    const predicateVersions = await api.listVersions(params).then((data) => {
-      return {
-        ...data,
-        data: data.data.map((version: IPredicateVersion) => {
-          return {
-            description: version.description,
-            code: version.code,
-            abi: version.abi,
-          };
-        }),
-      };
-    });
+    const predicateVersions = await api
+      .listVersions(params ?? _params)
+      .then((data) => {
+        return {
+          ...data,
+          data: data.data.map((version: IPredicateVersion) => {
+            return {
+              name: version.name,
+              description: version.description,
+              code: version.code,
+              abi: version.abi,
+            };
+          }),
+        };
+      });
 
     return predicateVersions;
   }
