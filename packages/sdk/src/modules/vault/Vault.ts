@@ -29,7 +29,6 @@ import {
 import { Transfer } from '../transfers';
 import { v4 as uuidv4 } from 'uuid';
 import { AddressUtils } from '../../utils/address/Address';
-import { PredicateAbi__factory } from '../../sway/predicates';
 
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
