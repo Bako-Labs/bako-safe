@@ -54,8 +54,8 @@ export class Vault extends Predicate<[]> implements IVault {
   protected constructor({
     configurable,
     provider,
-    abi = PredicateAbi__factory.abi as unknown as string,
-    bytecode = PredicateAbi__factory.bin,
+    abi,
+    bytecode,
     name,
     description,
     BakoSafeVaultId,
