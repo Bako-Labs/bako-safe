@@ -243,7 +243,7 @@ export class Vault extends Predicate<[]> implements IVault {
   /**
    * Return the last predicate version created
    *
-   * @returns an instance of predicate version
+   * @returns details of predicate version
    */
   static async BakoSafeGetCurrentPredicateVersion(): Promise<IPredicateVersion> {
     const api = new PredicateService();
@@ -253,7 +253,9 @@ export class Vault extends Predicate<[]> implements IVault {
   /**
    * Return the predicate version that has a given code
    *
-   * @returns an instance of predicate version
+   * @param code - The predicate version code on BakoSafeApi
+   *
+   * @returns details of predicate version
    */
   static async BakoSafeGetPredicateVersionByCode(
     code: string,
@@ -265,7 +267,11 @@ export class Vault extends Predicate<[]> implements IVault {
   /**
    * Return an list of predicate versions
    *
-   * @returns a paginated list of predicate versions
+   * @param {GetPredicateVersionParams} params - The params to list predicate versions
+   *  - has optional params
+   *  - by default, it returns the first 10 predicate version details
+   *
+   * @returns a paginated list of predicate version details
    */
   static async BakoSafeGetPredicateVersions(
     params: GetPredicateVersionParams,
