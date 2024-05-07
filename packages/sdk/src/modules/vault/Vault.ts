@@ -101,6 +101,7 @@ export class Vault extends Predicate<[]> implements IVault {
    * @param bytecode - The binary code of preficate BakoSafe multisig.
    * @param transactionRecursiveTimeout - The time to refetch transaction on BakoSafe API.
    * @param BakoSafeAuth - The auth to BakoSafe API.
+   * @param version - The identifier of predicate version to BakoSafe API.
    *
    * @returns an instance of Vault
    **/
