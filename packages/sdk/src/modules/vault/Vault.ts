@@ -49,6 +49,7 @@ export class Vault extends Predicate<[]> implements IVault {
   public BakoSafeVaultId!: string;
   public description?: string;
   public transactionRecursiveTimeout: number;
+  public version?: string;
 
   protected constructor({
     configurable,
@@ -62,6 +63,7 @@ export class Vault extends Predicate<[]> implements IVault {
     BakoSafeAuth,
     transactionRecursiveTimeout = 1000,
     api,
+    version,
   }: ICreationPayload) {
     const _abi = typeof abi === 'string' ? JSON.parse(abi) : abi;
     const _bin = bytecode;
@@ -85,6 +87,7 @@ export class Vault extends Predicate<[]> implements IVault {
     this.BakoSafeVault = BakoSafeVault!;
     this.auth = BakoSafeAuth!;
     this.api = api!;
+    this.version = version;
   }
 
   /**

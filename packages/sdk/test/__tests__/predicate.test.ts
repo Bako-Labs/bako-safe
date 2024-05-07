@@ -37,6 +37,10 @@ describe('[PREDICATES]', () => {
       BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
     };
 
+    await expect(
+      Vault.create({ ...VaultPayload, version: 'fake_version' }),
+    ).rejects.toThrow('Invalid predicate version');
+
     VaultPayload.configurable.SIGNATURES_COUNT = 0;
 
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
@@ -64,6 +68,44 @@ describe('[PREDICATES]', () => {
       auth['USER_1'].BakoSafeAuth,
     );
     expect(await vault.getBalances()).toStrictEqual(DEFAULT_BALANCES);
+  });
+
+  test('Create vault with predicate version', async () => {
+    const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
+    const { data: versions } = await Vault.BakoSafeGetPredicateVersions();
+    const _versions = versions.filter(
+      (version) => version.code !== currentVersion.code,
+    );
+    const vaultVersion = _versions[0].code;
+    const VaultPayload: IPayloadVault = {
+      configurable: {
+        HASH_PREDICATE: undefined,
+        SIGNATURES_COUNT: 3,
+        SIGNERS: signers,
+        network: provider.url,
+      },
+      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+      version: vaultVersion,
+    };
+    const vault = await Vault.create(VaultPayload);
+
+    expect(vault.version).not.toEqual(currentVersion.code);
+  });
+
+  test('Create vault without predicate version', async () => {
+    const VaultPayload: IPayloadVault = {
+      configurable: {
+        HASH_PREDICATE: undefined,
+        SIGNATURES_COUNT: 3,
+        SIGNERS: signers,
+        network: provider.url,
+      },
+      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+    };
+    const vault = await Vault.create(VaultPayload);
+    const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
+
+    expect(vault.version).toEqual(currentVersion.code);
   });
 
   test(

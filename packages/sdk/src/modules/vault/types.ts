@@ -28,6 +28,8 @@ export interface ICreationPayload extends IPayloadVault {
   BakoSafeVaultId?: string;
   BakoSafeVault?: IPredicate;
   api?: IPredicateService;
+  abi: string;
+  bytecode: string;
 }
 
 export interface ICreationOldVault {
@@ -54,6 +56,7 @@ export interface IPayloadVault {
   abi?: string;
   bytecode?: string;
   BakoSafeAuth?: IBakoSafeAuth;
+  version?: string;
 }
 export interface IBakoSafeApi extends IBakoSafeAuth {
   id?: string;

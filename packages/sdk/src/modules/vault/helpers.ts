@@ -9,6 +9,7 @@ import {
 } from './types';
 import { PredicateService } from '../../api/predicates';
 import { BakoSafe } from '../../../configurables';
+import { Vault } from './Vault';
 
 export const defaultValues: { [name: string]: string } = {
   signature:
@@ -81,6 +82,14 @@ export const instanceByNewUtil = async (
   const provider = await Provider.create(
     params.configurable.network ?? BakoSafe.getProviders('CHAIN_URL'),
   );
+  const hasVersion = !!params.version;
+  const { code, abi, bytes } = hasVersion
+    ? await Vault.BakoSafeGetPredicateVersionByCode(params.version!)
+        .then((data) => data)
+        .catch(() => {
+          throw new Error('Invalid predicate version');
+        })
+    : await Vault.BakoSafeGetCurrentPredicateVersion();
   return {
     ...params,
     api,
@@ -89,6 +98,9 @@ export const instanceByNewUtil = async (
       chainId: await provider.getChainId(),
     },
     provider,
+    abi,
+    bytecode: bytes,
+    version: code,
   };
 };
 
