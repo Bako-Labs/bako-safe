@@ -88,8 +88,14 @@ describe('[PREDICATES]', () => {
       version: vaultVersion,
     };
     const vault = await Vault.create(VaultPayload);
+    const auxVault = await Vault.create({
+      ...auth['USER_1'].BakoSafeAuth,
+      id: vault.BakoSafeVaultId,
+    });
 
     expect(vault.version).not.toEqual(currentVersion.code);
+    expect(vault.version).toStrictEqual(auxVault.version);
+    expect(vault.version).toStrictEqual(auxVault.BakoSafeVault.version.code);
   });
 
   test('Create vault without predicate version', async () => {
@@ -122,6 +128,13 @@ describe('[PREDICATES]', () => {
       });
       expect(auxVault.BakoSafeVaultId).toStrictEqual(vault.BakoSafeVaultId);
       expect(auxVault.BakoSafeVault.id).toStrictEqual(vault.BakoSafeVaultId);
+      expect(auxVault.version).toStrictEqual(vault.version);
+      expect(auxVault.BakoSafeVault.version).toStrictEqual(
+        vault.BakoSafeVault.version,
+      );
+      expect(auxVault.BakoSafeVault.predicateAddress).toStrictEqual(
+        vault.BakoSafeVault.predicateAddress,
+      );
     },
     20 * 1000,
   );
@@ -139,21 +152,25 @@ describe('[PREDICATES]', () => {
         predicateAddress: vault.address.toString(),
       });
       expect(auxVault.BakoSafeVaultId).toStrictEqual(vault.BakoSafeVaultId);
+      expect(auxVault.version).toStrictEqual(vault.version);
+      expect(auxVault.BakoSafeVault.version).toStrictEqual(
+        vault.BakoSafeVault.version,
+      );
+      expect(auxVault.BakoSafeVault.predicateAddress).toStrictEqual(
+        vault.BakoSafeVault.predicateAddress,
+      );
     },
     10 * 1000,
   );
 
   test(
-    'Instance an old Vault by payload',
+    'Recover equal Vault by payload',
     async () => {
-      const vault = await newVault(
-        signers,
-        provider,
-        auth['USER_1'].BakoSafeAuth,
-      );
+      const vault = await newVault(signers, provider, undefined, 2);
 
       const vaultByPayload = await Vault.create({
-        configurable: JSON.parse(vault.BakoSafeVault.configurable),
+        configurable: vault.getConfigurable(),
+        version: vault.version,
       });
 
       const [vaultAddress, vaultByPayloadAddress] = [
@@ -162,6 +179,10 @@ describe('[PREDICATES]', () => {
       ];
 
       expect(vaultAddress).toEqual(vaultByPayloadAddress);
+      expect(vaultByPayload.version).toStrictEqual(vault.version);
+      expect(await vaultByPayload.getBalances()).toStrictEqual(
+        await vault.getBalances(),
+      );
     },
     10 * 1000,
   );
