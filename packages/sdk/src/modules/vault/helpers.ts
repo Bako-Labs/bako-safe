@@ -126,14 +126,33 @@ export const isNewPredicate = async (
   data: ICreationPayload | undefined;
 }> => {
   const is = 'configurable' in param;
-  is && validations(param.configurable);
   return {
     is,
     data: is ? await instanceByNewUtil(param) : undefined,
   };
 };
 
-export const validations = (configurable: Omit<IConfVault, 'chainId'>) => {
+export const validateConfigurable = (
+  configurable: Omit<IConfVault, 'chainId'>,
+  abi: string,
+) => {
+  const versionConfigKeys: string[] = JSON.parse(abi).configurables.map(
+    (config: { name: string }) => config.name,
+  );
+
+  versionConfigKeys.forEach((key) => {
+    if (!(key in configurable)) {
+      throw new Error(`${key} is missing`);
+    }
+  });
+};
+
+export const validations = (
+  configurable: Omit<IConfVault, 'chainId'>,
+  abi: string,
+) => {
+  validateConfigurable(configurable, abi);
+
   const { SIGNATURES_COUNT, SIGNERS } = configurable;
   if (!SIGNATURES_COUNT || Number(SIGNATURES_COUNT) == 0) {
     throw new Error('SIGNATURES_COUNT is required must be granter than zero');
@@ -152,6 +171,10 @@ export const identifyCreateVaultParams = async (
   try {
     const { data: oldData, is: isOld } = await isOldPredicate(param);
     const { data: newData } = await isNewPredicate(param);
+
+    const abi = isOld ? oldData?.abi : newData?.abi;
+    const configurable = isOld ? oldData?.configurable : newData?.configurable;
+    validations(configurable!, abi!);
 
     if (isOld && !!oldData) {
       return {

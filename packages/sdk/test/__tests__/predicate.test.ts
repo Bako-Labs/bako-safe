@@ -1,6 +1,6 @@
 import { Provider } from 'fuels';
 import { signin, newVault, IUserAuth, authService } from '../utils';
-import { IPayloadVault, Vault } from '../../src/modules';
+import { IConfVault, IPayloadVault, Vault } from '../../src/modules';
 import { BakoSafe } from '../../configurables';
 import {
   DEFAULT_BALANCES,
@@ -68,6 +68,54 @@ describe('[PREDICATES]', () => {
       auth['USER_1'].BakoSafeAuth,
     );
     expect(await vault.getBalances()).toStrictEqual(DEFAULT_BALANCES);
+  });
+
+  test('Create vault with invalid configurable', async () => {
+    const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
+    const { data: versions } = await Vault.BakoSafeGetPredicateVersions();
+    const _versions = versions.filter(
+      (version) => version.code !== currentVersion.code,
+    );
+    const VaultPayload: IPayloadVault = {
+      configurable: {
+        network: provider.url,
+      } as Omit<IConfVault, 'chainId'>,
+      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+      version: _versions[0].code,
+    };
+
+    await expect(
+      Vault.create({
+        ...VaultPayload,
+        configurable: {
+          ...VaultPayload.configurable,
+          SIGNATURES_COUNT: 3,
+          SIGNERS: signers,
+        },
+      }),
+    ).rejects.toThrow('HASH_PREDICATE is missing');
+
+    await expect(
+      Vault.create({
+        ...VaultPayload,
+        configurable: {
+          ...VaultPayload.configurable,
+          HASH_PREDICATE: undefined,
+          SIGNERS: signers,
+        },
+      }),
+    ).rejects.toThrow('SIGNATURES_COUNT is missing');
+
+    await expect(
+      Vault.create({
+        ...VaultPayload,
+        configurable: {
+          ...VaultPayload.configurable,
+          HASH_PREDICATE: undefined,
+          SIGNATURES_COUNT: 3,
+        },
+      }),
+    ).rejects.toThrow('SIGNERS is missing');
   });
 
   test('Create vault with predicate version', async () => {

@@ -13,6 +13,7 @@ export const newVault = async (
 ) => {
   const VaultPayload: IPayloadVault = {
     configurable: {
+      HASH_PREDICATE: undefined,
       SIGNATURES_COUNT: 3,
       SIGNERS: signers,
       network: fuelProvider.url,
