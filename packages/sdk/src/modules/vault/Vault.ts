@@ -144,6 +144,7 @@ export class Vault extends Predicate<[]> implements IVault {
       addresses: AddressUtils.hex2string(this.configurable.SIGNERS),
       configurable: JSON.stringify(this.configurable),
       provider: this.provider.url,
+      versionCode: this.version,
     });
     this.BakoSafeVault = {
       ...rest,

@@ -15,7 +15,7 @@ export interface IPredicatePayload {
   configurable: string;
   provider: string;
   chainId?: number;
-  code?: string;
+  versionCode?: string;
 }
 
 export interface GetPredicateVersionParams {
