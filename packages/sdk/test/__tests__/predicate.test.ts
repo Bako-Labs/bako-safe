@@ -1,4 +1,4 @@
-import { Provider, getRandomB256 } from 'fuels';
+import { Provider } from 'fuels';
 import { signin, newVault, IUserAuth, authService } from '../utils';
 import { IConfVault, IPayloadVault, Vault } from '../../src/modules';
 import { BakoSafe } from '../../configurables';
@@ -128,7 +128,7 @@ describe('[PREDICATES]', () => {
       'HASH_PREDICATE must be a b256',
     );
 
-    VaultPayload.configurable.HASH_PREDICATE = getRandomB256();
+    delete VaultPayload.configurable.HASH_PREDICATE;
     VaultPayload.configurable.SIGNATURES_COUNT = undefined as unknown as number;
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
       'SIGNATURES_COUNT must be an integer',
