@@ -91,7 +91,7 @@ describe('[PREDICATES]', () => {
           SIGNERS: signers,
         },
       }),
-    ).rejects.toThrow('SIGNATURES_COUNT is missing');
+    ).rejects.toThrow('SIGNATURES_COUNT is required');
 
     await expect(
       Vault.create({
@@ -101,7 +101,7 @@ describe('[PREDICATES]', () => {
           SIGNATURES_COUNT: 3,
         },
       }),
-    ).rejects.toThrow('SIGNERS is missing');
+    ).rejects.toThrow('SIGNERS is required');
   });
 
   test('Create vault with invalid configurable params', async () => {

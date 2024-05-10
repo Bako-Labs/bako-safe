@@ -214,6 +214,7 @@ export const validateConfigurable = (
   abi: string,
 ) => {
   const optionalConfigs = ['HASH_PREDICATE'];
+
   const versionAbi = JSON.parse(abi);
   const versionTypes: JsonAbiType[] = versionAbi.types;
   const versionConfigs: JsonAbiConfigurable[] = versionAbi.configurables;
@@ -224,7 +225,7 @@ export const validateConfigurable = (
   //Validates params
   versionConfigKeys.forEach((key) => {
     if (!(key in configurable)) {
-      throw new Error(`${key} is missing`);
+      throw new Error(`${key} is required`);
     }
   });
 
