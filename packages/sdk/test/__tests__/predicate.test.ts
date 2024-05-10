@@ -7,11 +7,14 @@ import {
   accounts,
   DEFAULT_TRANSACTION_PAYLOAD,
 } from '../mocks';
+import { IPredicateVersion } from '../../src/api';
 
 describe('[PREDICATES]', () => {
   let auth: IUserAuth;
   let provider: Provider;
   let signers: string[];
+  let currentVersion: IPredicateVersion;
+  let oldVersions: Partial<IPredicateVersion>[];
 
   beforeAll(async () => {
     provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
@@ -24,6 +27,11 @@ describe('[PREDICATES]', () => {
       accounts['USER_2'].address,
       accounts['USER_3'].address,
     ];
+    currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
+    const { data: versions } = await Vault.BakoSafeGetPredicateVersions();
+    oldVersions = versions.filter(
+      (version) => version.code !== currentVersion.code,
+    );
   }, 20 * 1000);
 
   test('Create an inválid vault', async () => {
@@ -70,17 +78,12 @@ describe('[PREDICATES]', () => {
   });
 
   test('Create vault missing configurable params', async () => {
-    const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
-    const { data: versions } = await Vault.BakoSafeGetPredicateVersions();
-    const _versions = versions.filter(
-      (version) => version.code !== currentVersion.code,
-    );
     const VaultPayload: IPayloadVault = {
       configurable: {
         network: provider.url,
       } as Omit<IConfVault, 'chainId'>,
       BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
-      version: _versions[0].code,
+      version: oldVersions[0].code,
     };
 
     await expect(
@@ -105,11 +108,6 @@ describe('[PREDICATES]', () => {
   });
 
   test('Create vault with invalid configurable params', async () => {
-    const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
-    const { data: versions } = await Vault.BakoSafeGetPredicateVersions();
-    const _versions = versions.filter(
-      (version) => version.code !== currentVersion.code,
-    );
     const VaultPayload: IPayloadVault = {
       configurable: {
         SIGNATURES_COUNT: 3,
@@ -117,7 +115,7 @@ describe('[PREDICATES]', () => {
         network: provider.url,
       },
       BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
-      version: _versions[0].code,
+      version: oldVersions[0].code,
     };
 
     VaultPayload.configurable.HASH_PREDICATE = undefined;
@@ -156,12 +154,7 @@ describe('[PREDICATES]', () => {
   });
 
   test('Create vault with predicate version', async () => {
-    const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
-    const { data: versions } = await Vault.BakoSafeGetPredicateVersions();
-    const _versions = versions.filter(
-      (version) => version.code !== currentVersion.code,
-    );
-    const vaultVersion = _versions[0].code;
+    const vaultVersion = oldVersions[0].code;
     const VaultPayload: IPayloadVault = {
       configurable: {
         SIGNATURES_COUNT: 3,
@@ -192,7 +185,6 @@ describe('[PREDICATES]', () => {
       BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
     };
     const vault = await Vault.create(VaultPayload);
-    const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
 
     expect(vault.version).toEqual(currentVersion.code);
   });
@@ -322,8 +314,6 @@ describe('[PREDICATES]', () => {
   });
 
   test('Find current predicate version', async () => {
-    const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
-
     expect(currentVersion).toHaveProperty('id');
     expect(currentVersion).toHaveProperty('name');
     expect(currentVersion).toHaveProperty('description');
@@ -334,7 +324,6 @@ describe('[PREDICATES]', () => {
   });
 
   test('Find current predicate version by code', async () => {
-    const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
     const version = await Vault.BakoSafeGetPredicateVersionByCode(
       currentVersion.code,
     );
