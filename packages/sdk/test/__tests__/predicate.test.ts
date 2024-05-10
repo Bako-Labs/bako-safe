@@ -1,4 +1,4 @@
-import { Provider } from 'fuels';
+import { Provider, getRandomB256 } from 'fuels';
 import { signin, newVault, IUserAuth, authService } from '../utils';
 import { IConfVault, IPayloadVault, Vault } from '../../src/modules';
 import { BakoSafe } from '../../configurables';
@@ -118,9 +118,6 @@ describe('[PREDICATES]', () => {
       version: oldVersions[0].code,
     };
 
-    VaultPayload.configurable.HASH_PREDICATE = undefined;
-    await expect(Vault.create(VaultPayload)).resolves.toHaveProperty('address');
-
     VaultPayload.configurable.HASH_PREDICATE = 'hash_predicate';
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
       'HASH_PREDICATE must be a b256',
@@ -151,6 +148,31 @@ describe('[PREDICATES]', () => {
     // await expect(Vault.create(VaultPayload)).rejects.toThrow(
     //   'SIGNERS must be an array of b256',
     // );
+  });
+
+  test('Create vault with valid configurable params', async () => {
+    const vaultVersion = oldVersions[0].code;
+    const VaultPayload: IPayloadVault = {
+      configurable: {
+        HASH_PREDICATE: getRandomB256(),
+        SIGNATURES_COUNT: 3,
+        SIGNERS: signers,
+        network: provider.url,
+      },
+      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+      version: vaultVersion,
+    };
+
+    const vault = await Vault.create(VaultPayload);
+    expect(vault).toHaveProperty('address');
+    expect(vault).toHaveProperty('version');
+    expect(vault.version).toStrictEqual(vaultVersion);
+
+    VaultPayload.configurable.HASH_PREDICATE = undefined;
+    const auxVault = await Vault.create(VaultPayload);
+    expect(auxVault).toHaveProperty('address');
+    expect(auxVault).toHaveProperty('version');
+    expect(auxVault.version).toStrictEqual(vaultVersion);
   });
 
   test('Create vault with predicate version', async () => {
