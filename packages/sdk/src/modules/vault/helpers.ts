@@ -1,11 +1,14 @@
-import { Address, B256Address, Provider, ZeroBytes32 } from 'fuels';
+import { Address, B256Address, Provider, ZeroBytes32, isB256 } from 'fuels';
 import {
+  EConfigTypes,
   ECreationtype,
   IBakoSafeApi,
   IConfVault,
   ICreation,
   ICreationPayload,
   IPayloadVault,
+  JsonAbiConfigurable,
+  JsonAbiType,
 } from './types';
 import { PredicateService } from '../../api/predicates';
 import { BakoSafe } from '../../../configurables';
@@ -132,18 +135,106 @@ export const isNewPredicate = async (
   };
 };
 
+export const validateConfigTypeArray = (
+  value: unknown,
+  key: string,
+  versionTypes: JsonAbiType[],
+) => {
+  if (!Array.isArray(value)) {
+    throw new Error(`${key} must be an array`);
+  }
+
+  // const itemTypeId = versionTypes.find(
+  //   (item) => formatTypeDeclaration(item.type) === EConfigTypes.array,
+  // )?.components![0].type;
+  // const itemType = versionTypes.find(
+  //   (item) => item.typeId === itemTypeId,
+  // )!.type;
+
+  // value.forEach((item) => {
+  //   try {
+  //     validateConfigTypes(item, key, itemType, versionTypes);
+  //   } catch (e) {
+  //     throw new Error(`${key} must be an array of ${itemType}`);
+  //   }
+  // });
+};
+
+export const validateConfigTypeB256 = (value: unknown, key: string) => {
+  if (typeof value !== 'string' || !isB256(value)) {
+    throw new Error(`${key} must be a b256`);
+  }
+};
+
+export const validateConfigTypeBoolean = (value: unknown, key: string) => {
+  if (typeof value !== 'boolean') {
+    throw new Error(`${key} must be a boolean`);
+  }
+};
+
+export const validateConfigTypeU64 = (value: unknown, key: string) => {
+  if (typeof value !== 'number' || !Number.isInteger(value)) {
+    throw new Error(`${key} must be an integer`);
+  }
+};
+
+export const validateConfigTypes = (
+  value: unknown,
+  key: string,
+  type: string,
+  versionTypes: JsonAbiType[],
+) => {
+  switch (type) {
+    case EConfigTypes.array:
+      return validateConfigTypeArray(value, key, versionTypes);
+    case EConfigTypes.b256:
+      return validateConfigTypeB256(value, key);
+    case EConfigTypes.boolean:
+      return validateConfigTypeBoolean(value, key);
+    case EConfigTypes.u64:
+      return validateConfigTypeU64(value, key);
+    default:
+      return;
+  }
+};
+
+export const formatTypeDeclaration = (type: string) => {
+  const hasSquareBracketsPair = /\[.*?\]/.test(type);
+
+  if (hasSquareBracketsPair) {
+    const formattedType = type.replace(/\[.*?\]/g, '[]');
+    return formattedType;
+  }
+
+  return type;
+};
+
 export const validateConfigurable = (
   configurable: Omit<IConfVault, 'chainId'>,
   abi: string,
 ) => {
-  const versionConfigKeys: string[] = JSON.parse(abi).configurables.map(
-    (config: { name: string }) => config.name,
+  const versionAbi = JSON.parse(abi);
+  const versionTypes: JsonAbiType[] = versionAbi.types;
+  const versionConfigs: JsonAbiConfigurable[] = versionAbi.configurables;
+  const versionConfigKeys = versionConfigs.map(
+    (config: JsonAbiConfigurable) => config.name,
   );
 
+  //Validates params
   versionConfigKeys.forEach((key) => {
     if (!(key in configurable)) {
       throw new Error(`${key} is missing`);
     }
+  });
+
+  //Validates params values
+  versionConfigs.forEach((config: JsonAbiConfigurable) => {
+    const key = config.name;
+    const typeId = config.configurableType.type;
+    const type = versionTypes.find((type) => type.typeId === typeId)!.type;
+    const formattedType = formatTypeDeclaration(type);
+    const value = configurable[key];
+    validateConfigTypes(value, key, formattedType, versionTypes);
   });
 };
 

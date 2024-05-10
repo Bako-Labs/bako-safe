@@ -1,4 +1,4 @@
-import { Provider } from 'fuels';
+import { Provider, getRandomB256 } from 'fuels';
 import { signin, newVault, IUserAuth, authService } from '../utils';
 import { IConfVault, IPayloadVault, Vault } from '../../src/modules';
 import { BakoSafe } from '../../configurables';
@@ -29,7 +29,7 @@ describe('[PREDICATES]', () => {
   test('Create an inválid vault', async () => {
     const VaultPayload: IPayloadVault = {
       configurable: {
-        HASH_PREDICATE: undefined,
+        HASH_PREDICATE: getRandomB256(), //undefined
         SIGNATURES_COUNT: 3,
         SIGNERS: signers,
         network: provider.url,
@@ -70,7 +70,7 @@ describe('[PREDICATES]', () => {
     expect(await vault.getBalances()).toStrictEqual(DEFAULT_BALANCES);
   });
 
-  test('Create vault with invalid configurable', async () => {
+  test('Create vault missing configurable params', async () => {
     const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
     const { data: versions } = await Vault.BakoSafeGetPredicateVersions();
     const _versions = versions.filter(
@@ -118,6 +118,60 @@ describe('[PREDICATES]', () => {
     ).rejects.toThrow('SIGNERS is missing');
   });
 
+  test('Create vault with invalid configurable params', async () => {
+    const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
+    const { data: versions } = await Vault.BakoSafeGetPredicateVersions();
+    const _versions = versions.filter(
+      (version) => version.code !== currentVersion.code,
+    );
+    const VaultPayload: IPayloadVault = {
+      configurable: {
+        HASH_PREDICATE: getRandomB256(), //undefined
+        SIGNATURES_COUNT: 3,
+        SIGNERS: signers,
+        network: provider.url,
+      } as Omit<IConfVault, 'chainId'>,
+      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+      version: _versions[0].code,
+    };
+
+    VaultPayload.configurable.HASH_PREDICATE = undefined;
+    await expect(Vault.create(VaultPayload)).rejects.toThrow(
+      'HASH_PREDICATE must be a b256',
+    );
+
+    VaultPayload.configurable.HASH_PREDICATE = 'hash_predicate';
+    await expect(Vault.create(VaultPayload)).rejects.toThrow(
+      'HASH_PREDICATE must be a b256',
+    );
+
+    VaultPayload.configurable.HASH_PREDICATE = getRandomB256();
+    VaultPayload.configurable.SIGNATURES_COUNT = undefined as unknown as number;
+    await expect(Vault.create(VaultPayload)).rejects.toThrow(
+      'SIGNATURES_COUNT must be an integer',
+    );
+
+    VaultPayload.configurable.SIGNATURES_COUNT = 0.5;
+    await expect(Vault.create(VaultPayload)).rejects.toThrow(
+      'SIGNATURES_COUNT must be an integer',
+    );
+
+    VaultPayload.configurable.SIGNATURES_COUNT = 3;
+    VaultPayload.configurable.SIGNERS = undefined as unknown as string[];
+    await expect(Vault.create(VaultPayload)).rejects.toThrow(
+      'SIGNERS must be an array',
+    );
+
+    // VaultPayload.configurable.SIGNERS = [
+    //   'signer',
+    //   'signer2',
+    //   'signer3',
+    // ] as unknown as string[];
+    // await expect(Vault.create(VaultPayload)).rejects.toThrow(
+    //   'SIGNERS must be an array of b256',
+    // );
+  });
+
   test('Create vault with predicate version', async () => {
     const currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
     const { data: versions } = await Vault.BakoSafeGetPredicateVersions();
@@ -127,7 +181,7 @@ describe('[PREDICATES]', () => {
     const vaultVersion = _versions[0].code;
     const VaultPayload: IPayloadVault = {
       configurable: {
-        HASH_PREDICATE: undefined,
+        HASH_PREDICATE: getRandomB256(), //undefined
         SIGNATURES_COUNT: 3,
         SIGNERS: signers,
         network: provider.url,
@@ -149,7 +203,7 @@ describe('[PREDICATES]', () => {
   test('Create vault without predicate version', async () => {
     const VaultPayload: IPayloadVault = {
       configurable: {
-        HASH_PREDICATE: undefined,
+        HASH_PREDICATE: getRandomB256(), //undefined
         SIGNATURES_COUNT: 3,
         SIGNERS: signers,
         network: provider.url,

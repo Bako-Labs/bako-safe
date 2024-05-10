@@ -9,6 +9,32 @@ import { IFormatTransfer, Transfer } from '../transfers';
 import { ITransactionResume, IWitnesses } from '../../api';
 import { IPagination } from '../../api/utils/pagination';
 
+export interface JsonAbiType {
+  typeId: number;
+  type: string;
+  components: JsonAbiArgument[] | null;
+  typeParameters: number[] | null;
+}
+
+export interface JsonAbiArgument {
+  type: number;
+  name: string;
+  typeArguments: JsonAbiArgument[] | null;
+}
+
+export interface JsonAbiConfigurable {
+  name: string;
+  configurableType: JsonAbiArgument;
+  offset: number;
+}
+
+export enum EConfigTypes {
+  array = '[]',
+  b256 = 'b256',
+  boolean = 'bool',
+  u64 = 'u64',
+}
+
 export interface IConfVault {
   HASH_PREDICATE?: string;
   SIGNATURES_COUNT: number;

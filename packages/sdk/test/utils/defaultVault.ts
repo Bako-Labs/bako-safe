@@ -1,4 +1,4 @@
-import { Provider } from 'fuels';
+import { Provider, getRandomB256 } from 'fuels';
 import { IPayloadVault, Vault } from '../../src/modules';
 import { rootWallet } from './rootWallet';
 import { sendPredicateCoins } from './sendCoins';
@@ -13,7 +13,7 @@ export const newVault = async (
 ) => {
   const VaultPayload: IPayloadVault = {
     configurable: {
-      HASH_PREDICATE: undefined,
+      HASH_PREDICATE: getRandomB256(), //undefined
       SIGNATURES_COUNT: 3,
       SIGNERS: signers,
       network: fuelProvider.url,
