@@ -213,12 +213,13 @@ export const validateConfigurable = (
   configurable: Omit<IConfVault, 'chainId'>,
   abi: string,
 ) => {
+  const optionalConfigs = ['HASH_PREDICATE'];
   const versionAbi = JSON.parse(abi);
   const versionTypes: JsonAbiType[] = versionAbi.types;
   const versionConfigs: JsonAbiConfigurable[] = versionAbi.configurables;
-  const versionConfigKeys = versionConfigs.map(
-    (config: JsonAbiConfigurable) => config.name,
-  );
+  const versionConfigKeys = versionConfigs
+    .filter((config) => !optionalConfigs.includes(config.name))
+    .map((config: JsonAbiConfigurable) => config.name);
 
   //Validates params
   versionConfigKeys.forEach((key) => {
@@ -234,7 +235,10 @@ export const validateConfigurable = (
     const type = versionTypes.find((type) => type.typeId === typeId)!.type;
     const formattedType = formatTypeDeclaration(type);
     const value = configurable[key];
-    validateConfigTypes(value, key, formattedType, versionTypes);
+
+    if (!optionalConfigs.includes(key) || value) {
+      validateConfigTypes(value, key, formattedType, versionTypes);
+    }
   });
 };
 

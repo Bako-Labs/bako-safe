@@ -29,7 +29,6 @@ describe('[PREDICATES]', () => {
   test('Create an inválid vault', async () => {
     const VaultPayload: IPayloadVault = {
       configurable: {
-        HASH_PREDICATE: getRandomB256(), //undefined
         SIGNATURES_COUNT: 3,
         SIGNERS: signers,
         network: provider.url,
@@ -89,18 +88,6 @@ describe('[PREDICATES]', () => {
         ...VaultPayload,
         configurable: {
           ...VaultPayload.configurable,
-          SIGNATURES_COUNT: 3,
-          SIGNERS: signers,
-        },
-      }),
-    ).rejects.toThrow('HASH_PREDICATE is missing');
-
-    await expect(
-      Vault.create({
-        ...VaultPayload,
-        configurable: {
-          ...VaultPayload.configurable,
-          HASH_PREDICATE: undefined,
           SIGNERS: signers,
         },
       }),
@@ -111,7 +98,6 @@ describe('[PREDICATES]', () => {
         ...VaultPayload,
         configurable: {
           ...VaultPayload.configurable,
-          HASH_PREDICATE: undefined,
           SIGNATURES_COUNT: 3,
         },
       }),
@@ -126,7 +112,6 @@ describe('[PREDICATES]', () => {
     );
     const VaultPayload: IPayloadVault = {
       configurable: {
-        HASH_PREDICATE: getRandomB256(), //undefined
         SIGNATURES_COUNT: 3,
         SIGNERS: signers,
         network: provider.url,
@@ -136,9 +121,7 @@ describe('[PREDICATES]', () => {
     };
 
     VaultPayload.configurable.HASH_PREDICATE = undefined;
-    await expect(Vault.create(VaultPayload)).rejects.toThrow(
-      'HASH_PREDICATE must be a b256',
-    );
+    await expect(Vault.create(VaultPayload)).resolves.toHaveProperty('address');
 
     VaultPayload.configurable.HASH_PREDICATE = 'hash_predicate';
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
@@ -181,7 +164,6 @@ describe('[PREDICATES]', () => {
     const vaultVersion = _versions[0].code;
     const VaultPayload: IPayloadVault = {
       configurable: {
-        HASH_PREDICATE: getRandomB256(), //undefined
         SIGNATURES_COUNT: 3,
         SIGNERS: signers,
         network: provider.url,
@@ -203,7 +185,6 @@ describe('[PREDICATES]', () => {
   test('Create vault without predicate version', async () => {
     const VaultPayload: IPayloadVault = {
       configurable: {
-        HASH_PREDICATE: getRandomB256(), //undefined
         SIGNATURES_COUNT: 3,
         SIGNERS: signers,
         network: provider.url,
