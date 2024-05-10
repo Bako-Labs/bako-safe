@@ -144,24 +144,33 @@ export const validateConfigTypeArray = (
     throw new Error(`${key} must be an array`);
   }
 
-  // const itemTypeId = versionTypes.find(
-  //   (item) => formatTypeDeclaration(item.type) === EConfigTypes.array,
-  // )?.components![0].type;
-  // const itemType = versionTypes.find(
-  //   (item) => item.typeId === itemTypeId,
-  // )!.type;
+  const itemTypeId = versionTypes.find(
+    (item) => formatConfigTypeDeclaration(item.type) === EConfigTypes.array,
+  )?.components![0].type;
+  const itemType = versionTypes.find(
+    (item) => item.typeId === itemTypeId,
+  )!.type;
 
-  // value.forEach((item) => {
-  //   try {
-  //     validateConfigTypes(item, key, itemType, versionTypes);
-  //   } catch (e) {
-  //     throw new Error(`${key} must be an array of ${itemType}`);
-  //   }
-  // });
+  value.forEach((item) => {
+    try {
+      validateConfigTypes(item, key, itemType, versionTypes);
+    } catch {
+      throw new Error(`${key} must be an array of ${itemType}`);
+    }
+  });
 };
 
 export const validateConfigTypeB256 = (value: unknown, key: string) => {
-  if (typeof value !== 'string' || !isB256(value)) {
+  let _value = value;
+
+  if (typeof value === 'string' && !isB256(value)) {
+    try {
+      _value = Address.fromString(value).toB256();
+    } catch {
+      throw new Error(`${key} must be a b256`);
+    }
+  }
+  if (typeof _value !== 'string' || !isB256(_value)) {
     throw new Error(`${key} must be a b256`);
   }
 };
@@ -198,7 +207,7 @@ export const validateConfigTypes = (
   }
 };
 
-export const formatTypeDeclaration = (type: string) => {
+export const formatConfigTypeDeclaration = (type: string) => {
   const hasSquareBracketsPair = /\[.*?\]/.test(type);
 
   if (hasSquareBracketsPair) {
@@ -234,7 +243,7 @@ export const validateConfigurable = (
     const key = config.name;
     const typeId = config.configurableType.type;
     const type = versionTypes.find((type) => type.typeId === typeId)!.type;
-    const formattedType = formatTypeDeclaration(type);
+    const formattedType = formatConfigTypeDeclaration(type);
     const value = configurable[key];
 
     if (!optionalConfigs.includes(key) || value) {

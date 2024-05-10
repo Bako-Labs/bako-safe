@@ -140,14 +140,14 @@ describe('[PREDICATES]', () => {
       'SIGNERS must be an array',
     );
 
-    // VaultPayload.configurable.SIGNERS = [
-    //   'signer',
-    //   'signer2',
-    //   'signer3',
-    // ] as unknown as string[];
-    // await expect(Vault.create(VaultPayload)).rejects.toThrow(
-    //   'SIGNERS must be an array of b256',
-    // );
+    VaultPayload.configurable.SIGNERS = [
+      'signer',
+      'signer2',
+      'signer3',
+    ] as unknown as string[];
+    await expect(Vault.create(VaultPayload)).rejects.toThrow(
+      'SIGNERS must be an array of b256',
+    );
   });
 
   test('Create vault with valid configurable params', async () => {
