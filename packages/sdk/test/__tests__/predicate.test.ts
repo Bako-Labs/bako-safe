@@ -115,7 +115,7 @@ describe('[PREDICATES]', () => {
         SIGNATURES_COUNT: 3,
         SIGNERS: signers,
         network: provider.url,
-      } as Omit<IConfVault, 'chainId'>,
+      },
       BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
       version: _versions[0].code,
     };
