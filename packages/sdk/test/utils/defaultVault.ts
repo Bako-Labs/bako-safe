@@ -10,10 +10,11 @@ export const newVault = async (
   fuelProvider: Provider,
   auth?: IBakoSafeAuth,
   reason?: keyof typeof VALUES_DEFAULT_TO_MUL,
+  signersCount: number = signers.length,
 ) => {
   const VaultPayload: IPayloadVault = {
     configurable: {
-      SIGNATURES_COUNT: 3,
+      SIGNATURES_COUNT: signersCount,
       SIGNERS: signers,
       network: fuelProvider.url,
     },
