@@ -44,6 +44,7 @@ describe('[PREDICATES]', () => {
       BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
     };
 
+    //Validations
     await expect(
       Vault.create({ ...VaultPayload, version: 'fake_version' }),
     ).rejects.toThrow('Invalid predicate version');
@@ -83,7 +84,6 @@ describe('[PREDICATES]', () => {
         network: provider.url,
       } as Omit<IConfVault, 'chainId'>,
       BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
-      version: oldVersions[0].code,
     };
 
     await expect(
@@ -115,7 +115,6 @@ describe('[PREDICATES]', () => {
         network: provider.url,
       },
       BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
-      version: oldVersions[0].code,
     };
 
     VaultPayload.configurable.HASH_PREDICATE = 'hash_predicate';
@@ -151,7 +150,6 @@ describe('[PREDICATES]', () => {
   });
 
   test('Create vault with valid configurable params', async () => {
-    const vaultVersion = oldVersions[0].code;
     const VaultPayload: IPayloadVault = {
       configurable: {
         HASH_PREDICATE: getRandomB256(),
@@ -160,19 +158,18 @@ describe('[PREDICATES]', () => {
         network: provider.url,
       },
       BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
-      version: vaultVersion,
     };
 
     const vault = await Vault.create(VaultPayload);
     expect(vault).toHaveProperty('address');
     expect(vault).toHaveProperty('version');
-    expect(vault.version).toStrictEqual(vaultVersion);
+    expect(vault.version).toStrictEqual(currentVersion.code);
 
     VaultPayload.configurable.HASH_PREDICATE = undefined;
     const auxVault = await Vault.create(VaultPayload);
     expect(auxVault).toHaveProperty('address');
     expect(auxVault).toHaveProperty('version');
-    expect(auxVault.version).toStrictEqual(vaultVersion);
+    expect(auxVault.version).toStrictEqual(currentVersion.code);
   });
 
   test('Create vault with predicate version', async () => {
