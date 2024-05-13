@@ -44,13 +44,21 @@ describe('[PREDICATES]', () => {
       BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
     };
 
-    //Validations
     await expect(
       Vault.create({ ...VaultPayload, version: 'fake_version' }),
     ).rejects.toThrow('Invalid predicate version');
 
-    VaultPayload.configurable.SIGNATURES_COUNT = 0;
+    //Validations
+    const duplicated = [
+      ...VaultPayload.configurable.SIGNERS.slice(0, 2),
+      VaultPayload.configurable.SIGNERS[0],
+    ];
+    VaultPayload.configurable.SIGNERS = duplicated;
+    await expect(Vault.create(VaultPayload)).rejects.toThrow(
+      'SIGNERS must be unique',
+    );
 
+    VaultPayload.configurable.SIGNATURES_COUNT = 0;
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
       'SIGNATURES_COUNT is required must be granter than zero',
     );
@@ -63,7 +71,6 @@ describe('[PREDICATES]', () => {
 
     VaultPayload.configurable.SIGNERS = signers;
     VaultPayload.configurable.SIGNATURES_COUNT = 5;
-
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
       'Required Signers must be less than signers',
     );
