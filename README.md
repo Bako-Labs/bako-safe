@@ -12,3 +12,9 @@ On this repo, we have:
 #### 🔗 Bako Safe Connector: [This](https://github.com/infinitybase/bako-safe/blob/master/packages/connector/README.md) package to implements an connector to use BAKO SAFE on other apps, to implement use [Fuel Providers](https://wallet.fuel.network/docs/dev/connectors).
 
 #### 📑 Bako Safe Contracts: [This](https://github.com/infinitybase/bako-safe/blob/master/packages/sway/README.md) package have the contract used by sdk to implement a multsig based on predicates.
+
+## Tests
+1. Install dependencies with pnpm: `pnpm install`
+2. Run the Bako Safe API
+3. Set up the .env files in `packages/sdk` and `packages/sway`
+4. Run the tests: `pnpm test`
