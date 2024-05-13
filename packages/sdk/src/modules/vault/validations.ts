@@ -94,16 +94,31 @@ export const validateConfigurable = (
   abi: string,
 ) => {
   const optionalConfigs = ['HASH_PREDICATE'];
+  const configsNotInAbi = ['network', 'chainId'];
+
+  const configurableKeys = Object.keys(configurable).filter(
+    (key) => !configsNotInAbi.includes(key),
+  );
 
   const versionAbi = JSON.parse(abi);
   const versionTypes: JsonAbiType[] = versionAbi.types;
   const versionConfigs: JsonAbiConfigurable[] = versionAbi.configurables;
-  const versionConfigKeys = versionConfigs
-    .filter((config) => !optionalConfigs.includes(config.name))
-    .map((config: JsonAbiConfigurable) => config.name);
+  const versionConfigKeys = versionConfigs.map(
+    (config: JsonAbiConfigurable) => config.name,
+  );
+  const requiredVersionConfigKeys = versionConfigKeys.filter(
+    (key) => !optionalConfigs.includes(key),
+  );
 
-  //Validates params
-  versionConfigKeys.forEach((key) => {
+  //Validates unwanted params
+  configurableKeys.forEach((key) => {
+    if (!versionConfigKeys.includes(key)) {
+      throw new Error(`${key} is an invalid parameter`);
+    }
+  });
+
+  //Validates required params
+  requiredVersionConfigKeys.forEach((key) => {
     if (!(key in configurable)) {
       throw new Error(`${key} is required`);
     }

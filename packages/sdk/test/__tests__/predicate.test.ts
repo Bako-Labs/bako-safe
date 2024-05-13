@@ -150,6 +150,11 @@ describe('[PREDICATES]', () => {
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
       'SIGNERS must be an array of b256',
     );
+
+    VaultPayload.configurable.TEST = null;
+    await expect(Vault.create(VaultPayload)).rejects.toThrow(
+      'TEST is an invalid parameter',
+    );
   });
 
   test('Create vault with valid configurable params', async () => {
