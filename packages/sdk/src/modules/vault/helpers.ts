@@ -97,6 +97,7 @@ export const instanceByNewUtil = async (
     configurable: {
       ...params.configurable,
       chainId: await provider.getChainId(),
+      network: params.configurable.network,
     },
     provider,
     abi,

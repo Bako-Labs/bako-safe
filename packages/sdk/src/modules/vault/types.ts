@@ -36,11 +36,9 @@ export enum EConfigTypes {
 }
 
 export interface IConfVault {
-  HASH_PREDICATE?: string;
-  SIGNATURES_COUNT: number;
-  SIGNERS: string[];
   network: string;
   chainId: number;
+  [key: string]: any;
 }
 
 export enum ECreationtype {

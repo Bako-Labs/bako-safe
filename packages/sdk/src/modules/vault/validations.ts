@@ -131,7 +131,7 @@ export const validations = (
 
   //TO DO: adicionar validações dinâmicas baseadas no registro de versão da API
   const { SIGNATURES_COUNT, SIGNERS } = configurable;
-  const _SIGNERS = SIGNERS.filter((value) => value !== ZeroBytes32);
+  const _SIGNERS = SIGNERS.filter((value: string) => value !== ZeroBytes32);
 
   if (!SIGNATURES_COUNT || Number(SIGNATURES_COUNT) == 0) {
     throw new Error('SIGNATURES_COUNT is required must be granter than zero');

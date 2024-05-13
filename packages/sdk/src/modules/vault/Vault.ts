@@ -165,10 +165,9 @@ export class Vault extends Predicate<[]> implements IVault {
    */
   private static makePredicate(configurable: IConfVault) {
     return {
-      SIGNATURES_COUNT: configurable.SIGNATURES_COUNT as number,
-      SIGNERS: makeSubscribers(configurable.SIGNERS) as string[],
-      HASH_PREDICATE: (configurable.HASH_PREDICATE ??
-        makeHashPredicate()) as string,
+      SIGNATURES_COUNT: configurable.SIGNATURES_COUNT,
+      SIGNERS: makeSubscribers(configurable.SIGNERS),
+      HASH_PREDICATE: configurable.HASH_PREDICATE ?? makeHashPredicate(),
     };
   }
 

@@ -89,7 +89,7 @@ describe('[PREDICATES]', () => {
     const VaultPayload: IPayloadVault = {
       configurable: {
         network: provider.url,
-      } as Omit<IConfVault, 'chainId'>,
+      },
       BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
     };
 
@@ -130,7 +130,7 @@ describe('[PREDICATES]', () => {
     );
 
     delete VaultPayload.configurable.HASH_PREDICATE;
-    VaultPayload.configurable.SIGNATURES_COUNT = undefined as unknown as number;
+    VaultPayload.configurable.SIGNATURES_COUNT = undefined;
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
       'SIGNATURES_COUNT must be an integer',
     );
@@ -141,16 +141,12 @@ describe('[PREDICATES]', () => {
     );
 
     VaultPayload.configurable.SIGNATURES_COUNT = 3;
-    VaultPayload.configurable.SIGNERS = undefined as unknown as string[];
+    VaultPayload.configurable.SIGNERS = undefined;
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
       'SIGNERS must be an array',
     );
 
-    VaultPayload.configurable.SIGNERS = [
-      'signer',
-      'signer2',
-      'signer3',
-    ] as unknown as string[];
+    VaultPayload.configurable.SIGNERS = ['signer', 'signer2', 'signer3'];
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
       'SIGNERS must be an array of b256',
     );
