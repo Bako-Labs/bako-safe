@@ -18,7 +18,6 @@ import {
 } from 'fuels';
 
 import { PredicateAbi__factory } from '../../../sdk/src/sway/predicates';
-import { BakoSafe } from '../../../sdk/configurables';
 
 import { PRIVATE_KEY, GAS_LIMIT } from '../constants';
 const ERROR_DUPLICATED_WITNESSES =
@@ -31,7 +30,6 @@ async function seedAccount(
 ) {
   try {
     const genisesWallet = Wallet.fromPrivateKey(PRIVATE_KEY, provider);
-    const fee = await provider.getGasConfig();
 
     const resp = await genisesWallet.transfer(
       address,
@@ -114,7 +112,7 @@ describe('[SWAY_PREDICATE]', () => {
   let provider: Provider;
 
   beforeAll(async () => {
-    //todo: move to dynamic url of chain
+    //todo: move to dynamic url of chain and remove of the BakoSafe
     //provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
     provider = await Provider.create('http://127.0.0.1:4000/v1/graphql');
   });
