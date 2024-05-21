@@ -2,7 +2,6 @@ import {
   AbstractAddress,
   Address,
   BN,
-  BaseAssetId,
   InputType,
   InputValue,
   Predicate,
@@ -21,7 +20,9 @@ import {
 import { PredicateAbi__factory } from '../../../sdk/src/sway/predicates';
 import { BakoSafe } from '../../../sdk/configurables';
 
-import { PRIVATE_KEY, GAS_LIMIT, GAS_PRICE } from '../constants';
+import { PRIVATE_KEY, GAS_LIMIT } from '../constants';
+const ERROR_DUPLICATED_WITNESSES =
+  'FuelError: Invalid transaction data: PredicateVerificationFailed(Panic(PredicateReturnedNonOne))';
 
 async function seedAccount(
   address: AbstractAddress,
@@ -30,10 +31,16 @@ async function seedAccount(
 ) {
   try {
     const genisesWallet = Wallet.fromPrivateKey(PRIVATE_KEY, provider);
-    const resp = await genisesWallet.transfer(address, amount, BaseAssetId, {
-      gasLimit: Number(GAS_LIMIT),
-      gasPrice: Number(GAS_PRICE),
-    });
+    const fee = await provider.getGasConfig();
+
+    const resp = await genisesWallet.transfer(
+      address,
+      amount,
+      provider.getBaseAssetId(),
+      {
+        gasLimit: Number(GAS_LIMIT),
+      },
+    );
     await resp.waitForResult();
   } catch (e) {
     throw new Error(e.response.errors[0].message ?? 'Seed Account Error');
@@ -56,7 +63,7 @@ async function sendTransaction(
     const response = new TransactionResponse(transactionId, provider);
     return response;
   } catch (e) {
-    throw new Error(e.response.errors[0].message ?? 'Send Transaction Error');
+    throw new Error(e);
   }
 }
 
@@ -75,12 +82,15 @@ async function signTransaction(
 async function createTransaction(predicate: Predicate<InputValue[]>) {
   try {
     const tx = new ScriptTransactionRequest();
-    tx.gasPrice = bn(GAS_LIMIT);
+    const provider = predicate.provider;
+
     tx.gasLimit = bn(GAS_LIMIT);
+    tx.maxFee = bn(100000);
+
     const coins = await predicate.getResourcesToSpend([
       {
         amount: bn(100),
-        assetId: BaseAssetId,
+        assetId: provider.getBaseAssetId(),
       },
     ]);
     tx.addResources(coins);
@@ -96,7 +106,7 @@ async function createTransaction(predicate: Predicate<InputValue[]>) {
 
     return tx;
   } catch (e) {
-    throw new Error(e.response.errors[0].message ?? 'Create Transaction Error');
+    throw new Error(e);
   }
 }
 
@@ -104,7 +114,9 @@ describe('[SWAY_PREDICATE]', () => {
   let provider: Provider;
 
   beforeAll(async () => {
-    provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
+    //todo: move to dynamic url of chain
+    //provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
+    provider = await Provider.create('http://127.0.0.1:4000/v1/graphql');
   });
 
   test('Send transfer by predicate', async () => {
@@ -112,22 +124,26 @@ describe('[SWAY_PREDICATE]', () => {
       provider,
     });
 
-    const predicate = PredicateAbi__factory.createInstance(provider, {
-      SIGNATURES_COUNT: 1,
-      SIGNERS: [
-        wallet.address.toB256(),
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-      ],
-      HASH_PREDICATE: Address.fromRandom().toB256(),
-    });
+    const predicate = PredicateAbi__factory.createInstance(
+      provider,
+      undefined,
+      {
+        SIGNATURES_COUNT: 1,
+        SIGNERS: [
+          wallet.address.toB256(),
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+        ],
+        HASH_PREDICATE: Address.fromRandom().toB256(),
+      },
+    );
     await seedAccount(predicate.address, bn.parseUnits('0.1'), provider);
 
     const tx = await createTransaction(predicate);
@@ -145,22 +161,26 @@ describe('[SWAY_PREDICATE]', () => {
       provider,
     });
 
-    const predicate = PredicateAbi__factory.createInstance(provider, {
-      SIGNATURES_COUNT: 2,
-      SIGNERS: [
-        wallet.address.toB256(),
-        Address.fromRandom().toB256(),
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-      ],
-      HASH_PREDICATE: Address.fromRandom().toB256(),
-    });
+    const predicate = PredicateAbi__factory.createInstance(
+      provider,
+      undefined,
+      {
+        SIGNATURES_COUNT: 2,
+        SIGNERS: [
+          wallet.address.toB256(),
+          Address.fromRandom().toB256(),
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+        ],
+        HASH_PREDICATE: Address.fromRandom().toB256(),
+      },
+    );
 
     await seedAccount(predicate.address, bn.parseUnits('0.1'), provider);
 
@@ -170,9 +190,7 @@ describe('[SWAY_PREDICATE]', () => {
       await signTransaction(wallet, tx, provider),
       await signTransaction(wallet, tx, provider),
     ]).catch((e) => {
-      expect(e.message).toBe(
-        'PredicateVerificationFailed(Panic(PredicateReturnedNonOne))',
-      );
+      expect(e.message).toBe(ERROR_DUPLICATED_WITNESSES);
     });
   });
 
@@ -181,22 +199,26 @@ describe('[SWAY_PREDICATE]', () => {
       provider,
     });
 
-    const predicate = PredicateAbi__factory.createInstance(provider, {
-      SIGNATURES_COUNT: 2,
-      SIGNERS: [
-        wallet.address.toB256(),
-        wallet.address.toB256(),
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-        ZeroBytes32,
-      ],
-      HASH_PREDICATE: Address.fromRandom().toB256(),
-    });
+    const predicate = PredicateAbi__factory.createInstance(
+      provider,
+      undefined,
+      {
+        SIGNATURES_COUNT: 2,
+        SIGNERS: [
+          wallet.address.toB256(),
+          wallet.address.toB256(),
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+        ],
+        HASH_PREDICATE: Address.fromRandom().toB256(),
+      },
+    );
 
     await seedAccount(predicate.address, bn.parseUnits('0.1'), provider);
 
@@ -206,9 +228,7 @@ describe('[SWAY_PREDICATE]', () => {
       await signTransaction(wallet, tx, provider),
       await signTransaction(wallet, tx, provider),
     ]).catch((e) => {
-      expect(e.message).toBe(
-        'PredicateVerificationFailed(Panic(PredicateReturnedNonOne))',
-      );
+      expect(e.message).toBe(ERROR_DUPLICATED_WITNESSES);
     });
   });
 });

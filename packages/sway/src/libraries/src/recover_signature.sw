@@ -5,10 +5,7 @@ use std::b512::B512;
 use std::bytes::Bytes;
 use std::hash::*;
 use std::{ecr::{ec_recover_address, ec_recover_r1}};
-
-
-
-const INVALID_SIGNER: b256 = 0x1111111111111111111111111111111111111111111111111111111111111111;
+use std::constants::{ZERO_B256};
 
 pub fn fuel_verify(signature: B512, tx_hash_bytes: Bytes) -> b256 {
     let mut hasher = Hasher::new();
@@ -17,13 +14,13 @@ pub fn fuel_verify(signature: B512, tx_hash_bytes: Bytes) -> b256 {
     
 
     if let Result::Ok(pub_key_sig) = ec_recover_address(signature, tx_hash) {
-      return pub_key_sig.value
+      return pub_key_sig.bits();
   }
-  return INVALID_SIGNER;
+  return Address::from(ZERO_B256).bits();
 }
 
 pub fn secp256r1_verify(signature: B512, digest:b256 ) -> b256 {
       let public_key = ec_recover_r1(signature, digest).unwrap();
-      return sha256(public_key.into());
+      return sha256(public_key.bits());
 }
 

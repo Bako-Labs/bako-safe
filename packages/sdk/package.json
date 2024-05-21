@@ -39,17 +39,17 @@
   },
   "dependencies": {
     "@fuel-wallet/react": "0.15.2",
+    "@types/uuid": "^9.0.6",
+    "axios": "^1.5.1",
+    "elliptic": "^6.5.4",
+    "fuels": "0.88.1",
+    "patch-package": "8.0.0",
     "socket.io": "4.7.2",
     "socket.io-client": "4.7.2",
-    "patch-package": "8.0.0",
-    "@types/uuid": "^9.0.6",
-    "elliptic": "^6.5.4",
     "tsup": "^7.2.0",
-    "axios": "^1.5.1",
-    "fuels": "0.76.12",
     "uuid": "^9.0.1"
   },
   "peerDependencies": {
-    "fuels": "0.76.12"
+    "fuels": "0.88.1"
   }
 }

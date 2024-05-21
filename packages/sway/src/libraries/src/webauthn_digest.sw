@@ -16,7 +16,7 @@ pub struct WebAuthn {
   auth_data: raw_slice,
 }
 
-pub fn get_webauthn_digest(webauthn: WebAuthn, sig_ptr: raw_ptr, tx_id: Bytes) -> b256 {
+pub fn get_webauthn_digest(webauthn: WebAuthn, sig_ptr: raw_ptr, tx_id: Bytes) -> (b256, B512) {
   // enum + signature + prefix_size + suffix_size + auth_data_size
   let offset_data = __size_of::<u64>() + __size_of::<B512>() + __size_of::<u64>() + __size_of::<u64>() + __size_of::<u64>();
   let offset_data_ptr = sig_ptr.add::<u8>(offset_data);
@@ -42,5 +42,5 @@ pub fn get_webauthn_digest(webauthn: WebAuthn, sig_ptr: raw_ptr, tx_id: Bytes) -
   message.append(auth_data_bytes);
   message.append(Bytes::from(client_hash));
   // Create digest return
-  return sha256(message);
+  return (sha256(message), webauthn.signature);
 }
