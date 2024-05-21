@@ -50,7 +50,7 @@ export const formatTransaction = async ({
   const coins = await Asset.assetsGroupById(assets);
   const transactionCoins = await Asset.addTransactionFee(
     coins,
-    bn(BakoSafe.getGasConfig('GAS_PRICE')),
+    bn(BakoSafe.getGasConfig('MAX_FEE')),
   );
 
   const _coins = await vault.getResourcesToSpend(transactionCoins);

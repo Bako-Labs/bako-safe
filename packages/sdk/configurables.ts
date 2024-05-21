@@ -1,13 +1,13 @@
 export const defaultConfig = {
-  CHAIN_URL: 'http://localhost:4000/graphql',
+  CHAIN_URL: 'http://localhost:4000/v1/graphql',
   SERVER_URL: 'http://localhost:3333/',
   CLIENT_URL: 'https://safe.bako.global',
   ENCODER: 'Fuel',
 };
 
 export const gasConfig = {
-  GAS_PRICE: 1,
   GAS_LIMIT: 10000,
+  MAX_FEE: 100000, // todo: check this value, required more low value
 };
 
 const unEditable = ['ENCODER'];

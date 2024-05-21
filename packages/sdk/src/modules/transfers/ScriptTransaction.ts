@@ -15,21 +15,20 @@ import { BakoSafe } from '../../../configurables';
 import { transactionScript } from './helpers';
 
 interface BakoSafeScriptTransactionConstructor {
-  gasPrice: BN;
   gasLimit: BN;
+  maxFee: BN;
   script: BytesLike;
 }
 
 export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
   constructor(
-    { script, gasLimit, gasPrice }: BakoSafeScriptTransactionConstructor = {
+    { script, gasLimit }: BakoSafeScriptTransactionConstructor = {
       script: transactionScript,
-      gasPrice: bn(BakoSafe.getGasConfig('GAS_PRICE')),
       gasLimit: bn(BakoSafe.getGasConfig('GAS_LIMIT')),
+      maxFee: bn(BakoSafe.getGasConfig('MAX_FEE')),
     },
   ) {
     super({
-      gasPrice,
       gasLimit,
       script,
     });
@@ -49,7 +48,7 @@ export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
       );
     });
 
-    //todo: invalidate used coins [make using BakoSafe api assets?]
+    //todo: invalidate used coins [make using BakoSafe api assets?] UTXO PROBLEM
     this.addResources(_coins);
 
     this.inputs?.forEach((input) => {
@@ -58,7 +57,6 @@ export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
         hexlify(input.owner) === vault.address.toB256()
       ) {
         input.predicate = arrayify(vault.bytes);
-        //input.predicateData = arrayify();
       }
     });
 
