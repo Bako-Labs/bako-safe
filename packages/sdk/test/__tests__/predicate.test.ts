@@ -298,14 +298,8 @@ describe('[PREDICATES]', () => {
         auth['USER_1'].BakoSafeAuth,
         5,
       );
-      const tx_1 = DEFAULT_TRANSACTION_PAYLOAD(
-        accounts['STORE'].address,
-        provider,
-      );
-      const tx_2 = DEFAULT_TRANSACTION_PAYLOAD(
-        accounts['STORE'].address,
-        provider,
-      );
+      const tx_1 = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
+      const tx_2 = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
       const transaction = await vault.BakoSafeIncludeTransaction(tx_1);
       await vault.BakoSafeIncludeTransaction(tx_2);
