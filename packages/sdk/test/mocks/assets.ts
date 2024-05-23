@@ -21,5 +21,4 @@ export const DEFAULT_BALANCE_VALUE = bn.parseUnits(
 );
 export const DEFAULT_BALANCES = [
   { assetId: assets['ETH'], amount: DEFAULT_BALANCE_VALUE },
-  { assetId: assets['sETH'], amount: DEFAULT_BALANCE_VALUE },
 ];

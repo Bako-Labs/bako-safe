@@ -72,6 +72,7 @@ export class Vault extends Predicate<[]> implements IVault {
     super({
       bytecode: arrayify(_bin),
       provider,
+      abi: _abi,
       configurableConstants: _configurable,
     });
 

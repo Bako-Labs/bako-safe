@@ -1,3 +1,4 @@
+import { Provider } from 'fuels';
 import { IFormatTransfer } from '../../src/modules';
 import { DEFAULT_BALANCES } from './assets';
 import { v4 as uuidv4 } from 'uuid';

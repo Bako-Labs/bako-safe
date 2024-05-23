@@ -12,7 +12,7 @@ describe('[TRANSFERS]', () => {
 
   //example to sett up the provider
   BakoSafe.setProviders({
-    CHAIN_URL: 'http://localhost:4000/graphql',
+    CHAIN_URL: 'http://localhost:4000/v1/graphql',
     SERVER_URL: 'http://localhost:3333',
     CLIENT_URL: 'http://localhost:5174',
   });
@@ -39,7 +39,7 @@ describe('[TRANSFERS]', () => {
         signers,
         provider,
         auth['USER_1'].BakoSafeAuth,
-        2,
+        100,
       );
       const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
@@ -93,7 +93,7 @@ describe('[TRANSFERS]', () => {
         signers,
         provider,
         auth['USER_1'].BakoSafeAuth,
-        2,
+        100,
       );
       const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
@@ -144,7 +144,7 @@ describe('[TRANSFERS]', () => {
         signers,
         provider,
         auth['USER_1'].BakoSafeAuth,
-        2,
+        100,
       );
       const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
@@ -185,7 +185,7 @@ describe('[TRANSFERS]', () => {
   });
 
   test('Sent a transaction without BakoSafeAuth', async () => {
-    const vault = await newVault(signers, provider, undefined, 5);
+    const vault = await newVault(signers, provider, undefined, 10);
     const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
     const transaction = await vault.BakoSafeIncludeTransaction(tx);

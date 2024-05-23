@@ -46,19 +46,29 @@ export const formatTransaction = async ({
   assets,
   witnesses,
 }: IFormatTransfer & { vault: Vault }) => {
-  const outputs = await Asset.assetsGroupByTo(assets);
-  const coins = await Asset.assetsGroupById(assets);
-  const transactionCoins = await Asset.addTransactionFee(
-    coins,
-    bn(BakoSafe.getGasConfig('MAX_FEE')),
-  );
+  try {
+    const outputs = await Asset.assetsGroupByTo(assets);
+    const coins = await Asset.assetsGroupById(assets);
 
-  const _coins = await vault.getResourcesToSpend(transactionCoins);
+    const transactionCoins = await Asset.addTransactionFee(coins, bn(100));
 
-  const script_t = new BakoSafeScriptTransaction();
-  await script_t.instanceTransaction(_coins, vault, outputs, witnesses);
+    const _coins = await vault.getResourcesToSpend(transactionCoins);
 
-  return script_t;
+    const script_t = new BakoSafeScriptTransaction();
+    await script_t.instanceTransaction(_coins, vault, outputs, witnesses);
+
+    return script_t;
+  } catch (e) {
+    const coins = await Asset.assetsGroupById(assets);
+    // console.log('[SDK][Format tx]', {
+    //   balance: (await vault.getBalance()).format(),
+    //   assets,
+    //   request: (
+    //     await Asset.addTransactionFee(coins, bn(10))
+    //   )[0].amount.format(),
+    // });
+    throw new Error(e);
+  }
 };
 
 export const isNewTransaction = async ({
@@ -254,7 +264,10 @@ export const identifyCreateTransactionParams = async (
     const { data: oldData, is: isOld } = await isOldTransaction(param);
     const { data: newData, is: isNew } = await isNewTransaction(param);
     const { data: sData, is: isScript } = await isNewTransactionByScript(param);
-
+    // console.log({
+    //   isOld,
+    //   isNew,
+    // });
     if (isOld && !!oldData) {
       return {
         type: ECreationTransactiontype.IS_OLD,
@@ -271,6 +284,7 @@ export const identifyCreateTransactionParams = async (
       payload: sData!,
     };
   } catch (e: any) {
+    // console.log('[SDK][Criate tx]', e);
     throw new Error(e.message);
   }
 };

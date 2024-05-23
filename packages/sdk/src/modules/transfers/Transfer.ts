@@ -122,16 +122,15 @@ export class Transfer {
    */
   public async send(): Promise<ITransactionResume | TransactionResponse> {
     if (!this.service) {
-      const tx: TransactionRequest = transactionRequestify(
-        this.BakoSafeScript!,
+      this.transactionRequest.witnesses = this.witnesses;
+      await this.vault.provider.estimatePredicates(this.transactionRequest);
+      const encodedTransaction = hexlify(
+        this.transactionRequest.toTransactionBytes(),
       );
-      tx.witnesses = this.witnesses;
-
-      const tx_est = await this.vault.provider.estimatePredicates(tx);
-      const encodedTransaction = hexlify(tx_est.toTransactionBytes());
       const {
         submit: { id: transactionId },
       } = await this.vault.provider.operations.submit({ encodedTransaction });
+
       return new TransactionResponse(transactionId, this.vault.provider);
     }
 
