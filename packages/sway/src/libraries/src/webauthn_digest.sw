@@ -1,10 +1,11 @@
 
 library;
 
-use std::{b512::B512};
-use std::hash::*;
-use std::bytes::Bytes;
-
+use std::{
+  b512::B512,
+  bytes::Bytes,
+  hash::*,
+};
 
 pub struct WebAuthn {
   signature: B512,
@@ -16,10 +17,22 @@ pub struct WebAuthn {
   auth_data: raw_slice,
 }
 
+/// Get the WebAuthn digest
+
+///     - params:
+///         - webauthn: the WebAuthn struct
+///         - sig_ptr: the pointer to the signature
+///         - tx_id: the transaction id
+
+///     - process:
+///         - recreate the body of signed message
+
+///     - returns: the digest(message) and the signature
 pub fn get_webauthn_digest(webauthn: WebAuthn, sig_ptr: raw_ptr, tx_id: Bytes) -> (b256, B512) {
   // enum + signature + prefix_size + suffix_size + auth_data_size
   let offset_data = __size_of::<u64>() + __size_of::<B512>() + __size_of::<u64>() + __size_of::<u64>() + __size_of::<u64>();
   let offset_data_ptr = sig_ptr.add::<u8>(offset_data);
+
   // Get prefix bytes
   let prefix_buf = raw_slice::from_parts::<u8>(offset_data_ptr, webauthn.prefix_size);
   let prefix_bytes = Bytes::from(prefix_buf);
@@ -41,6 +54,7 @@ pub fn get_webauthn_digest(webauthn: WebAuthn, sig_ptr: raw_ptr, tx_id: Bytes) -
   let mut message = Bytes::new();
   message.append(auth_data_bytes);
   message.append(Bytes::from(client_hash));
-  // Create digest return
+
+  
   return (sha256(message), webauthn.signature);
 }

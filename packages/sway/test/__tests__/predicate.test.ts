@@ -18,8 +18,12 @@ import {
 } from 'fuels';
 
 import { PredicateAbi__factory } from '../../../sdk/src/sway/predicates';
+import { ScriptAbi__factory } from '../../../sdk/src/sway/scripts/';
 
 import { PRIVATE_KEY, GAS_LIMIT } from '../constants';
+import { accounts } from '../../../sdk/test/mocks';
+import { signin } from '../../../sdk/test/utils';
+
 const ERROR_DUPLICATED_WITNESSES =
   'FuelError: Invalid transaction data: PredicateVerificationFailed(Panic(PredicateReturnedNonOne))';
 
@@ -71,8 +75,7 @@ async function signTransaction(
   provider: Provider,
 ) {
   const txHash = tx.getTransactionId(provider.getChainId());
-  const hash = txHash.slice(2).toLowerCase();
-  const signature = await wallet.signMessage(hash);
+  const signature = await wallet.signMessage(txHash);
 
   return signature;
 }
@@ -83,7 +86,7 @@ async function createTransaction(predicate: Predicate<InputValue[]>) {
     const provider = predicate.provider;
 
     tx.gasLimit = bn(GAS_LIMIT);
-    tx.maxFee = bn(100000);
+    tx.maxFee = bn(100000000);
 
     const coins = await predicate.getResourcesToSpend([
       {
@@ -102,6 +105,7 @@ async function createTransaction(predicate: Predicate<InputValue[]>) {
       }
     });
 
+    tx.script = arrayify(ScriptAbi__factory.bin);
     return tx;
   } catch (e) {
     throw new Error(e);
@@ -118,19 +122,15 @@ describe('[SWAY_PREDICATE]', () => {
   });
 
   test('Send transfer by predicate', async () => {
-    const wallet = Wallet.generate({
-      provider,
-    });
-
     const predicate = PredicateAbi__factory.createInstance(
       provider,
       undefined,
       {
-        SIGNATURES_COUNT: 1,
+        SIGNATURES_COUNT: 0,
         SIGNERS: [
-          wallet.address.toB256(),
-          ZeroBytes32,
-          ZeroBytes32,
+          accounts['USER_1'].account,
+          accounts['USER_3'].account,
+          accounts['USER_4'].account,
           ZeroBytes32,
           ZeroBytes32,
           ZeroBytes32,
@@ -145,11 +145,16 @@ describe('[SWAY_PREDICATE]', () => {
     await seedAccount(predicate.address, bn.parseUnits('0.1'), provider);
 
     const tx = await createTransaction(predicate);
+    const id = tx.getTransactionId(await provider.getChainId()).slice(2);
 
     const response = await sendTransaction(provider, tx, [
-      await signTransaction(wallet, tx, provider),
+      await signin(id, 'USER_1', undefined),
+      await signin(id, 'USER_3', undefined),
+      await signin(id, 'USER_4', undefined),
     ]);
     const result = await response.waitForResult();
+
+    //console.log(result.receipts);
 
     expect(result.status).toBe('success');
   });

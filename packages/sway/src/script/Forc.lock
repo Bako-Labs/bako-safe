@@ -1,0 +1,21 @@
+[[package]]
+name = "core"
+source = "path+from-root-03A6E3005278C326"
+
+[[package]]
+name = "libraries"
+source = "path+from-root-1684ABE57CE2FE3E"
+dependencies = ["std"]
+
+[[package]]
+name = "script"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "std"
+source = "git+https://github.com/fuellabs/sway?tag=v0.56.0#b495d0df6956524fd68dab7e062df04d2e581ac3"
+dependencies = ["core"]
