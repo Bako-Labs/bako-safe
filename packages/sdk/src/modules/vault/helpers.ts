@@ -85,12 +85,12 @@ export const instanceByNewUtil = async (
   );
   const hasVersion = !!params.version;
   const { code, abi, bytes } = hasVersion
-    ? await Vault.BakoSafeGetPredicateVersionByCode(params.version!)
+    ? await Vault.BakoSafeGetVersionByCode(params.version!)
         .then((data) => data)
         .catch(() => {
           throw new Error('Invalid predicate version');
         })
-    : await Vault.BakoSafeGetCurrentPredicateVersion();
+    : await Vault.BakoSafeGetCurrentVersion();
   return {
     ...params,
     api,

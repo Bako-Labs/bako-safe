@@ -1,6 +1,6 @@
 import { Provider, getRandomB256 } from 'fuels';
 import { signin, newVault, IUserAuth, authService } from '../utils';
-import { IConfVault, IPayloadVault, Vault } from '../../src/modules';
+import { IPayloadVault, Vault } from '../../src/modules';
 import { BakoSafe } from '../../configurables';
 import {
   DEFAULT_BALANCES,
@@ -27,8 +27,8 @@ describe('[PREDICATES]', () => {
       accounts['USER_2'].address,
       accounts['USER_3'].address,
     ];
-    currentVersion = await Vault.BakoSafeGetCurrentPredicateVersion();
-    const { data: versions } = await Vault.BakoSafeGetPredicateVersions();
+    currentVersion = await Vault.BakoSafeGetCurrentVersion();
+    const { data: versions } = await Vault.BakoSafeGetVersions();
     oldVersions = versions.filter(
       (version) => version.code !== currentVersion.code,
     );
@@ -351,9 +351,7 @@ describe('[PREDICATES]', () => {
   });
 
   test('Find current predicate version by code', async () => {
-    const version = await Vault.BakoSafeGetPredicateVersionByCode(
-      currentVersion.code,
-    );
+    const version = await Vault.BakoSafeGetVersionByCode(currentVersion.code);
 
     expect(version).toHaveProperty('id', currentVersion.id);
     expect(version).toHaveProperty('name', currentVersion.name);
@@ -367,7 +365,7 @@ describe('[PREDICATES]', () => {
   test('List predicate versions with pagination', async () => {
     const page = 1;
     const perPage = 8;
-    const paginatedVersions = await Vault.BakoSafeGetPredicateVersions({
+    const paginatedVersions = await Vault.BakoSafeGetVersions({
       page,
       perPage,
     });
