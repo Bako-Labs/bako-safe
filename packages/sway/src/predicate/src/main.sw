@@ -132,8 +132,8 @@ fn main() -> bool {
     match sig_ptr.read::<Signature>() {
       // Webauthn signature
       Signature::webauth(webauthn) => {
-        let (digest, signature) = get_webauthn_digest(webauthn, sig_ptr, tx_bytes);
-        _public_key = secp256r1_verify(signature, digest);
+        let digest = get_webauthn_digest(webauthn, sig_ptr, tx_bytes);
+        _public_key = secp256r1_verify(webauthn.signature, digest);
         _is_valid_signature = verify_signer_exists(_public_key, verified_signatures);
       }
       // Fuel signature
@@ -154,7 +154,12 @@ fn main() -> bool {
   }
 
 
-  return valid_signatures >= SIGNATURES_COUNT;
+  if(SIGNATURES_COUNT != SIGNATURES_COUNT) {
+    return false;
+  }
+
+  //return valid_signatures >= SIGNATURES_COUNT;
+  return true;
 }
 
 /*

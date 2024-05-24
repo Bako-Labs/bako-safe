@@ -28,7 +28,7 @@ pub struct WebAuthn {
 ///         - recreate the body of signed message
 
 ///     - returns: the digest(message) and the signature
-pub fn get_webauthn_digest(webauthn: WebAuthn, sig_ptr: raw_ptr, tx_id: Bytes) -> (b256, B512) {
+pub fn get_webauthn_digest(webauthn: WebAuthn, sig_ptr: raw_ptr, tx_id: Bytes) -> b256 {
   // enum + signature + prefix_size + suffix_size + auth_data_size
   let offset_data = __size_of::<u64>() + __size_of::<B512>() + __size_of::<u64>() + __size_of::<u64>() + __size_of::<u64>();
   let offset_data_ptr = sig_ptr.add::<u8>(offset_data);
@@ -56,5 +56,5 @@ pub fn get_webauthn_digest(webauthn: WebAuthn, sig_ptr: raw_ptr, tx_id: Bytes) -
   message.append(Bytes::from(client_hash));
 
   
-  return (sha256(message), webauthn.signature);
+  return sha256(message);
 }

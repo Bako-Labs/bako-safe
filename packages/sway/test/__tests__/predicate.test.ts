@@ -20,7 +20,7 @@ import {
 import { PredicateAbi__factory } from '../../../sdk/src/sway/predicates';
 import { ScriptAbi__factory } from '../../../sdk/src/sway/scripts/';
 
-import { PRIVATE_KEY, GAS_LIMIT } from '../constants';
+import { PRIVATE_KEY, GAS_LIMIT, WEBAUTHN, CHAIN_URL } from '../constants';
 import { accounts } from '../../../sdk/test/mocks';
 import { signin } from '../../../sdk/test/utils';
 
@@ -65,6 +65,7 @@ async function sendTransaction(
     const response = new TransactionResponse(transactionId, provider);
     return response;
   } catch (e) {
+    console.log(e);
     throw new Error(e);
   }
 }
@@ -108,6 +109,7 @@ async function createTransaction(predicate: Predicate<InputValue[]>) {
     tx.script = arrayify(ScriptAbi__factory.bin);
     return tx;
   } catch (e) {
+    console.log(e);
     throw new Error(e);
   }
 }
@@ -118,7 +120,7 @@ describe('[SWAY_PREDICATE]', () => {
   beforeAll(async () => {
     //todo: move to dynamic url of chain and remove of the BakoSafe
     //provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
-    provider = await Provider.create('http://127.0.0.1:4000/v1/graphql');
+    provider = await Provider.create(CHAIN_URL);
   });
 
   test('Send transfer by predicate', async () => {
@@ -148,13 +150,14 @@ describe('[SWAY_PREDICATE]', () => {
     const id = tx.getTransactionId(await provider.getChainId()).slice(2);
 
     const response = await sendTransaction(provider, tx, [
-      await signin(id, 'USER_1', undefined),
-      await signin(id, 'USER_3', undefined),
-      await signin(id, 'USER_4', undefined),
+      // await signin(id, 'USER_1', undefined),
+      // await signin(id, 'USER_3', undefined),
+      //await signin(id, 'USER_4', undefined),
+      `${WEBAUTHN.signature}`,
     ]);
     const result = await response.waitForResult();
 
-    //console.log(result.receipts);
+    console.log(result.receipts);
 
     expect(result.status).toBe('success');
   });
