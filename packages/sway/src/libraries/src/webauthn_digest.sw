@@ -8,7 +8,7 @@ use std::{
 };
 
 pub struct WebAuthn {
-  signature: B512,
+  pub signature: B512,
   prefix_size: u64,
   suffix_size: u64,
   auth_data_size: u64,

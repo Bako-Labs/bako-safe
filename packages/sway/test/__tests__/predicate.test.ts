@@ -22,7 +22,6 @@ import { ScriptAbi__factory } from '../../../sdk/src/sway/scripts/';
 
 import { PRIVATE_KEY, GAS_LIMIT, WEBAUTHN, CHAIN_URL } from '../constants';
 import { accounts } from '../../../sdk/test/mocks';
-import { signin } from '../../../sdk/test/utils';
 
 const ERROR_DUPLICATED_WITNESSES =
   'FuelError: Invalid transaction data: PredicateVerificationFailed(Panic(PredicateReturnedNonOne))';
@@ -153,7 +152,7 @@ describe('[SWAY_PREDICATE]', () => {
       // await signin(id, 'USER_1', undefined),
       // await signin(id, 'USER_3', undefined),
       //await signin(id, 'USER_4', undefined),
-      `${WEBAUTHN.signature}`,
+      WEBAUTHN.signature,
     ]);
     const result = await response.waitForResult();
 

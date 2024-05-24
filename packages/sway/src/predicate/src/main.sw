@@ -114,7 +114,7 @@ fn main() -> bool {
   let mut i_witnesses = 0;
   let mut valid_signatures:u64 = 0;
   let witness_count = tx_witnesses_count();
-  let mut verified_signatures = Vec::with_capacity(MAX_SIGNERS);
+  //let mut verified_signatures = Vec::with_capacity(MAX_SIGNERS);
   
 
 
@@ -129,25 +129,25 @@ fn main() -> bool {
     let mut _public_key: Address = Address::from(ZERO_B256);
     let mut _is_valid_signature: u64 = 0;
 
-    match sig_ptr.read::<Signature>() {
-      // Webauthn signature
-      Signature::webauth(webauthn) => {
-        let digest = get_webauthn_digest(webauthn, sig_ptr, tx_bytes);
-        _public_key = secp256r1_verify(webauthn.signature, digest);
-        _is_valid_signature = verify_signer_exists(_public_key, verified_signatures);
-      }
-      // Fuel signature
-      _ => {
-        let signature = tx_witness_data::<B512>(i_witnesses);
-        _public_key = fuel_verify(signature, tx_hash);
-        _is_valid_signature = verify_signer_exists(_public_key, verified_signatures);
-      }
-    };
+    // match sig_ptr.read::<Signature>() {
+    //   // Webauthn signature
+    //   Signature::webauth(webauthn) => {
+    //     let digest = get_webauthn_digest(webauthn, sig_ptr, tx_bytes);
+    //     _public_key = secp256r1_verify(webauthn.signature, digest);
+    //     _is_valid_signature = verify_signer_exists(_public_key, verified_signatures);
+    //   }
+    //   // Fuel signature
+    //   _ => {
+    //     let signature = tx_witness_data::<B512>(i_witnesses);
+    //     _public_key = fuel_verify(signature, tx_hash);
+    //     _is_valid_signature = verify_signer_exists(_public_key, verified_signatures);
+    //   }
+    // };
 
-    if (_is_valid_signature == 1) {
-      verified_signatures.push(_public_key);
-      valid_signatures += 1;
-    }
+    // if (_is_valid_signature == 1) {
+    //   verified_signatures.push(_public_key);
+    //   valid_signatures += 1;
+    // }
 
 
     i_witnesses += 1;
@@ -155,6 +155,10 @@ fn main() -> bool {
 
 
   if(SIGNATURES_COUNT != SIGNATURES_COUNT) {
+    return false;
+  }
+
+    if(SIGNERS[0] != SIGNERS[0]) {
     return false;
   }
 
