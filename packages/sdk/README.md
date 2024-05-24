@@ -55,11 +55,15 @@ import {
 // if you run a local node of FuelVm use http://localhost:4000/graphql
 const fuelProvider = new Provider('https://beta-5.fuel.network/graphql');
 
-//
+// find the configurables needed to create a vault
+const { abi } = await Vault.BakoSafeGetCurrentVersion()
+console.log(JSON.parse(abi).configurables)
+
 const signers = [Address.fromRandom().toString(), Address.fromRandom().toString()];
 
 // make your vault
 const VaultPayload: IPayloadVault = {
+    // configurable properties are defined according to the ABI configurables of the predicate contract version
     configurable: {
         SIGNATURES_COUNT: 1, // required signatures
         SIGNERS: signers, // witnesses account
