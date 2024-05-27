@@ -11,7 +11,9 @@ use std::{
     ec_recover_address_r1
   },
 };
-use ::webauthn_digest::WebAuthn;
+use ::webauthn_digest::{
+  WebAuthn,
+};
 
 pub const INVALID_ADDRESS = 0x0000000000000000000000000000000000000000000000000000000000000001;
 
@@ -26,8 +28,8 @@ pub enum Signature {
 ///         - tx_hash: the hash of the transaction
 
 ///     - returns: the address of the signer
-pub fn fuel_verify(signature: B512, tx_hash: b256) -> Address {
-  if let Result::Ok(pub_key_sig) = ec_recover_address(signature, tx_hash) {
+pub fn fuel_verify(signature: B512, tx_bytes: b256) -> Address {
+  if let Result::Ok(pub_key_sig) = ec_recover_address(signature, tx_bytes) {
       return pub_key_sig;
   }
 
