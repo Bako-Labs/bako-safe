@@ -185,7 +185,7 @@ describe('[TRANSFERS]', () => {
   });
 
   test('Sent a transaction without BakoSafeAuth', async () => {
-    const vault = await newVault(signers, provider, undefined, 10);
+    const vault = await newVault(signers, provider, undefined, 100);
     const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
     const transaction = await vault.BakoSafeIncludeTransaction(tx);

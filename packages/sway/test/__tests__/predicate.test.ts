@@ -20,8 +20,15 @@ import {
 import { PredicateAbi__factory } from '../../../sdk/src/sway/predicates';
 import { ScriptAbi__factory } from '../../../sdk/src/sway/scripts/';
 
-import { PRIVATE_KEY, GAS_LIMIT, WEBAUTHN, CHAIN_URL } from '../constants';
+import {
+  PRIVATE_KEY,
+  GAS_LIMIT,
+  MAX_FEE,
+  CHAIN_URL,
+  WEBAUTHN,
+} from '../constants';
 import { accounts } from '../../../sdk/test/mocks';
+import { signin } from '../../../sdk/test/utils/signin';
 
 const ERROR_DUPLICATED_WITNESSES =
   'FuelError: Invalid transaction data: PredicateVerificationFailed(Panic(PredicateReturnedNonOne))';
@@ -86,7 +93,7 @@ async function createTransaction(predicate: Predicate<InputValue[]>) {
     const provider = predicate.provider;
 
     tx.gasLimit = bn(GAS_LIMIT);
-    tx.maxFee = bn(100000000);
+    tx.maxFee = bn(MAX_FEE);
 
     const coins = await predicate.getResourcesToSpend([
       {
@@ -105,7 +112,6 @@ async function createTransaction(predicate: Predicate<InputValue[]>) {
       }
     });
 
-    tx.script = arrayify(ScriptAbi__factory.bin);
     return tx;
   } catch (e) {
     console.log(e);
@@ -127,7 +133,7 @@ describe('[SWAY_PREDICATE]', () => {
       provider,
       undefined,
       {
-        SIGNATURES_COUNT: 0,
+        SIGNATURES_COUNT: 3,
         SIGNERS: [
           accounts['USER_1'].account,
           accounts['USER_3'].account,
@@ -146,13 +152,12 @@ describe('[SWAY_PREDICATE]', () => {
     await seedAccount(predicate.address, bn.parseUnits('0.1'), provider);
 
     const tx = await createTransaction(predicate);
-    const id = tx.getTransactionId(await provider.getChainId()).slice(2);
+    const id = tx.getTransactionId(provider.getChainId()).slice(2);
 
     const response = await sendTransaction(provider, tx, [
-      // await signin(id, 'USER_1', undefined),
-      // await signin(id, 'USER_3', undefined),
-      //await signin(id, 'USER_4', undefined),
-      WEBAUTHN.signature,
+      await signin(id, 'USER_1', undefined),
+      await signin(id, 'USER_3', undefined),
+      await signin(id, 'USER_4', undefined),
     ]);
     const result = await response.waitForResult();
 
@@ -235,5 +240,55 @@ describe('[SWAY_PREDICATE]', () => {
     ]).catch((e) => {
       expect(e.message).toBe(ERROR_DUPLICATED_WITNESSES);
     });
+  });
+
+  // this test is an adptation, becouse we dont sign messages on node using webauthn
+  // add, to validate this, whe have a constants with values signed by webauthn
+  // and this transaction, recives a script with this constants and check
+  test('Send transfer by webauthn', async () => {
+    const wallet = Wallet.generate({
+      provider,
+    });
+
+    const predicate = PredicateAbi__factory.createInstance(
+      provider,
+      undefined,
+      {
+        SIGNATURES_COUNT: 1,
+        SIGNERS: [
+          accounts['USER_1'].account,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+          ZeroBytes32,
+        ],
+        HASH_PREDICATE: Address.fromRandom().toB256(),
+      },
+    );
+
+    await seedAccount(predicate.address, bn.parseUnits('0.1'), provider);
+
+    const tx = await createTransaction(predicate);
+
+    tx.script = arrayify(ScriptAbi__factory.bin);
+
+    const id = tx.getTransactionId(provider.getChainId()).slice(2);
+
+    const result = await sendTransaction(provider, tx, [
+      await signin(id, 'USER_1', undefined),
+      WEBAUTHN.signature,
+    ]);
+
+    const res = await result.waitForResult();
+    expect(res.status).toBe('success');
+
+    // verify if on the script, recover of static signature is equal to the static address
+    //@ts-ignore
+    expect(res.receipts[0]['data']).toBe('0x01');
   });
 });

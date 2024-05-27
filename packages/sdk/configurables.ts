@@ -6,8 +6,8 @@ export const defaultConfig = {
 };
 
 export const gasConfig = {
-  GAS_LIMIT: 10000,
-  MAX_FEE: 100000, // todo: check this value, required more low value
+  GAS_LIMIT: 10000000,
+  MAX_FEE: 1000000, // todo: check this value, required more low value
 };
 
 const unEditable = ['ENCODER'];
