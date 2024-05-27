@@ -19,7 +19,6 @@ import {
 } from './types';
 import { Vault } from '../vault/Vault';
 import { Asset } from '../../utils/assets';
-import { BakoSafe } from '../../../configurables';
 import { BakoSafeScriptTransaction } from './ScriptTransaction';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -50,23 +49,23 @@ export const formatTransaction = async ({
     const outputs = await Asset.assetsGroupByTo(assets);
     const coins = await Asset.assetsGroupById(assets);
 
-    const transactionCoins = await Asset.addTransactionFee(coins, bn(100));
+    const transactionCoins = await Asset.addTransactionFee(
+      coins,
+      //todo: verify this values
+      //multiply(fee_config.maxGasPerPredicate, fee_config.gasPriceFactor),
+      bn(100),
+    );
 
     const _coins = await vault.getResourcesToSpend(transactionCoins);
 
     const script_t = new BakoSafeScriptTransaction();
     await script_t.instanceTransaction(_coins, vault, outputs, witnesses);
+    //script_t.maxFee = fee_config.maxGasPerPredicate.mul(fee_config.gasPerByte);
+    //todo: comment this line to update npm package
+    // script_t.script = arrayify(ScriptAbi__factory.bin);
 
     return script_t;
-  } catch (e) {
-    const coins = await Asset.assetsGroupById(assets);
-    // console.log('[SDK][Format tx]', {
-    //   balance: (await vault.getBalance()).format(),
-    //   assets,
-    //   request: (
-    //     await Asset.addTransactionFee(coins, bn(10))
-    //   )[0].amount.format(),
-    // });
+  } catch (e: any) {
     throw new Error(e);
   }
 };

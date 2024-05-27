@@ -14,6 +14,9 @@ export const VALUES_DEFAULT_TO_MUL = {
   5: 5,
   10: 10,
   100: 100,
+  1000: 1000,
+  10000: 10000,
+  5000000: 5000000,
 };
 
 export const DEFAULT_BALANCE_VALUE = bn.parseUnits(
