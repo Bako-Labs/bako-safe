@@ -65,23 +65,11 @@ export class Transfer {
    */
   public static async instance(param: TransferFactory): Promise<Transfer> {
     const item = await identifyCreateTransactionParams(param);
-
-    switch (item.type) {
-      case ECreationTransactiontype.IS_OLD: {
-        const { payload } = item;
-        return new Transfer(payload);
-      }
-      case ECreationTransactiontype.IS_NEW: {
-        const { payload } = item;
-        return new Transfer(payload);
-      }
-      case ECreationTransactiontype.IS_SCRIPT: {
-        const { payload } = item;
-        return new Transfer(payload);
-      }
-      default:
-        throw new Error('Invalid param type to create a transfer');
+    const isValidType = item.type in ECreationTransactiontype;
+    if (!isValidType) {
+      throw new Error('Invalid param type to create a transfer');
     }
+    return new Transfer(item.payload);
   }
 
   /**
