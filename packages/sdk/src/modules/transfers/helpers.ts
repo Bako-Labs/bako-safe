@@ -19,9 +19,9 @@ import {
 } from './types';
 import { Vault } from '../vault/Vault';
 import { Asset } from '../../utils/assets';
-import { BakoSafe } from '../../../configurables';
 import { BakoSafeScriptTransaction } from './ScriptTransaction';
 import { v4 as uuidv4 } from 'uuid';
+import { BakoSafe } from '../../../configurables';
 
 export const transactionScript = arrayify(
   '0x9000000447000000000000000000003c5dfcc00110fff3001a485000910000201a440000724000202849140072400020340004902400000047000000',
@@ -46,19 +46,55 @@ export const formatTransaction = async ({
   assets,
   witnesses,
 }: IFormatTransfer & { vault: Vault }) => {
-  const outputs = await Asset.assetsGroupByTo(assets);
-  const coins = await Asset.assetsGroupById(assets);
-  const transactionCoins = await Asset.addTransactionFee(
-    coins,
-    bn(BakoSafe.getGasConfig('GAS_PRICE')),
-  );
+  try {
+    const outputs = await Asset.assetsGroupByTo(assets);
+    const coins = await Asset.assetsGroupById(assets);
 
-  const _coins = await vault.getResourcesToSpend(transactionCoins);
+    const transactionCoins = await Asset.addTransactionFee(
+      coins,
+      //todo: verify this values
+      //multiply(fee_config.maxGasPerPredicate, fee_config.gasPriceFactor),
+      bn(BakoSafe.getGasConfig('BASE_FEE')),
+      vault.provider,
+    );
 
-  const script_t = new BakoSafeScriptTransaction();
-  await script_t.instanceTransaction(_coins, vault, outputs, witnesses);
+    const _coins = await vault.getResourcesToSpend(transactionCoins);
 
-  return script_t;
+    const script_t = new BakoSafeScriptTransaction();
+    await script_t.instanceTransaction(_coins, vault, outputs, witnesses);
+    //script_t.maxFee = fee_config.maxGasPerPredicate.mul(fee_config.gasPerByte);
+    //todo: comment this line to update npm package
+    // script_t.script = arrayify(ScriptAbi__factory.bin);
+
+    return script_t;
+  } catch (e: any) {
+    // const coins = await Asset.assetsGroupById(assets);
+    // // const fee_config = vault.provider.getGasConfig();
+    // // const transactionCoins = await Asset.addTransactionFee(
+    // //   coins,
+    // //   //todo: verify this values
+    // //   //multiply(fee_config.maxGasPerPredicate, fee_config.gasPriceFactor),
+    // //   //bn.parseUnits(BakoSafe.getGasConfig('BASE_FEE').toString()),
+    // //   bn(BakoSafe.getGasConfig('BASE_FEE').toString()),
+    // //   vault.provider,
+    // // );
+    // // console.log({ e });
+
+    // // const r = fee_config.maxGasPerPredicate.mul(fee_config.gasPriceFactor);
+
+    // // console.log({
+    // //   coins: coins,
+    // //   transactionCoins: transactionCoins.map((coin) => coin.amount.format()),
+    // //   balance: (await vault.getBalance()).format(),
+    // //   coast: r.format(),
+    // //   a: fee_config.maxGasPerPredicate.format(),
+    // //   b: fee_config.gasPriceFactor.format(),
+    // //   last_price: (await vault.provider.getLatestGasPrice()).format(),
+    // //   r,
+    // // });
+
+    throw new Error(e);
+  }
 };
 
 export const isNewTransaction = async ({
@@ -254,7 +290,10 @@ export const identifyCreateTransactionParams = async (
     const { data: oldData, is: isOld } = await isOldTransaction(param);
     const { data: newData, is: isNew } = await isNewTransaction(param);
     const { data: sData, is: isScript } = await isNewTransactionByScript(param);
-
+    // console.log({
+    //   isOld,
+    //   isNew,
+    // });
     if (isOld && !!oldData) {
       return {
         type: ECreationTransactiontype.IS_OLD,
@@ -271,6 +310,7 @@ export const identifyCreateTransactionParams = async (
       payload: sData!,
     };
   } catch (e: any) {
+    // console.log('[SDK][Criate tx]', e);
     throw new Error(e.message);
   }
 };

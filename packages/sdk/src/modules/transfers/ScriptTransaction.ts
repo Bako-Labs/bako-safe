@@ -9,29 +9,30 @@ import {
   BN,
   BytesLike,
   bn,
+  Provider,
 } from 'fuels';
 import { IAssetGroupByTo } from '../../utils/assets';
 import { BakoSafe } from '../../../configurables';
 import { transactionScript } from './helpers';
 
 interface BakoSafeScriptTransactionConstructor {
-  gasPrice: BN;
   gasLimit: BN;
+  maxFee: BN;
   script: BytesLike;
 }
 
 export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
   constructor(
-    { script, gasLimit, gasPrice }: BakoSafeScriptTransactionConstructor = {
+    { script, gasLimit, maxFee }: BakoSafeScriptTransactionConstructor = {
       script: transactionScript,
-      gasPrice: bn(BakoSafe.getGasConfig('GAS_PRICE')),
       gasLimit: bn(BakoSafe.getGasConfig('GAS_LIMIT')),
+      maxFee: bn(BakoSafe.getGasConfig('MAX_FEE')),
     },
   ) {
     super({
-      gasPrice,
       gasLimit,
       script,
+      maxFee,
     });
   }
 
@@ -41,15 +42,13 @@ export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
     outputs: IAssetGroupByTo,
     witnesses?: string[],
   ) {
+    const provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
+    const assetId = await provider.getBaseAssetId();
     Object.entries(outputs).map(([, value]) => {
-      this.addCoinOutput(
-        Address.fromString(value.to),
-        value.amount,
-        value.assetId,
-      );
+      this.addCoinOutput(Address.fromString(value.to), value.amount, assetId);
     });
 
-    //todo: invalidate used coins [make using BakoSafe api assets?]
+    //todo: invalidate used coins [make using BakoSafe api assets?] UTXO PROBLEM
     this.addResources(_coins);
 
     this.inputs?.forEach((input) => {
@@ -58,7 +57,6 @@ export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
         hexlify(input.owner) === vault.address.toB256()
       ) {
         input.predicate = arrayify(vault.bytes);
-        //input.predicateData = arrayify();
       }
     });
 

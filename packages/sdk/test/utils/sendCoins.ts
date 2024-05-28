@@ -4,20 +4,20 @@ import { assets } from '../mocks';
 import { Vault } from '../../src/modules/vault/Vault';
 
 export const txParams = {
-  gasPrice: bn(BakoSafe.getGasConfig('GAS_PRICE')),
+  maxFee: bn(BakoSafe.getGasConfig('MAX_FEE')),
   gasLimit: bn(BakoSafe.getGasConfig('GAS_LIMIT')),
 };
 
 export const sendPredicateCoins = async (
   predicate: Vault,
   amount: BN,
-  asset: 'ETH' | 'DAI' | 'sETH',
+  asset: string,
   rootWallet: WalletUnlocked,
 ) => {
   const deposit = await rootWallet.transfer(
     predicate.address.toString(),
     amount,
-    assets[asset],
+    asset,
     txParams,
   );
 

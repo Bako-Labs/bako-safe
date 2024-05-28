@@ -1,13 +1,14 @@
 export const defaultConfig = {
-  CHAIN_URL: 'http://localhost:4000/graphql',
+  CHAIN_URL: 'http://localhost:4000/v1/graphql',
   SERVER_URL: 'http://localhost:3333/',
   CLIENT_URL: 'https://safe.bako.global',
   ENCODER: 'Fuel',
 };
 
 export const gasConfig = {
-  GAS_PRICE: 1,
-  GAS_LIMIT: 10000,
+  GAS_LIMIT: 10000000,
+  MAX_FEE: 1000000, // todo: check this value, required more low value
+  BASE_FEE: 0.0001, // todo: check this value, is a fee for transaction, with assetid equal of base assetid of chain -> equal of min mock value to transaction sends
 };
 
 const unEditable = ['ENCODER'];

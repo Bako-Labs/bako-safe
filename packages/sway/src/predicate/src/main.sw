@@ -1,60 +1,85 @@
-// TODO: we should render this code dynamicly in the future
-// To increate the size of signatures
 predicate;
 
-use std::{b512::B512, ecr::ec_recover_address, tx::tx_id, tx::tx_witness_data, tx::tx_witnesses_count, bytes::Bytes};
-use libraries::{ascii::b256_to_ascii_bytes, recover_signature::{fuel_verify, secp256r1_verify}, webauthn_digest::{get_webauthn_digest, WebAuthn} };
-use std::hash::{Hash, Hasher};
-use std::tx::GTF_WITNESS_DATA;
-use std::tx::GTF_SCRIPT_WITNESS_AT_INDEX;
+use std::{
+  b512::B512, 
+  bytes::Bytes,
+  constants::ZERO_B256,
+  hash::{
+    Hash, 
+    Hasher
+  },
+  tx::{
+    tx_id,
+    tx_witness_data, 
+    tx_witnesses_count,
+    GTF_WITNESS_DATA,
+    GTF_SCRIPT_WITNESS_AT_INDEX
+  },
+};
+use libraries::{
+  ascii::b256_to_ascii_bytes,
+  recover_signature::{
+      Signature,
+      fuel_verify, 
+      secp256r1_verify
+    },
+    webauthn_digest::{
+      WebAuthn,
+      get_webauthn_digest, 
+    } 
+};
 
 
-/*
-    Configurable params:
+// Configurables:
 
-    - SIGNERS: address of required signatures
-    - SIGNATURES_COUNT: required signatures to approval
-    - HASH_PREDICATE: hash of the predicate 
-*/
-
+//     Parameters:
+//         SIGNERS: list of public keys that are allowed to sign
+//             - SIGNERS different ZERO_B256 must be greater than zero
+//             - SIGNERS different ZERO_B256 must be greater than or equal to 10
+//             - SIGNERS different ZERO_B256 must be greater than or equal to SIGNATURES_COUNT
+//         SIGNATURES_COUNT: number of signatures required
+//             - SIGNATURES_COUNT different ZERO_B256
+//         HASH_PREDICATE: hash of the predicate
+//             - HASH_PREDICATE different ZERO_B256
 configurable {
     SIGNERS: [b256; 10] = [
-        0x0000000000000000000000000000000000000000000000000000000000000000,
-        0x0000000000000000000000000000000000000000000000000000000000000000,
-        0x0000000000000000000000000000000000000000000000000000000000000000,
-        0x0000000000000000000000000000000000000000000000000000000000000000,
-        0x0000000000000000000000000000000000000000000000000000000000000000,
-        0x0000000000000000000000000000000000000000000000000000000000000000,
-        0x0000000000000000000000000000000000000000000000000000000000000000,
-        0x0000000000000000000000000000000000000000000000000000000000000000,
-        0x0000000000000000000000000000000000000000000000000000000000000000,
-        0x0000000000000000000000000000000000000000000000000000000000000000,
+        ZERO_B256,
+        ZERO_B256,
+        ZERO_B256,
+        ZERO_B256,
+        ZERO_B256,
+        ZERO_B256,
+        ZERO_B256,
+        ZERO_B256,
+        ZERO_B256,
+        ZERO_B256,
     ],
     SIGNATURES_COUNT: u64 = 0,
-    HASH_PREDICATE: b256 = 0x0000000000000000000000000000000000000000000000000000000000000000
+    HASH_PREDICATE: b256 = ZERO_B256
 }
-
 const MAX_SIGNERS: u64 = 10;
 
-/*
-    Validate signature:
 
-    params: 
-        - INDEX: position of signature
-        - TX_HASH: hash of signature
-*/
+// Validate signature:
 
-fn verify_signer_exists(public_key: b256, verified_signatures: Vec::<b256>) -> u64 {
-    //verify if the public key is one of the signers
+//     params: 
+//         - public_key: public key to validate
+//         - verified_signatures: list of verified signatures
+//     process:
+//         - check if the public key is a signer
+//         - check if the public key is already verified
+//     return:
+//         - 1 if the public key is a signer and not already verified
+//         - 0 if the public key is not a signer or already verified
+fn verify_signer_exists(public_key: Address, verified_signatures: Vec::<Address>) -> u64 {
     let mut i_signer = 0;
     while i_signer <  MAX_SIGNERS {
-        if (public_key == SIGNERS[i_signer]) {
-            // verify if the public key is not already verified
+        if (public_key == Address::from(SIGNERS[i_signer])) {
             let mut i_verified = 0;
             while i_verified < verified_signatures.len() {
-                if (verified_signatures.get(i_verified).unwrap() == public_key) {
-                    return 0;
-                }
+                // if (verified_signatures.get(i_verified).unwrap() == public_key) {
+                //     return 0;
+                // }
                 i_verified += 1;
             }
             return 1;
@@ -64,64 +89,89 @@ fn verify_signer_exists(public_key: b256, verified_signatures: Vec::<b256>) -> u
     return 0;
 }
 
-enum Signature {
-  webauth: WebAuthn, // 0
-}
+// Validate signature:
 
-
-
+//     process:
+//         - get the transaction hash
+//         - get the number of witnesses
+//         - get the witnesses
+//         - recover the public key from the signature
+//         - check if the public key is a signer
+//         - check if the public key is already verified
+//         - increase the number of valid signatures
+//         - check if the number of valid signatures is greater than the required
+//     return:
+//         - 1 if the minimum number of signatures is reached
+//         - 0 if the minimum number of signatures is not reached 
 fn main() -> bool {
-  // Get the transaction hash on bytes format
   let tx_bytes = b256_to_ascii_bytes(tx_id());
-  let witness_count = tx_witnesses_count();
-  let mut verified_signatures = Vec::with_capacity(MAX_SIGNERS);
+
+  //specific to webauthn
+  let tx_webauthn = Bytes::from(tx_bytes);
+  //specific to fuel
+  let mut hasher = Hasher::new();
+  tx_bytes.hash(hasher);
+  let tx_fuel = hasher.sha256();
 
 
   let mut i_witnesses = 0;
   let mut valid_signatures:u64 = 0;
+  let witness_count = tx_witnesses_count();
+  let mut verified_signatures = Vec::with_capacity(MAX_SIGNERS);
+  
 
+
+  // redundant check, but it is necessary to avoid compiler errors
   if(HASH_PREDICATE != HASH_PREDICATE) {
       return false;
   }
 
-  //recover the public key from the signature
+
   while i_witnesses < witness_count {
+    //let sig_ptr:raw_ptr = __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA);
+    let mut _public_key: Address = Address::from(ZERO_B256);
+    let mut _is_valid_signature: u64 = 0;
 
-    // Get the signatures from the transaction
-    let sig_ptr:raw_ptr = __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA);
+    match tx_witness_data::<Signature>(i_witnesses) {
+        // Webauthn signature
+          Signature::webauth(webauthn) => {
+              let sig_ptr:raw_ptr = __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA);
+              let digest = get_webauthn_digest(webauthn, sig_ptr, tx_webauthn);
+              _public_key = secp256r1_verify(webauthn.signature, digest);
+              _is_valid_signature = verify_signer_exists(_public_key, verified_signatures);
+          }
+        // Fuel signature
+          _ => {
+            let signature = tx_witness_data::<B512>(i_witnesses);
+            _public_key = fuel_verify(signature, tx_fuel);
+            _is_valid_signature = verify_signer_exists(_public_key, verified_signatures);
+          }
+    };
 
+    if (_is_valid_signature == 1) {
+      verified_signatures.push(_public_key);
+      valid_signatures += 1;
+    }
 
-    // Varibles to store the public key and the result of the signature verification
-    let mut _public_key: b256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
-    let mut _is_valid_signature: u64 = 0; // 0 to false, 1 to true
-
-
-    // Recover the public key from the signature
-    match sig_ptr.read::<Signature>() {
-      // Webauthn signature
-      Signature::webauth(webauthn) => {
-        let digest = get_webauthn_digest(webauthn, sig_ptr, tx_bytes);
-        _public_key = secp256r1_verify(webauthn.signature, digest);
-        _is_valid_signature = verify_signer_exists(_public_key, verified_signatures);
-      }
-      // Fuel signature
-      _ => {
-        let signature = tx_witness_data::<B512>(i_witnesses);
-        _public_key = fuel_verify(signature, tx_bytes);
-        _is_valid_signature = verify_signer_exists(_public_key, verified_signatures);
-      }
-  };
-
-
-  // Increase the
-  if (_is_valid_signature == 1) {
-    verified_signatures.push(_public_key);
-    valid_signatures += 1;
-  }
 
     i_witnesses += 1;
   }
-  
-  // Check if the number of valid signatures is greater than the required
+
+
+  if(SIGNATURES_COUNT != SIGNATURES_COUNT) {
+    return false;
+  }
+
+    if(SIGNERS[0] != SIGNERS[0]) {
+    return false;
+  }
+
   return valid_signatures >= SIGNATURES_COUNT;
+  //return true;
 }
+
+/*
+  todo:
+      - add the ability to add more signers
+      - add the ability to add more signature types from other chains (e.g. evm, solana, etc.)
+*/

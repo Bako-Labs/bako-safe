@@ -55,6 +55,8 @@ export class TransactionService extends Api implements ITransactionService {
       },
     );
 
+    //console.log(`[SIGN]: ${JSON.stringify(data)}`);
+
     return data;
   }
 

@@ -10,22 +10,24 @@ export const newVault = async (
   fuelProvider: Provider,
   auth?: IBakoSafeAuth,
   reason?: keyof typeof VALUES_DEFAULT_TO_MUL,
-  signersCount: number = signers.length,
+  signersCount?: number,
 ) => {
   const VaultPayload: IPayloadVault = {
     configurable: {
-      SIGNATURES_COUNT: signersCount,
+      SIGNATURES_COUNT: signersCount ?? signers.length,
       SIGNERS: signers,
       network: fuelProvider.url,
     },
     BakoSafeAuth: auth,
   };
+
   const vault = await Vault.create(VaultPayload);
   const new_balance = DEFAULT_BALANCE_VALUE.mul(
     VALUES_DEFAULT_TO_MUL[reason ?? 1],
   );
 
-  await sendPredicateCoins(vault!, new_balance, 'sETH', rootWallet);
-  await sendPredicateCoins(vault!, new_balance, 'ETH', rootWallet);
+  const baseAssetId = vault.provider.getBaseAssetId();
+
+  await sendPredicateCoins(vault!, new_balance, baseAssetId, rootWallet);
   return vault;
 };
