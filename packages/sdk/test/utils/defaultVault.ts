@@ -3,11 +3,7 @@ import { IPayloadVault, Vault } from '../../src/modules';
 import { rootWallet } from './rootWallet';
 import { sendPredicateCoins } from './sendCoins';
 import { IBakoSafeAuth } from '../../src/api';
-import {
-  assets,
-  DEFAULT_BALANCE_VALUE,
-  VALUES_DEFAULT_TO_MUL,
-} from '../mocks/assets';
+import { DEFAULT_BALANCE_VALUE, VALUES_DEFAULT_TO_MUL } from '../mocks/assets';
 
 export const newVault = async (
   signers: string[],
@@ -30,6 +26,8 @@ export const newVault = async (
     VALUES_DEFAULT_TO_MUL[reason ?? 1],
   );
 
-  await sendPredicateCoins(vault!, new_balance, assets['ETH'], rootWallet);
+  const baseAssetId = vault.provider.getBaseAssetId();
+
+  await sendPredicateCoins(vault!, new_balance, baseAssetId, rootWallet);
   return vault;
 };

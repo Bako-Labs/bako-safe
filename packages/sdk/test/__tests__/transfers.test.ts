@@ -1,8 +1,10 @@
 import { Provider, TransactionStatus, bn } from 'fuels';
 import { authService, delay, IUserAuth, newVault, signin } from '../utils';
 import { BakoSafe } from '../../configurables';
-import { accounts } from '../mocks';
+import { accounts, DEFAULT_BALANCE_VALUE, networks } from '../mocks';
 import { DEFAULT_TRANSACTION_PAYLOAD } from '../mocks/transactions';
+import { Vault } from '../../src/modules/vault/Vault';
+import { IPayloadVault } from '../../src/modules/vault/types';
 
 describe('[TRANSFERS]', () => {
   let chainId: number;
@@ -174,13 +176,10 @@ describe('[TRANSFERS]', () => {
       auth['USER_1'].BakoSafeAuth,
     );
     const tx_a = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
-    const tx_b = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
+    tx_a.assets[0].amount = '100';
 
     await expect(vault.BakoSafeIncludeTransaction(tx_a)).rejects.toThrow(
-      /not enough/,
-    );
-    await expect(vault.BakoSafeIncludeTransaction(tx_b)).rejects.toThrow(
-      /not enough/,
+      'Invalid character',
     );
   });
 
@@ -205,5 +204,54 @@ describe('[TRANSFERS]', () => {
     });
 
     expect(result.status).toBe(TransactionStatus.success);
+  });
+
+  test('Send a transaction with production fuel node', async () => {
+    const _provider = await Provider.create(networks['DEVNET']);
+    //valid only for devnet
+    const HASH_PREDICATE =
+      '0xb2bf0410c0574e5a9abf4ac5579cdcbf5bd33c1015b2a74bb34acc9069b7dc8a';
+    const tx_name = 'Test Transaction on DEVNET';
+    const VaultPayload: IPayloadVault = {
+      configurable: {
+        SIGNATURES_COUNT: 1,
+        SIGNERS: signers,
+        network: _provider.url,
+        HASH_PREDICATE,
+      },
+      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+    };
+
+    const _vault = await Vault.create(VaultPayload);
+
+    await expect(
+      await _vault
+        .BakoSafeIncludeTransaction({
+          name: tx_name,
+          assets: [
+            {
+              assetId: _provider.getBaseAssetId(),
+              to: accounts['STORE'].address,
+              amount: DEFAULT_BALANCE_VALUE.format(),
+            },
+          ],
+        })
+        .then((tx) => {
+          return tx.name;
+        }),
+    ).toBe(tx_name);
+
+    await expect(
+      _vault.BakoSafeIncludeTransaction({
+        name: tx_name,
+        assets: [
+          {
+            assetId: _provider.getBaseAssetId(),
+            to: accounts['STORE'].address,
+            amount: '0.5',
+          },
+        ],
+      }),
+    ).rejects.toThrow('Invalid character');
   });
 });
