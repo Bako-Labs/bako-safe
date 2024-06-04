@@ -150,48 +150,38 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
 
     const res = await result.waitForResult();
     expect(res.status).toBe('success');
-    console.log('[deplyed]');
 
     //verify if the contract was deployed
     const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
-    console.log(contractId);
+
     const contract = ContractAbi__factory.connect(contractId, wallet);
 
-    try {
-      const call_counter_pre = await contract.functions
-        .count()
-        .callParams({
-          gasLimit: bn(GAS_LIMIT),
-        })
-        .get();
+    const call_then = await contract.functions
+      .seven()
+      .txParams({
+        gasLimit: bn(GAS_LIMIT),
+      })
+      .get()
+      .then((res) => res.callResult.receipts);
 
-      //To verify if the contract was deployed,
-      //access localchainnode/playgound and check this contract, by id:
-      // query{
-      //   contract(id: <CONTRACT_ID/>){
-      //     id,
-      //     __typename,
-      //     bytecode,
-      //     salt
-      //   }
-      // }
+    const call_zero = await contract.functions
+      .zero()
+      .txParams({
+        gasLimit: bn(GAS_LIMIT),
+      })
+      .get()
+      .then((res) => res.callResult.receipts);
 
-      console.log({ call_counter_pre });
+    const isZeroCalled = call_zero.find(
+      (c) => c.type === 2 && parseInt(c.data, 16) == 0,
+    );
+    const isSevenCalled = call_then.find(
+      (c) => c.type === 2 && parseInt(c.data, 16) == 7,
+    );
 
-      //await contract.functions.increment();
-      const call_counter_pos = false; //await contract.functions.count().get();
-
-      // console.log({
-      //   call_counter_pre,
-      //   call_counter_pos,
-      // });
-
-      //TODO: VALIDATE THIS CONTRACT, CALLED A FUNCTION AND CHECK THE RESULT
-      expect(call_counter_pre).toBe(bn(0));
-      expect(call_counter_pos).toBe(bn(1));
-    } catch (e) {
-      console.log(e);
-    }
+    console.log(isSevenCalled);
+    expect(isZeroCalled).toBeDefined();
+    expect(isSevenCalled).toBeDefined();
   });
 
   //TODO:
