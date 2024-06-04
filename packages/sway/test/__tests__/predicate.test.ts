@@ -156,7 +156,7 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
 
     const contract = ContractAbi__factory.connect(contractId, wallet);
 
-    const call_then = await contract.functions
+    const call_seven = await contract.functions
       .seven()
       .txParams({
         gasLimit: bn(GAS_LIMIT),
@@ -175,7 +175,7 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     const isZeroCalled = call_zero.find(
       (c) => c.type === 2 && parseInt(c.data, 16) == 0,
     );
-    const isSevenCalled = call_then.find(
+    const isSevenCalled = call_seven.find(
       (c) => c.type === 2 && parseInt(c.data, 16) == 7,
     );
 
