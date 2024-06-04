@@ -1,125 +1,23 @@
-import {
-  AbstractAddress,
-  Address,
-  BN,
-  InputType,
-  InputValue,
-  Predicate,
-  Provider,
-  ScriptTransactionRequest,
-  TransactionRequest,
-  TransactionResponse,
-  Wallet,
-  WalletUnlocked,
-  ZeroBytes32,
-  arrayify,
-  bn,
-  hexlify,
-} from 'fuels';
+import { Address, Provider, Wallet, arrayify, bn } from 'fuels';
 
-import { PredicateAbi__factory } from '../../../sdk/src/sway/predicates';
 import { ScriptAbi__factory } from '../../../sdk/src/sway/scripts/';
+import { ContractAbi__factory } from '../../../sdk/src/sway/contracts';
 
-import {
-  PRIVATE_KEY,
-  GAS_LIMIT,
-  MAX_FEE,
-  CHAIN_URL,
-  WEBAUTHN,
-} from '../constants';
 import { accounts } from '../../../sdk/test/mocks';
 import { signin } from '../../../sdk/test/utils/signin';
+import {
+  createTransactionScript,
+  sendTransaction,
+  signTransaction,
+  CHAIN_URL,
+  createPredicate,
+  ERROR_DUPLICATED_WITNESSES,
+  WEBAUTHN,
+  GAS_LIMIT,
+} from '../utils';
+import { createTransactionDeploy } from '../utils/createTransactionDeploy';
 
-const ERROR_DUPLICATED_WITNESSES =
-  'FuelError: Invalid transaction data: PredicateVerificationFailed(Panic(PredicateReturnedNonOne))';
-
-async function seedAccount(
-  address: AbstractAddress,
-  amount: BN,
-  provider: Provider,
-) {
-  try {
-    const genisesWallet = Wallet.fromPrivateKey(PRIVATE_KEY, provider);
-
-    const resp = await genisesWallet.transfer(
-      address,
-      amount,
-      provider.getBaseAssetId(),
-      {
-        gasLimit: Number(GAS_LIMIT),
-      },
-    );
-    await resp.waitForResult();
-  } catch (e) {
-    throw new Error(e.response.errors[0].message ?? 'Seed Account Error');
-  }
-}
-
-async function sendTransaction(
-  provider: Provider,
-  tx: TransactionRequest,
-  signatures: Array<string>,
-) {
-  try {
-    tx.witnesses = signatures;
-    await provider.estimatePredicates(tx);
-    const encodedTransaction = hexlify(tx.toTransactionBytes());
-    const {
-      submit: { id: transactionId },
-    } = await provider.operations.submit({ encodedTransaction });
-
-    const response = new TransactionResponse(transactionId, provider);
-    return response;
-  } catch (e) {
-    console.log(e);
-    throw new Error(e);
-  }
-}
-
-async function signTransaction(
-  wallet: WalletUnlocked,
-  tx: TransactionRequest,
-  provider: Provider,
-) {
-  const txHash = tx.getTransactionId(provider.getChainId());
-  const signature = await wallet.signMessage(txHash);
-
-  return signature;
-}
-
-async function createTransaction(predicate: Predicate<InputValue[]>) {
-  try {
-    const tx = new ScriptTransactionRequest();
-    const provider = predicate.provider;
-
-    tx.gasLimit = bn(GAS_LIMIT);
-    tx.maxFee = bn(MAX_FEE);
-
-    const coins = await predicate.getResourcesToSpend([
-      {
-        amount: bn(100),
-        assetId: provider.getBaseAssetId(),
-      },
-    ]);
-    tx.addResources(coins);
-
-    tx.inputs?.forEach((input) => {
-      if (
-        input.type === InputType.Coin &&
-        hexlify(input.owner) === predicate.address.toB256()
-      ) {
-        input.predicate = arrayify(predicate.bytes);
-      }
-    });
-
-    return tx;
-  } catch (e) {
-    console.log(e);
-    throw new Error(e);
-  }
-}
-
-describe('[SWAY_PREDICATE]', () => {
+describe('[SWAY_PREDICATE] Send transfers', () => {
   let provider: Provider;
 
   beforeAll(async () => {
@@ -128,30 +26,19 @@ describe('[SWAY_PREDICATE]', () => {
     provider = await Provider.create(CHAIN_URL);
   });
 
-  test('Send transfer by predicate', async () => {
-    const predicate = PredicateAbi__factory.createInstance(
-      provider,
-      undefined,
-      {
-        SIGNATURES_COUNT: 3,
-        SIGNERS: [
-          accounts['USER_1'].account,
-          accounts['USER_3'].account,
-          accounts['USER_4'].account,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-        ],
-        HASH_PREDICATE: Address.fromRandom().toB256(),
-      },
-    );
-    await seedAccount(predicate.address, bn.parseUnits('0.1'), provider);
+  test('By predicate', async () => {
+    const predicate = await createPredicate({
+      amount: '0.1',
+      minSigners: 3,
+      signers: [
+        accounts['USER_1'].account,
+        accounts['USER_3'].account,
+        accounts['USER_4'].account,
+      ],
+    });
 
-    const tx = await createTransaction(predicate);
+    //@ts-ignore
+    const tx = await createTransactionScript(predicate);
     const id = tx.getTransactionId(provider.getChainId()).slice(2);
 
     const response = await sendTransaction(provider, tx, [
@@ -161,40 +48,22 @@ describe('[SWAY_PREDICATE]', () => {
     ]);
     const result = await response.waitForResult();
 
-    console.log(result.receipts);
-
     expect(result.status).toBe('success');
   });
 
-  test('Send transfer by predicate with duplicated witnesses', async () => {
+  test('With duplicated witnesses', async () => {
     const wallet = Wallet.generate({
       provider,
     });
 
-    const predicate = PredicateAbi__factory.createInstance(
-      provider,
-      undefined,
-      {
-        SIGNATURES_COUNT: 2,
-        SIGNERS: [
-          wallet.address.toB256(),
-          Address.fromRandom().toB256(),
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-        ],
-        HASH_PREDICATE: Address.fromRandom().toB256(),
-      },
-    );
+    const predicate = await createPredicate({
+      amount: '0.1',
+      minSigners: 2,
+      signers: [wallet.address.toB256(), Address.fromRandom().toB256()],
+    });
 
-    await seedAccount(predicate.address, bn.parseUnits('0.1'), provider);
-
-    const tx = await createTransaction(predicate);
+    //@ts-ignore
+    const tx = await createTransactionScript(predicate);
 
     await sendTransaction(provider, tx, [
       await signTransaction(wallet, tx, provider),
@@ -204,35 +73,19 @@ describe('[SWAY_PREDICATE]', () => {
     });
   });
 
-  test('Send transfer by predicate with duplicated signers', async () => {
+  test('With duplicated signers', async () => {
     const wallet = Wallet.generate({
       provider,
     });
 
-    const predicate = PredicateAbi__factory.createInstance(
-      provider,
-      undefined,
-      {
-        SIGNATURES_COUNT: 2,
-        SIGNERS: [
-          wallet.address.toB256(),
-          wallet.address.toB256(),
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-        ],
-        HASH_PREDICATE: Address.fromRandom().toB256(),
-      },
-    );
+    const predicate = await createPredicate({
+      amount: '0.1',
+      minSigners: 2,
+      signers: [wallet.address.toB256(), wallet.address.toB256()],
+    });
 
-    await seedAccount(predicate.address, bn.parseUnits('0.1'), provider);
-
-    const tx = await createTransaction(predicate);
+    //@ts-ignore
+    const tx = await createTransactionScript(predicate);
 
     await sendTransaction(provider, tx, [
       await signTransaction(wallet, tx, provider),
@@ -245,35 +98,15 @@ describe('[SWAY_PREDICATE]', () => {
   // this test is an adptation, becouse we dont sign messages on node using webauthn
   // add, to validate this, whe have a constants with values signed by webauthn
   // and this transaction, recives a script with this constants and check
-  test('Send transfer by webauthn', async () => {
-    const wallet = Wallet.generate({
-      provider,
+  test('By webauthn', async () => {
+    const predicate = await createPredicate({
+      amount: '0.1',
+      minSigners: 1,
+      signers: [accounts['USER_1'].account],
     });
 
-    const predicate = PredicateAbi__factory.createInstance(
-      provider,
-      undefined,
-      {
-        SIGNATURES_COUNT: 1,
-        SIGNERS: [
-          accounts['USER_1'].account,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-          ZeroBytes32,
-        ],
-        HASH_PREDICATE: Address.fromRandom().toB256(),
-      },
-    );
-
-    await seedAccount(predicate.address, bn.parseUnits('0.1'), provider);
-
-    const tx = await createTransaction(predicate);
+    //@ts-ignore
+    const tx = await createTransactionScript(predicate);
 
     tx.script = arrayify(ScriptAbi__factory.bin);
 
@@ -291,4 +124,77 @@ describe('[SWAY_PREDICATE]', () => {
     //@ts-ignore
     expect(res.receipts[0]['data']).toBe('0x01');
   });
+
+  // Create an tx with type create (1) and send to the chain to deploy a new contract
+  //https://github.com/FuelLabs/fuels-ts/blob/018efe96bde4fec5d49964fc55a725ecf9f7632e/packages/account/src/providers/transaction-request/hash-transaction.ts
+  test('To deploy new contract on chain', async () => {
+    const predicate = await createPredicate({
+      amount: '0.1',
+      minSigners: 1,
+      signers: [accounts['USER_1'].account],
+    });
+
+    const { tx, contractId } = await createTransactionDeploy(
+      provider,
+      predicate,
+    );
+
+    const id = tx.getTransactionId(provider.getChainId()).slice(2);
+
+    tx.witnesses.push(await signin(id, 'USER_1', undefined));
+
+    const result = await sendTransaction(provider, tx, [
+      ...tx.witnesses, // we have an bytecode of contract, dont move this position
+      await signin(id, 'USER_1', undefined),
+    ]);
+
+    const res = await result.waitForResult();
+    expect(res.status).toBe('success');
+    console.log('[deplyed]');
+
+    //verify if the contract was deployed
+    const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
+    console.log(contractId);
+    const contract = ContractAbi__factory.connect(contractId, wallet);
+
+    try {
+      const call_counter_pre = await contract.functions
+        .count()
+        .callParams({
+          gasLimit: bn(GAS_LIMIT),
+        })
+        .get();
+
+      //To verify if the contract was deployed,
+      //access localchainnode/playgound and check this contract, by id:
+      // query{
+      //   contract(id: <CONTRACT_ID/>){
+      //     id,
+      //     __typename,
+      //     bytecode,
+      //     salt
+      //   }
+      // }
+
+      console.log({ call_counter_pre });
+
+      //await contract.functions.increment();
+      const call_counter_pos = false; //await contract.functions.count().get();
+
+      // console.log({
+      //   call_counter_pre,
+      //   call_counter_pos,
+      // });
+
+      //TODO: VALIDATE THIS CONTRACT, CALLED A FUNCTION AND CHECK THE RESULT
+      expect(call_counter_pre).toBe(bn(0));
+      expect(call_counter_pos).toBe(bn(1));
+    } catch (e) {
+      console.log(e);
+    }
+  });
+
+  //TODO:
+  //vm deploy
+  //github.com/FuelLabs/fuels-ts/blob/018efe96bde4fec5d49964fc55a725ecf9f7632e/packages/transactions/src/coders/transaction.ts#L1-L2
 });
