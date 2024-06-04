@@ -179,7 +179,7 @@ describe('[TRANSFERS]', () => {
     tx_a.assets[0].amount = '100';
 
     await expect(vault.BakoSafeIncludeTransaction(tx_a)).rejects.toThrow(
-      'Invalid character',
+      'FuelError: not enough coins to fit the target',
     );
   });
 
@@ -252,6 +252,6 @@ describe('[TRANSFERS]', () => {
           },
         ],
       }),
-    ).rejects.toThrow('Invalid character');
+    ).rejects.toThrow('FuelError: not enough coins to fit the target');
   });
 });
