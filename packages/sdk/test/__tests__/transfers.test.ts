@@ -1,8 +1,11 @@
 import { Provider, TransactionStatus, bn } from 'fuels';
 import { authService, delay, IUserAuth, newVault, signin } from '../utils';
 import { BakoSafe } from '../../configurables';
-import { accounts, DEFAULT_BALANCE_VALUE, networks } from '../mocks';
-import { DEFAULT_TRANSACTION_PAYLOAD } from '../mocks/transactions';
+import { accounts, assets, DEFAULT_BALANCE_VALUE, networks } from '../mocks';
+import {
+  DEFAULT_MULTI_ASSET_TRANSACTION_PAYLOAD,
+  DEFAULT_TRANSACTION_PAYLOAD,
+} from '../mocks/transactions';
 import { Vault } from '../../src/modules/vault/Vault';
 import { IPayloadVault } from '../../src/modules/vault/types';
 
@@ -253,5 +256,27 @@ describe('[TRANSFERS]', () => {
         ],
       }),
     ).rejects.toThrow('FuelError: not enough coins to fit the target');
+  });
+
+  test('Send transaction with multiple assets ids', async () => {
+    const txAssets = Object.values(assets);
+    const vault = await newVault(
+      signers,
+      provider,
+      auth['USER_1'].BakoSafeAuth,
+      100,
+      undefined,
+      txAssets,
+    );
+    const tx = DEFAULT_MULTI_ASSET_TRANSACTION_PAYLOAD(
+      accounts['STORE'].address,
+    );
+    const tx_name = tx.name;
+
+    expect(
+      await vault.BakoSafeIncludeTransaction(tx).then((tx) => {
+        return tx.name;
+      }),
+    ).toBe(tx_name);
   });
 });
