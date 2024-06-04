@@ -13,10 +13,10 @@ import {
 
 export class Auth {
   public BakoSafeAuth?: IBakoSafeAuth;
-  client: IAuthService;
-  code: string;
-  address: string;
-  type: TypeUser;
+  readonly client: IAuthService;
+  readonly code: string;
+  readonly address: string;
+  readonly type: TypeUser;
   workspace?: Workspace;
 
   protected constructor(address: string, code: string, type: TypeUser) {
