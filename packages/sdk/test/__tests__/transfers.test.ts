@@ -257,7 +257,7 @@ describe('[TRANSFERS]', () => {
   });
 
   test(
-    'Send transaction with same asset id and multiple recipients',
+    'Send transaction with same asset ids and recipients',
     async () => {
       const vault = await newVault(
         signers,
@@ -298,6 +298,68 @@ describe('[TRANSFERS]', () => {
 
       expect(result.status).toBe(TransactionStatus.success);
       expect(newWalletBalance).toBe(expectedWalletBalance);
+    },
+    100 * 1000,
+  );
+
+  test(
+    'Send transaction with same asset ids and multiple recipients',
+    async () => {
+      const vault = await newVault(
+        signers,
+        provider,
+        auth['USER_1'].BakoSafeAuth,
+        100,
+        1,
+      );
+      const wallet = Wallet.generate({ provider });
+      const walletBalance = await wallet.getBalance(provider.getBaseAssetId());
+
+      const wallet2 = Wallet.generate({ provider });
+      const walletBalance2 = await wallet2.getBalance(
+        provider.getBaseAssetId(),
+      );
+
+      const numRecipients = 2;
+      const transaction = await vault.BakoSafeIncludeTransaction({
+        name: `tx_${uuidv4()}`,
+        assets: Array.from({ length: numRecipients * 2 }, (_, index) => ({
+          assetId: provider.getBaseAssetId(),
+          to:
+            index % 2 === 0
+              ? wallet.address.toString()
+              : wallet2.address.toString(),
+          amount: DEFAULT_BALANCE_VALUE.format(),
+        })),
+      });
+
+      await signin(
+        transaction.getHashTxId(),
+        'USER_1',
+        auth['USER_1'].BakoSafeAuth,
+        transaction.BakoSafeTransactionId,
+      );
+
+      transaction.send();
+      const result = await transaction.wait();
+
+      const newWalletBalance = (
+        await wallet.getBalance(provider.getBaseAssetId())
+      ).format();
+      const expectedWalletBalance = walletBalance
+        .add(DEFAULT_BALANCE_VALUE.mul(numRecipients))
+        .format();
+
+      const newWalletBalance2 = (
+        await wallet2.getBalance(provider.getBaseAssetId())
+      ).format();
+      const expectedWalletBalance2 = walletBalance2
+        .add(DEFAULT_BALANCE_VALUE.mul(numRecipients))
+        .format();
+
+      expect(result.status).toBe(TransactionStatus.success);
+      expect(newWalletBalance).toBe(expectedWalletBalance);
+      expect(newWalletBalance2).toBe(expectedWalletBalance2);
     },
     100 * 1000,
   );
