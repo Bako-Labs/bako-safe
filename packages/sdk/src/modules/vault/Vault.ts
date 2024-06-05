@@ -108,21 +108,19 @@ export class Vault extends Predicate<[]> implements IVault {
    * @returns an instance of Vault
    **/
   static async create(params: IPayloadVault | IBakoSafeApi): Promise<Vault> {
-    try {
-      const _params = await identifyCreateVaultParams(params);
-      switch (_params.type) {
-        case ECreationtype.IS_OLD:
-          return new Vault(_params.payload);
-        case ECreationtype.IS_NEW:
-          const vault = new Vault(_params.payload);
-          !!vault.api && (await vault.createOnService());
-          return vault;
-        default:
-          throw new Error('Invalid param type to create a vault');
-      }
-    } catch (e: any) {
-      throw new Error(e.message);
+    const { payload, type } = await identifyCreateVaultParams(params);
+    const vault = new Vault(payload);
+
+    if (type === ECreationtype.IS_OLD) {
+      return vault;
     }
+
+    if (type === ECreationtype.IS_NEW) {
+      if (vault.api) await vault.createOnService();
+      return vault;
+    }
+
+    throw new Error('Invalid param type to create a vault');
   }
 
   /**
