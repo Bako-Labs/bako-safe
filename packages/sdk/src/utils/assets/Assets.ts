@@ -44,7 +44,7 @@ export class Asset {
           to,
         };
       } else {
-        acc[key].amount.add(bn.parseUnits(amount));
+        acc[key].amount = acc[key].amount.add(bn.parseUnits(amount));
       }
       return acc;
     }, {}) as IAssetGroupByTo;

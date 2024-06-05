@@ -5,6 +5,7 @@ import { accounts, DEFAULT_BALANCE_VALUE, networks } from '../mocks';
 import { DEFAULT_TRANSACTION_PAYLOAD } from '../mocks/transactions';
 import { Vault } from '../../src/modules/vault/Vault';
 import { IPayloadVault } from '../../src/modules/vault/types';
+import { v4 as uuidv4 } from 'uuid';
 
 describe('[TRANSFERS]', () => {
   let chainId: number;
@@ -254,4 +255,67 @@ describe('[TRANSFERS]', () => {
       }),
     ).rejects.toThrow('FuelError: not enough coins to fit the target');
   });
+
+  test(
+    'Send transaction with same asset id and multiple recipients',
+    async () => {
+      const vault = await newVault(
+        signers,
+        provider,
+        auth['USER_1'].BakoSafeAuth,
+        100,
+        1,
+      );
+      const auxVault = await newVault(
+        signers,
+        provider,
+        auth['USER_1'].BakoSafeAuth,
+      );
+      const auxVaultBalance = await auxVault.getBalance(
+        provider.getBaseAssetId(),
+      );
+
+      const transaction = await vault.BakoSafeIncludeTransaction({
+        name: `tx_${uuidv4()}`,
+        assets: [
+          {
+            assetId: provider.getBaseAssetId(),
+            to: auxVault.address.toString(),
+            amount: DEFAULT_BALANCE_VALUE.format(),
+          },
+          {
+            assetId: provider.getBaseAssetId(),
+            to: auxVault.address.toString(),
+            amount: DEFAULT_BALANCE_VALUE.format(),
+          },
+          {
+            assetId: provider.getBaseAssetId(),
+            to: auxVault.address.toString(),
+            amount: DEFAULT_BALANCE_VALUE.format(),
+          },
+        ],
+      });
+
+      await signin(
+        transaction.getHashTxId(),
+        'USER_1',
+        auth['USER_1'].BakoSafeAuth,
+        transaction.BakoSafeTransactionId,
+      );
+
+      transaction.send();
+      const result = await transaction.wait();
+
+      const newAuxVaultBalance = (
+        await auxVault.getBalance(provider.getBaseAssetId())
+      ).format();
+      const expectedAuxVaultBalance = auxVaultBalance
+        .add(DEFAULT_BALANCE_VALUE.mul(3))
+        .format();
+
+      expect(result.status).toBe(TransactionStatus.success);
+      expect(newAuxVaultBalance).toBe(expectedAuxVaultBalance);
+    },
+    100 * 1000,
+  );
 });
