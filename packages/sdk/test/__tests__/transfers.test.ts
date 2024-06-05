@@ -275,25 +275,14 @@ describe('[TRANSFERS]', () => {
         provider.getBaseAssetId(),
       );
 
+      const numRecipients = 3;
       const transaction = await vault.BakoSafeIncludeTransaction({
         name: `tx_${uuidv4()}`,
-        assets: [
-          {
-            assetId: provider.getBaseAssetId(),
-            to: auxVault.address.toString(),
-            amount: DEFAULT_BALANCE_VALUE.format(),
-          },
-          {
-            assetId: provider.getBaseAssetId(),
-            to: auxVault.address.toString(),
-            amount: DEFAULT_BALANCE_VALUE.format(),
-          },
-          {
-            assetId: provider.getBaseAssetId(),
-            to: auxVault.address.toString(),
-            amount: DEFAULT_BALANCE_VALUE.format(),
-          },
-        ],
+        assets: Array.from({ length: numRecipients }, () => ({
+          assetId: provider.getBaseAssetId(),
+          to: auxVault.address.toString(),
+          amount: DEFAULT_BALANCE_VALUE.format(),
+        })),
       });
 
       await signin(
@@ -310,7 +299,7 @@ describe('[TRANSFERS]', () => {
         await auxVault.getBalance(provider.getBaseAssetId())
       ).format();
       const expectedAuxVaultBalance = auxVaultBalance
-        .add(DEFAULT_BALANCE_VALUE.mul(3))
+        .add(DEFAULT_BALANCE_VALUE.mul(numRecipients))
         .format();
 
       expect(result.status).toBe(TransactionStatus.success);
