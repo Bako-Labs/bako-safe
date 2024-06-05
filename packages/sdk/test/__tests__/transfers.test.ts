@@ -1,4 +1,4 @@
-import { Provider, TransactionStatus, bn } from 'fuels';
+import { Provider, TransactionStatus, Wallet, bn } from 'fuels';
 import { authService, delay, IUserAuth, newVault, signin } from '../utils';
 import { BakoSafe } from '../../configurables';
 import { accounts, DEFAULT_BALANCE_VALUE, networks } from '../mocks';
@@ -266,21 +266,15 @@ describe('[TRANSFERS]', () => {
         100,
         1,
       );
-      const auxVault = await newVault(
-        signers,
-        provider,
-        auth['USER_1'].BakoSafeAuth,
-      );
-      const auxVaultBalance = await auxVault.getBalance(
-        provider.getBaseAssetId(),
-      );
+      const wallet = Wallet.generate({ provider });
+      const walletBalance = await wallet.getBalance(provider.getBaseAssetId());
 
-      const numRecipients = 3;
+      const numAssets = 3;
       const transaction = await vault.BakoSafeIncludeTransaction({
         name: `tx_${uuidv4()}`,
-        assets: Array.from({ length: numRecipients }, () => ({
+        assets: Array.from({ length: numAssets }, () => ({
           assetId: provider.getBaseAssetId(),
-          to: auxVault.address.toString(),
+          to: wallet.address.toString(),
           amount: DEFAULT_BALANCE_VALUE.format(),
         })),
       });
@@ -295,15 +289,15 @@ describe('[TRANSFERS]', () => {
       transaction.send();
       const result = await transaction.wait();
 
-      const newAuxVaultBalance = (
-        await auxVault.getBalance(provider.getBaseAssetId())
+      const newWalletBalance = (
+        await wallet.getBalance(provider.getBaseAssetId())
       ).format();
-      const expectedAuxVaultBalance = auxVaultBalance
-        .add(DEFAULT_BALANCE_VALUE.mul(numRecipients))
+      const expectedWalletBalance = walletBalance
+        .add(DEFAULT_BALANCE_VALUE.mul(numAssets))
         .format();
 
       expect(result.status).toBe(TransactionStatus.success);
-      expect(newAuxVaultBalance).toBe(expectedAuxVaultBalance);
+      expect(newWalletBalance).toBe(expectedWalletBalance);
     },
     100 * 1000,
   );
