@@ -366,4 +366,94 @@ describe('[TRANSFERS]', () => {
     },
     100 * 1000,
   );
+
+  test(
+    'Send transaction with multiple asset ids',
+    async () => {
+      const txAssets = Object.values(assets);
+      const vault = await newVault(
+        signers,
+        provider,
+        auth['USER_1'].BakoSafeAuth,
+        100,
+        1,
+        txAssets,
+      );
+      const wallet = Wallet.generate({ provider });
+      const walletBalance = await wallet.getBalance(assets.ETH);
+
+      const tx = DEFAULT_MULTI_ASSET_TRANSACTION_PAYLOAD(
+        wallet.address.toString(),
+      );
+
+      const transaction = await vault.BakoSafeIncludeTransaction(tx);
+
+      await signin(
+        transaction.getHashTxId(),
+        'USER_1',
+        auth['USER_1'].BakoSafeAuth,
+        transaction.BakoSafeTransactionId,
+      );
+      transaction.send();
+      const result = await transaction.wait();
+
+      expect(result.status).toBe(TransactionStatus.success);
+      expect((await wallet.getBalance(assets.ETH)).format()).toBe(
+        walletBalance.add(DEFAULT_BALANCE_VALUE).format(),
+      );
+      expect((await wallet.getBalance(assets.BTC)).format()).toBe(
+        DEFAULT_BALANCE_VALUE.format(),
+      );
+      expect((await wallet.getBalance(assets.USDC)).format()).toBe(
+        DEFAULT_BALANCE_VALUE.format(),
+      );
+      expect((await wallet.getBalance(assets.UNI)).format()).toBe(
+        DEFAULT_BALANCE_VALUE.format(),
+      );
+    },
+    100 * 1000,
+  );
+
+  test(
+    'Send transaction with multiple asset ids without ETH',
+    async () => {
+      const txAssets = [assets.BTC, assets.USDC, assets.UNI];
+      const vault = await newVault(
+        signers,
+        provider,
+        auth['USER_1'].BakoSafeAuth,
+        100,
+        1,
+        txAssets,
+      );
+      const wallet = Wallet.generate({ provider });
+
+      const tx = DEFAULT_MULTI_ASSET_TRANSACTION_PAYLOAD(
+        wallet.address.toString(),
+        txAssets,
+      );
+      const transaction = await vault.BakoSafeIncludeTransaction(tx);
+
+      await signin(
+        transaction.getHashTxId(),
+        'USER_1',
+        auth['USER_1'].BakoSafeAuth,
+        transaction.BakoSafeTransactionId,
+      );
+      transaction.send();
+      const result = await transaction.wait();
+
+      expect(result.status).toBe(TransactionStatus.success);
+      expect((await wallet.getBalance(assets.BTC)).format()).toBe(
+        DEFAULT_BALANCE_VALUE.format(),
+      );
+      expect((await wallet.getBalance(assets.USDC)).format()).toBe(
+        DEFAULT_BALANCE_VALUE.format(),
+      );
+      expect((await wallet.getBalance(assets.UNI)).format()).toBe(
+        DEFAULT_BALANCE_VALUE.format(),
+      );
+    },
+    100 * 1000,
+  );
 });
