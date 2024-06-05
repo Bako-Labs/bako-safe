@@ -179,7 +179,6 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
       (c) => c.type === 2 && parseInt(c.data, 16) == 7,
     );
 
-    console.log(isSevenCalled);
     expect(isZeroCalled).toBeDefined();
     expect(isSevenCalled).toBeDefined();
   });
