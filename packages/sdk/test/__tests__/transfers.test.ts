@@ -1,10 +1,11 @@
-import { Provider, TransactionStatus, bn } from 'fuels';
+import { Provider, TransactionStatus, Wallet, bn } from 'fuels';
 import { authService, delay, IUserAuth, newVault, signin } from '../utils';
 import { BakoSafe } from '../../configurables';
 import { accounts, DEFAULT_BALANCE_VALUE, networks } from '../mocks';
 import { DEFAULT_TRANSACTION_PAYLOAD } from '../mocks/transactions';
 import { Vault } from '../../src/modules/vault/Vault';
 import { IPayloadVault } from '../../src/modules/vault/types';
+import { v4 as uuidv4 } from 'uuid';
 
 describe('[TRANSFERS]', () => {
   let chainId: number;
@@ -254,4 +255,112 @@ describe('[TRANSFERS]', () => {
       }),
     ).rejects.toThrow('FuelError: not enough coins to fit the target');
   });
+
+  test(
+    'Send transaction with same asset ids and recipients',
+    async () => {
+      const vault = await newVault(
+        signers,
+        provider,
+        auth['USER_1'].BakoSafeAuth,
+        100,
+        1,
+      );
+      const wallet = Wallet.generate({ provider });
+      const walletBalance = await wallet.getBalance(provider.getBaseAssetId());
+
+      const numAssets = 3;
+      const transaction = await vault.BakoSafeIncludeTransaction({
+        name: `tx_${uuidv4()}`,
+        assets: Array.from({ length: numAssets }, () => ({
+          assetId: provider.getBaseAssetId(),
+          to: wallet.address.toString(),
+          amount: DEFAULT_BALANCE_VALUE.format(),
+        })),
+      });
+
+      await signin(
+        transaction.getHashTxId(),
+        'USER_1',
+        auth['USER_1'].BakoSafeAuth,
+        transaction.BakoSafeTransactionId,
+      );
+
+      transaction.send();
+      const result = await transaction.wait();
+
+      const newWalletBalance = (
+        await wallet.getBalance(provider.getBaseAssetId())
+      ).format();
+      const expectedWalletBalance = walletBalance
+        .add(DEFAULT_BALANCE_VALUE.mul(numAssets))
+        .format();
+
+      expect(result.status).toBe(TransactionStatus.success);
+      expect(newWalletBalance).toBe(expectedWalletBalance);
+    },
+    100 * 1000,
+  );
+
+  test(
+    'Send transaction with same asset ids and multiple recipients',
+    async () => {
+      const vault = await newVault(
+        signers,
+        provider,
+        auth['USER_1'].BakoSafeAuth,
+        100,
+        1,
+      );
+      const wallet = Wallet.generate({ provider });
+      const walletBalance = await wallet.getBalance(provider.getBaseAssetId());
+
+      const wallet2 = Wallet.generate({ provider });
+      const walletBalance2 = await wallet2.getBalance(
+        provider.getBaseAssetId(),
+      );
+
+      const numRecipients = 2;
+      const transaction = await vault.BakoSafeIncludeTransaction({
+        name: `tx_${uuidv4()}`,
+        assets: Array.from({ length: numRecipients * 2 }, (_, index) => ({
+          assetId: provider.getBaseAssetId(),
+          to:
+            index % 2 === 0
+              ? wallet.address.toString()
+              : wallet2.address.toString(),
+          amount: DEFAULT_BALANCE_VALUE.format(),
+        })),
+      });
+
+      await signin(
+        transaction.getHashTxId(),
+        'USER_1',
+        auth['USER_1'].BakoSafeAuth,
+        transaction.BakoSafeTransactionId,
+      );
+
+      transaction.send();
+      const result = await transaction.wait();
+
+      const newWalletBalance = (
+        await wallet.getBalance(provider.getBaseAssetId())
+      ).format();
+      const expectedWalletBalance = walletBalance
+        .add(DEFAULT_BALANCE_VALUE.mul(numRecipients))
+        .format();
+
+      const newWalletBalance2 = (
+        await wallet2.getBalance(provider.getBaseAssetId())
+      ).format();
+      const expectedWalletBalance2 = walletBalance2
+        .add(DEFAULT_BALANCE_VALUE.mul(numRecipients))
+        .format();
+
+      expect(result.status).toBe(TransactionStatus.success);
+      expect(newWalletBalance).toBe(expectedWalletBalance);
+      expect(newWalletBalance2).toBe(expectedWalletBalance2);
+    },
+    100 * 1000,
+  );
 });
