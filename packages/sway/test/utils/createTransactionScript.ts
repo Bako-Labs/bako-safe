@@ -9,7 +9,9 @@ import {
 } from 'fuels';
 import { GAS_LIMIT, MAX_FEE } from './constants';
 
-export async function createTransaction(predicate: Predicate<InputValue[]>) {
+export async function createTransactionScript(
+  predicate: Predicate<InputValue[]>,
+) {
   try {
     const tx = new ScriptTransactionRequest();
     const provider = predicate.provider;
@@ -36,7 +38,6 @@ export async function createTransaction(predicate: Predicate<InputValue[]>) {
 
     return tx;
   } catch (e) {
-    console.log(e);
     throw new Error(e);
   }
 }

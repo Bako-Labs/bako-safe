@@ -21,7 +21,6 @@ export async function sendTransaction(
     const response = new TransactionResponse(transactionId, provider);
     return response;
   } catch (e) {
-    console.log(e);
     throw new Error(e);
   }
 }

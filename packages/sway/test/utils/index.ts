@@ -1,4 +1,4 @@
-export * from './createTransaction';
+export * from './createTransactionScript';
 export * from './signTransaction';
 export * from './sendTransaction';
 export * from './seedAccount';

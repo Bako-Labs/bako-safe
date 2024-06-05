@@ -1,11 +1,13 @@
 import { ZeroBytes32, Address, bn, Provider } from 'fuels';
-import { PredicateAbi__factory } from '../../../sdk/src/sway/predicates';
+import {
+  PredicateAbi__factory,
+  PredicateAbiInputs,
+} from '../../../sdk/src/sway/predicates';
 import { accounts } from '../../../sdk/test/mocks';
 import { seedAccount } from './seedAccount';
-import { _signers } from './constants';
+import { CHAIN_URL } from './constants';
 
 export const createPredicate = async ({
-  provider,
   amount = '0.1',
   minSigners = 3,
   signers = [
@@ -14,16 +16,43 @@ export const createPredicate = async ({
     accounts['USER_4'].account,
   ],
 }: {
-  provider: Provider;
   amount: string;
   minSigners: number;
   signers: string[];
 }) => {
+  const provider = await Provider.create(CHAIN_URL);
+  const _signers: [
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+    string,
+  ] = [
+    ZeroBytes32,
+    ZeroBytes32,
+    ZeroBytes32,
+    ZeroBytes32,
+    ZeroBytes32,
+    ZeroBytes32,
+    ZeroBytes32,
+    ZeroBytes32,
+    ZeroBytes32,
+    ZeroBytes32,
+  ];
+
   for (let i = 0; i < 10; i++) {
-    _signers.push(signers[i] ?? ZeroBytes32);
+    _signers[i] = signers[i] ?? ZeroBytes32;
   }
 
-  const predicate = PredicateAbi__factory.createInstance(provider, [], {
+  const input: PredicateAbiInputs = [];
+
+  //@ts-ignore
+  const predicate = PredicateAbi__factory.createInstance(provider, input, {
     SIGNATURES_COUNT: minSigners ?? signers.length,
     SIGNERS: _signers,
     HASH_PREDICATE: Address.fromRandom().toB256(),

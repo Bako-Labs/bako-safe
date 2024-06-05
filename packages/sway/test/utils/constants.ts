@@ -1,29 +1,3 @@
-import { ZeroBytes32 } from 'fuels';
-
-export const _signers: [
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-] = [
-  ZeroBytes32,
-  ZeroBytes32,
-  ZeroBytes32,
-  ZeroBytes32,
-  ZeroBytes32,
-  ZeroBytes32,
-  ZeroBytes32,
-  ZeroBytes32,
-  ZeroBytes32,
-  ZeroBytes32,
-];
-
 export const ERROR_DUPLICATED_WITNESSES =
   'FuelError: Invalid transaction data: PredicateVerificationFailed(Panic(PredicateReturnedNonOne))';
 
