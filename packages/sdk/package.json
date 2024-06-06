@@ -19,7 +19,8 @@
   "scripts": {
     "build": "tsup",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
-    "test:watch:all": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --verbose --watch"
+    "test:watch:all": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --verbose --watch",
+    "test:name": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand -t"
   },
   "license": "Apache-2.0",
   "devDependencies": {
