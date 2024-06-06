@@ -210,54 +210,58 @@ describe('[TRANSFERS]', () => {
     expect(result.status).toBe(TransactionStatus.success);
   });
 
-  test('Send a transaction with production fuel node', async () => {
-    const _provider = await Provider.create(networks['DEVNET']);
-    //valid only for devnet
-    const HASH_PREDICATE =
-      '0xb2bf0410c0574e5a9abf4ac5579cdcbf5bd33c1015b2a74bb34acc9069b7dc8a';
-    const tx_name = 'Test Transaction on DEVNET';
-    const VaultPayload: IPayloadVault = {
-      configurable: {
-        SIGNATURES_COUNT: 1,
-        SIGNERS: signers,
-        network: _provider.url,
-        HASH_PREDICATE,
-      },
-      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
-    };
+  test(
+    'Send a transaction with production fuel node',
+    async () => {
+      const _provider = await Provider.create(networks['DEVNET']);
+      //valid only for devnet
+      const HASH_PREDICATE =
+        '0xb2bf0410c0574e5a9abf4ac5579cdcbf5bd33c1015b2a74bb34acc9069b7dc8a';
+      const tx_name = 'Test Transaction on DEVNET';
+      const VaultPayload: IPayloadVault = {
+        configurable: {
+          SIGNATURES_COUNT: 1,
+          SIGNERS: signers,
+          network: _provider.url,
+          HASH_PREDICATE,
+        },
+        BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+      };
 
-    const _vault = await Vault.create(VaultPayload);
+      const _vault = await Vault.create(VaultPayload);
 
-    await expect(
-      await _vault
-        .BakoSafeIncludeTransaction({
+      await expect(
+        await _vault
+          .BakoSafeIncludeTransaction({
+            name: tx_name,
+            assets: [
+              {
+                assetId: _provider.getBaseAssetId(),
+                to: accounts['STORE'].address,
+                amount: DEFAULT_BALANCE_VALUE.format(),
+              },
+            ],
+          })
+          .then((tx) => {
+            return tx.name;
+          }),
+      ).toBe(tx_name);
+
+      await expect(
+        _vault.BakoSafeIncludeTransaction({
           name: tx_name,
           assets: [
             {
               assetId: _provider.getBaseAssetId(),
               to: accounts['STORE'].address,
-              amount: DEFAULT_BALANCE_VALUE.format(),
+              amount: '0.5',
             },
           ],
-        })
-        .then((tx) => {
-          return tx.name;
         }),
-    ).toBe(tx_name);
-
-    await expect(
-      _vault.BakoSafeIncludeTransaction({
-        name: tx_name,
-        assets: [
-          {
-            assetId: _provider.getBaseAssetId(),
-            to: accounts['STORE'].address,
-            amount: '0.5',
-          },
-        ],
-      }),
-    ).rejects.toThrow('FuelError: not enough coins to fit the target');
-  });
+      ).rejects.toThrow('FuelError: not enough coins to fit the target');
+    },
+    100 * 1000,
+  );
 
   test(
     'Send transaction with same asset ids and recipients',
@@ -415,7 +419,7 @@ describe('[TRANSFERS]', () => {
   );
 
   test(
-    'Send transaction with multiple asset ids without ETH',
+    'Send transaction with multiple asset ids without sending ETH',
     async () => {
       const txAssets = [assets.BTC, assets.USDC, assets.UNI];
       const vault = await newVault(
@@ -424,7 +428,7 @@ describe('[TRANSFERS]', () => {
         auth['USER_1'].BakoSafeAuth,
         100,
         1,
-        txAssets,
+        Object.values(assets),
       );
       const wallet = Wallet.generate({ provider });
 
@@ -456,4 +460,26 @@ describe('[TRANSFERS]', () => {
     },
     100 * 1000,
   );
+
+  test('Send transaction with multiple asset ids without ETH on vault', async () => {
+    const txAssets = [assets.BTC, assets.USDC, assets.UNI];
+    const vault = await newVault(
+      signers,
+      provider,
+      auth['USER_1'].BakoSafeAuth,
+      100,
+      1,
+      txAssets,
+    );
+    const wallet = Wallet.generate({ provider });
+
+    const tx = DEFAULT_MULTI_ASSET_TRANSACTION_PAYLOAD(
+      wallet.address.toString(),
+      txAssets,
+    );
+
+    await expect(vault.BakoSafeIncludeTransaction(tx)).rejects.toThrow(
+      'FuelError: not enough coins to fit the target',
+    );
+  });
 });
