@@ -1,6 +1,6 @@
 {
   "name": "bakosafe",
-  "version": "0.0.57",
+  "version": "0.0.58",
   "author": "Infinybase - Guilherme Roque",
   "description": "A signature validation package built based on sway in the fuel network",
   "main": "dist/index.js",
@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "build": "tsup",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --silent",
     "test:watch:all": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --verbose --watch",
     "test:name": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand -t"
   },
