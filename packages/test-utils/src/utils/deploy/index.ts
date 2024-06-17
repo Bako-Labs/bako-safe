@@ -10,7 +10,7 @@ export const createTransactionDeploy = async (
 ) => {
   const byteCodePath = join(
     __dirname,
-    `../../sway/src/contract/out/debug/contract.bin`
+    `../../sway/contract/out/debug/contract.bin`
   );
 
   const byteCode = readFileSync(byteCodePath);

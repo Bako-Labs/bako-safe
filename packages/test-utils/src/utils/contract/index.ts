@@ -1,4 +1,12 @@
-import { ContractAbi__factory } from '../../types/sway';
+import { ContractAbi, ContractAbi__factory } from '../../types/sway';
 import { Account, Provider } from 'fuels';
 
-export const getContractInstance = async (contractId: string, accountOrProvider: Account | Provider) => ContractAbi__factory.connect(contractId, accountOrProvider);
+export type ContractInstanceParams = {contractId: string, account: Account};
+export type CallContractParams = ContractInstanceParams & { method: keyof ContractAbi['functions'] };
+
+export const getContractInstance = async (params: ContractInstanceParams) => ContractAbi__factory.connect(params.contractId, params.account);
+
+export const callContractMethod = async (params: CallContractParams) => {
+  const contract = await getContractInstance(params);
+  return contract.functions[params.method]().call();
+};

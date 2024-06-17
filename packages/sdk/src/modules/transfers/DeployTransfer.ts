@@ -8,10 +8,14 @@ import {
   ContractUtils,
   TransactionCreate,
   CreateTransactionRequest,
-  CoinTransactionRequestInput,
+  CoinTransactionRequestInput, transactionRequestify
 } from 'fuels';
+import { IBakoSafeAuth, TransactionService, TransactionStatus } from '../../api';
 
-type DeployTransferFromTransaction = TransactionCreate & Omit<BaseTransferLike<CreateTransactionRequest>, 'transactionRequest' | 'witnesses'>;
+type DeployTransferFromTransaction =
+  TransactionCreate &
+  Omit<BaseTransferLike<CreateTransactionRequest>, 'transactionRequest' | 'witnesses' | 'service' | 'BakoSafeTransaction' | 'BakoSafeTransactionId'> &
+  { auth?: IBakoSafeAuth };
 type DeployTransferTransactionRequest = TransactionCreate & Pick<BaseTransferLike<CreateTransactionRequest>, 'vault'>;
 
 const { getContractId, getContractStorageRoot } = ContractUtils;
@@ -20,30 +24,42 @@ const { getContractId, getContractStorageRoot } = ContractUtils;
  * `DeployTransfer` are extension of CreateTransactionRequest, to create and deploy contracts
  */
 export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
-
   /**
    * Static method to create a new instance of DeployTransfer from a TransactionCreate.
    * @param {DeployTransferFromTransaction} params - The parameters for creating a DeployTransfer.
    * @param {string} params.name - The name of the transfer.
    * @param {Vault} params.vault - The vault associated with the transfer.
-   * @param {ITransactionService} params.service - The transaction service used for the transfer.
    * @param {Witness[]} params.witnesses - The witnesses for the transfer.
-   * @param {ITransaction} params.BakoSafeTransaction - The BakoSafeTransaction associated with the transfer.
-   * @param {string} params.BakoSafeTransactionId - The ID of the BakoSafeTransaction.
    * @param {TransactionCreate} transaction - The transaction to be used for the transfer.
    * @returns {Promise<DeployTransfer>} A new instance of DeployTransfer.
    */
-  static async fromTransactionCreate({ name, vault, service, witnesses, BakoSafeTransaction, BakoSafeTransactionId, ...transaction }: DeployTransferFromTransaction): Promise<DeployTransfer> {
+  static async fromTransactionCreate({ name, vault, witnesses, auth, ...transaction }: DeployTransferFromTransaction): Promise<DeployTransfer> {
     const transactionRequest = await this.createTransactionRequest({ witnesses, vault, ...transaction });
-    return new DeployTransfer({
+    const deployTransfer = new DeployTransfer({
       name,
       vault,
-      service,
       transactionRequest,
-      BakoSafeTransaction,
-      BakoSafeTransactionId,
       witnesses: witnesses.map(witness => witness.data),
     });
+
+    // When auth is provided, create a transaction in the API.
+    if (auth) {
+      const service = new TransactionService(auth);
+      const transactionData = await service.create({
+        assets: [],
+        hash: deployTransfer.getHashTxId(),
+        txData: transactionRequestify(deployTransfer.transactionRequest),
+        status: TransactionStatus.AWAIT_REQUIREMENTS,
+        predicateAddress: vault.address.toString(),
+        name: 'Contract deploy',
+      });
+
+      deployTransfer.service = service;
+      deployTransfer.BakoSafeTransaction = transactionData;
+      deployTransfer.BakoSafeTransactionId = transactionData.id;
+    }
+
+    return deployTransfer;
   }
 
   /**
