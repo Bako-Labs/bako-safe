@@ -1,8 +1,8 @@
-import { bn, hexlify, Provider, transactionRequestify, Wallet } from 'fuels';
+import { hexlify, Provider, Wallet } from 'fuels';
 import { authService, IUserAuth, newVault, signin } from '../utils';
 import { BakoSafe } from '../../configurables';
 import { accounts } from '../mocks';
-import { DeployTransfer, TransactionService, TransactionStatus } from '../../src';
+import { DeployTransfer } from '../../src';
 import { callContractMethod, createTransactionDeploy } from 'bakosafe-test-utils';
 
 describe('[TRANSFERS] Deploy', () => {
@@ -26,7 +26,7 @@ describe('[TRANSFERS] Deploy', () => {
 
     signers = [
       accounts['USER_1'].address,
-      accounts['USER_2'].address
+      accounts['FULL'].address
     ];
   }, 30 * 1000);
 
@@ -76,7 +76,7 @@ describe('[TRANSFERS] Deploy', () => {
   );
 
   test(
-    'Submit a DeployTransfer and try execute contract',
+    'Submit a DeployTransfer and execute contract',
     async () => {
       const { USER_1: user } = auth;
       const { FULL: genesis } = accounts;
@@ -114,6 +114,27 @@ describe('[TRANSFERS] Deploy', () => {
       });
 
       expect(Number(value)).toBe(0);
+    },
+    100 * 1000
+  );
+
+  test(
+    'Submit a DeployTransfer by vault',
+    async () => {
+      const { USER_1: user } = auth;
+
+      const vault = await newVault(
+        signers,
+        provider,
+        user.BakoSafeAuth,
+        10000,
+        1
+      );
+      const { transactionRequest, contractId } = await createTransactionDeploy(provider, vault);
+
+      const deployTransfer = await vault.BakoSafeDeployContract(transactionRequest.toTransaction());
+
+      expect(deployTransfer.getContractId()).toBe(contractId);
     },
     100 * 1000
   );

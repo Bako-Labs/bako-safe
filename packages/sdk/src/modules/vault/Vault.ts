@@ -1,4 +1,4 @@
-import { arrayify, Predicate } from 'fuels';
+import { arrayify, Predicate, TransactionCreate } from 'fuels';
 
 import {
   defaultListParams,
@@ -26,7 +26,7 @@ import {
   makeHashPredicate,
   makeSubscribers,
 } from './helpers';
-import { Transfer } from '../transfers';
+import { DeployTransfer, Transfer } from '../transfers';
 import { v4 as uuidv4 } from 'uuid';
 import { AddressUtils } from '../../utils/address/Address';
 
@@ -174,6 +174,21 @@ export class Vault extends Predicate<[]> implements IVault {
       SIGNERS: makeSubscribers(configurable.SIGNERS),
       HASH_PREDICATE: configurable.HASH_PREDICATE ?? makeHashPredicate(),
     };
+  }
+
+  /**
+   * Include a new transaction in vault to deploy contract.
+   *
+   * @param {TransactionCreate} transaction - The transaction details for deploying the contract.
+   * @returns {Promise<DeployTransfer>} A promise that resolves to an instance of DeployTransfer.
+   */
+  public async BakoSafeDeployContract(transaction: TransactionCreate): Promise<DeployTransfer> {
+    return DeployTransfer.fromTransactionCreate({
+      ...transaction,
+      vault: this,
+      auth: this.auth,
+      name: 'Contract deploy',
+    })
   }
 
   /**
