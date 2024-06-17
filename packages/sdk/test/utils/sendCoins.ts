@@ -14,6 +14,7 @@ export const sendPredicateCoins = async (
   asset: string,
   rootWallet: WalletUnlocked,
 ) => {
+  rootWallet.provider = predicate.provider;
   const deposit = await rootWallet.transfer(
     predicate.address.toString(),
     amount,
