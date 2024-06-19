@@ -252,8 +252,6 @@ export class Vault extends Predicate<[]> implements IVault {
    * @param transactionId - The transaction id on BakoSafeApi
    *
    * @returns an transaction list
-   *
-   *
    */
   public async BakoSafeGetTransaction(
     transactionId: string,

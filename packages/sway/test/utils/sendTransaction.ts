@@ -1,14 +1,15 @@
 import {
-  Provider,
-  TransactionRequest,
   hexlify,
+  Provider,
+  BytesLike,
+  TransactionRequest,
   TransactionResponse,
 } from 'fuels';
 
 export async function sendTransaction(
   provider: Provider,
   tx: TransactionRequest,
-  signatures: Array<string>,
+  signatures: (string | BytesLike)[],
 ) {
   try {
     tx.witnesses = signatures;
