@@ -1,6 +1,5 @@
 import { BN, WalletUnlocked, bn } from 'fuels';
 import { BakoSafe } from '../../configurables';
-import { assets } from '../mocks';
 import { Vault } from '../../src/modules/vault/Vault';
 
 export const txParams = {
@@ -14,7 +13,6 @@ export const sendPredicateCoins = async (
   asset: string,
   rootWallet: WalletUnlocked,
 ) => {
-  rootWallet.provider = predicate.provider;
   const deposit = await rootWallet.transfer(
     predicate.address.toString(),
     amount,

@@ -1,4 +1,4 @@
-import { arrayify, Predicate, TransactionCreate } from 'fuels';
+import { arrayify, Predicate, TransactionCreate, TransactionType } from 'fuels';
 
 import {
   defaultListParams,
@@ -9,7 +9,7 @@ import {
   IPredicate,
   IPredicateService,
   IPredicateVersion,
-  PredicateService,
+  PredicateService
 } from '../../api';
 import {
   ECreationtype,
@@ -19,13 +19,9 @@ import {
   IConfVault,
   ICreationPayload,
   IPayloadVault,
-  IVault,
+  IVault
 } from './types';
-import {
-  identifyCreateVaultParams,
-  makeHashPredicate,
-  makeSubscribers,
-} from './helpers';
+import { identifyCreateVaultParams, makeHashPredicate, makeSubscribers } from './helpers';
 import { DeployTransfer, Transfer } from '../transfers';
 import { v4 as uuidv4 } from 'uuid';
 import { AddressUtils } from '../../utils/address/Address';
@@ -50,20 +46,7 @@ export class Vault extends Predicate<[]> implements IVault {
   public transactionRecursiveTimeout: number;
   public version?: string;
 
-  protected constructor({
-    configurable,
-    provider,
-    abi,
-    bytecode,
-    name,
-    description,
-    BakoSafeVaultId,
-    BakoSafeVault,
-    BakoSafeAuth,
-    transactionRecursiveTimeout = 1000,
-    api,
-    version,
-  }: ICreationPayload) {
+  protected constructor({ configurable, provider, abi, bytecode, name, description, BakoSafeVaultId, BakoSafeVault, BakoSafeAuth, transactionRecursiveTimeout = 1000, api, version }: ICreationPayload) {
     const _abi = typeof abi === 'string' ? JSON.parse(abi) : abi;
     const _bin = bytecode;
 
@@ -73,7 +56,7 @@ export class Vault extends Predicate<[]> implements IVault {
       bytecode: arrayify(_bin),
       provider,
       abi: _abi,
-      configurableConstants: _configurable,
+      configurableConstants: _configurable
     });
 
     this.bin = _bin;
@@ -81,7 +64,7 @@ export class Vault extends Predicate<[]> implements IVault {
     this.configurable = {
       ..._configurable,
       network: _network,
-      chainId: _chainId,
+      chainId: _chainId
     };
     this.provider = provider;
     this.name = name || `Vault - ${uuidv4()}`;
@@ -153,11 +136,11 @@ export class Vault extends Predicate<[]> implements IVault {
       addresses: AddressUtils.hex2string(this.configurable.SIGNERS),
       configurable: JSON.stringify(this.configurable),
       provider: this.provider.url,
-      versionCode: this.version,
+      versionCode: this.version
     });
     this.BakoSafeVault = {
       ...rest,
-      id,
+      id
     };
     this.BakoSafeVaultId = id;
   }
@@ -172,7 +155,7 @@ export class Vault extends Predicate<[]> implements IVault {
     return {
       SIGNATURES_COUNT: configurable.SIGNATURES_COUNT,
       SIGNERS: makeSubscribers(configurable.SIGNERS),
-      HASH_PREDICATE: configurable.HASH_PREDICATE ?? makeHashPredicate(),
+      HASH_PREDICATE: configurable.HASH_PREDICATE ?? makeHashPredicate()
     };
   }
 
@@ -183,12 +166,14 @@ export class Vault extends Predicate<[]> implements IVault {
    * @returns {Promise<DeployTransfer>} A promise that resolves to an instance of DeployTransfer.
    */
   public async BakoSafeDeployContract(transaction: TransactionCreate): Promise<DeployTransfer> {
-    return DeployTransfer.fromTransactionCreate({
+    const transfer = await DeployTransfer.fromTransactionCreate({
       ...transaction,
       vault: this,
       auth: this.auth,
-      name: 'Contract deploy',
-    })
+      name: 'Contract deploy'
+    });
+
+    return transfer.save();
   }
 
   /**
@@ -199,13 +184,13 @@ export class Vault extends Predicate<[]> implements IVault {
    * @returns return a new Transfer instance
    */
   public async BakoSafeIncludeTransaction(
-    param: IBakoSafeIncludeTransaction,
+    param: IBakoSafeIncludeTransaction
   ): Promise<Transfer> {
     return Transfer.instance({
       auth: this.auth,
       vault: this,
       transfer: param,
-      isSave: true,
+      isSave: true
     });
   }
 
@@ -223,14 +208,14 @@ export class Vault extends Predicate<[]> implements IVault {
    *
    */
   public async BakoSafeGetTransactions(
-    params?: IListTransactions,
+    params?: IListTransactions
   ): Promise<IPagination<IBakoSafeGetTransactions>> {
     this.verifyAuth();
 
     const tx = await this.api
       .listPredicateTransactions({
         predicateId: [this.BakoSafeVaultId],
-        ...(params ?? defaultListParams),
+        ...(params ?? defaultListParams)
       })
       .then((data) => {
         return {
@@ -238,9 +223,9 @@ export class Vault extends Predicate<[]> implements IVault {
           data: data.data.map((tx) => {
             return {
               resume: tx.resume,
-              witnesses: tx.witnesses,
+              witnesses: tx.witnesses
             };
-          }),
+          })
         };
       });
 
@@ -254,13 +239,23 @@ export class Vault extends Predicate<[]> implements IVault {
    * @returns an transaction list
    */
   public async BakoSafeGetTransaction(
-    transactionId: string,
-  ): Promise<Transfer> {
-    return Transfer.instance({
+    transactionId: string
+  ): Promise<Transfer | DeployTransfer> {
+    const transfer = await Transfer.instance({
       vault: this,
       auth: this.auth,
-      transfer: transactionId,
+      transfer: transactionId
     });
+
+    if (transfer.BakoSafeTransaction?.txData?.type === TransactionType.Create) {
+      return DeployTransfer.fromBakoTransaction({
+        vault: this,
+        auth: this.auth,
+        ...transfer.BakoSafeTransaction
+      });
+    }
+
+    return transfer;
   }
 
   /**
@@ -290,7 +285,7 @@ export class Vault extends Predicate<[]> implements IVault {
    * @returns details of predicate version
    */
   static async BakoSafeGetVersionByCode(
-    code: string,
+    code: string
   ): Promise<IPredicateVersion> {
     const api = this.getPredicateServiceInstance();
     return await api.findVersionByCode(code);
@@ -306,11 +301,11 @@ export class Vault extends Predicate<[]> implements IVault {
    * @returns a paginated list of predicate version details
    */
   static async BakoSafeGetVersions(
-    params?: GetPredicateVersionParams,
+    params?: GetPredicateVersionParams
   ): Promise<IPagination<Partial<IPredicateVersion>>> {
     const _params = {
       page: 0,
-      perPage: 10,
+      perPage: 10
     };
     const api = this.getPredicateServiceInstance();
     const predicateVersions = await api
@@ -323,9 +318,9 @@ export class Vault extends Predicate<[]> implements IVault {
               name: version.name,
               description: version.description,
               code: version.code,
-              abi: version.abi,
+              abi: version.abi
             };
-          }),
+          })
         };
       });
 
