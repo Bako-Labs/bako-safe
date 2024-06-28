@@ -9,7 +9,6 @@ import {
   BN,
   BytesLike,
   bn,
-  Provider,
 } from 'fuels';
 import { IAssetGroupByTo } from '../../utils/assets';
 import { BakoSafe } from '../../../configurables';
@@ -42,10 +41,12 @@ export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
     outputs: IAssetGroupByTo,
     witnesses?: string[],
   ) {
-    const provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
-    const assetId = await provider.getBaseAssetId();
     Object.entries(outputs).map(([, value]) => {
-      this.addCoinOutput(Address.fromString(value.to), value.amount, assetId);
+      this.addCoinOutput(
+        Address.fromString(value.to),
+        value.amount,
+        value.assetId,
+      );
     });
 
     //todo: invalidate used coins [make using BakoSafe api assets?] UTXO PROBLEM

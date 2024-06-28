@@ -11,6 +11,7 @@ export const newVault = async (
   auth?: IBakoSafeAuth,
   reason?: keyof typeof VALUES_DEFAULT_TO_MUL,
   signersCount?: number,
+  assetIds?: string[],
 ) => {
   const VaultPayload: IPayloadVault = {
     configurable: {
@@ -26,8 +27,14 @@ export const newVault = async (
     VALUES_DEFAULT_TO_MUL[reason ?? 1],
   );
 
-  const baseAssetId = vault.provider.getBaseAssetId();
+  if (assetIds) {
+    for await (const assetId of assetIds) {
+      await sendPredicateCoins(vault!, new_balance, assetId, rootWallet);
+    }
+  } else {
+    const baseAssetId = vault.provider.getBaseAssetId();
+    await sendPredicateCoins(vault!, new_balance, baseAssetId, rootWallet);
+  }
 
-  await sendPredicateCoins(vault!, new_balance, baseAssetId, rootWallet);
   return vault;
 };
