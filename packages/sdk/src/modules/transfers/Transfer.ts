@@ -1,5 +1,7 @@
 import {
+  BN,
   hexlify,
+  Provider,
   ScriptTransactionRequest,
   TransactionRequest,
   transactionRequestify,
@@ -18,7 +20,7 @@ import {
 } from './types';
 import { Vault } from '../vault/Vault';
 import { delay } from '../../../test/utils';
-import { identifyCreateTransactionParams } from './helpers';
+import { FAKE_WITNESSES, identifyCreateTransactionParams } from './helpers';
 
 /**
  * `Transfer` are extension of ScriptTransactionRequest, to create and send transactions
@@ -95,6 +97,42 @@ export class Transfer {
       this.vault.provider.getChainId(),
     );
     return txHash.slice(2);
+  }
+
+  public static async estimateFee(
+    transaction: TransactionRequest,
+    provider: Provider,
+    required_witnesses: number,
+  ): Promise<{
+    minGas: BN;
+    minFee: BN;
+    maxGas: BN;
+    maxFee: BN;
+    gasPrice: BN;
+    gasLimit: BN;
+    bako_max_fee: BN;
+    bako_gas_limit: BN;
+  }> {
+    try {
+      const _tx = transactionRequestify(transaction);
+
+      _tx.witnesses = Array.from(
+        { length: required_witnesses },
+        () => FAKE_WITNESSES,
+      );
+
+      const fee = await provider.estimateTxGasAndFee({
+        transactionRequest: transactionRequestify(_tx),
+      });
+
+      return {
+        ...fee,
+        bako_max_fee: fee.maxFee.add(fee.minFee),
+        bako_gas_limit: fee.gasLimit,
+      };
+    } catch (e) {
+      return Promise.reject(e);
+    }
   }
 
   /**

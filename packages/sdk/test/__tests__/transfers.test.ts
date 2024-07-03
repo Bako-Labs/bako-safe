@@ -482,4 +482,39 @@ describe('[TRANSFERS]', () => {
       'FuelError: not enough coins to fit the target',
     );
   });
+
+  test('Transaction estimate fee', async () => {
+    // max fee are blocked on predicate validation
+    // gas limit are blocked on predicate validation
+
+    const txAssets = Object.values(assets);
+    const wallet = Wallet.generate({ provider });
+    const vault = await newVault(
+      signers,
+      provider,
+      auth['USER_1'].BakoSafeAuth,
+      5, // on local run this balance (5 * 0.0001) is enough to send the transaction
+      1,
+      txAssets,
+    );
+
+    const tx = DEFAULT_MULTI_ASSET_TRANSACTION_PAYLOAD(
+      wallet.address.toString(),
+      txAssets,
+    );
+
+    const transaction = await vault.BakoSafeIncludeTransaction(tx);
+
+    await signin(
+      transaction.getHashTxId(),
+      'USER_1',
+      auth['USER_1'].BakoSafeAuth,
+      transaction.BakoSafeTransactionId,
+    );
+
+    transaction.send();
+
+    const result = await transaction.wait();
+    expect(result.status).toBe(TransactionStatus.success);
+  });
 });
