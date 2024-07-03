@@ -1,11 +1,12 @@
 import {
+  AuthRequestHeaders,
   IAuthCreateRequest,
   IAuthCreateResponse,
   IAuthService,
   IAuthSignRequest,
   IAuthSignResponse,
   IBakoSafeAuth,
-  ISelectWorkspaceResponse,
+  ISelectWorkspaceResponse
 } from './types';
 
 import { Api } from '../api';
@@ -15,10 +16,9 @@ export class AuthService extends Api implements IAuthService {
     super();
   }
 
-  public async setAuth(auth: IBakoSafeAuth) {
-    this.client.defaults.headers['Authorization'] = auth.token;
-    this.client.defaults.headers['Signeraddress'] = auth.address;
-    return;
+  public setAuth(auth: IBakoSafeAuth) {
+    this.client.defaults.headers[AuthRequestHeaders.AUTHORIZATION] = auth.token;
+    this.client.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS] = auth.address;
   }
 
   public async auth(params: IAuthCreateRequest): Promise<IAuthCreateResponse> {
@@ -32,20 +32,20 @@ export class AuthService extends Api implements IAuthService {
   }
 
   public async selectWorkspace(
-    workspaceId: string,
+    workspaceId: string
   ): Promise<ISelectWorkspaceResponse> {
-    if (!this.client.defaults.headers['Signeraddress'])
+    if (!this.client.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS])
       throw new Error('Auth is required');
 
     const { data } = await this.client.put('/auth/workspace', {
       workspaceId,
-      userId: this.client.defaults.headers['Signeraddress'],
+      userId: this.client.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS]
     });
     return data;
   }
 
   public async getWorkspaces(): Promise<ISelectWorkspaceResponse[]> {
-    if (!this.client.defaults.headers['Signeraddress'])
+    if (!this.client.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS])
       throw new Error('Auth is required');
     const { data } = await this.client.get(`/workspace/by-user`);
     return data;
