@@ -1,5 +1,6 @@
 import { GetTransactionParams, ITransaction } from '../transactions';
 import { IPagination } from '../utils/pagination';
+import { Operation, TransactionRequest } from 'fuels';
 
 export enum SortOption {
   asc = 'ASC',
@@ -58,8 +59,22 @@ export interface IPredicate extends IPredicatePayload {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface IDeposit {
+  date: Date;
+  id: string;
+  operations: Operation[];
+  gasUsed: string;
+  txData: TransactionRequest;
+}
+
+export interface IExtendedPredicate {
+  predicate: IPredicate;
+  missingDeposits: IDeposit[];
+}
+
 export interface IPredicateService {
-  create: (payload: IPredicatePayload) => Promise<IPredicate>;
+  create: (payload: IPredicatePayload) => Promise<IExtendedPredicate>;
   findByAddress: (predicateAddress: string) => Promise<IPredicate>;
   findById: (predicateAddress: string) => Promise<IPredicate>;
   hasReservedCoins: (predicateAddress: string) => Promise<string[]>;

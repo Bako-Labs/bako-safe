@@ -1,13 +1,13 @@
 import { BaseTransfer, BaseTransferLike } from './BaseTransfer';
 import {
   bn,
-  ContractUtils,
-  CreateTransactionRequest,
   InputCoin,
   InputType,
-  PolicyType,
+  ContractUtils,
   TransactionCreate,
-  transactionRequestify
+  transactionRequestify,
+  CreateTransactionRequest,
+  CoinTransactionRequestInput,
 } from 'fuels';
 import { IBakoSafeAuth, ITransaction, TransactionService, TransactionStatus } from '../../api';
 
@@ -50,7 +50,7 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
       service: new TransactionService(auth),
       transactionRequest: createTransactionRequest,
       BakoSafeTransaction: bakoTransaction,
-      BakoSafeTransactionId: bakoTransaction.id,
+      BakoSafeTransactionId: bakoTransaction.id
     });
   }
 
@@ -64,7 +64,13 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
    * @param {TransactionCreate} transaction - The transaction to be used for the transfer.
    * @returns {Promise<DeployTransfer>} A new instance of DeployTransfer.
    */
-  static async fromTransactionCreate({ name, vault, witnesses, auth, ...transaction }: DeployTransferFromTransaction): Promise<DeployTransfer> {
+  static async fromTransactionCreate({
+                                       name,
+                                       vault,
+                                       witnesses,
+                                       auth,
+                                       ...transaction
+                                     }: DeployTransferFromTransaction): Promise<DeployTransfer> {
     const transactionRequest = await this.createTransactionRequest({ witnesses, vault, ...transaction });
     const deployTransfer = new DeployTransfer({
       name,
@@ -98,26 +104,27 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
       salt: transaction.salt,
       storageSlots: transaction.storageSlots,
       outputs: transaction.outputs,
-      inputs: [],
+      inputs: []
     });
 
     // Update coin input to same id
     const inputCoin = inputs.find(
-      (input) => input.type === InputType.Coin,
+      (input) => input.type === InputType.Coin
     ) as InputCoin;
     if (inputCoin) {
       const [resource] = await account.getResourcesToSpend([
         {
           amount: inputCoin.amount,
-          assetId: account.provider.getBaseAssetId(),
-        },
+          assetId: account.provider.getBaseAssetId()
+        }
       ]);
       transactionRequest.addResource(resource);
     }
 
-    const maxFee = transaction.policies.find(policy => policy.type === PolicyType.MaxFee);
-    if (maxFee) {
-      transactionRequest.maxFee = bn(maxFee.data);
+    const { estimatedPredicates } = await account.provider.getTransactionCost(transactionRequest);
+    const coinInput = estimatedPredicates.find(coin => coin.type === InputType.Coin);
+    if (coinInput) {
+      transactionRequest.maxFee = bn((<CoinTransactionRequestInput>coinInput).predicateGasUsed);
     }
 
     return transactionRequest;

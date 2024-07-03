@@ -127,7 +127,7 @@ export class Vault extends Predicate<[]> implements IVault {
    */
   private async createOnService(): Promise<void> {
     this.verifyAuth();
-    const { id, ...rest } = await this.api.create({
+    const { predicate } = await this.api.create({
       name: this.name,
       description: this.description,
       predicateAddress: this.address.toString(),
@@ -137,6 +137,7 @@ export class Vault extends Predicate<[]> implements IVault {
       provider: this.provider.url,
       versionCode: this.version
     });
+    const { id, ...rest } = predicate;
     this.BakoSafeVault = {
       ...rest,
       id
@@ -223,7 +224,7 @@ export class Vault extends Predicate<[]> implements IVault {
             return {
               resume: tx.resume,
               witnesses: tx.witnesses,
-              type: tx.type,
+              type: tx.type
             };
           })
         };
