@@ -1,11 +1,12 @@
 import { BaseTransfer, BaseTransferLike } from './BaseTransfer';
 import {
   bn,
+  ContractUtils,
+  CreateTransactionRequest,
   InputCoin,
   InputType,
-  ContractUtils,
+  PolicyType,
   TransactionCreate,
-  CreateTransactionRequest,
   transactionRequestify
 } from 'fuels';
 import { IBakoSafeAuth, ITransaction, TransactionService, TransactionStatus } from '../../api';
@@ -114,8 +115,10 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
       transactionRequest.addResource(resource);
     }
 
-    // TODO: Check how set this fee dynamically
-    transactionRequest.maxFee = bn(20000);
+    const maxFee = transaction.policies.find(policy => policy.type === PolicyType.MaxFee);
+    if (maxFee) {
+      transactionRequest.maxFee = bn(maxFee.data);
+    }
 
     return transactionRequest;
   }

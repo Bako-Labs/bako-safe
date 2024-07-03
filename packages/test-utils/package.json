@@ -10,7 +10,6 @@
     "fuels": "0.88.1"
   },
   "devDependencies": {
-    "bakosafe": "workspace:*",
     "dotenv": "^16.4.1"
   },
   "keywords": [],

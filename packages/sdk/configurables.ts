@@ -1,5 +1,4 @@
 export const defaultConfig = {
-  GATEWAY_URL: 'http://localhost:4444/v1/graphql',
   CHAIN_URL: 'http://localhost:4000/v1/graphql',
   SERVER_URL: 'http://localhost:3333/',
   CLIENT_URL: 'https://safe.bako.global',

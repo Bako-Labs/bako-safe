@@ -1,5 +1,5 @@
 import { ContractAbi, ContractAbi__factory } from '../../types/sway';
-import { Account, Provider } from 'fuels';
+import { Account } from 'fuels';
 
 export type ContractInstanceParams = {contractId: string, account: Account};
 export type CallContractParams = ContractInstanceParams & { method: keyof ContractAbi['functions'] };
