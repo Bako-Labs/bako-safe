@@ -1,4 +1,4 @@
-import { arrayify, Predicate, TransactionCreate, TransactionType } from 'fuels';
+import { arrayify, Predicate, TransactionCreate } from 'fuels';
 
 import {
   defaultListParams,
@@ -9,7 +9,8 @@ import {
   IPredicate,
   IPredicateService,
   IPredicateVersion,
-  PredicateService
+  PredicateService,
+  TransactionType
 } from '../../api';
 import {
   ECreationtype,
@@ -245,7 +246,7 @@ export class Vault extends Predicate<[]> implements IVault {
       transfer: transactionId
     });
 
-    if (transfer.BakoSafeTransaction?.txData?.type === TransactionType.Create) {
+    if (transfer.BakoSafeTransaction.type === TransactionType.TRANSACTION_CREATE) {
       return DeployTransfer.fromBakoTransaction({
         vault: this,
         auth: this.auth,
