@@ -70,7 +70,6 @@ export const formatTransaction = async ({
     );
     return script_t;
   } catch (e: any) {
-    console.log(e);
     throw new Error(e);
   }
 };
@@ -268,10 +267,7 @@ export const identifyCreateTransactionParams = async (
     const { data: oldData, is: isOld } = await isOldTransaction(param);
     const { data: newData, is: isNew } = await isNewTransaction(param);
     const { data: sData, is: isScript } = await isNewTransactionByScript(param);
-    // console.log({
-    //   isOld,
-    //   isNew,
-    // });
+
     if (isOld && !!oldData) {
       return {
         type: ECreationTransactiontype.IS_OLD,
@@ -288,7 +284,6 @@ export const identifyCreateTransactionParams = async (
       payload: sData!,
     };
   } catch (e: any) {
-    console.log('[SDK][Criate tx]', e);
     throw new Error(e.message);
   }
 };

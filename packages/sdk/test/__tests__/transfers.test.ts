@@ -478,8 +478,6 @@ describe('[TRANSFERS]', () => {
       txAssets,
     );
 
-    // console.log('[LOG]', await vault.BakoSafeIncludeTransaction(tx));
-
     await expect(vault.BakoSafeIncludeTransaction(tx)).rejects.toThrow(
       'FuelError: not enough coins to fit the target',
     );
@@ -517,7 +515,6 @@ describe('[TRANSFERS]', () => {
     transaction.send();
 
     const result = await transaction.wait();
-    //console.log(result);
     expect(result.status).toBe(TransactionStatus.success);
   });
 });
