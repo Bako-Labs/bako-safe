@@ -1,16 +1,20 @@
 import { BaseTransfer, BaseTransferLike } from './BaseTransfer';
 import {
   bn,
-  InputCoin,
-  InputType,
+  Wallet,
+  Provider,
+  ZeroBytes32,
   ContractUtils,
   TransactionCreate,
   transactionRequestify,
   CreateTransactionRequest,
-  CoinTransactionRequestInput,
+   ScriptTransactionRequest,
 } from 'fuels';
 import { IBakoSafeAuth, ITransaction, TransactionService, TransactionStatus } from '../../api';
 
+import { Vault } from '../vault';
+
+/* Types */
 type BaseDeployTransfer = BaseTransferLike<CreateTransactionRequest>;
 type DeployTransferFromTransaction =
   TransactionCreate
@@ -25,6 +29,38 @@ type DeployBakoTransaction = {
 } & ITransaction;
 
 const { getContractId, getContractStorageRoot } = ContractUtils;
+
+/* TODO: Move this method to vault */
+const getMaxPredicateGasUsed = async (provider: Provider, signers: number) => {
+  const wallets = Array.from({ length: signers }, (_, i) => Wallet.generate({ provider }));
+  const vault = await Vault.create({
+    configurable: {
+      SIGNATURES_COUNT: signers,
+      SIGNERS: wallets.map(wallet => wallet.address.toB256()),
+      network: provider.url,
+    }
+  });
+  const request = new ScriptTransactionRequest();
+  request.addCoinInput({
+    id: ZeroBytes32,
+    assetId: ZeroBytes32,
+    amount: bn(),
+    owner: vault.address,
+    blockCreated: bn(),
+    txCreatedIdx: bn(),
+  });
+  vault.populateTransactionPredicateData(request);
+
+  const txId = request.getTransactionId(provider.getChainId());
+  const signatures = await Promise.all(wallets.map(wallet => wallet.signMessage(txId.slice(2))));
+  signatures.forEach(signature => request.addWitness(signature));
+  await vault.provider.estimatePredicates(request);
+  const predicateInput = request.inputs[0];
+  if (predicateInput && 'predicate' in predicateInput) {
+    return bn(predicateInput.predicateGasUsed);
+  }
+  return bn();
+};
 
 /**
  * `DeployTransfer` are extension of CreateTransactionRequest, to create and deploy contracts
@@ -98,8 +134,9 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
   static async createTransactionRequest(options: DeployTransferTransactionRequest): Promise<CreateTransactionRequest> {
     const { vault: account, inputs, witnesses, ...transaction } = options;
 
-    const transactionRequest = CreateTransactionRequest.from({
-      witnesses: witnesses.map((witnesse) => witnesse.data),
+    const bytecode = witnesses[transaction.bytecodeWitnessIndex];
+    let transactionRequest = CreateTransactionRequest.from({
+      witnesses: [bytecode.data],
       bytecodeWitnessIndex: transaction.bytecodeWitnessIndex,
       salt: transaction.salt,
       storageSlots: transaction.storageSlots,
@@ -107,25 +144,12 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
       inputs: []
     });
 
-    // Update coin input to same id
-    const inputCoin = inputs.find(
-      (input) => input.type === InputType.Coin
-    ) as InputCoin;
-    if (inputCoin) {
-      const [resource] = await account.getResourcesToSpend([
-        {
-          amount: inputCoin.amount,
-          assetId: account.provider.getBaseAssetId()
-        }
-      ]);
-      transactionRequest.addResource(resource);
-    }
+    const fee = await getMaxPredicateGasUsed(account.provider, account.BakoSafeVault.minSigners);
+    transactionRequest.maxFee = fee.add(10);
 
-    const { estimatedPredicates } = await account.provider.getTransactionCost(transactionRequest);
-    const coinInput = estimatedPredicates.find(coin => coin.type === InputType.Coin);
-    if (coinInput) {
-      transactionRequest.maxFee = bn((<CoinTransactionRequestInput>coinInput).predicateGasUsed);
-    }
+    const transactionCost = await account.provider.getTransactionCost(transactionRequest);
+    transactionRequest = await account.fund(transactionRequest, transactionCost);
+
 
     return transactionRequest;
   }
