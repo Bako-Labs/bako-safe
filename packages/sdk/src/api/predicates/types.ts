@@ -74,7 +74,7 @@ export interface IExtendedPredicate {
 }
 
 export interface IPredicateService {
-  create: (payload: IPredicatePayload) => Promise<IExtendedPredicate>;
+  create: (payload: IPredicatePayload) => Promise<IPredicate>;
   findByAddress: (predicateAddress: string) => Promise<IPredicate>;
   findById: (predicateAddress: string) => Promise<IPredicate>;
   hasReservedCoins: (predicateAddress: string) => Promise<string[]>;
