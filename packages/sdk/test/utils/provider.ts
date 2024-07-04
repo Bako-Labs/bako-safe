@@ -1,5 +1,5 @@
-import { BakoSafe } from '../../configurables';
 import { Provider } from 'fuels';
+import { BakoSafe } from '../../configurables';
 
 export class LocalProvider extends Provider {
   constructor() {

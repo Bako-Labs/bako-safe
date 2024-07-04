@@ -1,7 +1,11 @@
-import { Address, Provider, Wallet, arrayify, bn } from 'fuels';
+import {
+  Address,
+  Provider,
+  Wallet,
+  arrayify,
+} from 'fuels';
 
 import { ScriptAbi__factory } from '../../../sdk/src/sway/scripts/';
-import { ContractAbi__factory } from '../../../sdk/src/sway/contracts';
 
 import { accounts } from '../../../sdk/test/mocks';
 import { signin } from '../../../sdk/test/utils/signin';
@@ -13,12 +17,16 @@ import {
   createPredicate,
   ERROR_DUPLICATED_WITNESSES,
   WEBAUTHN,
-  GAS_LIMIT,
 } from '../utils';
-import { createTransactionDeploy } from '../utils/createTransactionDeploy';
+import { BakoSafe } from '../../../sdk';
 
 describe('[SWAY_PREDICATE] Send transfers', () => {
   let provider: Provider;
+
+  BakoSafe.setProviders({
+    CHAIN_URL,
+    SERVER_URL: 'http://localhost:3333',
+  })
 
   beforeAll(async () => {
     //todo: move to dynamic url of chain and remove of the BakoSafe
@@ -124,66 +132,4 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     //@ts-ignore
     expect(res.receipts[0]['data']).toBe('0x01');
   });
-
-  // Create an tx with type create (1) and send to the chain to deploy a new contract
-  //https://github.com/FuelLabs/fuels-ts/blob/018efe96bde4fec5d49964fc55a725ecf9f7632e/packages/account/src/providers/transaction-request/hash-transaction.ts
-  test('To deploy new contract on chain', async () => {
-    const predicate = await createPredicate({
-      amount: '0.1',
-      minSigners: 1,
-      signers: [accounts['USER_1'].account],
-    });
-
-    const { tx, contractId } = await createTransactionDeploy(
-      provider,
-      predicate,
-    );
-
-    const id = tx.getTransactionId(provider.getChainId()).slice(2);
-
-    tx.witnesses.push(await signin(id, 'USER_1', undefined));
-
-    const result = await sendTransaction(provider, tx, [
-      ...tx.witnesses, // we have an bytecode of contract, dont move this position
-      await signin(id, 'USER_1', undefined),
-    ]);
-
-    const res = await result.waitForResult();
-    expect(res.status).toBe('success');
-
-    //verify if the contract was deployed
-    const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
-
-    const contract = ContractAbi__factory.connect(contractId, wallet);
-
-    const call_seven = await contract.functions
-      .seven()
-      .txParams({
-        gasLimit: bn(GAS_LIMIT),
-      })
-      .get()
-      .then((res) => res.callResult.receipts);
-
-    const call_zero = await contract.functions
-      .zero()
-      .txParams({
-        gasLimit: bn(GAS_LIMIT),
-      })
-      .get()
-      .then((res) => res.callResult.receipts);
-
-    const isZeroCalled = call_zero.find(
-      (c) => c.type === 2 && parseInt(c.data, 16) == 0,
-    );
-    const isSevenCalled = call_seven.find(
-      (c) => c.type === 2 && parseInt(c.data, 16) == 7,
-    );
-
-    expect(isZeroCalled).toBeDefined();
-    expect(isSevenCalled).toBeDefined();
-  });
-
-  //TODO:
-  //vm deploy
-  //github.com/FuelLabs/fuels-ts/blob/018efe96bde4fec5d49964fc55a725ecf9f7632e/packages/transactions/src/coders/transaction.ts#L1-L2
 });

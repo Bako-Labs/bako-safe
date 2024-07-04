@@ -1,11 +1,12 @@
 import {
-  Signer,
-  TransactionRequestLike,
   arrayify,
-  hashMessage,
-  transactionRequestify,
   bn,
+  hashMessage,
   ScriptTransactionRequest,
+  Signer,
+  transactionRequestify,
+  TransactionRequestLike,
+  TransactionType
 } from 'fuels';
 import { defaultValues } from '../vault/helpers';
 import { ITransaction, TransactionService, TransactionStatus } from '../../api';
@@ -15,7 +16,7 @@ import {
   IFormatTransfer,
   TransferConstructor,
   TransferFactory,
-  TransferInstanceError,
+  TransferInstanceError
 } from './types';
 import { Vault } from '../vault/Vault';
 import { Asset } from '../../utils/assets';
@@ -203,7 +204,8 @@ export const isNewTransactionByScript = async ({
     transfer &&
     Object.entries(transfer).length > 3 &&
     typeof transfer != 'string' &&
-    'type' in transfer;
+    'type' in transfer &&
+    transfer.type === TransactionType.Script;
 
   const transactionName = `tx_${uuidv4()}`;
   const service = auth && new TransactionService(auth);

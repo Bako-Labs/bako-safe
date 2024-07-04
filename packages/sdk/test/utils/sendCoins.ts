@@ -1,6 +1,5 @@
 import { BN, WalletUnlocked, bn } from 'fuels';
 import { BakoSafe } from '../../configurables';
-import { assets } from '../mocks';
 import { Vault } from '../../src/modules/vault/Vault';
 
 export const txParams = {

@@ -6,6 +6,3 @@ export * from '../configurables';
 
 //mocks
 export { IDefaultAccount, accounts } from '../test/mocks';
-
-//connector
-export * from '../../connector';

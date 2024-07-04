@@ -82,12 +82,19 @@ export interface ITransactionSummary {
   operations?: Operation[];
 }
 
+export enum TransactionType {
+  TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',
+  TRANSACTION_CREATE = 'TRANSACTION_CREATE',
+  DEPOSIT = 'DEPOSIT',
+}
+
 export interface ITransaction extends ICreateTransactionPayload {
   id: string;
   name: string;
   createdAt: string;
   updatedAt: string;
   predicateId: string;
+  type: TransactionType,
   witnesses: IWitnesses[];
   resume: ITransactionResume; // RESULT
   assets: ITransferAsset[];

@@ -7,7 +7,7 @@ export const GAS_LIMIT = 10000000;
 export const MAX_FEE = 100000000;
 export const GAS_PRICE = 1;
 
-export const CHAIN_URL = 'http://127.0.0.1:4000/v1/graphql';
+export const CHAIN_URL = 'http://localhost:4000/v1/graphql';
 
 // transactions signed by webauthn are not posible to be signed an tested by code
 export const WEBAUTHN = {

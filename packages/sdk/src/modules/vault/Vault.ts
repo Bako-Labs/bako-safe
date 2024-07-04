@@ -1,4 +1,4 @@
-import { arrayify, Predicate } from 'fuels';
+import { arrayify, Predicate, TransactionCreate } from 'fuels';
 
 import {
   defaultListParams,
@@ -10,6 +10,7 @@ import {
   IPredicateService,
   IPredicateVersion,
   PredicateService,
+  TransactionType,
 } from '../../api';
 import {
   ECreationtype,
@@ -26,7 +27,7 @@ import {
   makeHashPredicate,
   makeSubscribers,
 } from './helpers';
-import { Transfer } from '../transfers';
+import { DeployTransfer, Transfer } from '../transfers';
 import { v4 as uuidv4 } from 'uuid';
 import { AddressUtils } from '../../utils/address/Address';
 
@@ -143,7 +144,7 @@ export class Vault extends Predicate<[]> implements IVault {
    */
   private async createOnService(): Promise<void> {
     this.verifyAuth();
-    const { id, ...rest } = await this.api.create({
+    const predicate = await this.api.create({
       name: this.name,
       description: this.description,
       predicateAddress: this.address.toString(),
@@ -153,6 +154,7 @@ export class Vault extends Predicate<[]> implements IVault {
       provider: this.provider.url,
       versionCode: this.version,
     });
+    const { id, ...rest } = predicate;
     this.BakoSafeVault = {
       ...rest,
       id,
@@ -172,6 +174,25 @@ export class Vault extends Predicate<[]> implements IVault {
       SIGNERS: makeSubscribers(configurable.SIGNERS),
       HASH_PREDICATE: configurable.HASH_PREDICATE ?? makeHashPredicate(),
     };
+  }
+
+  /**
+   * Include a new transaction in vault to deploy contract.
+   *
+   * @param {TransactionCreate} transaction - The transaction details for deploying the contract.
+   * @returns {Promise<DeployTransfer>} A promise that resolves to an instance of DeployTransfer.
+   */
+  public async BakoSafeDeployContract(
+    transaction: TransactionCreate,
+  ): Promise<DeployTransfer> {
+    const transfer = await DeployTransfer.fromTransactionCreate({
+      ...transaction,
+      vault: this,
+      auth: this.auth,
+      name: 'Contract deploy',
+    });
+
+    return transfer.save();
   }
 
   /**
@@ -222,6 +243,7 @@ export class Vault extends Predicate<[]> implements IVault {
             return {
               resume: tx.resume,
               witnesses: tx.witnesses,
+              type: tx.type,
             };
           }),
         };
@@ -235,17 +257,27 @@ export class Vault extends Predicate<[]> implements IVault {
    * @param transactionId - The transaction id on BakoSafeApi
    *
    * @returns an transaction list
-   *
-   *
    */
   public async BakoSafeGetTransaction(
     transactionId: string,
-  ): Promise<Transfer> {
-    return Transfer.instance({
+  ): Promise<Transfer | DeployTransfer> {
+    const transfer = await Transfer.instance({
       vault: this,
       auth: this.auth,
       transfer: transactionId,
     });
+
+    if (
+      transfer.BakoSafeTransaction.type === TransactionType.TRANSACTION_CREATE
+    ) {
+      return DeployTransfer.fromBakoTransaction({
+        vault: this,
+        auth: this.auth,
+        ...transfer.BakoSafeTransaction,
+      });
+    }
+
+    return transfer;
   }
 
   /**
