@@ -32,7 +32,7 @@ const { getContractId, getContractStorageRoot } = ContractUtils;
 
 /* TODO: Move this method to vault */
 const getMaxPredicateGasUsed = async (provider: Provider, signers: number) => {
-  const wallets = Array.from({ length: signers }, (_, i) => Wallet.generate({ provider }));
+  const wallets = Array.from({ length: signers }, () => Wallet.generate({ provider }));
   const vault = await Vault.create({
     configurable: {
       SIGNATURES_COUNT: signers,
@@ -69,13 +69,11 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
   /**
    * Static method to create a new instance of DeployTransfer from a BakoTransaction.
    *
-   * @param {DeployBakoTransaction} params - The parameters for creating a DeployTransfer.
-   * @param {IBakoSafeAuth} params.auth - The authentication object.
-   * @param {Vault} params.vault - The vault associated with the transfer.
-   * @param {DeployBakoTransaction} bakoTransaction - The Bako transaction to be used for the transfer.
+   * @param {DeployBakoTransaction} options - The parameters for creating a DeployTransfer.
    * @returns {DeployTransfer} A new instance of DeployTransfer.
    */
-  static async fromBakoTransaction({ auth, vault, ...bakoTransaction }: DeployBakoTransaction) {
+  static async fromBakoTransaction(options: DeployBakoTransaction) {
+    const { auth, vault, ...bakoTransaction } = options;
     const createTransactionRequest = CreateTransactionRequest.from(bakoTransaction.txData);
     const witnesses = bakoTransaction.witnesses.map((witness) => witness.signature);
 
@@ -93,20 +91,17 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
   /**
    * Static method to create a new instance of DeployTransfer from a TransactionCreate.
    *
-   * @param {DeployTransferFromTransaction} params - The parameters for creating a DeployTransfer.
-   * @param {string} params.name - The name of the transfer.
-   * @param {Vault} params.vault - The vault associated with the transfer.
-   * @param {Witness[]} params.witnesses - The witnesses for the transfer.
-   * @param {TransactionCreate} transaction - The transaction to be used for the transfer.
+   * @param {DeployTransferFromTransaction} options - The parameters for creating a DeployTransfer.
    * @returns {Promise<DeployTransfer>} A new instance of DeployTransfer.
    */
-  static async fromTransactionCreate({
-                                       name,
-                                       vault,
-                                       witnesses,
-                                       auth,
-                                       ...transaction
-                                     }: DeployTransferFromTransaction): Promise<DeployTransfer> {
+  static async fromTransactionCreate(options: DeployTransferFromTransaction): Promise<DeployTransfer> {
+    const {
+      name,
+      vault,
+      witnesses,
+      auth,
+      ...transaction
+    } = options;
     const transactionRequest = await this.createTransactionRequest({ witnesses, vault, ...transaction });
     const deployTransfer = new DeployTransfer({
       name,
@@ -149,7 +144,6 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
 
     const transactionCost = await account.provider.getTransactionCost(transactionRequest);
     transactionRequest = await account.fund(transactionRequest, transactionCost);
-
 
     return transactionRequest;
   }

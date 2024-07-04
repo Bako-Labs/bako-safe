@@ -1,8 +1,8 @@
-import { bn, hexlify, Provider, Wallet } from 'fuels';
+import { Address, bn, ContractUtils, hexlify, Provider, ScriptTransactionRequest, Wallet, ZeroBytes32 } from 'fuels';
 import { authService, IUserAuth, newVault, signin } from '../utils';
 import { BakoSafe } from '../../configurables';
 import { accounts } from '../mocks';
-import { DeployTransfer, TransactionStatus } from '../../src';
+import { DeployTransfer, TransactionStatus, Vault } from '../../src';
 import { callContractMethod, createTransactionDeploy } from 'bakosafe-test-utils';
 
 describe('[TRANSFERS] Deploy', () => {
@@ -25,8 +25,10 @@ describe('[TRANSFERS] Deploy', () => {
     );
 
     signers = [
+      accounts['FULL'].address,
       accounts['USER_1'].address,
-      accounts['FULL'].address
+      accounts['USER_3'].address,
+      accounts['USER_4'].address
     ];
   }, 30 * 1000);
 
@@ -35,23 +37,29 @@ describe('[TRANSFERS] Deploy', () => {
       signers,
       provider,
       auth['USER_1'].BakoSafeAuth,
-      100
+      100,
+      1
     );
 
-    const { transactionRequest } = await createTransactionDeploy(
+    const { transactionRequest, contractId: expectedContractId } = await createTransactionDeploy(
       provider,
       vault,
-      BakoSafe.getGasConfig('MAX_FEE'),
+      BakoSafe.getGasConfig('MAX_FEE')
     );
-    const createTransactionRequest = await DeployTransfer.createTransactionRequest({
+    const request = await DeployTransfer.createTransactionRequest({
       ...transactionRequest.toTransaction(),
       vault
     });
 
-    const txHex = hexlify(transactionRequest.toTransactionBytes());
-    const txDeployHex = hexlify(createTransactionRequest.toTransactionBytes());
+    const createTransaction = request.toTransaction();
+    const contractBytecode = createTransaction.witnesses[createTransaction.bytecodeWitnessIndex];
+    const contractId = ContractUtils.getContractId(
+      contractBytecode.data,
+      request.salt,
+      ContractUtils.getContractStorageRoot(createTransaction.storageSlots)
+    );
 
-    expect(txHex).toEqual(txDeployHex);
+    expect(expectedContractId).toEqual(contractId);
   });
 
   test(
@@ -135,7 +143,7 @@ describe('[TRANSFERS] Deploy', () => {
         provider,
         user.BakoSafeAuth,
         10000,
-        1
+        2
       );
       const { transactionRequest, contractId } = await createTransactionDeploy(
         provider,
