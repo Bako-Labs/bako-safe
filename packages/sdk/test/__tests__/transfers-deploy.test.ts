@@ -1,9 +1,27 @@
-import { Address, bn, ContractUtils, hexlify, Provider, ScriptTransactionRequest, Wallet, ZeroBytes32 } from 'fuels';
-import { authService, IUserAuth, newVault, signin } from '../utils';
-import { BakoSafe } from '../../configurables';
-import { accounts } from '../mocks';
-import { DeployTransfer, TransactionStatus, Vault } from '../../src';
+import {
+  bn,
+  Wallet,
+  Provider,
+  ContractUtils,
+  CreateTransactionRequest,
+} from 'fuels';
 import { callContractMethod, createTransactionDeploy } from 'bakosafe-test-utils';
+
+import { accounts } from '../mocks';
+import { BakoSafe } from '../../configurables';
+import { DeployTransfer, TransactionStatus } from '../../src';
+import { authService, IUserAuth, newVault, signin } from '../utils';
+
+/* Test util to get id from transaction request */
+const getContractId = (request: CreateTransactionRequest) => {
+  const createTransaction = request.toTransaction();
+  const contractBytecode = createTransaction.witnesses[createTransaction.bytecodeWitnessIndex];
+  return ContractUtils.getContractId(
+    contractBytecode.data,
+    request.salt,
+    ContractUtils.getContractStorageRoot(createTransaction.storageSlots)
+  );
+};
 
 describe('[TRANSFERS] Deploy', () => {
   let auth: IUserAuth;
@@ -51,13 +69,7 @@ describe('[TRANSFERS] Deploy', () => {
       vault
     });
 
-    const createTransaction = request.toTransaction();
-    const contractBytecode = createTransaction.witnesses[createTransaction.bytecodeWitnessIndex];
-    const contractId = ContractUtils.getContractId(
-      contractBytecode.data,
-      request.salt,
-      ContractUtils.getContractStorageRoot(createTransaction.storageSlots)
-    );
+    const contractId = getContractId(request);
 
     expect(expectedContractId).toEqual(contractId);
   });
@@ -72,7 +84,7 @@ describe('[TRANSFERS] Deploy', () => {
         100
       );
 
-      const { transactionRequest } = await createTransactionDeploy(
+      const { transactionRequest, contractId: expectedContractId } = await createTransactionDeploy(
         provider,
         vault,
         BakoSafe.getGasConfig('MAX_FEE')
@@ -83,10 +95,11 @@ describe('[TRANSFERS] Deploy', () => {
         name: 'Contract deploy'
       });
 
-      const txIdFromDeployTransfer = deployTransfer.getHashTxId();
-      const txIdFromTransactionDeploy = transactionRequest.getTransactionId(vault.provider.getChainId()).slice(2);
+      const contractIdFromRequest = getContractId(transactionRequest);
+      const contractIdFromTransfer = deployTransfer.getContractId();
 
-      expect(txIdFromDeployTransfer).toEqual(txIdFromTransactionDeploy);
+      expect(contractIdFromTransfer).toBe(contractIdFromRequest);
+      expect(expectedContractId).toEqual(contractIdFromRequest);
     },
     100 * 1000
   );
