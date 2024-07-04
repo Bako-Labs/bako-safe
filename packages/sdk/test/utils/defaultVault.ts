@@ -5,6 +5,7 @@ import { sendPredicateCoins } from './sendCoins';
 import { IBakoSafeAuth } from '../../src/api';
 import { DEFAULT_BALANCE_VALUE, VALUES_DEFAULT_TO_MUL } from '../mocks/assets';
 
+//todo: remove else, and move assetsId to required params
 export const newVault = async (
   signers: string[],
   fuelProvider: Provider,

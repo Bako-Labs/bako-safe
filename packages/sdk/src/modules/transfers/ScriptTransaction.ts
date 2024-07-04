@@ -11,26 +11,28 @@ import {
   bn,
 } from 'fuels';
 import { IAssetGroupByTo } from '../../utils/assets';
+import { Transfer } from './Transfer';
+//import { BakoSafe } from 'configurables';
 import { BakoSafe } from '../../../configurables';
-import { transactionScript } from './helpers';
+// import { transactionScript } from './helpers';
 
 interface BakoSafeScriptTransactionConstructor {
-  gasLimit: BN;
-  maxFee: BN;
-  script: BytesLike;
+  gasLimit?: BN;
+  maxFee?: BN;
+  script?: BytesLike;
 }
 
 export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
   constructor(
     { script, gasLimit, maxFee }: BakoSafeScriptTransactionConstructor = {
-      script: transactionScript,
-      gasLimit: bn(BakoSafe.getGasConfig('GAS_LIMIT')),
-      maxFee: bn(BakoSafe.getGasConfig('MAX_FEE')),
+      script: '0x',
+      gasLimit: bn(0),
+      maxFee: bn(0),
     },
   ) {
     super({
-      gasLimit,
       script,
+      gasLimit,
       maxFee,
     });
   }
@@ -39,6 +41,7 @@ export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
     _coins: Resource[],
     vault: Predicate<[]>,
     outputs: IAssetGroupByTo,
+    minSigners: number = 1,
     witnesses?: string[],
   ) {
     Object.entries(outputs).map(([, value]) => {
@@ -64,5 +67,10 @@ export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
     if (witnesses) {
       this.witnesses = [...this.witnesses, ...witnesses];
     }
+
+    const fee = await Transfer.estimateFee(this, vault.provider, minSigners);
+
+    this.maxFee = fee.bako_max_fee;
+    this.gasLimit = fee.bako_gas_limit;
   }
 }

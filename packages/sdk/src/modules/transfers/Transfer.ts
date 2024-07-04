@@ -1,10 +1,14 @@
+
 import { TransactionRequest, } from 'fuels';
+
 import {
   ECreationTransactiontype,
   TransferFactory,
 } from './types';
+
 import { identifyCreateTransactionParams } from './helpers';
 import { BaseTransfer } from './BaseTransfer';
+
 
 /**
  * `Transfer` are extension of ScriptTransactionRequest, to create and send transactions
@@ -21,6 +25,7 @@ export class Transfer extends BaseTransfer<TransactionRequest>{
    * @returns return a new Transfer instance
    */
   public static async instance(param: TransferFactory): Promise<Transfer> {
+
     const { payload, type } = await identifyCreateTransactionParams(param);
 
     if (!(type in ECreationTransactiontype)) {
