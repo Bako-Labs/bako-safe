@@ -1,4 +1,5 @@
 import {
+  BN,
   ScriptTransactionRequest,
   TransactionRequest,
   TransactionRequestLike,
@@ -84,4 +85,15 @@ export interface ITransfer {
   getScript(): TransactionRequest;
   wait(): Promise<ITransactionResume | undefined>;
   getAssets(): ITransferAsset[];
+}
+
+export interface ITransferEstimateFee {
+  minGas: BN;
+  minFee: BN;
+  maxGas: BN;
+  maxFee: BN;
+  gasPrice: BN;
+  gasLimit: BN;
+  bako_max_fee: BN;
+  bako_gas_limit: BN;
 }

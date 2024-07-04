@@ -12,9 +12,6 @@ import {
 } from 'fuels';
 import { IAssetGroupByTo } from '../../utils/assets';
 import { Transfer } from './Transfer';
-//import { BakoSafe } from 'configurables';
-import { BakoSafe } from '../../../configurables';
-// import { transactionScript } from './helpers';
 
 interface BakoSafeScriptTransactionConstructor {
   gasLimit?: BN;

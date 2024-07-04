@@ -1,7 +1,11 @@
 import {
-  hexlify, ScriptTransactionRequest,
+  BN,
+  hexlify,
+  Provider,
+  ScriptTransactionRequest,
   TransactionRequest,
-  TransactionResponse
+  transactionRequestify,
+  TransactionResponse,
 } from 'fuels';
 import {
   ITransaction,
@@ -11,6 +15,8 @@ import {
 } from '../../api';
 import { Vault } from '../vault/Vault';
 import { delay } from '../../../test/utils';
+import { FAKE_WITNESSES } from './helpers';
+import { ITransferEstimateFee } from './types';
 
 export interface BaseTransferLike<T extends TransactionRequest> {
   name: string;
@@ -159,5 +165,32 @@ export class BaseTransfer<T extends TransactionRequest> {
       status: transaction.status,
     };
     return result;
+  }
+
+  public static async estimateFee(
+    transaction: TransactionRequest,
+    provider: Provider,
+    required_witnesses: number,
+  ): Promise<ITransferEstimateFee> {
+    try {
+      const _tx = transactionRequestify(transaction);
+
+      _tx.witnesses = Array.from(
+        { length: required_witnesses },
+        () => FAKE_WITNESSES,
+      );
+
+      const fee = await provider.estimateTxGasAndFee({
+        transactionRequest: transactionRequestify(_tx),
+      });
+
+      return {
+        ...fee,
+        bako_max_fee: fee.maxFee.add(fee.minFee),
+        bako_gas_limit: fee.gasLimit,
+      };
+    } catch (e) {
+      return Promise.reject(e);
+    }
   }
 }
