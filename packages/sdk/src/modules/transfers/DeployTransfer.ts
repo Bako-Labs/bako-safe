@@ -2,13 +2,14 @@ import { BaseTransfer, BaseTransferLike } from './BaseTransfer';
 import {
   bn,
   Wallet,
+  hexlify,
   Provider,
   ZeroBytes32,
   ContractUtils,
   TransactionCreate,
   transactionRequestify,
   CreateTransactionRequest,
-   ScriptTransactionRequest,
+  ScriptTransactionRequest,
 } from 'fuels';
 import { IBakoSafeAuth, ITransaction, TransactionService, TransactionStatus } from '../../api';
 
@@ -163,8 +164,13 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
       throw new Error('Auth is required to save the transaction.');
     }
 
+    const coinInputs = this.transactionRequest.getCoinInputs();
     const transactionData = await this.service.create({
-      assets: [],
+      assets: coinInputs.map(input => ({
+        to: hexlify(input.owner),
+        assetId: hexlify(input.assetId),
+        amount: bn(input.amount).format(),
+      })),
       hash: this.getHashTxId(),
       txData: transactionRequestify(this.transactionRequest),
       status: TransactionStatus.AWAIT_REQUIREMENTS,
