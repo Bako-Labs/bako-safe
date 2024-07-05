@@ -1,4 +1,13 @@
-import { BN, bn, BytesLike, ContractFactory, DeployContractOptions, JsonAbi, Predicate, Provider } from 'fuels';
+import {
+  BN,
+  bn,
+  BytesLike,
+  ContractFactory,
+  DeployContractOptions,
+  JsonAbi,
+  Predicate,
+  Provider,
+} from 'fuels';
 import { join } from 'path';
 import { readFileSync } from 'fs';
 import { ContractAbi__factory } from '../../types/sway';
@@ -43,11 +52,11 @@ export class BakoContractDeploy extends ContractFactory {
 export const createTransactionDeploy = async (
   provider: Provider,
   vault: Predicate<any>,
-  maxFee: BN | number,
+  maxFee?: BN | number,
 ) => {
   const byteCodePath = join(
     __dirname,
-    `../../sway/contract/out/debug/contract.bin`
+    `../../sway/contract/out/debug/contract.bin`,
   );
 
   const byteCode = readFileSync(byteCodePath);
@@ -56,22 +65,21 @@ export const createTransactionDeploy = async (
     byteCode,
     ContractAbi__factory.abi,
     provider,
-    vault.address.toB256()
+    vault.address.toB256(),
   );
 
   const { transactionRequest, contractId } = await deploy_class.deploy();
 
   const coins = await vault.getResourcesToSpend([
     {
-      amount: bn(1000000),
-      assetId: provider.getBaseAssetId()
-    }
+      amount: bn(1),
+      assetId: provider.getBaseAssetId(),
+    },
   ]);
   transactionRequest.addResources(coins);
-  transactionRequest.maxFee = bn(maxFee);
 
   return {
     transactionRequest,
-    contractId
+    contractId,
   };
 };
