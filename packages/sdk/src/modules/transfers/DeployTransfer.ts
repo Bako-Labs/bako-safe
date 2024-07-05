@@ -1,29 +1,41 @@
 import { BaseTransfer, BaseTransferLike } from './BaseTransfer';
 import {
   bn,
-  Wallet,
-  hexlify,
-  Provider,
-  ZeroBytes32,
+  CoinTransactionRequestInput,
   ContractUtils,
-  TransactionCreate,
-  transactionRequestify,
   CreateTransactionRequest,
-  ScriptTransactionRequest,
+  hexlify,
+  OutputType,
+  Provider,
+  TransactionCreate,
+  TransactionRequest,
+  transactionRequestify,
+  Wallet,
+  ZeroBytes32,
 } from 'fuels';
-import { IBakoSafeAuth, ITransaction, TransactionService, TransactionStatus } from '../../api';
+import {
+  IBakoSafeAuth,
+  ITransaction,
+  TransactionService,
+  TransactionStatus,
+} from '../../api';
 
 import { Vault } from '../vault';
+import { clone } from 'ramda';
 
 /* Types */
 type BaseDeployTransfer = BaseTransferLike<CreateTransactionRequest>;
-type DeployTransferFromTransaction =
-  TransactionCreate
-  &
-  Omit<BaseDeployTransfer, 'transactionRequest' | 'witnesses' | 'service' | 'BakoSafeTransaction' | 'BakoSafeTransactionId'>
-  &
-  { auth?: IBakoSafeAuth };
-type DeployTransferTransactionRequest = TransactionCreate & Pick<BaseDeployTransfer, 'vault'>;
+type DeployTransferFromTransaction = TransactionCreate &
+  Omit<
+    BaseDeployTransfer,
+    | 'transactionRequest'
+    | 'witnesses'
+    | 'service'
+    | 'BakoSafeTransaction'
+    | 'BakoSafeTransactionId'
+  > & { auth?: IBakoSafeAuth };
+type DeployTransferTransactionRequest = TransactionCreate &
+  Pick<BaseDeployTransfer, 'vault'>;
 type DeployBakoTransaction = {
   auth: IBakoSafeAuth;
   vault: DeployTransferFromTransaction['vault'];
@@ -32,16 +44,22 @@ type DeployBakoTransaction = {
 const { getContractId, getContractStorageRoot } = ContractUtils;
 
 /* TODO: Move this method to vault */
-const getMaxPredicateGasUsed = async (provider: Provider, signers: number) => {
-  const wallets = Array.from({ length: signers }, () => Wallet.generate({ provider }));
+const getMaxPredicateGasUsed = async (
+  provider: Provider,
+  signers: number,
+  transactionRequest: TransactionRequest,
+) => {
+  const request = clone(transactionRequest);
+  const wallets = Array.from({ length: signers }, () =>
+    Wallet.generate({ provider }),
+  );
   const vault = await Vault.create({
     configurable: {
       SIGNATURES_COUNT: signers,
-      SIGNERS: wallets.map(wallet => wallet.address.toB256()),
+      SIGNERS: wallets.map((wallet) => wallet.address.toB256()),
       network: provider.url,
-    }
+    },
   });
-  const request = new ScriptTransactionRequest();
   request.addCoinInput({
     id: ZeroBytes32,
     assetId: ZeroBytes32,
@@ -53,8 +71,12 @@ const getMaxPredicateGasUsed = async (provider: Provider, signers: number) => {
   vault.populateTransactionPredicateData(request);
 
   const txId = request.getTransactionId(provider.getChainId());
-  const signatures = await Promise.all(wallets.map(wallet => wallet.signMessage(txId.slice(2))));
-  signatures.forEach(signature => request.addWitness(signature));
+  const signatures = await Promise.all(
+    wallets.map((wallet) => wallet.signMessage(txId.slice(2))),
+  );
+  signatures.forEach((signature) => request.addWitness(signature));
+  const transactionCost = await vault.provider.getTransactionCost(request);
+  await vault.fund(request, transactionCost);
   await vault.provider.estimatePredicates(request);
   const predicateInput = request.inputs[0];
   if (predicateInput && 'predicate' in predicateInput) {
@@ -75,8 +97,12 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
    */
   static async fromBakoTransaction(options: DeployBakoTransaction) {
     const { auth, vault, ...bakoTransaction } = options;
-    const createTransactionRequest = CreateTransactionRequest.from(bakoTransaction.txData);
-    const witnesses = bakoTransaction.witnesses.map((witness) => witness.signature);
+    const createTransactionRequest = CreateTransactionRequest.from(
+      bakoTransaction.txData,
+    );
+    const witnesses = bakoTransaction.witnesses.map(
+      (witness) => witness.signature,
+    );
 
     return new DeployTransfer({
       vault,
@@ -85,7 +111,7 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
       service: new TransactionService(auth),
       transactionRequest: createTransactionRequest,
       BakoSafeTransaction: bakoTransaction,
-      BakoSafeTransactionId: bakoTransaction.id
+      BakoSafeTransactionId: bakoTransaction.id,
     });
   }
 
@@ -95,20 +121,20 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
    * @param {DeployTransferFromTransaction} options - The parameters for creating a DeployTransfer.
    * @returns {Promise<DeployTransfer>} A new instance of DeployTransfer.
    */
-  static async fromTransactionCreate(options: DeployTransferFromTransaction): Promise<DeployTransfer> {
-    const {
-      name,
-      vault,
+  static async fromTransactionCreate(
+    options: DeployTransferFromTransaction,
+  ): Promise<DeployTransfer> {
+    const { name, vault, witnesses, auth, ...transaction } = options;
+    const transactionRequest = await this.createTransactionRequest({
       witnesses,
-      auth,
-      ...transaction
-    } = options;
-    const transactionRequest = await this.createTransactionRequest({ witnesses, vault, ...transaction });
+      vault,
+      ...transaction,
+    });
     const deployTransfer = new DeployTransfer({
       name,
       vault,
       transactionRequest,
-      witnesses: witnesses.map(witness => witness.data)
+      witnesses: witnesses.map((witness) => witness.data),
     });
 
     if (auth) {
@@ -127,24 +153,54 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
    * @param {TransactionCreate} options.transaction - The transaction to be used for the transfer.
    * @returns {Promise<CreateTransactionRequest>} A new instance of CreateTransactionRequest.
    */
-  static async createTransactionRequest(options: DeployTransferTransactionRequest): Promise<CreateTransactionRequest> {
+  static async createTransactionRequest(
+    options: DeployTransferTransactionRequest,
+  ): Promise<CreateTransactionRequest> {
     const { vault: account, inputs, witnesses, ...transaction } = options;
 
+    console.log('Received outputs: ', transaction.outputs);
     const bytecode = witnesses[transaction.bytecodeWitnessIndex];
+    const contractOutput = transaction.outputs.find(
+      (output) => output.type === OutputType.ContractCreated,
+    );
+
+    if (!contractOutput || !bytecode) {
+      throw new Error('Contract output and bytecode are required.');
+    }
+
     let transactionRequest = CreateTransactionRequest.from({
-      witnesses: [bytecode.data],
-      bytecodeWitnessIndex: transaction.bytecodeWitnessIndex,
+      inputs: [],
       salt: transaction.salt,
+      witnesses: [bytecode.data],
       storageSlots: transaction.storageSlots,
-      outputs: transaction.outputs,
-      inputs: []
+      outputs: [contractOutput],
+      bytecodeWitnessIndex: transaction.bytecodeWitnessIndex,
     });
 
-    const fee = await getMaxPredicateGasUsed(account.provider, account.BakoSafeVault.minSigners);
-    transactionRequest.maxFee = fee.add(10);
+    const fee = await getMaxPredicateGasUsed(
+      account.provider,
+      account.BakoSafeVault.minSigners,
+      transactionRequest,
+    );
+    transactionRequest.maxFee = fee;
 
-    const transactionCost = await account.provider.getTransactionCost(transactionRequest);
-    transactionRequest = await account.fund(transactionRequest, transactionCost);
+    const transactionCost =
+      await account.provider.getTransactionCost(transactionRequest);
+    transactionRequest = await account.fund(
+      transactionRequest,
+      transactionCost,
+    );
+
+    if (transactionRequest.inputs.length > 1) {
+      console.log('Multiple inputs detected. Using the highest input amount.');
+      const highestInput = transactionRequest
+        .getCoinInputs()
+        .reduce((max, input) => {
+          return Number(max.amount) > Number(input.amount) ? max : input;
+        }, {} as CoinTransactionRequestInput);
+      transactionRequest.inputs = [highestInput];
+      console.log('Input amount: ', highestInput.amount.toString());
+    }
 
     return transactionRequest;
   }
@@ -164,18 +220,13 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
       throw new Error('Auth is required to save the transaction.');
     }
 
-    const coinInputs = this.transactionRequest.getCoinInputs();
     const transactionData = await this.service.create({
-      assets: coinInputs.map(input => ({
-        to: hexlify(input.owner),
-        assetId: hexlify(input.assetId),
-        amount: bn(input.amount).format(),
-      })),
+      assets: [],
       hash: this.getHashTxId(),
       txData: transactionRequestify(this.transactionRequest),
       status: TransactionStatus.AWAIT_REQUIREMENTS,
       predicateAddress: this.vault.address.toString(),
-      name: this.name
+      name: this.name,
     });
 
     this.BakoSafeTransaction = transactionData;
@@ -193,12 +244,13 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
    */
   getContractId(): string {
     const transaction = this.transactionRequest.toTransaction();
-    const bytecode = transaction.witnesses[transaction.bytecodeWitnessIndex].data;
+    const bytecode =
+      transaction.witnesses[transaction.bytecodeWitnessIndex].data;
 
     return getContractId(
       bytecode,
       transaction.salt,
-      getContractStorageRoot(transaction.storageSlots)
+      getContractStorageRoot(transaction.storageSlots),
     );
   }
 }
