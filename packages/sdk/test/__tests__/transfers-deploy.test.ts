@@ -12,7 +12,7 @@ import {
 
 import { accounts } from '../mocks';
 import { BakoSafe } from '../../configurables';
-import { DeployTransfer, TransactionStatus } from '../../src';
+import { DeployTransfer, TransactionStatus, Vault } from '../../src';
 import { authService, IUserAuth, newVault, signin } from '../utils';
 
 /* Test util to get id from transaction request */
@@ -42,7 +42,7 @@ describe('[TRANSFERS] Deploy', () => {
   beforeAll(async () => {
     provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
     auth = await authService(
-      ['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
+      ['FULL', 'USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
       provider.url,
     );
 
@@ -227,4 +227,43 @@ describe('[TRANSFERS] Deploy', () => {
     expect(apiDeployTransfer).toBeInstanceOf(DeployTransfer);
     expect(resume.status).toBe(TransactionStatus.SUCCESS);
   });
+
+  test.skip(
+    'Create a transaction request for deploy and send',
+    async () => {
+      const genesisWallet = Wallet.fromPrivateKey(
+        accounts['FULL'].privateKey,
+        provider,
+      );
+      const vault = await Vault.create({
+        ...auth['FULL'].BakoSafeAuth,
+        id: '886d984b-8971-4cd0-b098-177b5d4368b0',
+      });
+
+      const { transactionRequest, contractId: expectedContractId } =
+        await createTransactionDeploy(provider, vault);
+
+      const deployTransfer = await DeployTransfer.fromTransactionCreate({
+        ...transactionRequest.toTransaction(),
+        vault,
+        name: 'Contract deploy',
+      });
+
+      const signature = await genesisWallet.signMessage(
+        deployTransfer.getHashTxId(),
+      );
+      deployTransfer.transactionRequest.addWitness(signature);
+
+      await provider.estimatePredicates(deployTransfer.transactionRequest);
+      const response = await vault.sendTransaction(
+        deployTransfer.transactionRequest,
+      );
+      const deployed = await response.wait();
+
+      // const contractId = getContractId(request);
+
+      // expect(expectedContractId).toEqual(contractId);
+    },
+    1000 * 60 * 10,
+  );
 });
