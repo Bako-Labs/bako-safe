@@ -78,11 +78,7 @@ const getMaxPredicateGasUsed = async (
   const transactionCost = await vault.provider.getTransactionCost(request);
   await vault.fund(request, transactionCost);
   await vault.provider.estimatePredicates(request);
-  const predicateInput = request.inputs[0];
-  if (predicateInput && 'predicate' in predicateInput) {
-    return bn(predicateInput.predicateGasUsed);
-  }
-  return bn();
+  return request.maxFee;
 };
 
 /**
