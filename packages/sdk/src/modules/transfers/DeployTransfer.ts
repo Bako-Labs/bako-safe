@@ -154,7 +154,6 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
   ): Promise<CreateTransactionRequest> {
     const { vault: account, inputs, witnesses, ...transaction } = options;
 
-    console.log('Received outputs: ', transaction.outputs);
     const bytecode = witnesses[transaction.bytecodeWitnessIndex];
     const contractOutput = transaction.outputs.find(
       (output) => output.type === OutputType.ContractCreated,
