@@ -1,4 +1,4 @@
-import { Provider, TransactionRequestLike } from 'fuels';
+import { Provider, TransactionCreate, TransactionRequestLike } from 'fuels';
 import { IBakoSafeAuth } from '../../api/auth/types';
 import {
   IListTransactions,
@@ -67,6 +67,10 @@ export interface ICreationNewVault {
 }
 
 export type ICreation = ICreationOldVault | ICreationNewVault;
+
+export type IDeployContract = TransactionCreate & {
+  name: string;
+};
 
 export type IBakoSafeIncludeTransaction =
   | IFormatTransfer

@@ -19,6 +19,7 @@ import {
   IBakoSafeIncludeTransaction,
   IConfVault,
   ICreationPayload,
+  IDeployContract,
   IPayloadVault,
   IVault,
 } from './types';
@@ -179,17 +180,18 @@ export class Vault extends Predicate<[]> implements IVault {
   /**
    * Include a new transaction in vault to deploy contract.
    *
-   * @param {TransactionCreate} transaction - The transaction details for deploying the contract.
+   * @param {IDeployContract} params - The transaction details for deploying the contract.
    * @returns {Promise<DeployTransfer>} A promise that resolves to an instance of DeployTransfer.
    */
   public async BakoSafeDeployContract(
-    transaction: TransactionCreate,
+    params: IDeployContract,
   ): Promise<DeployTransfer> {
+    const { name, ...transaction } = params;
     const transfer = await DeployTransfer.fromTransactionCreate({
       ...transaction,
       vault: this,
       auth: this.auth,
-      name: 'Contract deploy',
+      name: name || 'Contract deployment',
     });
 
     return transfer.save();

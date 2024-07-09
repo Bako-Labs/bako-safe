@@ -1,12 +1,15 @@
 import { BaseTransfer, BaseTransferLike } from './BaseTransfer';
 import {
+  Address,
   bn,
+  calculateGasFee,
   CoinTransactionRequestInput,
   ContractUtils,
   CreateTransactionRequest,
   hexlify,
   OutputType,
   Provider,
+  ScriptTransactionRequest,
   TransactionCreate,
   TransactionRequest,
   transactionRequestify,
@@ -22,6 +25,7 @@ import {
 
 import { Vault } from '../vault';
 import { clone } from 'ramda';
+import { FAKE_WITNESSES } from './helpers';
 
 /* Types */
 type BaseDeployTransfer = BaseTransferLike<CreateTransactionRequest>;
@@ -44,22 +48,18 @@ type DeployBakoTransaction = {
 const { getContractId, getContractStorageRoot } = ContractUtils;
 
 /* TODO: Move this method to vault */
-const getMaxPredicateGasUsed = async (
-  provider: Provider,
-  signers: number,
-  transactionRequest: TransactionRequest,
-) => {
-  const request = clone(transactionRequest);
-  const wallets = Array.from({ length: signers }, () =>
-    Wallet.generate({ provider }),
-  );
+const getMaxPredicateGasUsed = async (provider: Provider, signers: number) => {
+  const request = new ScriptTransactionRequest();
+  const addresses = Array.from({ length: signers }, () => Address.fromRandom());
   const vault = await Vault.create({
     configurable: {
       SIGNATURES_COUNT: signers,
-      SIGNERS: wallets.map((wallet) => wallet.address.toB256()),
+      SIGNERS: addresses.map((address) => address.toB256()),
       network: provider.url,
     },
   });
+
+  // Add fake input
   request.addCoinInput({
     id: ZeroBytes32,
     assetId: ZeroBytes32,
@@ -68,17 +68,20 @@ const getMaxPredicateGasUsed = async (
     blockCreated: bn(),
     txCreatedIdx: bn(),
   });
-  vault.populateTransactionPredicateData(request);
 
-  const txId = request.getTransactionId(provider.getChainId());
-  const signatures = await Promise.all(
-    wallets.map((wallet) => wallet.signMessage(txId.slice(2))),
-  );
-  signatures.forEach((signature) => request.addWitness(signature));
+  // Populate the  transaction inputs with predicate data
+  vault.populateTransactionPredicateData(request);
+  Array.from({ length: signers }, () => request.addWitness(FAKE_WITNESSES));
+
   const transactionCost = await vault.provider.getTransactionCost(request);
   await vault.fund(request, transactionCost);
   await vault.provider.estimatePredicates(request);
-  return request.maxFee;
+  const input = request.inputs[0];
+  if ('predicate' in input && input.predicate) {
+    return bn(input.predicateGasUsed);
+  }
+
+  return bn();
 };
 
 /**
@@ -152,9 +155,8 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
   static async createTransactionRequest(
     options: DeployTransferTransactionRequest,
   ): Promise<CreateTransactionRequest> {
-    const { vault: account, inputs, witnesses, ...transaction } = options;
+    const { vault, inputs, witnesses, ...transaction } = options;
 
-    console.log('Received outputs: ', transaction.outputs);
     const bytecode = witnesses[transaction.bytecodeWitnessIndex];
     const contractOutput = transaction.outputs.find(
       (output) => output.type === OutputType.ContractCreated,
@@ -173,30 +175,43 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
       bytecodeWitnessIndex: transaction.bytecodeWitnessIndex,
     });
 
-    const fee = await getMaxPredicateGasUsed(
-      account.provider,
-      account.BakoSafeVault.minSigners,
-      transactionRequest,
-    );
-    transactionRequest.maxFee = fee;
-
+    // Get the transaction cost and set max fee to fund the transaction with required inputs
     const transactionCost =
-      await account.provider.getTransactionCost(transactionRequest);
-    transactionRequest = await account.fund(
-      transactionRequest,
-      transactionCost,
+      await vault.provider.getTransactionCost(transactionRequest);
+    transactionRequest.maxFee = transactionCost.maxFee;
+    transactionRequest = await vault.fund(transactionRequest, transactionCost);
+
+    // Estimate the gas usage for the predicate
+    const predicateGasUsed = await getMaxPredicateGasUsed(
+      vault.provider,
+      vault.BakoSafeVault.minSigners,
     );
 
-    if (transactionRequest.inputs.length > 1) {
-      console.log('Multiple inputs detected. Using the highest input amount.');
-      const highestInput = transactionRequest
-        .getCoinInputs()
-        .reduce((max, input) => {
-          return Number(max.amount) > Number(input.amount) ? max : input;
-        }, {} as CoinTransactionRequestInput);
-      transactionRequest.inputs = [highestInput];
-      console.log('Input amount: ', highestInput.amount.toString());
-    }
+    // Calculate the total gas usage for the transaction
+    let totalGasUsed = bn(0);
+    transactionRequest.inputs.forEach((input) => {
+      if ('predicate' in input && input.predicate) {
+        totalGasUsed = totalGasUsed.add(predicateGasUsed);
+      }
+    });
+
+    // Estimate the max fee for the transaction and calculate fee difference
+    const { gasPriceFactor } = await vault.provider.getGasConfig();
+    const { maxFee, gasPrice } = await vault.provider.estimateTxGasAndFee({
+      transactionRequest,
+    });
+
+    const predicateSuccessFeeDiff = calculateGasFee({
+      gas: totalGasUsed,
+      priceFactor: gasPriceFactor,
+      gasPrice,
+    });
+
+    const feeWithFat = maxFee.add(predicateSuccessFeeDiff);
+    transactionRequest.maxFee = feeWithFat;
+
+    // Attach missing inputs (including estimated predicate gas usage) / outputs to the request
+    await vault.provider.estimateTxDependencies(transactionRequest);
 
     return transactionRequest;
   }
