@@ -82,7 +82,9 @@ describe('[PREDICATES]', () => {
       provider,
       auth['USER_1'].BakoSafeAuth,
     );
-    expect(await vault.getBalances()).toStrictEqual(DEFAULT_BALANCES);
+    expect((await vault.getBalances()).balances).toStrictEqual(
+      DEFAULT_BALANCES,
+    );
   });
 
   test('Create vault missing configurable params', async () => {
