@@ -73,4 +73,12 @@ export class TransactionService extends Api implements ITransactionService {
 
     return data;
   }
+
+  public async status(BakoSafeTransactionId: string) {
+    const { data } = await this.client.get(
+      `/transaction/status/${BakoSafeTransactionId}`,
+    );
+
+    return data;
+  }
 }

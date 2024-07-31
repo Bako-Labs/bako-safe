@@ -1,9 +1,27 @@
 {
-  "extends": "@fuels/ts-config/base.json",
   "compilerOptions": {
     "keyofStringsOnly": true,
     "ignoreDeprecations": "5.0",
+    "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true,
+    "preserveSymlinks": false,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react-jsx",
+    "lib": ["dom", "esnext"],
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
     "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "target": "es2020",
     "outDir": "./dist",
     "baseUrl": ".",
     "rootDir": "../"
@@ -14,5 +32,11 @@
     }
   },
   "include": ["**/*.ts", "../sway/fuels.config.ts"],
-  "exclude": ["**/*.test.ts", "dist"]
+  "exclude": [
+    "**/*.test.ts",
+    "**/dist",
+    "**/build",
+    "node_modules",
+    "**/node_modules"
+  ]
 }

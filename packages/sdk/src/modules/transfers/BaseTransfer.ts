@@ -62,6 +62,46 @@ export class BaseTransfer<T extends TransactionRequest> {
       : '';
   }
 
+  // get trasaction status on bakosafe-api
+  private getStatus(): TransactionStatus {
+    // get transaction status on BakoSafeAPI
+    // set BakoSafeTransaction status
+    return this.BakoSafeTransaction.status;
+  }
+
+  // send predicate transaction to chain
+  private async sendTransactionToChain(): Promise<TransactionResponse> {
+    this.transactionRequest.witnesses = this.witnesses;
+    await this.vault.provider.estimatePredicates(this.transactionRequest);
+    const encodedTransaction = hexlify(
+      this.transactionRequest.toTransactionBytes(),
+    );
+    const {
+      submit: { id: transactionId },
+    } = await this.vault.provider.operations.submit({ encodedTransaction });
+
+    return new TransactionResponse(transactionId, this.vault.provider);
+  }
+
+  // sync transaction by api status
+  // get on api the transaction by id, and recive only the status
+  // if status is different of the current status, get the complete transaction on api
+  private async syncTrasanction(): Promise<void> {
+    if (!this.service) return;
+    const currentStatus = await this.service.status(this.BakoSafeTransactionId);
+    const isDeprecated = currentStatus !== this.BakoSafeTransaction.status;
+
+    if (!isDeprecated) {
+      return;
+    }
+
+    this.BakoSafeTransaction = await this.service.findByTransactionID(
+      this.BakoSafeTransaction.id,
+    );
+
+    return;
+  }
+
   /**
    * Generates and formats the transaction hash of transaction instance
    *
@@ -80,40 +120,21 @@ export class BaseTransfer<T extends TransactionRequest> {
    * @returns an resume for transaction
    */
   public async send(): Promise<ITransactionResume | TransactionResponse> {
+    // Default send of predicate transaction
     if (!this.service) {
-      this.transactionRequest.witnesses = this.witnesses;
-      await this.vault.provider.estimatePredicates(this.transactionRequest);
-      const encodedTransaction = hexlify(
-        this.transactionRequest.toTransactionBytes(),
-      );
-      const {
-        submit: { id: transactionId },
-      } = await this.vault.provider.operations.submit({ encodedTransaction });
-
-      return new TransactionResponse(transactionId, this.vault.provider);
+      return this.sendTransactionToChain();
     }
 
-    this.BakoSafeTransaction = await this.service.findByTransactionID(
+    if (this.BakoSafeTransaction.status == TransactionStatus.PENDING_SENDER) {
+      await this.service.send(this.BakoSafeTransactionId);
+    }
+
+    await this.syncTrasanction();
+
+    return new TransactionResponse(
       this.BakoSafeTransactionId,
+      this.vault.provider,
     );
-    switch (this.BakoSafeTransaction.status) {
-      case TransactionStatus.PENDING_SENDER:
-        await this.service.send(this.BakoSafeTransactionId);
-        break;
-
-      case TransactionStatus.PROCESS_ON_CHAIN:
-        return await this.wait();
-
-      case TransactionStatus.FAILED || TransactionStatus.SUCCESS:
-        break;
-
-      default:
-        break;
-    }
-    return {
-      ...this.BakoSafeTransaction.resume,
-      BakoSafeID: this.BakoSafeTransactionId,
-    };
   }
 
   /**
@@ -131,29 +152,21 @@ export class BaseTransfer<T extends TransactionRequest> {
       throw Error('Implement this.');
     }
 
-    let transaction = await this.service.findByTransactionID(
-      this.BakoSafeTransactionId,
-    );
-    while (
-      transaction.status !== TransactionStatus.SUCCESS &&
-      transaction.status !== TransactionStatus.FAILED
-    ) {
-      await delay(this.vault.transactionRecursiveTimeout); // todo: make time to dynamic
-      transaction = await this.service.findByTransactionID(
-        this.BakoSafeTransactionId,
-      );
+    await this.syncTrasanction();
 
-      if (transaction.status == TransactionStatus.PENDING_SENDER)
-        await this.send();
-
-      if (transaction.status == TransactionStatus.PROCESS_ON_CHAIN)
-        await this.service.verify(this.BakoSafeTransactionId);
+    if (this.BakoSafeTransaction.status === TransactionStatus.PENDING_SENDER) {
+      await this.service.send(this.BakoSafeTransactionId);
     }
 
-    const result: ITransactionResume = {
-      ...transaction.resume,
-      status: transaction.status,
-    };
-    return result;
+    const wait =
+      this.BakoSafeTransaction.status === TransactionStatus.PROCESS_ON_CHAIN ||
+      this.BakoSafeTransaction.status === TransactionStatus.AWAIT_REQUIREMENTS;
+
+    if (wait) {
+      await delay(1000);
+      return this.wait();
+    }
+
+    return this.BakoSafeTransaction.resume;
   }
 }
