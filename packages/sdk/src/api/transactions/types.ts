@@ -73,6 +73,7 @@ export interface ITransactionResume {
   witnesses?: string[];
   gasUsed?: string;
   sendTime?: Date;
+  error?: string;
 }
 
 export interface ITransactionSummary {
@@ -94,7 +95,7 @@ export interface ITransaction extends ICreateTransactionPayload {
   createdAt: string;
   updatedAt: string;
   predicateId: string;
-  type: TransactionType,
+  type: TransactionType;
   witnesses: IWitnesses[];
   resume: ITransactionResume; // RESULT
   assets: ITransferAsset[];
@@ -113,4 +114,5 @@ export interface ITransactionService {
   ) => Promise<ITransaction>;
   send: (BakoSafeTransactionId: string) => Promise<ITransactionResume>;
   verify: (BakoSafeTransactionId: string) => Promise<ITransactionResume>;
+  status: (BakoSafeTransactionId: string) => Promise<TransactionStatus>;
 }
