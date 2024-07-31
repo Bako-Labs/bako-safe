@@ -1,12 +1,11 @@
 import {
-  arrayify,
   bn,
   hashMessage,
   ScriptTransactionRequest,
   Signer,
   transactionRequestify,
   TransactionRequestLike,
-  TransactionType
+  TransactionType,
 } from 'fuels';
 import { defaultValues } from '../vault/helpers';
 import { ITransaction, TransactionService, TransactionStatus } from '../../api';
@@ -16,13 +15,12 @@ import {
   IFormatTransfer,
   TransferConstructor,
   TransferFactory,
-  TransferInstanceError
+  TransferInstanceError,
 } from './types';
 import { Vault } from '../vault/Vault';
 import { Asset } from '../../utils/assets';
 import { BakoSafeScriptTransaction } from './ScriptTransaction';
 import { v4 as uuidv4 } from 'uuid';
-import { BakoSafe } from '../../../configurables';
 
 export function recoverSigner(signer: string, tx_id: string) {
   if (tx_id == '0x') return;
@@ -37,9 +35,6 @@ export const getHashTxId = (
   const txHash = transactionRequestify(script).getTransactionId(chainId);
   return txHash.slice(2);
 };
-
-export const FAKE_WITNESSES =
-  '0x000000000000000082a412d0b88a9d8348006e6347359604afaa9b81ac4e2f995c4142a90d9fd8beb332e91ab4573478f44ca318f32e65224a94615eeb987d99eed26692272d87120000000000000024000000000000005700000000000000257b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a22222c226f726967696e223a2268747470733a2f2f62736166652d75692d6769742d73746167696e672d696e66696e6974792d626173652e76657263656c2e617070222c2263726f73734f726967696e223a66616c73657d766159c52a420165c2367df88c6aec599f50425345b97f1d4d1014572b9cbca51d00000000';
 
 export const formatTransaction = async ({
   vault,
@@ -60,7 +55,7 @@ export const formatTransaction = async ({
     const _coins = await vault.getResourcesToSpend(transactionCoins);
 
     const script_t = new BakoSafeScriptTransaction();
-    const minSigners = vault.getConfigurable().REQUIRED_SIGNERS ?? 10;
+    const minSigners = vault.getConfigurable().SIGNATURES_COUNT ?? 10;
 
     await script_t.instanceTransaction(
       _coins,
