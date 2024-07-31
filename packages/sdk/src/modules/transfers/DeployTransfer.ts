@@ -24,8 +24,8 @@ import {
 } from '../../api';
 
 import { Vault } from '../vault';
-import { clone } from 'ramda';
-import { FAKE_WITNESSES } from './helpers';
+
+import { FAKE_WITNESSES } from './fee';
 
 /* Types */
 type BaseDeployTransfer = BaseTransferLike<CreateTransactionRequest>;
