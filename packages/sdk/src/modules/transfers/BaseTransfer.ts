@@ -112,7 +112,7 @@ export class BaseTransfer<T extends TransactionRequest> {
     }
     return {
       ...this.BakoSafeTransaction.resume,
-      BakoSafeID: this.BakoSafeTransactionId,
+      id: this.BakoSafeTransactionId,
     };
   }
 

@@ -1,4 +1,10 @@
-import { Operation, TransactionRequest } from 'fuels';
+import {
+  Operation,
+  TransactionRequest,
+  TransactionRequestInput,
+  TransactionRequestOutput,
+  TransactionType as FuelsTransactionType,
+} from 'fuels';
 import { ITransferAsset } from '../../utils/assets';
 
 export enum SortOptionTx {
@@ -67,9 +73,11 @@ export interface ITransactionResume {
     id: string;
     address: string;
   };
-  outputs: ITransferAsset[];
+  type: FuelsTransactionType;
+  inputs: TransactionRequestInput[];
+  outputs: TransactionRequestOutput[];
   status: TransactionStatus;
-  BakoSafeID: string;
+  id: string;
   witnesses?: string[];
   gasUsed?: string;
   sendTime?: Date;
@@ -94,7 +102,7 @@ export interface ITransaction extends ICreateTransactionPayload {
   createdAt: string;
   updatedAt: string;
   predicateId: string;
-  type: TransactionType,
+  type: TransactionType;
   witnesses: IWitnesses[];
   resume: ITransactionResume; // RESULT
   assets: ITransferAsset[];
