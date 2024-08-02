@@ -11,7 +11,7 @@ import {
   bn,
 } from 'fuels';
 import { IAssetGroupByTo } from '../../utils/assets';
-import { Transfer } from './Transfer';
+import { estimateFee } from './fee';
 
 interface BakoSafeScriptTransactionConstructor {
   gasLimit?: BN;
@@ -65,7 +65,7 @@ export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
       this.witnesses = [...this.witnesses, ...witnesses];
     }
 
-    const fee = await Transfer.estimateFee(this, vault.provider, minSigners);
+    const fee = await estimateFee(this, vault.provider, minSigners);
 
     this.maxFee = fee.bako_max_fee;
     this.gasLimit = fee.bako_gas_limit;
