@@ -1,9 +1,4 @@
-import {
-  Address,
-  Provider,
-  Wallet,
-  arrayify,
-} from 'fuels';
+import { Address, Provider, Wallet, arrayify } from 'fuels';
 
 import { ScriptAbi__factory } from '../../../sdk/src/sway/scripts/';
 
@@ -26,7 +21,7 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
   BakoSafe.setProviders({
     CHAIN_URL,
     SERVER_URL: 'http://localhost:3333',
-  })
+  });
 
   beforeAll(async () => {
     //todo: move to dynamic url of chain and remove of the BakoSafe
@@ -47,15 +42,16 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
 
     //@ts-ignore
     const tx = await createTransactionScript(predicate);
+    tx.script = arrayify(ScriptAbi__factory.bin);
     const id = tx.getTransactionId(provider.getChainId()).slice(2);
 
     const response = await sendTransaction(provider, tx, [
-      await signin(id, 'USER_1', undefined),
-      await signin(id, 'USER_3', undefined),
-      await signin(id, 'USER_4', undefined),
+      ...(await signin(id, 'USER_1', undefined)),
+      ...(await signin(id, 'USER_3', undefined)),
+      ...(await signin(id, 'USER_4', undefined)),
     ]);
     const result = await response.waitForResult();
-
+    console.log(result.receipts);
     expect(result.status).toBe('success');
   });
 
@@ -121,7 +117,7 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     const id = tx.getTransactionId(provider.getChainId()).slice(2);
 
     const result = await sendTransaction(provider, tx, [
-      await signin(id, 'USER_1', undefined),
+      ...(await signin(id, 'USER_1', undefined)),
       WEBAUTHN.signature,
     ]);
 

@@ -7,15 +7,9 @@ use std::{
   hash::*,
 };
 
-pub struct WebAuthn {
-  pub signature: B512,
-  prefix_size: u64,
-  suffix_size: u64,
-  auth_data_size: u64,
-  prefix: raw_slice,
-  suffix: raw_slice,
-  auth_data: raw_slice,
-}
+use ::entities::{
+  WebAuthn
+};
 
 /// Get the WebAuthn digest
 

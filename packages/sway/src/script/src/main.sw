@@ -7,6 +7,7 @@ use std::{
         tx_id,
         GTF_WITNESS_DATA,
     },
+    bytes::Bytes,
     ecr::{
         ec_recover_address,
     },
@@ -17,14 +18,14 @@ use libraries::{
     ascii::b256_to_ascii_bytes,
     recover_signature::{
         fuel_verify, 
-        secp256r1_verify, 
-        INVALID_ADDRESS,
-        Signature,  
+        secp256r1_verify,
     },
     webauthn_digest::{
-      WebAuthn,
       get_webauthn_digest, 
-    } 
+    },
+    entities::{
+        WebAuthn,
+    },
 };
 
 use std::b512::{B512};
@@ -43,19 +44,20 @@ fn main() {
     
     while i_witnesses < tx_witnesses_count() {
 
-            match tx_witness_data::<Signature>(i_witnesses) {
-                // Webauthn signature
-                Signature::webauth(webauthn) => {
+            match __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA).read::<u64>() {
+                0x0000000000000012 => {
+                    let webauthn = tx_witness_data::<WebAuthn>(i_witnesses);
                     let sig_ptr:raw_ptr = __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA);
                     let digest = get_webauthn_digest(webauthn, sig_ptr, tx_bytes);
-                    let rec = secp256r1_verify(webauthn.signature, digest);
-                    
-                    // log(rec);
-                    // log(Address::from(WEBAUTHN_ADDRESS));
-                    log(rec == Address::from(WEBAUTHN_ADDRESS));
-
+                    log(0)
                 }
-                // Fuel signature
+                0x0000000000000016 => {
+                    let sig_ptr = __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA);
+                    let data = raw_slice::from_parts::<u8>(sig_ptr, __size_of::<u16>() + __size_of::<B512>());
+                    // let buff = Bytes::from(data);
+                    log(__gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA).read::<u64>());
+                    log(__gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA).add::<u8>(8).read::<B512>());
+                }
                 _ => {
                 }
             };

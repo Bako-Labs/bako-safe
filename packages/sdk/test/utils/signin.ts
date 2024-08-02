@@ -1,4 +1,5 @@
-import { Wallet, Address } from 'fuels';
+import { concat } from 'ethers';
+import { Wallet, Address, BigNumberCoder } from 'fuels';
 import { IBakoSafeAuth, TransactionService } from '../../src/api';
 
 import { accounts } from '../mocks';
@@ -17,10 +18,16 @@ export const signin = async (
     fuelProvider,
   );
   const tx = await signer.signMessage(tx_hash);
+  console.log('[ASSINATURAS]', {
+    normal: tx,
+    prefix: concat([new BigNumberCoder(`u64`).encode(1), tx]),
+    //bite: new BigNumberCoder(`u64`).encode(2).toString(),
+  });
+
   if (!!auth && BakoSafeTransactionId) {
     const acc = Address.fromString(accounts[account].address).toString();
     const serviceTransactions = new TransactionService(auth);
     return await serviceTransactions.sign(BakoSafeTransactionId, acc, tx);
   }
-  return tx;
+  return [tx, concat([new BigNumberCoder(`u64`).encode(1), tx])];
 };
