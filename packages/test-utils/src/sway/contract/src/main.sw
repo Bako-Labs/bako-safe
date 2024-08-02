@@ -1,5 +1,7 @@
 contract;
 
+
+
 // ANCHOR: abi
 abi Counter {
     fn seven() -> u64;

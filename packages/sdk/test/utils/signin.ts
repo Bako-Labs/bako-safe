@@ -18,11 +18,11 @@ export const signin = async (
     fuelProvider,
   );
   const tx = await signer.signMessage(tx_hash);
-  console.log('[ASSINATURAS]', {
-    normal: tx,
-    prefix: concat([new BigNumberCoder(`u64`).encode(1), tx]),
-    //bite: new BigNumberCoder(`u64`).encode(2).toString(),
-  });
+  // console.log('[ASSINATURAS]', {
+  //   normal: tx,
+  //   prefix: concat([new BigNumberCoder(`u64`).encode(1), tx]),
+  //   //bite: new BigNumberCoder(`u64`).encode(2).toString(),
+  // });
 
   if (!!auth && BakoSafeTransactionId) {
     const acc = Address.fromString(accounts[account].address).toString();

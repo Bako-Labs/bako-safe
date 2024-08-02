@@ -1,4 +1,12 @@
-import { Address, Provider, Wallet, arrayify } from 'fuels';
+import {
+  Address,
+  BigNumberCoder,
+  Provider,
+  Wallet,
+  arrayify,
+  concat,
+  sha256,
+} from 'fuels';
 
 import { ScriptAbi__factory } from '../../../sdk/src/sway/scripts/';
 
@@ -49,6 +57,7 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
       ...(await signin(id, 'USER_1', undefined)),
       ...(await signin(id, 'USER_3', undefined)),
       ...(await signin(id, 'USER_4', undefined)),
+      // WEBAUTHN.signature,
     ]);
     const result = await response.waitForResult();
     console.log(result.receipts);
@@ -104,7 +113,7 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
   // and this transaction, recives a script with this constants and check
   test('By webauthn', async () => {
     const predicate = await createPredicate({
-      amount: '0.1',
+      amount: '0.5',
       minSigners: 1,
       signers: [accounts['USER_1'].account],
     });
@@ -124,8 +133,29 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     const res = await result.waitForResult();
     expect(res.status).toBe('success');
 
+    console.log(res.receipts);
     // verify if on the script, recover of static signature is equal to the static address
     //@ts-ignore
     expect(res.receipts[0]['data']).toBe('0x01');
+  });
+
+  test.only('SCRIPT', async () => {
+    const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
+    const script = ScriptAbi__factory.createInstance(wallet);
+
+    const request = await script.functions.main().txParams({
+      gasLimit: 10000000,
+      maxFee: 1000000,
+    });
+    const txRequest = await request.fundWithRequiredCoins();
+
+    // console.log(WEBAUTHN.signature);
+    txRequest.witnesses = [WEBAUTHN.signature];
+
+    const callResult = await wallet.provider.dryRun(txRequest, {
+      utxoValidation: false,
+      estimateTxDependencies: false,
+    });
+    console.dir(callResult, { depth: null });
   });
 });

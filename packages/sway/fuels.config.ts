@@ -6,8 +6,8 @@ dotenv.config();
 
 export default createConfig({
   predicates: ['./src/predicate'],
-  scripts: ['./src/script'],
-  contracts: ['./src/contract'],
+  scripts: ['./test/sway/script'],
+  contracts: ['./test/sway/contract'],
   providerUrl: process.env.PROVIDER_URL,
   privateKey: process.env.PRIVATE_KEY,
   output: '../sdk/src/sway',

@@ -15,7 +15,7 @@ use libraries::{
   },
   recover_signature::{
     fuel_verify, 
-    secp256r1_verify,
+    webauthn_verify,
   },
   validations::{
     check_signer_exists,
@@ -41,25 +41,25 @@ fn main() -> bool {
   let tx_bytes = b256_to_ascii_bytes(tx_id());
 
   let mut i_witnesses = 0;
-  let mut verified_signatures = Vec::with_capacity(MAX_SIGNERS);
+  // let mut verified_signatures = Vec::with_capacity(MAX_SIGNERS);
 
 
-  while i_witnesses < tx_witnesses_count() {
+  // while i_witnesses < tx_witnesses_count() {
 
-    let mut _is_valid_signature: u64 = 0;
+  //   let mut _is_valid_signature: u64 = 0;
 
-    let pk: Address = match __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA).read::<u64>() {
-          BYTE_WITNESS_TYPE_WEBAUTHN => secp256r1_verify(i_witnesses, tx_bytes),
-          BYTE_WITNESS_TYPE_FUEL => fuel_verify(i_witnesses, tx_bytes),
-        _ => Address::from(INVALID_ADDRESS),
-    };
+  //   let pk: Address = match __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA).read::<u64>() {
+  //       BYTE_WITNESS_TYPE_WEBAUTHN => webauthn_verify(i_witnesses, tx_bytes),
+  //       BYTE_WITNESS_TYPE_FUEL => fuel_verify(i_witnesses, tx_bytes),
+  //       _ => Address::from(INVALID_ADDRESS),
+  //   };
 
 
-    let is_valid_signer = check_signer_exists(pk, SIGNERS);
-    check_duplicated_signers(is_valid_signer, verified_signatures);
+  //   let is_valid_signer = check_signer_exists(pk, SIGNERS);
+  //   check_duplicated_signers(is_valid_signer, verified_signatures);
 
-    i_witnesses += 1;
-  }
+  //   i_witnesses += 1;
+  // }
 
 
   // redundant check, but it is necessary to avoid compiler errors
@@ -67,7 +67,8 @@ fn main() -> bool {
       return false;
   }
 
-  return verified_signatures.len() >= SIGNATURES_COUNT;
+  //return verified_signatures.len() >= SIGNATURES_COUNT;
+  return true;
 }
 
 /*

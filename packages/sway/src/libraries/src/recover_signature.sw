@@ -52,7 +52,7 @@ pub fn fuel_verify(witness_index: u64, tx_bytes: Bytes) -> Address {
 ///         - digest: the digest of the message
 
 ///     - returns: the address of the signer
-pub fn secp256r1_verify(witness_index: u64, tx_bytes: Bytes) -> Address {
+pub fn webauthn_verify(witness_index: u64, tx_bytes: Bytes) -> Address {
   let tx_webauthn = Bytes::from(tx_bytes);
   let webauthn = tx_witness_data::<WebAuthn>(witness_index);
   let sig_ptr:raw_ptr = __gtf::<raw_ptr>(witness_index, GTF_WITNESS_DATA);
