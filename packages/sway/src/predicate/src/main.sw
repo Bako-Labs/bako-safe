@@ -23,6 +23,7 @@ use libraries::{
   },
   constants::{
       MAX_SIGNERS,
+      EMPTY_SIGNERS,
       INVALID_ADDRESS,
       BYTE_WITNESS_TYPE_FUEL,
       BYTE_WITNESS_TYPE_WEBAUTHN,
@@ -30,18 +31,7 @@ use libraries::{
 };
 
 configurable {
-    SIGNERS: [b256; 10] = [
-        ZERO_B256,
-        ZERO_B256,
-        ZERO_B256,
-        ZERO_B256,
-        ZERO_B256,
-        ZERO_B256,
-        ZERO_B256,
-        ZERO_B256,
-        ZERO_B256,
-        ZERO_B256,
-    ],
+    SIGNERS: [b256; 10] = EMPTY_SIGNERS,
     SIGNATURES_COUNT: u64 = 0,
     HASH_PREDICATE: b256 = ZERO_B256
 }
