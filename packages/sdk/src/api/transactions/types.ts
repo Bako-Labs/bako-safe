@@ -1,10 +1,4 @@
-import {
-  Operation,
-  TransactionRequest,
-  TransactionRequestInput,
-  TransactionRequestOutput,
-  TransactionType as FuelsTransactionType,
-} from 'fuels';
+import { Operation, TransactionRequest } from 'fuels';
 import { ITransferAsset } from '../../utils/assets';
 
 export enum SortOptionTx {
@@ -73,9 +67,6 @@ export interface ITransactionResume {
     id: string;
     address: string;
   };
-  type: FuelsTransactionType;
-  inputs: TransactionRequestInput[];
-  outputs: TransactionRequestOutput[];
   status: TransactionStatus;
   id: string;
   witnesses?: string[];
