@@ -32,11 +32,10 @@ use ::constants::{
 ///         - tx_hash: the hash of the transaction
 
 ///     - returns: the address of the signer
-pub fn fuel_verify(witness_index: u64, tx_bytes: Bytes) -> Address {
+pub fn fuel_verify(signature: B512, tx_bytes: Bytes) -> Address {
   let mut hasher = Hasher::new();
   tx_bytes.hash(hasher);
   let tx_fuel = hasher.sha256();
-  let signature = __gtf::<raw_ptr>(witness_index, GTF_WITNESS_DATA).add::<u8>(8).read::<B512>();
 
   if let Result::Ok(pub_key_sig) = ec_recover_address(signature, tx_fuel) {
       return pub_key_sig;

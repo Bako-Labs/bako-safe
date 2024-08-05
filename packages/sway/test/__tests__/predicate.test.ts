@@ -9,6 +9,7 @@ import {
 } from 'fuels';
 
 import { ScriptAbi__factory } from '../../../sdk/src/sway/scripts/';
+import { launchTestNode } from 'fuels/test-utils';
 
 import { accounts } from '../../../sdk/test/mocks';
 import { signin } from '../../../sdk/test/utils/signin';
@@ -20,6 +21,7 @@ import {
   createPredicate,
   ERROR_DUPLICATED_WITNESSES,
   WEBAUTHN,
+  FUEL,
 } from '../utils';
 import { BakoSafe } from '../../../sdk';
 
@@ -140,22 +142,36 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
   });
 
   test.only('SCRIPT', async () => {
+    // using fuelNode = await launchTestNode();
+    // const {
+    //   wallets: [wallet],
+    // } = fuelNode;
+
     const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
+
+    console.log(sha256(ScriptAbi__factory.bin));
     const script = ScriptAbi__factory.createInstance(wallet);
+    const invocationScope = await script.functions
+      .main(FUEL.tx_id, FUEL.address)
+      .txParams({
+        gasLimit: 10000000,
+        maxFee: 1000000,
+      });
+    const txRequest = await invocationScope.getTransactionRequest();
+    txRequest.witnesses = [FUEL.signature];
 
-    const request = await script.functions.main().txParams({
-      gasLimit: 10000000,
-      maxFee: 1000000,
-    });
-    const txRequest = await request.fundWithRequiredCoins();
+    const txCost = await wallet.provider.getTransactionCost(txRequest);
+    await wallet.fund(txRequest, txCost);
 
-    // console.log(WEBAUTHN.signature);
-    txRequest.witnesses = [WEBAUTHN.signature];
+    try {
+      const callResult = await wallet.provider.dryRun(txRequest, {
+        utxoValidation: false,
+        estimateTxDependencies: false,
+      });
 
-    const callResult = await wallet.provider.dryRun(txRequest, {
-      utxoValidation: false,
-      estimateTxDependencies: false,
-    });
-    console.dir(callResult, { depth: null });
+      console.dir(callResult.receipts, { depth: null });
+    } catch (e) {
+      console.log(e.message);
+    }
   });
 });
