@@ -1,5 +1,4 @@
-import { concat } from 'ethers';
-import { Wallet, Address, BigNumberCoder } from 'fuels';
+import { Wallet, Address, BigNumberCoder, concat } from 'fuels';
 import { IBakoSafeAuth, TransactionService } from '../../src/api';
 
 import { accounts } from '../mocks';
