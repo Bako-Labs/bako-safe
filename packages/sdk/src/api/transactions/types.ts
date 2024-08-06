@@ -36,6 +36,7 @@ export interface IWitnesses {
   account: string;
   signature: string;
   status: WitnessStatus;
+  updatedAt: string;
 }
 
 export interface GetTransactionParams {
@@ -92,7 +93,6 @@ export interface ITransaction extends ICreateTransactionPayload {
   updatedAt: string;
   predicateId: string;
   type: TransactionType;
-  //witnesses: IWitnesses[]; // TODO: remove
   resume: ITransactionResume; // RESULT
   assets: ITransferAsset[];
   summary?: ITransactionSummary;
