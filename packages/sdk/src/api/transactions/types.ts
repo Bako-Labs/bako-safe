@@ -33,12 +33,9 @@ export enum WitnessStatus {
 }
 
 export interface IWitnesses {
-  id: string;
-  signature: string;
   account: string;
+  signature: string;
   status: WitnessStatus;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface GetTransactionParams {
@@ -69,7 +66,7 @@ export interface ITransactionResume {
   };
   status: TransactionStatus;
   id: string;
-  witnesses?: string[];
+  witnesses: IWitnesses[];
   gasUsed?: string;
   sendTime?: Date;
   error?: string;
@@ -95,7 +92,7 @@ export interface ITransaction extends ICreateTransactionPayload {
   updatedAt: string;
   predicateId: string;
   type: TransactionType;
-  witnesses: IWitnesses[];
+  //witnesses: IWitnesses[]; // TODO: remove
   resume: ITransactionResume; // RESULT
   assets: ITransferAsset[];
   summary?: ITransactionSummary;
