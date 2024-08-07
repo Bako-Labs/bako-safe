@@ -1,5 +1,5 @@
 import { Wallet, Address, BigNumberCoder, concat } from 'fuels';
-import { IBakoSafeAuth, TransactionService } from '../../src/api';
+import { IBakoSafeAuth, TransactionService } from 'bakosafe';
 
 import { accounts } from '../mocks';
 import { LocalProvider } from './provider';

@@ -5,15 +5,12 @@ import {
   ContractUtils,
   CreateTransactionRequest,
 } from 'fuels';
-import {
-  callContractMethod,
-  createTransactionDeploy,
-} from 'bakosafe-test-utils';
+import { callContractMethod, createTransactionDeploy } from './utils';
 
-import { accounts } from '../mocks';
-import { BakoSafe } from '../../configurables';
-import { DeployTransfer, TransactionStatus, Vault } from '../../src';
-import { authService, IUserAuth, newVault, signin } from '../utils';
+import { accounts } from './mocks';
+import { BakoSafe } from 'bakosafe';
+import { DeployTransfer, TransactionStatus, Vault } from 'bakosafe';
+import { authService, IUserAuth, newVault, signin } from './utils';
 
 /* Test util to get id from transaction request */
 const getContractId = (request: CreateTransactionRequest) => {

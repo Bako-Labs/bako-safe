@@ -1,5 +1,5 @@
-import { BakoSafe } from '../../configurables';
-import { IBakoSafeAuth, TypeUser, ITransaction } from '../../src/api';
+import { BakoSafe } from 'bakosafe';
+import { IBakoSafeAuth, TypeUser, ITransaction } from 'bakosafe';
 import { FuelWalletLocked } from '@fuel-wallet/sdk';
 
 import { IAccountKeys, IDefaultAccount, accounts } from '../mocks';

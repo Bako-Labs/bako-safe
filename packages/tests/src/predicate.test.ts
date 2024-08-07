@@ -1,13 +1,13 @@
 import { Provider, getRandomB256 } from 'fuels';
-import { signin, newVault, IUserAuth, authService } from '../utils';
-import { IPayloadVault, Vault } from '../../src/modules';
-import { BakoSafe } from '../../configurables';
+import { signin, newVault, IUserAuth, authService } from './utils';
+import { IPayloadVault, Vault } from 'bakosafe';
+import { BakoSafe } from 'bakosafe';
 import {
   DEFAULT_BALANCES,
   accounts,
   DEFAULT_TRANSACTION_PAYLOAD,
-} from '../mocks';
-import { IPredicateVersion } from '../../src/api';
+} from './mocks';
+import { IPredicateVersion } from 'bakosafe';
 
 describe('[PREDICATES]', () => {
   let auth: IUserAuth;

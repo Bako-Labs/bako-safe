@@ -1,8 +1,8 @@
 import { Provider } from 'fuels';
-import { IPayloadVault, Vault } from '../../src/modules';
+import { IBakoSafeAuth } from 'bakosafe';
+import { IPayloadVault, Vault } from 'bakosafe';
 import { rootWallet } from './rootWallet';
 import { sendPredicateCoins } from './sendCoins';
-import { IBakoSafeAuth } from '../../src/api';
 import { DEFAULT_BALANCE_VALUE, VALUES_DEFAULT_TO_MUL } from '../mocks/assets';
 
 //todo: remove else, and move assetsId to required params

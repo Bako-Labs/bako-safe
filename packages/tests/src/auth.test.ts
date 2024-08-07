@@ -1,7 +1,7 @@
-import { BakoSafe } from '../../configurables';
-import { Auth, IAuthCreateRequest, TypeUser } from '../../src/modules/auth';
-import { accounts, networks } from '../mocks';
-import { AuthTestUtil } from '../utils';
+import { BakoSafe } from 'bakosafe';
+import { Auth, IAuthCreateRequest, TypeUser } from 'bakosafe';
+import { accounts, networks } from './mocks';
+import { AuthTestUtil } from './utils';
 
 describe('[AUTH]', () => {
   beforeAll(() => {

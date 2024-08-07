@@ -1,15 +1,15 @@
 import { Provider, TransactionStatus, Wallet, bn } from 'fuels';
-import { authService, delay, IUserAuth, newVault, signin } from '../utils';
-import { BakoSafe } from '../../configurables';
-import { accounts, assets, DEFAULT_BALANCE_VALUE, networks } from '../mocks';
+import { authService, delay, IUserAuth, newVault, signin } from './utils';
+import { BakoSafe } from 'bakosafe';
+import { accounts, assets, DEFAULT_BALANCE_VALUE, networks } from './mocks';
 import {
   DEFAULT_MULTI_ASSET_TRANSACTION_PAYLOAD,
   DEFAULT_TRANSACTION_PAYLOAD,
-} from '../mocks/transactions';
-import { Vault } from '../../src/modules/vault/Vault';
-import { IPayloadVault } from '../../src/modules/vault/types';
+} from './mocks';
+import { Vault } from 'bakosafe';
+import { IPayloadVault } from 'bakosafe';
 import { v4 as uuidv4 } from 'uuid';
-import { estimateFee } from '../../src/modules/transfers/fee';
+import { estimateFee } from 'bakosafe';
 
 describe('[TRANSFERS]', () => {
   let chainId: number;

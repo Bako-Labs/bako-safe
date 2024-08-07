@@ -1,5 +1,5 @@
 import { Provider } from 'fuels';
-import { IFormatTransfer } from '../../src/modules';
+import { IFormatTransfer } from 'bakosafe';
 import {
   assets,
   DEFAULT_BALANCES,
