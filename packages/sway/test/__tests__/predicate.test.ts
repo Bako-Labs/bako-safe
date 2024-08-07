@@ -22,22 +22,23 @@ import {
   createPredicate,
   ERROR_DUPLICATED_WITNESSES,
   WEBAUTHN,
+  FUEL,
 } from '../utils';
 import { BakoSafe } from '../../../sdk';
 
 describe('[SWAY_PREDICATE] Send transfers', () => {
   let provider: Provider;
 
-  // BakoSafe.setProviders({
-  //   CHAIN_URL,
-  //   SERVER_URL: 'http://localhost:3333',
-  // });
+  BakoSafe.setProviders({
+    CHAIN_URL,
+    SERVER_URL: 'http://localhost:3333',
+  });
 
-  // beforeAll(async () => {
-  //   //todo: move to dynamic url of chain and remove of the BakoSafe
-  //   //provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
-  //   provider = await Provider.create();
-  // });
+  beforeAll(async () => {
+    //todo: move to dynamic url of chain and remove of the BakoSafe
+    // provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
+    //provider = await Provider.create();
+  });
 
   // test('By predicate', async () => {
   //   const predicate = await createPredicate({
@@ -146,16 +147,15 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     const {
       wallets: [wallet],
     } = fuelNode;
-    console.log(sha256(ScriptAbi__factory.bin));
     const script = ScriptAbi__factory.createInstance(wallet);
     const invocationScope = await script.functions
-      .main(WEBAUTHN.tx_id, WEBAUTHN.address)
+      .main(FUEL.tx_id, FUEL.address)
       .txParams({
         gasLimit: 10000000,
         maxFee: 1000000,
       });
     const txRequest = await invocationScope.getTransactionRequest();
-    txRequest.witnesses = [WEBAUTHN.signature];
+    txRequest.witnesses = [FUEL.signature];
 
     const txCost = await wallet.provider.getTransactionCost(txRequest);
     await wallet.fund(txRequest, txCost);
@@ -165,7 +165,7 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
         utxoValidation: false,
         estimateTxDependencies: false,
       });
-      console.dir(callResult, { depth: null });
+      console.dir(callResult.receipts, { depth: null });
     } catch (e) {
       console.log(e.message);
     }

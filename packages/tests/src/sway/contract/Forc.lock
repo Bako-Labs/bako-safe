@@ -1,19 +1,11 @@
 [[package]]
 name = "contract"
 source = "member"
-dependencies = [
-    "libraries",
-    "std",
-]
+dependencies = ["std"]
 
 [[package]]
 name = "core"
 source = "path+from-root-2AB5BCE55EAAEFF4"
-
-[[package]]
-name = "libraries"
-source = "path+from-root-67606CE75F849616"
-dependencies = ["std"]
 
 [[package]]
 name = "std"
