@@ -28,5 +28,7 @@ export const signin = async (
     const serviceTransactions = new TransactionService(auth);
     return await serviceTransactions.sign(BakoSafeTransactionId, acc, tx);
   }
-  return [tx, concat([new BigNumberCoder(`u64`).encode(1), tx])];
+
+  //return [tx, concat([new BigNumberCoder(`u64`).encode(1), tx])];
+  return tx;
 };

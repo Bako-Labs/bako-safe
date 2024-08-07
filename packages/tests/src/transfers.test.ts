@@ -188,7 +188,7 @@ describe('[TRANSFERS]', () => {
     );
   });
 
-  test('Sent a transaction without BakoSafeAuth', async () => {
+  test('Sent a transaction without API calls', async () => {
     const vault = await newVault(signers, provider, undefined, 100);
     const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
 
