@@ -11,6 +11,7 @@ import {
 import { launchTestNode } from 'fuels/test-utils';
 
 import { ScriptAbi__factory } from '../../../sdk/src/sway/scripts/';
+import { launchTestNode } from 'fuels/test-utils';
 
 import { accounts } from '../../../sdk/test/mocks';
 import { signin } from '../../../sdk/test/utils/signin';
