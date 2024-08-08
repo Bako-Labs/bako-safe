@@ -7,6 +7,10 @@ const config: JestConfigWithTsJest = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   testMatch: ['**/src/**/*.test.ts'],
+  rootDir: '../',
+  moduleNameMapper: {
+    '^bakosafe/(.*)$': '<rootDir>/sdk/$1',
+  },
   transform: {
     '^.+\\.ts?$': [
       'ts-jest',
