@@ -17,6 +17,11 @@ export const workspace = {
     name: 'WK3',
     avatar: workspace_avatars[2],
   },
+  WORKSPACE_4: {
+    id: '769a422b-11b9-430f-846b-8f2ccc44165f',
+    name: 'singleWorkspace[0fec3a23-cb9f-4f86-92b1-cd49413b7284]',
+    avatar: 'https://besafe-asset.s3.amazonaws.com/icon/workspaces/651.jpg',
+  },
 };
 
 export type IWorkspaceKeys = keyof typeof workspace;
