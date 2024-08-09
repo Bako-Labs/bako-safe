@@ -10,7 +10,7 @@ import {
 } from 'fuels';
 import { join } from 'path';
 import { readFileSync } from 'fs';
-import { ContractAbi__factory } from '../../types/sway';
+import { ContractAbi__factory } from 'bakosafe/src/sway/contracts';
 
 export class BakoContractDeploy extends ContractFactory {
   readonly abi: JsonAbi;

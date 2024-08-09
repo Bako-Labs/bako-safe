@@ -55,14 +55,14 @@ export class AuthTestUtil {
     });
   }
 
-  static async signerByPk(pk: string, code: string) {
-    const signer = Wallet.fromPrivateKey(
-      pk,
-      await Provider.create(BakoSafe.getProviders('CHAIN_URL')),
-    );
-    const msg = await signer.signMessage(code);
-    return msg;
-  }
+  // static async signerByPk(pk: string, code: string) {
+  //   const signer = Wallet.fromPrivateKey(
+  //     pk,
+  //     await Provider.create(BakoSafe.getProviders('CHAIN_URL')),
+  //   );
+  //   const msg = await signer.signMessage(code);
+  //   return msg;
+  // }
 
   static async signerByAccount(wallet: FuelWalletLocked, code: string) {
     const msg = await wallet.signMessage(code);

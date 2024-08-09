@@ -14,16 +14,30 @@ describe('AuthService Tests', () => {
   });
 
   it('should return admin token for admin user', async () => {
-    console.log(TypeUser.FUEL);
     const response = await mockAuthService.auth({
       address: 'admin',
       provider: 'admin',
       type: TypeUser.FUEL,
     });
-    console.log(response);
-    expect(mockAuthService.auth).toHaveBeenCalledWith({
-      username: 'admin',
-      password: 'admin-pass',
+    expect(response).toEqual({
+      code: 'random-code',
+      validAt: expect.any(String),
+      origin: 'random-origin',
+    });
+  });
+
+  it('should return user token for user user', async () => {
+    const response = await mockAuthService.sign({
+      digest: 'digest',
+      encoder: TypeUser.FUEL,
+      signature: 'signature',
+    });
+    expect(response).toEqual({
+      accessToken: 'signature',
+      address: expect.any(String),
+      avatar: expect.any(String),
+      user_id: 'fake-user-id',
+      workspace: expect.any(Object),
     });
   });
 });

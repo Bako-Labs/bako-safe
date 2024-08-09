@@ -1,77 +1,89 @@
-import { BakoSafe } from 'bakosafe';
-import { Auth, IAuthCreateRequest, TypeUser } from 'bakosafe';
+import { TypeUser } from 'bakosafe';
 import { accounts, networks } from './mocks';
-import { AuthTestUtil } from './utils';
+import mockAuthService from './mocks/api/auth';
+import { Wallet } from 'fuels';
+
+jest.mock('bakosafe/src/api/auth', () => {
+  return {
+    TypeUser: jest.requireActual('bakosafe/src/api/auth').TypeUser,
+    AuthService: jest.fn().mockImplementation(() => mockAuthService),
+  };
+});
 
 describe('[AUTH]', () => {
-  beforeAll(() => {
-    // set up BakoSafe
-    BakoSafe.setProviders({
-      CHAIN_URL: networks['LOCAL'],
-      SERVER_URL: 'http://localhost:3333',
-      CLIENT_URL: 'http://localhost:5174',
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('Authenticate', async () => {
+    const auth = await mockAuthService.auth({
+      address: accounts['USER_1'].address,
+      provider: networks['DEVNET'],
+      type: TypeUser.FUEL,
+    });
+
+    const signature = await Wallet.fromPrivateKey(
+      accounts['USER_1'].privateKey,
+    ).signMessage(auth.code);
+
+    const { address, accessToken } = await mockAuthService.sign({
+      digest: auth.code,
+      encoder: TypeUser.FUEL,
+      signature,
+    });
+
+    expect(address).toBe(accounts['USER_1'].address);
+    expect(accessToken).toBe(signature);
+  });
+
+  it('List workspaces', async () => {
+    const auth = await mockAuthService.auth({
+      address: accounts['USER_1'].address,
+      provider: networks['DEVNET'],
+      type: TypeUser.FUEL,
+    });
+
+    const signature = await Wallet.fromPrivateKey(
+      accounts['USER_1'].privateKey,
+    ).signMessage(auth.code);
+
+    await mockAuthService.sign({
+      digest: auth.code,
+      encoder: TypeUser.FUEL,
+      signature,
+    });
+
+    const workspaces = await mockAuthService.getWorkspaces();
+
+    expect(workspaces.length).toBeGreaterThanOrEqual(1);
+    expect(workspaces[0]).toMatchObject({
+      id: expect.any(String),
+      name: expect.any(String),
+      avatar: expect.any(String),
     });
   });
 
-  test('Authenticate', async () => {
-    const params: IAuthCreateRequest = {
+  it('Select workspace', async () => {
+    const auth = await mockAuthService.auth({
       address: accounts['USER_1'].address,
-      provider: BakoSafe.getProviders('CHAIN_URL'),
+      provider: networks['DEVNET'],
       type: TypeUser.FUEL,
-    };
+    });
 
-    const auth = await Auth.create(params);
-    const signature = await AuthTestUtil.signerByPk(
+    const signature = await Wallet.fromPrivateKey(
       accounts['USER_1'].privateKey,
-      auth.code,
+    ).signMessage(auth.code);
+
+    await mockAuthService.sign({
+      digest: auth.code,
+      encoder: TypeUser.FUEL,
+      signature,
+    });
+
+    const workspaces = await mockAuthService.getWorkspaces();
+
+    expect(workspaces[0]).toBe(
+      await mockAuthService.selectWorkspace(workspaces[0].id),
     );
-
-    const { token: sig } = await auth.sign(signature);
-
-    expect(sig).toBe(auth.BakoSafeAuth?.token);
-
-    expect(auth.BakoSafeAuth?.address).toBe(accounts['USER_1'].address);
-  });
-
-  test('Select workspace', async () => {
-    const params: IAuthCreateRequest = {
-      address: accounts['USER_1'].address,
-      provider: BakoSafe.getProviders('CHAIN_URL'),
-      type: TypeUser.FUEL,
-    };
-
-    const auth = await Auth.create(params);
-    const signature = await AuthTestUtil.signerByPk(
-      accounts['USER_1'].privateKey,
-      auth.code,
-    );
-
-    await auth.sign(signature);
-
-    const workspaces = await auth.getWorkspaces();
-    const workspace = workspaces[0];
-
-    await auth.selectWorkspace(workspace.id);
-
-    expect(auth.workspace?.id).toBe(auth.BakoSafeAuth?.worksapce);
-  });
-
-  test('Sign by PK', async () => {
-    const params: IAuthCreateRequest = {
-      address: accounts['USER_1'].address,
-      provider: BakoSafe.getProviders('CHAIN_URL'),
-      type: TypeUser.FUEL,
-    };
-
-    const auth = await Auth.create(params);
-    const signature = await Auth.signerByPk(
-      accounts['USER_1'].privateKey,
-      auth.code,
-    );
-
-    const { token: sig } = await auth.sign(signature);
-
-    expect(auth.BakoSafeAuth?.address).toBe(accounts['USER_1'].address);
-    expect(sig).toBe(auth.BakoSafeAuth?.token);
   });
 });

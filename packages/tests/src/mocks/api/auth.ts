@@ -6,6 +6,10 @@ import {
   ISelectWorkspaceResponse,
   IBakoSafeAuth,
 } from 'bakosafe/src/api/auth/types';
+import { randomUUID } from 'crypto';
+import { Address, hashMessage, Signer } from 'fuels';
+import { random_user_avatar } from '../avatars';
+import { findById, workspace } from '../workspaces';
 
 export const mockAuthService = {
   auth: jest.fn<Promise<IAuthCreateResponse>, [IAuthCreateRequest]>(),
@@ -17,13 +21,11 @@ export const mockAuthService = {
 
 // Implementação dos mocks utilizando os parâmetros da request:
 mockAuthService.auth.mockImplementation((params: IAuthCreateRequest) => {
-  const { address, provider, type } = params;
-  console.log(params);
   return new Promise((resolve, _) => {
     resolve({
-      code: '',
-      validAt: '',
-      origin: '',
+      code: Address.fromRandom().toB256(),
+      validAt: new Date().toISOString(),
+      origin: 'random-origin',
     });
   });
 });
@@ -33,24 +35,35 @@ mockAuthService.sign.mockImplementation((params: IAuthSignRequest) => {
 
   return new Promise((resolve, _) => {
     resolve({
-      accessToken: '',
-      address: '',
-      avatar: '',
-      user_id: '',
-      workspace: { id: '', name: '', avatar: '' },
+      accessToken: signature,
+      address: Signer.recoverAddress(
+        hashMessage(digest),
+        signature,
+      ).toAddress(),
+      avatar: random_user_avatar(),
+      user_id: randomUUID(),
+      workspace: workspace['WORKSPACE_1'],
     });
   });
 });
 
 mockAuthService.selectWorkspace.mockImplementation((workspaceId: string) => {
-  return new Promise((resolve, _) => {
-    resolve({ id: '', name: '', avatar: '' });
+  return new Promise((resolve, reject) => {
+    const workspace = findById(workspaceId);
+    if (workspace) {
+      resolve(workspace);
+    }
+    reject(new Error('Workspace not found'));
   });
 });
 
 mockAuthService.getWorkspaces.mockImplementation(() => {
   return new Promise((resolve, _) => {
-    resolve([{ id: '', name: '', avatar: '' }]);
+    resolve(
+      Object.keys(workspace).map((key) => {
+        return workspace[key];
+      }),
+    );
   });
 });
 

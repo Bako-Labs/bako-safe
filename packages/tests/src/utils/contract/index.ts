@@ -1,4 +1,4 @@
-import { ContractAbi, ContractAbi__factory } from '../../types/sway';
+import { ContractAbi, ContractAbi__factory } from 'bakosafe/src/sway/contracts';
 import { Account } from 'fuels';
 
 export type ContractInstanceParams = { contractId: string; account: Account };
