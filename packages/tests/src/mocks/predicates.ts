@@ -5,7 +5,7 @@ import {
 } from './predicateVersions';
 import { workspace } from './workspaces';
 
-const configurable = {
+export const configurable = {
   PREDICATE_1:
     '{"SIGNATURES_COUNT":1,"SIGNERS":["0xb7ad0a1344eb35fe0f5c934d181d8ab222dea02acb69c6408445e516fe9809eb","0xb47f4b4e139a84d984a2c6a1fdb48892583ad144d0e5dfac95bec673f1a89208","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000","0x0000000000000000000000000000000000000000000000000000000000000000"],"HASH_PREDICATE":"0x0525c7d8410c5fec181de6f7ab4334e6f0a667d86a5f55c25e560b8228954ee4","network":"https://testnet.fuel.network/v1/graphql","chainId":0}',
   PREDICATE_2:
@@ -96,26 +96,26 @@ export const predicates: { [key: string]: IPredicate } = {
 
 export type IPredicateKeys = keyof typeof predicates;
 
-export const findPredicateById = (id: string): IPredicate => {
-  const keys = Object.keys(predicates) as IPredicateKeys[];
-  const key = keys.find((k) => predicates[k].id === id);
-  if (key) {
-    return predicates[key];
-  } else {
-    throw new Error('Predicate not found');
-  }
-};
+// export const findPredicateById = (id: string): IPredicate => {
+//   const keys = Object.keys(predicates) as IPredicateKeys[];
+//   const key = keys.find((k) => predicates[k].id === id);
+//   if (key) {
+//     return predicates[key];
+//   } else {
+//     throw new Error('Predicate not found');
+//   }
+// };
 
-export const findPredicateByAddress = (
-  predicateAddress: string,
-): IPredicate => {
-  const keys = Object.keys(predicates) as IPredicateKeys[];
-  const key = keys.find(
-    (k) => predicates[k].predicateAddress === predicateAddress,
-  );
-  if (key) {
-    return predicates[key];
-  } else {
-    throw new Error('Predicate not found');
-  }
-};
+// export const findPredicateByAddress = (
+//   predicateAddress: string,
+// ): IPredicate => {
+//   const keys = Object.keys(predicates) as IPredicateKeys[];
+//   const key = keys.find(
+//     (k) => predicates[k].predicateAddress === predicateAddress,
+//   );
+//   if (key) {
+//     return predicates[key];
+//   } else {
+//     throw new Error('Predicate not found');
+//   }
+// };

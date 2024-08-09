@@ -15,7 +15,69 @@ import {
   predicateVersions,
 } from '../predicateVersions';
 import { random_user_avatar } from '../avatars';
-import { findPredicateByAddress, findPredicateById } from '../predicates';
+import { predicates } from '../predicates';
+
+class PredicateStorage {
+  private predicates: IPredicate[] = [
+    predicates['PREDICATE_1'],
+    predicates['PREDICATE_2'],
+  ];
+
+  public publish(predicate: IPredicate) {
+    this.predicates.push(predicate);
+  }
+
+  public predicateVersionById(id: string) {
+    const version = predicateVersions.find(
+      ({ id: predicateId }) => predicateId === id,
+    );
+    if (!version) {
+      throw new Error('Version not found');
+    }
+
+    return version;
+  }
+
+  public predicateVersionByCode(_code: string) {
+    const version = predicateVersions.find(({ code }) => code === _code);
+    if (!version) {
+      throw new Error('Version not found');
+    }
+
+    return version;
+  }
+
+  public findByAddress(address: string) {
+    const item = this.predicates.find(
+      ({ predicateAddress }) => predicateAddress === address,
+    );
+
+    if (!item) {
+      throw new Error('Predicate not found');
+    }
+
+    return item;
+  }
+
+  public findById(id: string) {
+    const item = this.predicates.find(
+      ({ id: predicateId }) => predicateId === id,
+    );
+    if (!item) {
+      throw new Error('Predicate not found');
+    }
+
+    return item;
+  }
+
+  public clear() {
+    this.predicates = [];
+  }
+
+  public restore() {
+    this.predicates = [predicates['PREDICATE_1'], predicates['PREDICATE_2']];
+  }
+}
 
 export const mockPredicateService = {
   create: jest.fn<Promise<IPredicate>, [IPredicatePayload]>(),
@@ -32,12 +94,14 @@ export const mockPredicateService = {
     Promise<IPagination<IPredicateVersion>>,
     [GetPredicateVersionParams]
   >(),
+  //storage
+  store: new PredicateStorage(),
 };
 
 // Implementação dos mocks utilizando os parâmetros da request:
 mockPredicateService.create.mockImplementation((payload: IPredicatePayload) => {
   return new Promise((resolve, _) => {
-    resolve({
+    const predicate = {
       ...payload,
       id: randomUUID(),
       members: payload.addresses.map((item) => {
@@ -58,21 +122,23 @@ mockPredicateService.create.mockImplementation((payload: IPredicatePayload) => {
       workspace: workspace['WORKSPACE_1'],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    });
+    };
+    mockPredicateService.store.publish(predicate);
+    resolve(predicate);
   });
 });
 
 mockPredicateService.findByAddress.mockImplementation(
   (predicateAddress: string) => {
     return new Promise((resolve, _) => {
-      resolve(findPredicateByAddress(predicateAddress));
+      resolve(mockPredicateService.store.findByAddress(predicateAddress));
     });
   },
 );
 
 mockPredicateService.findById.mockImplementation((predicateId: string) => {
   return new Promise((resolve, _) => {
-    resolve(findPredicateById(predicateId));
+    resolve(mockPredicateService.store.findById(predicateId));
   });
 });
 
@@ -100,13 +166,17 @@ mockPredicateService.listPredicateTransactions.mockImplementation(
 
 mockPredicateService.findVersionByCode.mockImplementation((code: string) => {
   return new Promise((resolve, _) => {
-    resolve(findPredicateVersionByCode(code));
+    resolve(mockPredicateService.store.predicateVersionByCode(code));
   });
 });
 
 mockPredicateService.findCurrentVersion.mockImplementation(() => {
   return new Promise((resolve, _) => {
-    resolve(findPredicateVersionByCode(predicateCurrentVersion));
+    resolve(
+      mockPredicateService.store.predicateVersionByCode(
+        predicateCurrentVersion,
+      ),
+    );
   });
 });
 

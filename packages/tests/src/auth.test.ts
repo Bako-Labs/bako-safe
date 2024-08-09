@@ -16,11 +16,6 @@ describe('[AUTH]', () => {
   });
 
   it('Authenticate', async () => {
-    console.log(
-      Address.fromString(
-        'fuel13vdg58zetjyvhfw5gvhga6uzlq5wxdjz3e8tpt84ucwycusuwfdsyuun3t',
-      ).toB256(),
-    );
     const auth = await mockAuthService.auth({
       address: accounts['USER_1'].address,
       provider: networks['DEVNET'],
