@@ -1,24 +1,25 @@
-import { BN, WalletUnlocked, bn } from 'fuels';
+import { BN, Provider, Wallet, bn } from 'fuels';
 import { BakoSafe } from 'bakosafe';
-import { Vault } from 'bakosafe';
+
+import { accounts, networks } from '../mocks';
 
 export const txParams = {
   maxFee: bn(BakoSafe.getGasConfig('MAX_FEE')),
   gasLimit: bn(BakoSafe.getGasConfig('GAS_LIMIT')),
 };
 
-export const sendPredicateCoins = async (
-  predicate: Vault,
-  amount: BN,
+export const sendCoins = async (
+  address: string,
+  amount: string,
   asset: string,
-  rootWallet: WalletUnlocked,
 ) => {
-  const deposit = await rootWallet.transfer(
-    predicate.address.toString(),
-    amount,
-    asset,
-    txParams,
+  const _amount = bn.parseUnits(amount, 18);
+  const rootWallet = Wallet.fromPrivateKey(
+    accounts['FULL'].privateKey,
+    await Provider.create(networks['LOCAL']),
   );
+
+  const deposit = await rootWallet.transfer(address, _amount, asset, txParams);
 
   return await deposit.waitForResult();
 };
