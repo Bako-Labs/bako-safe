@@ -184,11 +184,11 @@ mockPredicateService.listVersions.mockImplementation(
   (params: GetPredicateVersionParams) => {
     return new Promise((resolve, _) => {
       resolve({
-        currentPage: 0,
+        currentPage: params.page ?? 0,
         totalPages: 1,
-        nextPage: 1,
-        prevPage: 0,
-        perPage: 10,
+        nextPage: params.page ?? 0 + 1,
+        prevPage: params.page ?? 0 - 1,
+        perPage: params.perPage ?? 10,
         total: predicateVersions.length,
         data: predicateVersions,
       });
