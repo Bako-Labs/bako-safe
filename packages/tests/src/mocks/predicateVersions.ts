@@ -44,3 +44,5 @@ export const findPredicateVersionByCode = (code: string) => {
 
 export const predicateCurrentVersion =
   '0xd3af58d6340df6901196a849b539f4e5149457b141b5503a50367cf2fff9b3de';
+export const predicateOldVersion =
+  '0xa8efb18f92443ae8f9d92953e5fb42e0bd3d183392b95f316b9f586874d89ebc';
