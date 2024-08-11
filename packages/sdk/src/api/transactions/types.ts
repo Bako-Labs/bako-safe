@@ -57,17 +57,19 @@ export enum TransactionProcessStatus {
   FAILED = 'FailureStatus',
 }
 
+export interface ITransactionPredicate {
+  id: string;
+  address: string;
+}
+
 export interface ITransactionResume {
+  id: string;
   hash: string;
   totalSigners: number;
   requiredSigners: number;
-  predicate: {
-    id: string;
-    address: string;
-  };
-  status: TransactionStatus;
-  id: string;
   witnesses: IWitnesses[];
+  status: TransactionStatus;
+  predicate: ITransactionPredicate;
   gasUsed?: string;
   sendTime?: Date;
   error?: string;
@@ -96,16 +98,16 @@ export enum TransactionType {
   DEPOSIT = 'DEPOSIT',
 }
 
-export interface ITransaction extends ICreateTransactionPayload {
+export interface ITransaction
+  extends Omit<ICreateTransactionPayload, 'predicateAddress'> {
   id: string;
   name: string;
+  type: TransactionType;
+  resume: ITransactionResume;
+  summary?: ITransactionSummary;
+
   createdAt: string;
   updatedAt: string;
-  predicateId: string;
-  type: TransactionType;
-  resume: ITransactionResume; // RESULT
-  assets: ITransferAsset[];
-  summary?: ITransactionSummary;
 }
 
 export interface ITransactionService {

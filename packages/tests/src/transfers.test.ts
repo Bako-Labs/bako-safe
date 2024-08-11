@@ -9,7 +9,6 @@ import {
 import { Vault } from 'bakosafe';
 import { IPayloadVault } from 'bakosafe';
 import { v4 as uuidv4 } from 'uuid';
-import { estimateFee } from 'bakosafe';
 
 describe('[TRANSFERS]', () => {
   let chainId: number;

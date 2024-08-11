@@ -16,6 +16,7 @@ import {
 } from '../predicateVersions';
 import { random_user_avatar } from '../avatars';
 import { predicates } from '../predicates';
+import { transactions } from '../transactions';
 
 class PredicateStorage {
   private predicates: IPredicate[] = [
@@ -152,13 +153,13 @@ mockPredicateService.listPredicateTransactions.mockImplementation(
   (params: GetTransactionParams) => {
     return new Promise((resolve, _) => {
       resolve({
-        data: [],
-        nextPage: 0,
-        prevPage: 0,
-        currentPage: 1,
-        total: 0,
-        perPage: 10,
-        totalPages: 0,
+        data: transactions,
+        nextPage: params.page ?? 0 + 1,
+        prevPage: params.page ?? 0 - 1,
+        currentPage: params.page ?? 0,
+        total: transactions.length,
+        perPage: params.perPage ?? 10,
+        totalPages: 1,
       });
     });
   },
