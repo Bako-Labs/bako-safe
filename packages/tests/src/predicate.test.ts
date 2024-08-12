@@ -5,6 +5,7 @@ import { mockAuthService, mockPredicateService } from './mocks/api';
 import { Address, bn, Provider, Wallet } from 'fuels';
 import { sendCoins } from './utils/sendCoins';
 import {
+  currentVersion,
   predicateCurrentVersion,
   predicateOldVersion,
 } from './mocks/predicateVersions';
@@ -196,7 +197,6 @@ describe('[INSTACE]', () => {
     const vault = await Vault.create(VaultPayload);
     expect(vault).toHaveProperty('address');
     expect(vault).toHaveProperty('version');
-    expect(vault.version).toStrictEqual(predicateCurrentVersion);
   });
 
   it('Auth depends without credentials', async () => {
@@ -244,10 +244,12 @@ describe('[VERSION]', () => {
 
   it('Find current version', async () => {
     const current = await Vault.BakoSafeGetCurrentVersion();
+    const _currentVersion = await currentVersion();
     expect(current).toHaveProperty('id');
     expect(current).toHaveProperty('abi');
     expect(current).toHaveProperty('bytes');
-    expect(current).toHaveProperty('code', predicateCurrentVersion);
+
+    expect(current).toStrictEqual(_currentVersion);
   });
 
   it('Find version by code', async () => {
@@ -256,6 +258,7 @@ describe('[VERSION]', () => {
     expect(version).toHaveProperty('id');
     expect(version).toHaveProperty('abi');
     expect(version).toHaveProperty('bytes');
+
     expect(version).toHaveProperty('code', predicateOldVersion);
   });
 

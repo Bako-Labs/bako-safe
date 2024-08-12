@@ -1,9 +1,20 @@
 import { IPredicate } from 'bakosafe/src/api';
-import {
-  findPredicateVersionByCode,
-  predicateCurrentVersion,
-} from './predicateVersions';
+import { predicateCurrentVersion, predicateVersion } from './predicateVersions';
 import { workspace } from './workspaces';
+import { ZeroBytes32 } from 'fuels';
+
+export const zeroSigners = [
+  ZeroBytes32,
+  ZeroBytes32,
+  ZeroBytes32,
+  ZeroBytes32,
+  ZeroBytes32,
+  ZeroBytes32,
+  ZeroBytes32,
+  ZeroBytes32,
+  ZeroBytes32,
+  ZeroBytes32,
+];
 
 export const configurable = {
   PREDICATE_1:
@@ -64,7 +75,7 @@ export const predicates: { [key: string]: IPredicate } = {
     description: 'Description for Predicate 1',
     predicateAddress: address['PREDICATE_1'],
     versionCode: predicateCurrentVersion,
-    version: findPredicateVersionByCode(predicateCurrentVersion),
+    version: predicateVersion,
     members: members['PREDICATE_1'],
     owner: members['PREDICATE_1'][0],
     minSigners: JSON.parse(configurable['PREDICATE_1']).SIGNATURES_COUNT,
@@ -82,7 +93,7 @@ export const predicates: { [key: string]: IPredicate } = {
     description: 'Description for Predicate 2',
     predicateAddress: address['PREDICATE_2'],
     versionCode: predicateCurrentVersion,
-    version: findPredicateVersionByCode(predicateCurrentVersion),
+    version: predicateVersion,
     members: members['PREDICATE_2'],
     owner: members['PREDICATE_2'][0],
     minSigners: JSON.parse(configurable['PREDICATE_2']).SIGNATURES_COUNT,
