@@ -58,6 +58,7 @@ export enum TransactionProcessStatus {
 }
 
 export interface ITransactionResume {
+  id: string;
   hash: string;
   totalSigners: number;
   requiredSigners: number;
@@ -66,7 +67,6 @@ export interface ITransactionResume {
     address: string;
   };
   status: TransactionStatus;
-  id: string;
   witnesses: IWitnesses[];
   gasUsed?: string;
   sendTime?: Date;
