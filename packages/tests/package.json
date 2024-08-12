@@ -11,6 +11,7 @@
     "test:name": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand -t"
   },
   "dependencies": {
+    "@noble/curves": "^1.5.0",
     "axios": "^1.7.2",
     "bakosafe": "workspace:*",
     "fuels": "0.92.1",
