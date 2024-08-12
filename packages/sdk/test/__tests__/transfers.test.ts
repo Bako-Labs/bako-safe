@@ -423,29 +423,22 @@ describe('[TRANSFERS]', () => {
   test(
     'Send transaction with multiple asset ids without sending ETH',
     async () => {
-      // const txAssets = [assets.BTC, assets.USDC, assets.UNI];
-      // const txAssets = [assets.ETH];
+      const txAssets = [assets.BTC, assets.USDC, assets.UNI];
       const vault = await newVault(
         signers,
         provider,
         auth['USER_1'].BakoSafeAuth,
         100,
         1,
+        Object.values(assets),
       );
       const wallet = Wallet.generate({ provider });
 
-      const tx = {
-        name: `tx_${uuidv4()}`,
-        assets: [
-          {
-            assetId: provider.getBaseAssetId(),
-            to: wallet.address.toB256(),
-            amount: DEFAULT_BALANCE_VALUE.format(),
-          },
-        ],
-      };
+      const tx = DEFAULT_MULTI_ASSET_TRANSACTION_PAYLOAD(
+        wallet.address.toString(),
+        txAssets,
+      );
       const transaction = await vault.BakoSafeIncludeTransaction(tx);
-      const transaction2 = await vault.BakoSafeIncludeTransaction(tx);
 
       await signin(
         transaction.getHashTxId(),
@@ -457,26 +450,15 @@ describe('[TRANSFERS]', () => {
       const result = await transaction.wait();
 
       expect(result.status).toBe(TransactionStatus.success);
-      // expect((await wallet.getBalance(assets.BTC)).format()).toBe(
-      //   DEFAULT_BALANCE_VALUE.format(),
-      // );
-      // expect((await wallet.getBalance(assets.USDC)).format()).toBe(
-      //   DEFAULT_BALANCE_VALUE.format(),
-      // );
-      // expect((await wallet.getBalance(assets.UNI)).format()).toBe(
-      //   DEFAULT_BALANCE_VALUE.format(),
-      // );
-
-      await signin(
-        transaction2.getHashTxId(),
-        'USER_1',
-        auth['USER_1'].BakoSafeAuth,
-        transaction2.BakoSafeTransactionId,
+      expect((await wallet.getBalance(assets.BTC)).format()).toBe(
+        DEFAULT_BALANCE_VALUE.format(),
       );
-
-      await transaction.send();
-      const result2 = await transaction.wait();
-      console.log(result2);
+      expect((await wallet.getBalance(assets.USDC)).format()).toBe(
+        DEFAULT_BALANCE_VALUE.format(),
+      );
+      expect((await wallet.getBalance(assets.UNI)).format()).toBe(
+        DEFAULT_BALANCE_VALUE.format(),
+      );
     },
     100 * 1000,
   );
