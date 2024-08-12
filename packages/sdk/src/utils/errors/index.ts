@@ -4,8 +4,15 @@ import { FuelErrorParser } from './parser';
 
 export class BakoError extends Error {
   static parse(error: unknown) {
-    if (error instanceof FuelError) {
-      const fuelError = FuelErrorParser.parse(error);
+    // Workaround to check if error is a FuelError because instanceof doesn't parse correctly
+    const isFuelError =
+      error instanceof Object &&
+      'code' in error &&
+      'VERSIONS' in error &&
+      'message' in error;
+
+    if (isFuelError) {
+      const fuelError = FuelErrorParser.parse(<FuelError>error);
       return new BakoError(
         fuelError.code,
         fuelError.message,
@@ -14,10 +21,7 @@ export class BakoError extends Error {
     }
 
     if (error instanceof Object && 'message' in error) {
-      return new BakoError(
-        ErrorCodes.DEFAULT,
-        (error.message as string) || 'Unknown error',
-      );
+      return new BakoError(ErrorCodes.DEFAULT, error.message as string);
     }
 
     return new BakoError(ErrorCodes.DEFAULT, 'Unknown error');

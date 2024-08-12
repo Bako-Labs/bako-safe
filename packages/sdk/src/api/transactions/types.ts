@@ -1,5 +1,6 @@
 import { Operation, TransactionRequest } from 'fuels';
 import { ITransferAsset } from '../../utils/assets';
+import { IBakoError } from '../../utils/errors/types';
 
 export enum SortOptionTx {
   ASC = 'ASC',
@@ -73,7 +74,7 @@ export interface ITransactionResume {
   witnesses?: string[];
   gasUsed?: string;
   sendTime?: Date;
-  error?: string;
+  error?: IBakoError;
 }
 
 export interface ITransactionSummary {
