@@ -142,6 +142,7 @@ describe('[TRANSFERS] Deploy', () => {
         deployTransfer.BakoSafeTransactionId,
       );
 
+      await deployTransfer.send();
       await deployTransfer.wait();
       expect(contractId).toBe(deployTransfer.getContractId());
 

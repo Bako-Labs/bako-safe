@@ -18,7 +18,7 @@ export const signin = async (
   );
   const tx = await signer.signMessage(tx_hash);
   if (!!auth && BakoSafeTransactionId) {
-    const acc = Address.fromString(accounts[account].address).toString();
+    const acc = Address.fromString(accounts[account].address).toB256();
     const serviceTransactions = new TransactionService(auth);
     return await serviceTransactions.sign(BakoSafeTransactionId, acc, tx);
   }

@@ -47,43 +47,6 @@ type DeployBakoTransaction = {
 
 const { getContractId, getContractStorageRoot } = ContractUtils;
 
-/* TODO: Move this method to vault */
-const getMaxPredicateGasUsed = async (provider: Provider, signers: number) => {
-  const request = new ScriptTransactionRequest();
-  const addresses = Array.from({ length: signers }, () => Address.fromRandom());
-  const vault = await Vault.create({
-    configurable: {
-      SIGNATURES_COUNT: signers,
-      SIGNERS: addresses.map((address) => address.toB256()),
-      network: provider.url,
-    },
-  });
-
-  // Add fake input
-  request.addCoinInput({
-    id: ZeroBytes32,
-    assetId: ZeroBytes32,
-    amount: bn(),
-    owner: vault.address,
-    blockCreated: bn(),
-    txCreatedIdx: bn(),
-  });
-
-  // Populate the  transaction inputs with predicate data
-  vault.populateTransactionPredicateData(request);
-  Array.from({ length: signers }, () => request.addWitness(FAKE_WITNESSES));
-
-  const transactionCost = await vault.provider.getTransactionCost(request);
-  await vault.fund(request, transactionCost);
-  await vault.provider.estimatePredicates(request);
-  const input = request.inputs[0];
-  if ('predicate' in input && input.predicate) {
-    return bn(input.predicateGasUsed);
-  }
-
-  return bn();
-};
-
 /**
  * `DeployTransfer` are extension of CreateTransactionRequest, to create and deploy contracts
  */
@@ -182,10 +145,7 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
     transactionRequest = await vault.fund(transactionRequest, transactionCost);
 
     // Estimate the gas usage for the predicate
-    const predicateGasUsed = await getMaxPredicateGasUsed(
-      vault.provider,
-      vault.BakoSafeVault.minSigners,
-    );
+    const predicateGasUsed = await vault.maxGasUsed();
 
     // Calculate the total gas usage for the transaction
     let totalGasUsed = bn(0);
