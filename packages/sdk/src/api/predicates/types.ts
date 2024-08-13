@@ -1,3 +1,4 @@
+import { Workspace } from '../auth';
 import { GetTransactionParams, ITransaction } from '../transactions';
 import { IPagination } from '../utils/pagination';
 import { Operation, TransactionRequest } from 'fuels';
@@ -19,6 +20,22 @@ export interface IPredicatePayload {
   versionCode?: string;
 }
 
+export interface IPredicateMember {
+  id: string;
+  avatar: string;
+  address: string;
+}
+
+export interface IPredicate extends Omit<IPredicatePayload, 'addresses'> {
+  id: string;
+  members: IPredicateMember[];
+  owner: IPredicateMember;
+  version: IPredicateVersion;
+  workspace: Workspace;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface GetPredicateVersionParams {
   q?: string;
   code?: string;
@@ -35,29 +52,9 @@ export interface IListTransactions
 
 export interface IPredicateVersion {
   id: string;
-  name: string;
-  description?: string;
-  code: string;
-  bytes: string;
   abi: string;
-  active: boolean;
-}
-
-export interface IPredicate extends IPredicatePayload {
-  id: string;
-  members: {
-    id: string;
-    avatar: string;
-    address: string;
-    nickname: string;
-  }[];
-  owner: {
-    id: string;
-    address: string;
-  };
-  version: Partial<IPredicateVersion>;
-  createdAt: string;
-  updatedAt: string;
+  bytes: string;
+  code: string;
 }
 
 export interface IDeposit {

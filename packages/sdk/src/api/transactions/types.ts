@@ -34,11 +34,9 @@ export enum WitnessStatus {
 }
 
 export interface IWitnesses {
-  id: string;
-  signature: string;
   account: string;
+  signature: string;
   status: WitnessStatus;
-  createdAt: string;
   updatedAt: string;
 }
 
@@ -60,29 +58,40 @@ export enum TransactionProcessStatus {
   FAILED = 'FailureStatus',
 }
 
+export interface ITransactionPredicate {
+  id: string;
+  address: string;
+}
+
 export interface ITransactionResume {
+  id: string;
   hash: string;
   totalSigners: number;
   requiredSigners: number;
-  predicate: {
-    id: string;
-    address: string;
-  };
-  outputs: ITransferAsset[];
+  witnesses: IWitnesses[];
   status: TransactionStatus;
-  BakoSafeID: string;
-  witnesses?: string[];
+  predicate: ITransactionPredicate;
   gasUsed?: string;
   sendTime?: Date;
   error?: IBakoError;
 }
 
-export interface ITransactionSummary {
+export interface BaseSummary {
+  operations: Operation[];
+}
+
+export interface IConnectorSummary extends BaseSummary {
+  type: 'connector';
   origin: string;
   name: string;
   image?: string;
-  operations?: Operation[];
 }
+
+export interface ICliSummary extends BaseSummary {
+  type: 'cli';
+}
+
+export type ITransactionSummary = IConnectorSummary | ICliSummary;
 
 export enum TransactionType {
   TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',
@@ -90,17 +99,16 @@ export enum TransactionType {
   DEPOSIT = 'DEPOSIT',
 }
 
-export interface ITransaction extends ICreateTransactionPayload {
+export interface ITransaction
+  extends Omit<ICreateTransactionPayload, 'predicateAddress'> {
   id: string;
   name: string;
+  type: TransactionType;
+  resume: ITransactionResume;
+  summary?: ITransactionSummary;
+
   createdAt: string;
   updatedAt: string;
-  predicateId: string;
-  type: TransactionType;
-  witnesses: IWitnesses[];
-  resume: ITransactionResume; // RESULT
-  assets: ITransferAsset[];
-  summary?: ITransactionSummary;
 }
 
 export interface ITransactionService {
