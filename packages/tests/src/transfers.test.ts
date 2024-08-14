@@ -1,20 +1,21 @@
-import {
-  Provider,
-  Signer,
-  TransactionStatus,
-  Wallet,
-  bn,
-  hashMessage,
-} from 'fuels';
-import { sendCoins, signin } from './utils';
+import { Provider, Wallet } from 'fuels';
+import { sendCoins, setupVault, signin } from './utils';
 import { accounts, DEFAULT_BALANCE_VALUE, networks } from './mocks';
-import { bakoCoder, SignatureType, Vault } from 'bakosafe/src';
+import {
+  bakoCoder,
+  SignatureType,
+  Vault,
+  TransactionStatus,
+  BakoError,
+} from 'bakosafe/src';
 import { mockAuthService, mockPredicateService } from './mocks/api';
-import { ScriptAbi__factory } from './types/sway';
+
 import {
   WebAuthn_createCredentials,
   WebAuthn_signChallange,
 } from './utils/webauthn';
+import { setupBaseTransaction } from './utils/transaction';
+import { ErrorCodes } from 'bakosafe/src/utils/errors/types';
 
 jest.mock('bakosafe/src/api/auth', () => {
   return {
@@ -29,198 +30,232 @@ jest.mock('bakosafe/src/api/predicates', () => {
   };
 });
 
-describe('[TRANSFERS]', () => {
-  beforeEach(() => {
+describe('[SEND TRANSACTION]', () => {
+  let provider: Provider;
+
+  beforeEach(async () => {
     jest.clearAllMocks();
-  });
-  // let chainId: number;
-  // let auth: IUserAuth;
-  // let provider: Provider;
-  // let signers: string[];
-
-  // //example to sett up the provider
-  // BakoSafe.setProviders({
-  //   CHAIN_URL: 'http://localhost:4000/v1/graphql',
-  //   SERVER_URL: 'http://localhost:3333',
-  //   CLIENT_URL: 'http://localhost:5174',
-  // });
-
-  // beforeAll(async () => {
-  //   // provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
-  //   // chainId = provider.getChainId();
-  //   // auth = await authService(
-  //   //   ['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
-  //   //   provider.url,
-  //   // );
-
-  //   // signers = [
-  //   //   accounts['USER_1'].address,
-  //   //   accounts['USER_2'].address,
-  //   //   accounts['USER_3'].address,
-  //   // ];
-  // }, 30 * 1000);
-  it('SEND', async () => {
-    const provider = await Provider.create(networks['LOCAL']);
-    const user = accounts['FULL'].privateKey;
-    const wallet = Wallet.fromPrivateKey(user, provider);
-    const tx_id =
-      '361928fde57834469c1f2d9bbf858cda73d431e6b1b04149d6836a7c2e890410';
-    const script = ScriptAbi__factory.createInstance(wallet);
-    const invocationScope = await script.functions.main(`0x${tx_id}`).txParams({
-      gasLimit: 10000000,
-      maxFee: 1000000,
-    });
-    const txRequest = await invocationScope.getTransactionRequest();
-
-    // const payload = await WebAuthn_signChallange(webAuthnCredential, tx_id);
-    // console.log(webAuthnCredential.address);
-    txRequest.witnesses = [
-      bakoCoder.encode({
-        type: SignatureType.Fuel,
-        signature: await signin(
-          '361928fde57834469c1f2d9bbf858cda73d431e6b1b04149d6836a7c2e890410',
-          'USER_1',
-        ),
-      }),
-    ];
-
-    console.log(txRequest.witnesses);
-
-    const txCost = await wallet.provider.getTransactionCost(txRequest);
-    await wallet.fund(txRequest, txCost);
-
-    try {
-      const callResult = await wallet.provider.dryRun(txRequest, {
-        utxoValidation: false,
-        estimateTxDependencies: false,
-      });
-
-      console.dir(callResult.receipts, { depth: null });
-    } catch (e) {
-      console.log(e.message);
-    }
+    provider = await Provider.create(networks['LOCAL']);
   });
 
-  it('Send a transaction with a single predicate 1:1 with fuel account', async () => {
-    const provider = await Provider.create(networks['LOCAL']);
-    const wallet = Wallet.fromPrivateKey(
-      accounts['USER_1'].privateKey,
-      provider,
-    );
-    // console.log('wallet', wallet.address.toString());
-    const vault = await Vault.create({
-      configurable: {
-        SIGNATURES_COUNT: 1,
-        SIGNERS: [accounts['USER_1'].account],
-        network: provider.url,
-      },
-    });
-    console.log(vault.getConfigurable());
-    // console.log('wallet', wallet.address.toString(), await vault.getBalance());
-    await sendCoins(
-      vault.address.toAddress(),
-      '0.5',
-      provider.getBaseAssetId(),
-    );
-
-    // console.log('wallet', wallet.address.toString(), await vault.getBalance());
-
-    const tx = await vault.BakoSafeIncludeTransaction({
-      name: 'Test Transaction',
-      assets: [
-        {
-          assetId: provider.getBaseAssetId(),
-          to: accounts['STORE'].address,
-          amount: DEFAULT_BALANCE_VALUE.format(),
-        },
-      ],
-    });
+  it('1:1 predicate', async () => {
+    const vault = await setupVault([accounts['USER_1'].account], provider);
+    const tx_payload = await setupBaseTransaction(provider);
+    const tx = await vault.BakoSafeIncludeTransaction(tx_payload);
     const signature = await signin(tx.getHashTxId(), 'USER_1');
-
-    console.log({
-      signature,
-      address: Signer.recoverPublicKey(
-        hashMessage(tx.getHashTxId()),
-        signature,
-      ),
-      signer: accounts['USER_1'].account,
-    });
 
     tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.Fuel,
-        signature: await signin(tx.getHashTxId(), 'USER_1'),
+        signature,
       },
     ]);
 
-    console.log(tx.witnesses);
+    const call = await tx.send();
+    const { status } = await call.waitForResult();
 
-    const result = await tx.send().then(async (tx) => {
-      if ('wait' in tx) {
-        return await tx.wait();
-      }
-      return {
-        status: TransactionStatus.failure,
-      };
-    });
-    expect(result.status).toBe(TransactionStatus.success);
+    expect(status).toBe(TransactionStatus.SUCCESS);
   });
 
-  it('Send a transaction with a single predicate 1:1 with fuel account', async () => {
-    const provider = await Provider.create(networks['LOCAL']);
-    const user = accounts['FULL'].privateKey;
-    const webAuthnCredential = WebAuthn_createCredentials();
-    const wallet = Wallet.fromPrivateKey(user, provider);
-    const signers = [accounts['USER_1'].address, webAuthnCredential.address];
-
-    const vault = await Vault.create({
-      configurable: {
-        SIGNATURES_COUNT: 2,
-        SIGNERS: signers,
-        network: provider.url,
-      },
-    });
-
-    await sendCoins(
-      vault.address.toAddress(),
-      '0.5',
-      provider.getBaseAssetId(),
+  it('Pending signatures', async () => {
+    const vault = await setupVault(
+      [accounts['USER_1'].account, accounts['USER_2'].account],
+      provider,
     );
+    const tx_payload = await setupBaseTransaction(provider);
+    const tx = await vault.BakoSafeIncludeTransaction(tx_payload);
+    const signature = await signin(tx.getHashTxId(), 'USER_1');
 
-    const transaction = await vault.BakoSafeIncludeTransaction({
-      name: 'Test Transaction',
-      assets: [
-        {
-          assetId: provider.getBaseAssetId(),
-          to: accounts['STORE'].address,
-          amount: DEFAULT_BALANCE_VALUE.format(),
-        },
-      ],
-    });
-    const tx_id = transaction.getHashTxId();
-
-    transaction.witnesses = bakoCoder.encode([
+    tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.Fuel,
-        signature: await signin(tx_id, 'USER_1'),
+        signature,
       },
+    ]);
+
+    await tx.send().catch((e) => {
+      expect(BakoError.parse(e).code).toBe(
+        ErrorCodes.PREDICATE_VALIDATION_FAILED,
+      );
+    });
+  });
+
+  it('Duplicated signatures', async () => {
+    const vault = await setupVault(
+      [accounts['USER_1'].account, accounts['USER_2'].account],
+      provider,
+    );
+    const tx_payload = await setupBaseTransaction(provider);
+    const tx = await vault.BakoSafeIncludeTransaction(tx_payload);
+    const signature = await signin(tx.getHashTxId(), 'USER_1');
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature,
+      },
+      {
+        type: SignatureType.Fuel,
+        signature,
+      },
+    ]);
+
+    await tx.send().catch((e) => {
+      expect(BakoError.parse(e).code).toBe(
+        ErrorCodes.PREDICATE_VALIDATION_FAILED,
+      );
+    });
+  });
+
+  it('Inválid signatures', async () => {
+    const vault = await setupVault(
+      [accounts['USER_1'].account, accounts['USER_2'].account],
+      provider,
+    );
+    const tx_payload = await setupBaseTransaction(provider);
+    const tx = await vault.BakoSafeIncludeTransaction(tx_payload);
+    const signature = await signin(tx.getHashTxId(), 'USER_1');
+    const encoded_signature = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature,
+      },
+    ]);
+
+    //change a little bit the signature
+    tx.witnesses = [encoded_signature[0].slice(0, -1) + '0'];
+
+    await tx.send().catch((e) => {
+      expect(BakoError.parse(e).code).toBe(
+        ErrorCodes.PREDICATE_VALIDATION_FAILED,
+      );
+    });
+  });
+
+  it('Subscriber outside the vault ', async () => {
+    const vault = await setupVault(
+      [accounts['USER_1'].account, accounts['USER_2'].account],
+      provider,
+    );
+    const tx_payload = await setupBaseTransaction(provider);
+    const tx = await vault.BakoSafeIncludeTransaction(tx_payload);
+    const signature = await signin(tx.getHashTxId(), 'USER_3');
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature,
+      },
+    ]);
+
+    await tx.send().catch((e) => {
+      expect(BakoError.parse(e).code).toBe(
+        ErrorCodes.PREDICATE_VALIDATION_FAILED,
+      );
+    });
+  });
+
+  it('Sign by webauthn account', async () => {
+    const webAuthnCredential = WebAuthn_createCredentials();
+    const vault = await setupVault([webAuthnCredential.address], provider);
+
+    const tx_payload = await setupBaseTransaction(provider);
+    const tx = await vault.BakoSafeIncludeTransaction(tx_payload);
+    const tx_id = tx.getHashTxId();
+
+    tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.WebAuthn,
         ...(await WebAuthn_signChallange(webAuthnCredential, tx_id)),
       },
     ]);
 
-    const result = await transaction.send().then(async (tx) => {
-      if ('wait' in tx) {
-        return await tx.wait();
-      }
-      return {
-        status: TransactionStatus.failure,
-      };
-    });
-    expect(result.status).toBe(TransactionStatus.success);
+    const call = await tx.send();
+    const { status } = await call.waitForResult();
+
+    expect(status).toBe(TransactionStatus.SUCCESS);
   });
+
+  it('Sign by webauthn and fuel account', async () => {
+    const webAuthnCredential = WebAuthn_createCredentials();
+    const vault = await setupVault(
+      [webAuthnCredential.address, accounts['USER_1'].account],
+      provider,
+    );
+
+    const tx_payload = await setupBaseTransaction(provider);
+    const tx = await vault.BakoSafeIncludeTransaction(tx_payload);
+    const tx_id = tx.getHashTxId();
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.WebAuthn,
+        ...(await WebAuthn_signChallange(webAuthnCredential, tx_id)),
+      },
+      {
+        type: SignatureType.Fuel,
+        signature: await signin(tx_id, 'USER_1'),
+      },
+    ]);
+
+    const call = await tx.send();
+    const { status } = await call.waitForResult();
+
+    expect(status).toBe(TransactionStatus.SUCCESS);
+  });
+
+  // it();
 });
+//   it('Send a transaction with a single predicate 1:1 with webauthn account', async () => {
+//     const provider = await Provider.create(networks['LOCAL']);
+//     const user = accounts['FULL'].privateKey;
+//     const webAuthnCredential = WebAuthn_createCredentials();
+//     const wallet = Wallet.fromPrivateKey(user, provider);
+//     const signers = [accounts['USER_1'].address, webAuthnCredential.address];
+
+//     const vault = await Vault.create({
+//       configurable: {
+//         SIGNATURES_COUNT: 1,
+//         SIGNERS: signers,
+//         network: provider.url,
+//       },
+//     });
+
+//     await sendCoins(
+//       vault.address.toAddress(),
+//       '0.5',
+//       provider.getBaseAssetId(),
+//     );
+
+//     const transaction = await vault.BakoSafeIncludeTransaction({
+//       name: 'Test Transaction',
+//       assets: [
+//         {
+//           assetId: provider.getBaseAssetId(),
+//           to: accounts['STORE'].address,
+//           amount: DEFAULT_BALANCE_VALUE.format(),
+//         },
+//       ],
+//     });
+//     const tx_id = transaction.getHashTxId();
+
+//     transaction.witnesses = bakoCoder.encode([
+//       {
+//         type: SignatureType.WebAuthn,
+//         ...(await WebAuthn_signChallange(webAuthnCredential, tx_id)),
+//       },
+//     ]);
+
+//     const result = await transaction.send().then(async (tx) => {
+//       if ('wait' in tx) {
+//         return await tx.wait();
+//       }
+//       return {
+//         status: TransactionStatus.failure,
+//       };
+//     });
+//     expect(result.status).toBe(TransactionStatus.success);
+//   });
+// });
 
 // test(
 //   'Created an valid transaction to vault and instance old transaction',

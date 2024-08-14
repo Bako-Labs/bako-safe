@@ -6,4 +6,4 @@ export * from './provider';
 export * from './rootWallet';
 export * from './sendCoins';
 export * from './signin';
-export * from './defaultVault';
+export * from './vault';
