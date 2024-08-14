@@ -119,7 +119,7 @@ export class BaseTransfer<T extends TransactionRequest> {
    *
    * @returns an resume for transaction
    */
-  public async send(): Promise<ITransactionResume | TransactionResponse> {
+  public async send(): Promise<TransactionResponse> {
     // Default send of predicate transaction
     if (!this.service) {
       return this.sendTransactionToChain();
