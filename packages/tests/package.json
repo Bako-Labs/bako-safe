@@ -4,6 +4,9 @@
   "private": true,
   "description": "",
   "main": "src/index.ts",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "postinstall": "pnpm fuels build",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
