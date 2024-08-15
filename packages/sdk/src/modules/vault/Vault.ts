@@ -1,166 +1,53 @@
-import { arrayify, Predicate, TransactionCreate } from 'fuels';
-
 import {
-  defaultListParams,
-  GetPredicateVersionParams,
-  IBakoSafeAuth,
-  IListTransactions,
-  IPagination,
-  IPredicate,
-  IPredicateService,
-  IPredicateVersion,
-  PredicateService,
+  Address,
+  arrayify,
+  BN,
+  bn,
+  calculateGasFee,
+  CreateTransactionRequest,
+  hexlify,
+  InputType,
+  Predicate,
+  Provider,
+  ScriptTransactionRequest,
+  TransactionRequest,
+  transactionRequestify,
+  TransactionRequestLike,
+  TransactionResponse,
   TransactionType,
-} from '../../api';
-import {
-  ECreationtype,
-  IBakoSafeApi,
-  IBakoSafeGetTransactions,
-  IBakoSafeIncludeTransaction,
-  IConfVault,
-  ICreationPayload,
-  IDeployContract,
-  IPayloadVault,
-  IVault,
-} from './types';
-import {
-  identifyCreateVaultParams,
-  makeHashPredicate,
-  makeSubscribers,
-} from './helpers';
-import { DeployTransfer, Transfer } from '../transfers';
-import { v4 as uuidv4 } from 'uuid';
-import { AddressUtils } from '../../utils/address/Address';
+  ZeroBytes32,
+} from 'fuels';
+
+import { makeHashPredicate, makeSubscribers } from './helpers';
+import { estimateFee, FAKE_WITNESSES } from '../transfers';
+
+import { PredicateAbi__factory } from '../../sway/predicates';
+import { Asset, ITransferAsset } from '../../utils/assets';
 
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
  */
-export class Vault extends Predicate<[]> implements IVault {
-  // private readonly RECURSIVE_TIMEOUT = 10000;
-
-  private bin: string;
-  private abi: { [name: string]: unknown };
-  private api!: IPredicateService;
-  private auth!: IBakoSafeAuth;
-  private configurable: IConfVault;
-
-  public name!: string;
-  //@ts-ignore
-  public BakoSafeVault!: IPredicate;
-  public BakoSafeVaultId!: string;
-  public description?: string;
-  public transactionRecursiveTimeout: number;
+export class Vault extends Predicate<[]> {
+  // todo: implement this
+  // if you have an especific version of predicate,
+  // put the version code (bytes+abi+configurables<zero32bytes>) here: 0xas9...81, for example
   public version?: string;
 
-  protected constructor({
-    configurable,
-    provider,
-    abi,
-    bytecode,
-    name,
-    description,
-    BakoSafeVaultId,
-    BakoSafeVault,
-    BakoSafeAuth,
-    transactionRecursiveTimeout = 1000,
-    api,
-    version,
-  }: ICreationPayload) {
-    const _abi = typeof abi === 'string' ? JSON.parse(abi) : abi;
-    const _bin = bytecode;
-
-    const { network: _network, chainId: _chainId } = configurable;
-    const _configurable = Vault.makePredicate(configurable);
+  constructor(
+    provider: Provider,
+    configurable: {
+      SIGNATURES_COUNT: number;
+      SIGNERS: string[];
+      HASH_PREDICATE?: string;
+    },
+  ) {
     super({
-      bytecode: arrayify(_bin),
-      provider,
-      abi: _abi,
-      configurableConstants: _configurable,
+      abi: PredicateAbi__factory.abi,
+      bytecode: arrayify(PredicateAbi__factory.bin),
+      provider: provider,
+      configurableConstants: Vault.makePredicate(configurable),
     });
-
-    this.bin = _bin;
-    this.abi = _abi;
-    this.configurable = {
-      ..._configurable,
-      network: _network,
-      chainId: _chainId,
-    };
-    this.provider = provider;
-    this.name = name || `Vault - ${uuidv4()}`;
-    this.description = description;
-    this.BakoSafeVaultId = BakoSafeVaultId!;
-    this.transactionRecursiveTimeout = transactionRecursiveTimeout;
-    this.BakoSafeVault = BakoSafeVault!;
-    this.auth = BakoSafeAuth!;
-    this.api = api!;
-    this.version = version;
-  }
-
-  /**
-   * Creates an instance of the Predicate class.
-   *
-   * @param configurable - The parameters of signature requirements.
-   *      @param HASH_PREDICATE - Hash to works an unic predicate, is not required, but to instance old predicate is an number array
-   *      @param SIGNATURES_COUNT - Number of signatures required of predicate
-   *      @param SIGNERS - Array string of predicate signers
-   * @param transactionRecursiveTimeout - The time to refetch transaction on BakoSafe API.
-   * @param BakoSafeAuth - The auth to BakoSafe API.
-   * @param version - The identifier of predicate version to BakoSafe API.
-   *
-   * @returns an instance of Vault
-   **/
-  static async create(params: IPayloadVault | IBakoSafeApi): Promise<Vault> {
-    const { payload, type } = await identifyCreateVaultParams(params);
-    const vault = new Vault(payload);
-
-    if (type === ECreationtype.IS_OLD) {
-      return vault;
-    }
-
-    if (type === ECreationtype.IS_NEW) {
-      if (vault.api) await vault.createOnService();
-      return vault;
-    }
-
-    throw new Error('Invalid param type to create a vault');
-  }
-
-  /**
-   * To use BakoSafe API, auth is required
-   *
-   * @returns if auth is not defined, throw an error
-   */
-  private verifyAuth(): void {
-    if (!this.auth) {
-      throw new Error('Auth is required');
-    }
-  }
-
-  /**
-   * Send a caller to BakoSafe API to save predicate
-   * Set BakoSafeVaultId and BakoSafeVault
-   *
-   *
-   * @returns if auth is not defined, throw an error
-   */
-  private async createOnService(): Promise<void> {
-    this.verifyAuth();
-    const predicate = await this.api.create({
-      name: this.name,
-      description: this.description,
-      predicateAddress: this.address.toString(),
-      minSigners: this.configurable.SIGNATURES_COUNT,
-      addresses: AddressUtils.hex2string(this.configurable.SIGNERS),
-      configurable: JSON.stringify(this.configurable),
-      provider: this.provider.url,
-      versionCode: this.version,
-    });
-    const { id, ...rest } = predicate;
-    this.BakoSafeVault = {
-      ...rest,
-      id,
-    };
-    this.BakoSafeVaultId = id;
+    // return new PredicateAbi__factory.cre
   }
 
   /**
@@ -169,211 +56,214 @@ export class Vault extends Predicate<[]> implements IVault {
    * @param {IConfVault} configurable - The parameters of signature requirements.
    * @returns an formatted object to instance a new predicate
    */
-  private static makePredicate(configurable: IConfVault) {
+  private static makePredicate({
+    SIGNATURES_COUNT,
+    SIGNERS,
+    HASH_PREDICATE,
+  }: {
+    SIGNATURES_COUNT: number;
+    SIGNERS: string[];
+    HASH_PREDICATE?: string;
+  }): { [key: string]: any } {
     return {
-      SIGNATURES_COUNT: configurable.SIGNATURES_COUNT,
-      SIGNERS: makeSubscribers(configurable.SIGNERS),
-      HASH_PREDICATE: configurable.HASH_PREDICATE ?? makeHashPredicate(),
+      SIGNATURES_COUNT,
+      SIGNERS: makeSubscribers(SIGNERS),
+      HASH_PREDICATE: HASH_PREDICATE ?? makeHashPredicate(),
     };
   }
 
-  /**
-   * Include a new transaction in vault to deploy contract.
-   *
-   * @param {IDeployContract} params - The transaction details for deploying the contract.
-   * @returns {Promise<DeployTransfer>} A promise that resolves to an instance of DeployTransfer.
-   */
-  public async BakoSafeDeployContract(
-    params: IDeployContract,
-  ): Promise<DeployTransfer> {
-    const { name, ...transaction } = params;
-    const transfer = await DeployTransfer.fromTransactionCreate({
-      ...transaction,
-      vault: this,
-      auth: this.auth,
-      name: name || 'Contract deployment',
-    });
-
-    return transfer.save();
-  }
-
-  /**
-   * Include new transaction to vault
-   *
-   * @param {IFormatTransfer} param - IFormatTransaction or TransactionRequestLike
-   * @param {TransactionRequestLike} param - IFormatTransaction or TransactionRequestLike
-   * @returns return a new Transfer instance
-   */
-  public async BakoSafeIncludeTransaction(
-    param: IBakoSafeIncludeTransaction,
-  ): Promise<Transfer> {
-    return Transfer.instance({
-      auth: this.auth,
-      vault: this,
-      transfer: param,
-      isSave: true,
-    });
-  }
-
-  /**
-   * Return an list of transaction of this vault
-   *
-   *
-   * @param {IListTransactions} params - The params to list transactions
-   *  - has optional params
-   *  - by default, it returns the first 10 transactions
-   *
-   *
-   * @returns {Promise<IPagination<IBakoSafeGetTransactions>>} an transaction paginated transaction list
-   *
-   *
-   */
-  public async BakoSafeGetTransactions(
-    params?: IListTransactions,
-  ): Promise<IPagination<IBakoSafeGetTransactions>> {
-    this.verifyAuth();
-
-    const tx = await this.api
-      .listPredicateTransactions({
-        predicateId: [this.BakoSafeVaultId],
-        ...(params ?? defaultListParams),
-      })
-      .then((data) => {
+  async BakoTransfer(tx: TransactionRequestLike): Promise<{
+    tx: TransactionRequestLike;
+    hashTxId: string;
+  }> {
+    switch (tx.type) {
+      case TransactionType.Script:
+        let script = new ScriptTransactionRequest(tx);
+        script.gasLimit = bn(10000000);
+        script = await this.prepareTransaction(script);
         return {
-          ...data,
-          data: data.data.map((tx) => {
-            return {
-              resume: tx.resume,
-              type: tx.type,
-            };
-          }),
+          tx: script,
+          hashTxId: script
+            .getTransactionId(this.provider.getChainId())
+            .slice(2),
         };
-      });
+      // script.maxFee = bn(0);
+      // return {
+      //   tx: script,
+      //   hashTxId: script
+      //     .getTransactionId(this.provider.getChainId())
+      //     .slice(2),
+      // };
 
-    return tx;
+      case TransactionType.Create:
+        // calcule a fee com witness fake
+        // adicione os inputs
+        const create = new CreateTransactionRequest(tx);
+        create.maxFee = bn(0);
+        //create.gasLimit = bn(0); // TODO: check if this is necessary
+        return {
+          tx: create,
+          hashTxId: create
+            .getTransactionId(this.provider.getChainId())
+            .slice(2),
+        };
+
+      default:
+        throw new Error('Not implemented');
+    }
+  }
+
+  // txData = transactionRequestify(scriptTransaction);
+
+  async BakoFormatTransfer(assets: ITransferAsset[]): Promise<{
+    tx: TransactionRequestLike;
+    hashTxId: string;
+  }> {
+    const tx = new ScriptTransactionRequest();
+
+    const outputs = Asset.assetsGroupByTo(assets);
+    const coins = Asset.assetsGroupById(assets);
+
+    const transactionCoins = Asset.addTransactionFee(
+      coins,
+      bn(0),
+      this.provider.getBaseAssetId(),
+    );
+
+    const _coins = await this.getResourcesToSpend(transactionCoins);
+    const minSigners = 10; // MAKE THIS DYNAMIC
+
+    tx.addResources(_coins);
+    Object.entries(outputs).map(([, value]) => {
+      tx.addCoinOutput(
+        Address.fromString(value.to),
+        value.amount,
+        value.assetId,
+      );
+    });
+
+    tx.inputs?.forEach((input) => {
+      if (
+        input.type === InputType.Coin &&
+        hexlify(input.owner) === this.address.toB256()
+      ) {
+        input.predicate = arrayify(this.bytes);
+      }
+    });
+
+    const fee = await estimateFee(tx, this.provider, minSigners);
+
+    tx.maxFee = fee.bako_max_fee;
+    tx.gasLimit = fee.bako_gas_limit;
+    tx.witnesses = [];
+
+    return {
+      tx: tx,
+      hashTxId: tx.getTransactionId(this.provider.getChainId()).slice(2),
+    };
+  }
+
+  async sendTransactionToChain(
+    tx: TransactionRequestLike,
+  ): Promise<TransactionResponse> {
+    // this.transactionRequest.witnesses = this.witnesses;
+    const txRequest = transactionRequestify(tx);
+    await this.provider.estimatePredicates(txRequest);
+    const encodedTransaction = hexlify(txRequest.toTransactionBytes());
+    const {
+      submit: { id: transactionId },
+    } = await this.provider.operations.submit({ encodedTransaction });
+    return new TransactionResponse(transactionId, this.provider);
   }
 
   /**
-   * Return an list of transaction of this vault
-   * @param transactionId - The transaction id on BakoSafeApi
+   * Calculates the maximum gas used by a transaction.
    *
-   * @returns an transaction list
+   * @returns {Promise<BN>} Maximum gas used in the predicate.
    */
-  public async BakoSafeGetTransaction(
-    transactionId: string,
-  ): Promise<Transfer | DeployTransfer> {
-    const transfer = await Transfer.instance({
-      vault: this,
-      auth: this.auth,
-      transfer: transactionId,
+  public async maxGasUsed(): Promise<BN> {
+    const request = new ScriptTransactionRequest();
+    const conf = this.interface?.configurables;
+    const signers = Number(conf!.SIGNATURES_COUNT) ?? 10;
+    const vault = new Vault(this.provider, {
+      SIGNATURES_COUNT: Number(conf!.SIGNATURES_COUNT),
+      SIGNERS: Array.from({ length: signers }, () => ZeroBytes32),
+      HASH_PREDICATE: ZeroBytes32,
     });
 
-    if (
-      transfer.BakoSafeTransaction.type === TransactionType.TRANSACTION_CREATE
-    ) {
-      return DeployTransfer.fromBakoTransaction({
-        vault: this,
-        auth: this.auth,
-        ...transfer.BakoSafeTransaction,
-      });
+    // Add fake input
+    request.addCoinInput({
+      id: ZeroBytes32,
+      assetId: ZeroBytes32,
+      amount: bn(),
+      owner: vault.address,
+      blockCreated: bn(),
+      txCreatedIdx: bn(),
+    });
+
+    // Populate the  transaction inputs with predicate data
+    vault.populateTransactionPredicateData(request);
+    Array.from({ length: signers }, () => request.addWitness(FAKE_WITNESSES));
+
+    const transactionCost = await vault.provider.getTransactionCost(request);
+    await vault.fund(request, transactionCost);
+    await vault.provider.estimatePredicates(request);
+    const input = request.inputs[0];
+    if ('predicate' in input && input.predicate) {
+      return bn(input.predicateGasUsed);
     }
 
-    return transfer;
+    return bn();
   }
 
-  /**
-   * Return an instance of predicate service
-   *
-   * @returns an instance of predicate service
-   */
-  private static getPredicateServiceInstance(): PredicateService {
-    return new PredicateService();
-  }
+  public async prepareTransaction<T extends TransactionRequest>(
+    transactionRequest: T,
+  ): Promise<T> {
+    // Estimate the gas usage for the predicate
+    const predicateGasUsed = await this.maxGasUsed();
+    const signers =
+      Number(this.interface?.configurables.SIGNATURES_COUNT) ?? 10;
 
-  /**
-   * Return the last predicate version created
-   *
-   * @returns details of predicate version
-   */
-  static async BakoSafeGetCurrentVersion(): Promise<IPredicateVersion> {
-    const api = this.getPredicateServiceInstance();
-    return await api.findCurrentVersion();
-  }
+    const transactionCost =
+      await this.provider.getTransactionCost(transactionRequest);
+    transactionRequest.maxFee = transactionCost.maxFee;
+    transactionRequest = await this.fund(transactionRequest, transactionCost);
 
-  /**
-   * Return the predicate version that has a given code
-   *
-   * @param code - The predicate version code on BakoSafeApi
-   *
-   * @returns details of predicate version
-   */
-  static async BakoSafeGetVersionByCode(
-    code: string,
-  ): Promise<IPredicateVersion> {
-    const api = this.getPredicateServiceInstance();
-    return await api.findVersionByCode(code);
-  }
+    // Calculate the total gas usage for the transaction
+    let totalGasUsed = bn(0);
+    transactionRequest.inputs.forEach((input) => {
+      if ('predicate' in input && input.predicate) {
+        input.witnessIndex = 0;
+        input.predicateGasUsed = undefined;
+        totalGasUsed = totalGasUsed.add(predicateGasUsed);
+      }
+    });
 
-  /**
-   * Return an list of predicate versions
-   *
-   * @param {GetPredicateVersionParams} params - The params to list predicate versions
-   *  - has optional params
-   *  - by default, it returns the first 10 predicate version details
-   *
-   * @returns a paginated list of predicate version details
-   */
-  static async BakoSafeGetVersions(
-    params?: GetPredicateVersionParams,
-  ): Promise<IPagination<Partial<IPredicateVersion>>> {
-    const _params = {
-      page: 0,
-      perPage: 10,
-    };
-    const api = this.getPredicateServiceInstance();
-    const predicateVersions = await api
-      .listVersions(params ?? _params)
-      .then((data) => {
-        return {
-          ...data,
-          data: data.data.map((version: IPredicateVersion) => {
-            return {
-              // name: version.name,
-              // description: version.description,
-              code: version.code,
-              abi: version.abi,
-            };
-          }),
-        };
-      });
+    const witnesses = Array.from(transactionRequest.witnesses);
+    const fakeSignatures = Array.from(
+      { length: signers },
+      () => FAKE_WITNESSES,
+    );
+    transactionRequest.witnesses.push(...fakeSignatures);
 
-    return predicateVersions;
-  }
+    // Estimate the max fee for the transaction and calculate fee difference
+    const { gasPriceFactor } = this.provider.getGasConfig();
+    const { maxFee, gasPrice } = await this.provider.estimateTxGasAndFee({
+      transactionRequest,
+    });
 
-  /**
-   * Return abi of this vault
-   *
-   * @returns an abi
-   */
-  public getAbi(): { [name: string]: unknown } {
-    return this.abi;
-  }
+    const predicateSuccessFeeDiff = calculateGasFee({
+      gas: totalGasUsed,
+      priceFactor: gasPriceFactor,
+      gasPrice,
+    });
 
-  /**
-   * Return binary of this vault
-   *
-   * @returns an binary
-   */
-  public getBin(): string {
-    return this.bin;
-  }
+    transactionRequest.maxFee = maxFee.add(predicateSuccessFeeDiff);
 
-  /**
-   * Return this vault configurables state
-   *
-   * @returns configurables [signers, signers requested, hash]
-   */
-  public getConfigurable(): IConfVault {
-    return this.configurable;
+    // Attach missing inputs (including estimated predicate gas usage) / outputs to the request
+    await this.provider.estimateTxDependencies(transactionRequest);
+    transactionRequest.witnesses = witnesses;
+
+    return transactionRequest;
   }
 }
