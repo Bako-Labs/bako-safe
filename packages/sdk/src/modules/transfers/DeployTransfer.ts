@@ -55,21 +55,25 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
    */
   static async fromBakoTransaction(options: DeployBakoTransaction) {
     const { auth, vault, ...bakoTransaction } = options;
+
     const createTransactionRequest = CreateTransactionRequest.from(
       bakoTransaction.txData,
     );
 
-    const witnesses = [
-      bakoTransaction.txData.witnesses[
-        createTransactionRequest.bytecodeWitnessIndex ?? 0
-      ].toString(),
-      ...bakoTransaction.resume.witnesses.map((witness) => witness.signature),
-    ];
+    const bytecodeIndex = createTransactionRequest.bytecodeWitnessIndex;
+    const bytecode = bakoTransaction.txData.witnesses[bytecodeIndex];
+
+    const witnessesResume = bakoTransaction.resume.witnesses || [];
+    const witnessesAccounts = witnessesResume
+      .map((witness) => witness.signature)
+      .filter((signature) => !!signature);
+
+    const witnesses = [bytecode.toString(), ...witnessesAccounts];
 
     return new DeployTransfer({
       vault,
-      name: bakoTransaction.name,
       witnesses,
+      name: bakoTransaction.name,
       service: new TransactionService(auth),
       transactionRequest: createTransactionRequest,
       BakoSafeTransaction: bakoTransaction,
@@ -138,42 +142,7 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
       bytecodeWitnessIndex: transaction.bytecodeWitnessIndex,
     });
 
-    // Get the transaction cost and set max fee to fund the transaction with required inputs
-    const transactionCost =
-      await vault.provider.getTransactionCost(transactionRequest);
-    transactionRequest.maxFee = transactionCost.maxFee;
-    transactionRequest = await vault.fund(transactionRequest, transactionCost);
-
-    // Estimate the gas usage for the predicate
-    const predicateGasUsed = await vault.maxGasUsed();
-
-    // Calculate the total gas usage for the transaction
-    let totalGasUsed = bn(0);
-    transactionRequest.inputs.forEach((input) => {
-      if ('predicate' in input && input.predicate) {
-        totalGasUsed = totalGasUsed.add(predicateGasUsed);
-      }
-    });
-
-    // Estimate the max fee for the transaction and calculate fee difference
-    const { gasPriceFactor } = await vault.provider.getGasConfig();
-    const { maxFee, gasPrice } = await vault.provider.estimateTxGasAndFee({
-      transactionRequest,
-    });
-
-    const predicateSuccessFeeDiff = calculateGasFee({
-      gas: totalGasUsed,
-      priceFactor: gasPriceFactor,
-      gasPrice,
-    });
-
-    const feeWithFat = maxFee.add(predicateSuccessFeeDiff);
-    transactionRequest.maxFee = feeWithFat;
-
-    // Attach missing inputs (including estimated predicate gas usage) / outputs to the request
-    await vault.provider.estimateTxDependencies(transactionRequest);
-
-    return transactionRequest;
+    return DeployTransfer.prepareTransaction(vault, transactionRequest);
   }
 
   /**
