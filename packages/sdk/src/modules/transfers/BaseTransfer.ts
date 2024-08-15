@@ -167,12 +167,12 @@ export class BaseTransfer<T extends TransactionRequest> {
       }
     });
 
-    transactionRequest.witnesses.push(
-      ...Array.from(
-        { length: vault.getConfigurable().SIGNATURES_COUNT },
-        () => FAKE_WITNESSES,
-      ),
+    const witnesses = Array.from(transactionRequest.witnesses);
+    const fakeSignatures = Array.from(
+      { length: vault.getConfigurable().SIGNATURES_COUNT },
+      () => FAKE_WITNESSES,
     );
+    transactionRequest.witnesses.push(...fakeSignatures);
 
     // Estimate the max fee for the transaction and calculate fee difference
     const { gasPriceFactor } = vault.provider.getGasConfig();
@@ -190,6 +190,8 @@ export class BaseTransfer<T extends TransactionRequest> {
 
     // Attach missing inputs (including estimated predicate gas usage) / outputs to the request
     await vault.provider.estimateTxDependencies(transactionRequest);
+
+    transactionRequest.witnesses = witnesses;
 
     return transactionRequest;
   }
