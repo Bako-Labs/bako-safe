@@ -163,10 +163,9 @@ export const isOldTransaction = async ({
       name: transaction.name!,
       vault: vault,
       assets: transaction.assets,
-      witnesses:
-        transaction.witnesses
-          ?.map((witness) => witness.signature)
-          .filter((witness) => !!witness) ?? [],
+      witnesses: transaction.resume.witnesses
+        .map((witness) => witness.signature)
+        .filter((witness) => !!witness),
     });
 
     const data: TransferConstructor = {
@@ -175,7 +174,7 @@ export const isOldTransaction = async ({
       name: transaction.name!,
       BakoSafeScript: scriptTransactionRequest,
       transactionRequest: transactionRequestify(scriptTransactionRequest),
-      witnesses: transaction.witnesses?.map((witness) => witness.account) ?? [],
+      witnesses: transaction.resume.witnesses.map((witness) => witness.account),
       BakoSafeTransactionId: transaction.id,
       BakoSafeTransaction: transaction,
     };
@@ -238,8 +237,8 @@ export const isNewTransactionByScript = async ({
     }
 
     const witnesses =
-      transaction && transaction.witnesses
-        ? transaction.witnesses
+      transaction && transaction.resume.witnesses
+        ? transaction.resume.witnesses
             .map((witness) => witness.signature)
             .filter((signature) => !!signature)
         : [];

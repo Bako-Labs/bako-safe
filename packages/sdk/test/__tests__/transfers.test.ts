@@ -468,18 +468,19 @@ describe('[TRANSFERS]', () => {
         transaction.BakoSafeTransactionId,
       );
       await transaction.send();
-      const result = await transaction.wait();
 
-      expect(result.status).toBe(TransactionStatus.success);
-      expect((await wallet.getBalance(assets.BTC)).format()).toBe(
-        DEFAULT_BALANCE_VALUE.format(),
-      );
-      expect((await wallet.getBalance(assets.USDC)).format()).toBe(
-        DEFAULT_BALANCE_VALUE.format(),
-      );
-      expect((await wallet.getBalance(assets.UNI)).format()).toBe(
-        DEFAULT_BALANCE_VALUE.format(),
-      );
+      transaction.wait().then(async (result) => {
+        expect(result.status).toBe(TransactionStatus.success);
+        expect((await wallet.getBalance(assets.BTC)).format()).toBe(
+          DEFAULT_BALANCE_VALUE.format(),
+        );
+        expect((await wallet.getBalance(assets.USDC)).format()).toBe(
+          DEFAULT_BALANCE_VALUE.format(),
+        );
+        expect((await wallet.getBalance(assets.UNI)).format()).toBe(
+          DEFAULT_BALANCE_VALUE.format(),
+        );
+      });
     },
     100 * 1000,
   );

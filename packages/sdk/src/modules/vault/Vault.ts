@@ -251,7 +251,6 @@ export class Vault extends Predicate<[]> implements IVault {
           data: data.data.map((tx) => {
             return {
               resume: tx.resume,
-              witnesses: tx.witnesses,
               type: tx.type,
             };
           }),

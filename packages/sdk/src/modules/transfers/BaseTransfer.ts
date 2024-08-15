@@ -132,11 +132,12 @@ export class BaseTransfer<T extends TransactionRequest> {
       return this.sendTransactionToChain();
     }
 
+    await this.syncTrasanction();
+
     if (this.BakoSafeTransaction.status == TransactionStatus.PENDING_SENDER) {
       await this.service.send(this.BakoSafeTransactionId);
+      await this.syncTrasanction();
     }
-
-    await this.syncTrasanction();
 
     return new TransactionResponse(
       this.BakoSafeTransactionId,
@@ -212,6 +213,7 @@ export class BaseTransfer<T extends TransactionRequest> {
 
     if (this.BakoSafeTransaction.status === TransactionStatus.PENDING_SENDER) {
       await this.service.send(this.BakoSafeTransactionId);
+      await this.syncTrasanction();
     }
 
     const wait =
