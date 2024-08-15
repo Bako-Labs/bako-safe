@@ -1,17 +1,5 @@
-import {
-  bn,
-  calculateGasFee,
-  hexlify,
-  Provider,
-  ScriptTransactionRequest,
-  TransactionStatus,
-  Wallet,
-} from 'fuels';
-import {
-  getContractInstance,
-  ContractAbi__factory,
-  contractBytecode,
-} from 'bakosafe-test-utils';
+import { Provider, TransactionStatus, Wallet } from 'fuels';
+import { ContractAbi__factory, contractBytecode } from 'bakosafe-test-utils';
 import { authService, delay, IUserAuth, newVault, signin } from '../utils';
 import { BakoSafe } from '../../configurables';
 import { accounts, assets, DEFAULT_BALANCE_VALUE, networks } from '../mocks';
@@ -22,13 +10,6 @@ import {
 import { Vault } from '../../src/modules/vault/Vault';
 import { IPayloadVault } from '../../src/modules/vault/types';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  BakoSafeScriptTransaction,
-  BaseTransfer,
-  estimateFee,
-  Transfer,
-} from '../../src';
-import { clone } from 'ramda';
 
 describe('[TRANSFERS]', () => {
   let chainId: number;
@@ -52,11 +33,9 @@ describe('[TRANSFERS]', () => {
     );
 
     signers = [
-      accounts['FULL'].address,
       accounts['USER_1'].address,
       accounts['USER_2'].address,
       accounts['USER_3'].address,
-      accounts['USER_4'].address,
     ];
   }, 30 * 1000);
 
@@ -507,11 +486,11 @@ describe('[TRANSFERS]', () => {
     );
   });
 
-  test('Call contract method', async () => {
+  test('Call script with contract', async () => {
     const vault = await newVault(
       signers,
       provider,
-      auth['FULL'].BakoSafeAuth,
+      auth['USER_1'].BakoSafeAuth,
       5000000,
       1,
     );
@@ -529,32 +508,17 @@ describe('[TRANSFERS]', () => {
     const contractMethod = contractAbi.functions.zero();
     const contractRequest = await contractMethod.fundWithRequiredCoins();
 
-    let transactionRequest = contractRequest;
-    // transactionRequest = await transactionRequest.estimateFee(vault);
+    const transaction = await vault.BakoSafeIncludeTransaction(contractRequest);
 
-    transactionRequest = await BaseTransfer.prepareTransaction(
-      vault,
-      transactionRequest,
+    await signin(
+      transaction.getHashTxId(),
+      'USER_1',
+      auth['USER_1'].BakoSafeAuth,
+      transaction.BakoSafeTransactionId,
     );
 
-    const txHash = transactionRequest.getTransactionId(
-      vault.provider.getChainId(),
-    );
-    const signature = await wallet.signMessage(txHash.slice(2));
-    transactionRequest.witnesses = [signature];
-
-    await provider.estimatePredicates(transactionRequest);
-
-    try {
-      // const transactionResponse =
-      //   await vault.sendTransaction(transactionRequest);
-      // console.log(transactionResponse);
-      const { submit } = await provider.operations.submit({
-        encodedTransaction: hexlify(transactionRequest.toTransactionBytes()),
-      });
-      console.log(submit);
-    } catch (e) {
-      console.log(e);
-    }
+    await transaction.send();
+    const resume = await transaction.wait();
+    expect(resume.status).toBe(TransactionStatus.success);
   });
 });
