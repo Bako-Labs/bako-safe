@@ -1,4 +1,10 @@
-import { hexlify, TransactionRequest, TransactionResponse } from 'fuels';
+import {
+  bn,
+  calculateGasFee,
+  hexlify,
+  TransactionRequest,
+  TransactionResponse,
+} from 'fuels';
 import {
   ITransaction,
   ITransactionResume,
@@ -7,6 +13,7 @@ import {
 } from '../../api';
 import { Vault } from '../vault/Vault';
 import { delay } from '../../../test/utils';
+import { FAKE_WITNESSES } from './fee';
 
 export interface BaseTransferLike<T extends TransactionRequest> {
   name: string;
@@ -135,6 +142,55 @@ export class BaseTransfer<T extends TransactionRequest> {
       this.BakoSafeTransactionId,
       this.vault.provider,
     );
+  }
+
+  static async prepareTransaction<T extends TransactionRequest>(
+    vault: Vault,
+    transactionRequest: T,
+  ): Promise<T> {
+    // Estimate the gas usage for the predicate
+    const predicateGasUsed = await vault.maxGasUsed();
+
+    const transactionCost =
+      await vault.provider.getTransactionCost(transactionRequest);
+    transactionRequest.maxFee = transactionCost.maxFee;
+    transactionRequest = await vault.fund(transactionRequest, transactionCost);
+
+    // Calculate the total gas usage for the transaction
+    let totalGasUsed = bn(0);
+    transactionRequest.inputs.forEach((input) => {
+      if ('predicate' in input && input.predicate) {
+        input.witnessIndex = 0;
+        input.predicateGasUsed = undefined;
+        totalGasUsed = totalGasUsed.add(predicateGasUsed);
+      }
+    });
+
+    transactionRequest.witnesses.push(
+      ...Array.from(
+        { length: vault.getConfigurable().SIGNATURES_COUNT },
+        () => FAKE_WITNESSES,
+      ),
+    );
+
+    // Estimate the max fee for the transaction and calculate fee difference
+    const { gasPriceFactor } = vault.provider.getGasConfig();
+    const { maxFee, gasPrice } = await vault.provider.estimateTxGasAndFee({
+      transactionRequest,
+    });
+
+    const predicateSuccessFeeDiff = calculateGasFee({
+      gas: totalGasUsed,
+      priceFactor: gasPriceFactor,
+      gasPrice,
+    });
+
+    transactionRequest.maxFee = maxFee.add(predicateSuccessFeeDiff);
+
+    // Attach missing inputs (including estimated predicate gas usage) / outputs to the request
+    await vault.provider.estimateTxDependencies(transactionRequest);
+
+    return transactionRequest;
   }
 
   /**

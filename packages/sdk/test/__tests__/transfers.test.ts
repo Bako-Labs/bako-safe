@@ -1,4 +1,17 @@
-import { Provider, TransactionStatus, Wallet, bn } from 'fuels';
+import {
+  bn,
+  calculateGasFee,
+  hexlify,
+  Provider,
+  ScriptTransactionRequest,
+  TransactionStatus,
+  Wallet,
+} from 'fuels';
+import {
+  getContractInstance,
+  ContractAbi__factory,
+  contractBytecode,
+} from 'bakosafe-test-utils';
 import { authService, delay, IUserAuth, newVault, signin } from '../utils';
 import { BakoSafe } from '../../configurables';
 import { accounts, assets, DEFAULT_BALANCE_VALUE, networks } from '../mocks';
@@ -9,7 +22,13 @@ import {
 import { Vault } from '../../src/modules/vault/Vault';
 import { IPayloadVault } from '../../src/modules/vault/types';
 import { v4 as uuidv4 } from 'uuid';
-import { estimateFee } from '../../src/modules/transfers/fee';
+import {
+  BakoSafeScriptTransaction,
+  BaseTransfer,
+  estimateFee,
+  Transfer,
+} from '../../src';
+import { clone } from 'ramda';
 
 describe('[TRANSFERS]', () => {
   let chainId: number;
@@ -28,14 +47,16 @@ describe('[TRANSFERS]', () => {
     provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
     chainId = provider.getChainId();
     auth = await authService(
-      ['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
+      ['FULL', 'USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
       provider.url,
     );
 
     signers = [
+      accounts['FULL'].address,
       accounts['USER_1'].address,
       accounts['USER_2'].address,
       accounts['USER_3'].address,
+      accounts['USER_4'].address,
     ];
   }, 30 * 1000);
 
@@ -483,5 +504,56 @@ describe('[TRANSFERS]', () => {
     await expect(vault.BakoSafeIncludeTransaction(tx)).rejects.toThrow(
       'FuelError: not enough coins to fit the target',
     );
+  });
+
+  test('Call contract method', async () => {
+    const vault = await newVault(
+      signers,
+      provider,
+      auth['FULL'].BakoSafeAuth,
+      5000000,
+      1,
+    );
+
+    // Deploy contract and set account to vault
+    const wallet = Wallet.fromPrivateKey(auth['FULL'].privateKey, provider);
+    const deploy = await ContractAbi__factory.deployContract(
+      contractBytecode,
+      wallet,
+    );
+    await deploy.waitForResult();
+
+    // Get transaction request of contract method
+    const contractAbi = ContractAbi__factory.connect(deploy.contractId, vault);
+    const contractMethod = contractAbi.functions.zero();
+    const contractRequest = await contractMethod.fundWithRequiredCoins();
+
+    let transactionRequest = contractRequest;
+    // transactionRequest = await transactionRequest.estimateFee(vault);
+
+    transactionRequest = await BaseTransfer.prepareTransaction(
+      vault,
+      transactionRequest,
+    );
+
+    const txHash = transactionRequest.getTransactionId(
+      vault.provider.getChainId(),
+    );
+    const signature = await wallet.signMessage(txHash.slice(2));
+    transactionRequest.witnesses = [signature];
+
+    await provider.estimatePredicates(transactionRequest);
+
+    try {
+      // const transactionResponse =
+      //   await vault.sendTransaction(transactionRequest);
+      // console.log(transactionResponse);
+      const { submit } = await provider.operations.submit({
+        encodedTransaction: hexlify(transactionRequest.toTransactionBytes()),
+      });
+      console.log(submit);
+    } catch (e) {
+      console.log(e);
+    }
   });
 });
