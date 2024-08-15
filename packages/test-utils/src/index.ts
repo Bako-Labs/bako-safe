@@ -1,2 +1,2 @@
 export * from './utils';
-export * from './types/sway';
+export * from './types';

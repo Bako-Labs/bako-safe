@@ -1,4 +1,11 @@
-import { arrayify, Predicate, TransactionCreate } from 'fuels';
+import {
+  BN,
+  bn,
+  arrayify,
+  Predicate,
+  ZeroBytes32,
+  ScriptTransactionRequest,
+} from 'fuels';
 
 import {
   defaultListParams,
@@ -28,7 +35,7 @@ import {
   makeHashPredicate,
   makeSubscribers,
 } from './helpers';
-import { DeployTransfer, Transfer } from '../transfers';
+import { DeployTransfer, FAKE_WITNESSES, Transfer } from '../transfers';
 import { v4 as uuidv4 } from 'uuid';
 import { AddressUtils } from '../../utils/address/Address';
 
@@ -279,6 +286,45 @@ export class Vault extends Predicate<[]> implements IVault {
     }
 
     return transfer;
+  }
+
+  /**
+   * Calculates the maximum gas used by a transaction.
+   *
+   * @returns {Promise<BN>} Maximum gas used in the predicate.
+   */
+  public async maxGasUsed(): Promise<BN> {
+    const request = new ScriptTransactionRequest();
+
+    const vault = await Vault.create({
+      configurable: this.configurable,
+    });
+
+    // Add fake input
+    request.addCoinInput({
+      id: ZeroBytes32,
+      assetId: ZeroBytes32,
+      amount: bn(),
+      owner: vault.address,
+      blockCreated: bn(),
+      txCreatedIdx: bn(),
+    });
+
+    // Populate the  transaction inputs with predicate data
+    vault.populateTransactionPredicateData(request);
+    Array.from({ length: this.configurable.SIGNATURES_COUNT }, () =>
+      request.addWitness(FAKE_WITNESSES),
+    );
+
+    const transactionCost = await vault.provider.getTransactionCost(request);
+    await vault.fund(request, transactionCost);
+    await vault.provider.estimatePredicates(request);
+    const input = request.inputs[0];
+    if ('predicate' in input && input.predicate) {
+      return bn(input.predicateGasUsed);
+    }
+
+    return bn();
   }
 
   /**

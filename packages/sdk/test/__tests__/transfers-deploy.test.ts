@@ -142,6 +142,7 @@ describe('[TRANSFERS] Deploy', () => {
         deployTransfer.BakoSafeTransactionId,
       );
 
+      await deployTransfer.send();
       await deployTransfer.wait();
       expect(contractId).toBe(deployTransfer.getContractId());
 
@@ -185,7 +186,7 @@ describe('[TRANSFERS] Deploy', () => {
     100 * 1000,
   );
 
-  test('Create deploy transfer and get the transaction by id', async () => {
+  test('Execute transaction to deploy and call contract', async () => {
     const { USER_1: user, FULL: genesisAccount } = await authService(
       ['USER_1', 'FULL'],
       provider.url,
@@ -200,9 +201,10 @@ describe('[TRANSFERS] Deploy', () => {
       1,
     );
 
-    // Send coins to the vault
-    const wallet = Wallet.fromPrivateKey(genesisAccount.privateKey!, provider);
-    await wallet.transfer(vault.address, bn.parseUnits('0.1'));
+    const genesisWallet = Wallet.fromPrivateKey(
+      genesisAccount.privateKey!,
+      provider,
+    );
 
     // Create the transaction request
     let { transactionRequest } = await createTransactionDeploy(
@@ -223,15 +225,21 @@ describe('[TRANSFERS] Deploy', () => {
       user.BakoSafeAuth,
       deployTransfer.BakoSafeTransactionId,
     );
-    const apiDeployTransfer = await vault.BakoSafeGetTransaction(
-      deployTransfer.BakoSafeTransactionId,
-    );
-    const resume = await apiDeployTransfer.wait();
 
-    expect(deployTransfer.BakoSafeTransactionId).toBe(
-      apiDeployTransfer.BakoSafeTransactionId,
-    );
-    expect(apiDeployTransfer).toBeInstanceOf(DeployTransfer);
+    const apiDeployTransfer = (await vault.BakoSafeGetTransaction(
+      deployTransfer.BakoSafeTransactionId,
+    )) as DeployTransfer;
+
+    await apiDeployTransfer.send();
+    const resume = await apiDeployTransfer.wait();
     expect(resume.status).toBe(TransactionStatus.SUCCESS);
+
+    const { value } = await callContractMethod({
+      method: 'zero',
+      contractId: apiDeployTransfer.getContractId(),
+      account: Wallet.fromPrivateKey(genesisWallet.privateKey, provider),
+    });
+
+    expect(Number(value)).toBe(0);
   });
 });

@@ -1,4 +1,5 @@
-import { Provider, TransactionStatus, Wallet, bn } from 'fuels';
+import { Provider, TransactionStatus, Wallet } from 'fuels';
+import { ContractAbi__factory, contractBytecode } from 'bakosafe-test-utils';
 import { authService, delay, IUserAuth, newVault, signin } from '../utils';
 import { BakoSafe } from '../../configurables';
 import { accounts, assets, DEFAULT_BALANCE_VALUE, networks } from '../mocks';
@@ -9,7 +10,6 @@ import {
 import { Vault } from '../../src/modules/vault/Vault';
 import { IPayloadVault } from '../../src/modules/vault/types';
 import { v4 as uuidv4 } from 'uuid';
-import { estimateFee } from '../../src/modules/transfers/fee';
 
 describe('[TRANSFERS]', () => {
   let chainId: number;
@@ -28,7 +28,7 @@ describe('[TRANSFERS]', () => {
     provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
     chainId = provider.getChainId();
     auth = await authService(
-      ['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
+      ['FULL', 'USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
       provider.url,
     );
 
@@ -484,5 +484,41 @@ describe('[TRANSFERS]', () => {
     await expect(vault.BakoSafeIncludeTransaction(tx)).rejects.toThrow(
       'FuelError: not enough coins to fit the target',
     );
+  });
+
+  test('Call script with contract', async () => {
+    const vault = await newVault(
+      signers,
+      provider,
+      auth['USER_1'].BakoSafeAuth,
+      5000000,
+      1,
+    );
+
+    // Deploy contract and set account to vault
+    const wallet = Wallet.fromPrivateKey(auth['FULL'].privateKey, provider);
+    const deploy = await ContractAbi__factory.deployContract(
+      contractBytecode,
+      wallet,
+    );
+    await deploy.waitForResult();
+
+    // Get transaction request of contract method
+    const contractAbi = ContractAbi__factory.connect(deploy.contractId, vault);
+    const contractMethod = contractAbi.functions.zero();
+    const contractRequest = await contractMethod.fundWithRequiredCoins();
+
+    const transaction = await vault.BakoSafeIncludeTransaction(contractRequest);
+
+    await signin(
+      transaction.getHashTxId(),
+      'USER_1',
+      auth['USER_1'].BakoSafeAuth,
+      transaction.BakoSafeTransactionId,
+    );
+
+    await transaction.send();
+    const resume = await transaction.wait();
+    expect(resume.status).toBe(TransactionStatus.success);
   });
 });

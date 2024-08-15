@@ -21,6 +21,8 @@ import { Vault } from '../vault/Vault';
 import { Asset } from '../../utils/assets';
 import { BakoSafeScriptTransaction } from './ScriptTransaction';
 import { v4 as uuidv4 } from 'uuid';
+import { Transfer } from './Transfer';
+import { BaseTransfer } from './BaseTransfer';
 
 export function recoverSigner(signer: string, tx_id: string) {
   if (tx_id == '0x') return;
@@ -208,8 +210,15 @@ export const isNewTransactionByScript = async ({
   if (isScript) {
     vault.populateTransactionPredicateData(transfer);
     const txData = transactionRequestify(transfer);
-    const hashTxId = getHashTxId(txData, vault.provider.getChainId());
-    const assets = txData.getCoinOutputs().map((coin) => ({
+    const preparedTransaction = await BaseTransfer.prepareTransaction(
+      vault,
+      txData,
+    );
+    const hashTxId = getHashTxId(
+      preparedTransaction,
+      vault.provider.getChainId(),
+    );
+    const assets = preparedTransaction.getCoinOutputs().map((coin) => ({
       assetId: coin.assetId.toString(),
       to: coin.to.toString(),
       amount: bn(coin.amount).format().toString(),
