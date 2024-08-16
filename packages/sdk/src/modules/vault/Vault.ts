@@ -28,9 +28,7 @@ import { Asset, ITransferAsset } from '../../utils/assets';
  * `Vault` are extension of predicates, to manager transactions, and sends.
  */
 export class Vault extends Predicate<[]> {
-  // todo: implement this
-  // if you have an especific version of predicate,
-  // put the version code (bytes+abi+configurables<zero32bytes>) here: 0xas9...81, for example
+  readonly maxSigners = 10;
   public version?: string;
 
   constructor(
@@ -47,7 +45,6 @@ export class Vault extends Predicate<[]> {
       provider: provider,
       configurableConstants: Vault.makePredicate(configurable),
     });
-    // return new PredicateAbi__factory.cre
   }
 
   /**
@@ -79,7 +76,6 @@ export class Vault extends Predicate<[]> {
     switch (tx.type) {
       case TransactionType.Script:
         let script = new ScriptTransactionRequest(tx);
-        script.gasLimit = bn(10000000);
         script = await this.prepareTransaction(script);
         return {
           tx: script,
@@ -87,13 +83,6 @@ export class Vault extends Predicate<[]> {
             .getTransactionId(this.provider.getChainId())
             .slice(2),
         };
-      // script.maxFee = bn(0);
-      // return {
-      //   tx: script,
-      //   hashTxId: script
-      //     .getTransactionId(this.provider.getChainId())
-      //     .slice(2),
-      // };
 
       case TransactionType.Create:
         // calcule a fee com witness fake
@@ -113,8 +102,6 @@ export class Vault extends Predicate<[]> {
     }
   }
 
-  // txData = transactionRequestify(scriptTransaction);
-
   async BakoFormatTransfer(assets: ITransferAsset[]): Promise<{
     tx: TransactionRequestLike;
     hashTxId: string;
@@ -131,7 +118,6 @@ export class Vault extends Predicate<[]> {
     );
 
     const _coins = await this.getResourcesToSpend(transactionCoins);
-    const minSigners = 10; // MAKE THIS DYNAMIC
 
     tx.addResources(_coins);
     Object.entries(outputs).map(([, value]) => {
@@ -151,7 +137,7 @@ export class Vault extends Predicate<[]> {
       }
     });
 
-    const fee = await estimateFee(tx, this.provider, minSigners);
+    const fee = await estimateFee(tx, this.provider, this.maxSigners);
 
     tx.maxFee = fee.bako_max_fee;
     tx.gasLimit = fee.bako_gas_limit;
@@ -183,11 +169,10 @@ export class Vault extends Predicate<[]> {
    */
   public async maxGasUsed(): Promise<BN> {
     const request = new ScriptTransactionRequest();
-    const conf = this.interface?.configurables;
-    const signers = Number(conf!.SIGNATURES_COUNT) ?? 10;
+
     const vault = new Vault(this.provider, {
-      SIGNATURES_COUNT: Number(conf!.SIGNATURES_COUNT),
-      SIGNERS: Array.from({ length: signers }, () => ZeroBytes32),
+      SIGNATURES_COUNT: this.maxSigners,
+      SIGNERS: Array.from({ length: this.maxSigners }, () => ZeroBytes32),
       HASH_PREDICATE: ZeroBytes32,
     });
 
@@ -203,7 +188,9 @@ export class Vault extends Predicate<[]> {
 
     // Populate the  transaction inputs with predicate data
     vault.populateTransactionPredicateData(request);
-    Array.from({ length: signers }, () => request.addWitness(FAKE_WITNESSES));
+    Array.from({ length: this.maxSigners }, () =>
+      request.addWitness(FAKE_WITNESSES),
+    );
 
     const transactionCost = await vault.provider.getTransactionCost(request);
     await vault.fund(request, transactionCost);
@@ -221,8 +208,6 @@ export class Vault extends Predicate<[]> {
   ): Promise<T> {
     // Estimate the gas usage for the predicate
     const predicateGasUsed = await this.maxGasUsed();
-    const signers =
-      Number(this.interface?.configurables.SIGNATURES_COUNT) ?? 10;
 
     const transactionCost =
       await this.provider.getTransactionCost(transactionRequest);
@@ -241,9 +226,10 @@ export class Vault extends Predicate<[]> {
 
     const witnesses = Array.from(transactionRequest.witnesses);
     const fakeSignatures = Array.from(
-      { length: signers },
+      { length: this.maxSigners },
       () => FAKE_WITNESSES,
     );
+
     transactionRequest.witnesses.push(...fakeSignatures);
 
     // Estimate the max fee for the transaction and calculate fee difference

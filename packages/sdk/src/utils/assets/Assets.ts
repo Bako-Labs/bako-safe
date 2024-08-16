@@ -6,7 +6,7 @@ export class Asset {
    *  Asset: provides utils to organize assets
    */
 
-  public static async assetsGroupById(list: ITransferAsset[]) {
+  public static assetsGroupById(list: ITransferAsset[]) {
     /**
      * Groupe assest by id
      *
@@ -25,7 +25,7 @@ export class Asset {
       return acc;
     }, {});
   }
-  public static async assetsGroupByTo(list: ITransferAsset[]) {
+  public static assetsGroupByTo(list: ITransferAsset[]) {
     /**
      * Group assets by transaction destination
      *
@@ -49,10 +49,10 @@ export class Asset {
     }, {}) as IAssetGroupByTo;
   }
 
-  public static async addTransactionFee(
+  public static addTransactionFee(
     _assets: IAssetGroupById,
     _fee: BN,
-    provider: Provider,
+    baseAssetId: string,
   ) {
     /**
      * Checks if there is an eth asset in the transaction to pay for the gas and inserts a minimum amount
@@ -62,7 +62,7 @@ export class Asset {
      * @returns An object with n unique keys, each key being a destination address and the value of each key is equivalent to the sum of the equivalent assets received.
      */
 
-    const baseAssetId = await provider.getBaseAssetId();
+    // const baseAssetId = await provider.getBaseAssetId();
 
     let _assets_aux = _assets;
     let containETH = !!_assets_aux[baseAssetId];
