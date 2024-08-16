@@ -1,27 +1,18 @@
 import { BaseTransfer, BaseTransferLike } from './BaseTransfer';
 import {
-  Address,
-  bn,
-  calculateGasFee,
   ContractUtils,
   CreateTransactionRequest,
   OutputType,
-  Provider,
-  ScriptTransactionRequest,
   TransactionCreate,
   transactionRequestify,
-  ZeroBytes32,
 } from 'fuels';
+
 import {
   IBakoSafeAuth,
   ITransaction,
   TransactionService,
   TransactionStatus,
 } from '../../api';
-
-import { Vault } from '../vault';
-
-import { FAKE_WITNESSES } from './fee';
 
 /* Types */
 type BaseDeployTransfer = BaseTransferLike<CreateTransactionRequest>;

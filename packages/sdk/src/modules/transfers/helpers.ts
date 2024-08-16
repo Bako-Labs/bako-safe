@@ -57,15 +57,7 @@ export const formatTransaction = async ({
     const _coins = await vault.getResourcesToSpend(transactionCoins);
 
     const script_t = new BakoSafeScriptTransaction();
-    const minSigners = vault.getConfigurable().SIGNATURES_COUNT ?? 10;
-
-    await script_t.instanceTransaction(
-      _coins,
-      vault,
-      outputs,
-      minSigners,
-      witnesses,
-    );
+    await script_t.instanceTransaction(_coins, vault, outputs, witnesses);
     return script_t;
   } catch (e: any) {
     throw new Error(e);
@@ -102,7 +94,12 @@ export const isNewTransaction = async ({
       assets: assets,
     });
 
-    const txData = transactionRequestify(scriptTransaction);
+    const script = await BaseTransfer.prepareTransaction(
+      vault,
+      scriptTransaction,
+    );
+
+    const txData = transactionRequestify(script);
     const hashTxId = getHashTxId(txData, vault.provider.getChainId());
 
     const BakoSafeTransaction =

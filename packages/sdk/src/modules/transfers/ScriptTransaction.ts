@@ -10,8 +10,10 @@ import {
   BytesLike,
   bn,
 } from 'fuels';
+import { Vault } from '../vault/Vault';
 import { IAssetGroupByTo } from '../../utils/assets';
 import { estimateFee } from './fee';
+import { BaseTransfer } from './BaseTransfer';
 
 interface BakoSafeScriptTransactionConstructor {
   gasLimit?: BN;
@@ -36,9 +38,8 @@ export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
 
   public async instanceTransaction(
     _coins: Resource[],
-    vault: Predicate<[]>,
+    vault: Vault,
     outputs: IAssetGroupByTo,
-    minSigners: number = 1,
     witnesses?: string[],
   ) {
     Object.entries(outputs).map(([, value]) => {
@@ -65,9 +66,9 @@ export class BakoSafeScriptTransaction extends ScriptTransactionRequest {
       this.witnesses = [...this.witnesses, ...witnesses];
     }
 
-    const fee = await estimateFee(this, vault.provider, minSigners);
+    const baseTX = await BaseTransfer.prepareTransaction(vault, this);
 
-    this.maxFee = fee.bako_max_fee;
-    this.gasLimit = fee.bako_gas_limit;
+    this.gasLimit = baseTX.gasLimit;
+    this.maxFee = baseTX.maxFee;
   }
 }

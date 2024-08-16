@@ -13,7 +13,7 @@ import {
 } from '../../api';
 import { Vault } from '../vault/Vault';
 import { delay } from '../../../test/utils';
-import { FAKE_WITNESSES } from './fee';
+import { FAKE_WITNESSES, maxSigners } from './fee';
 
 export interface BaseTransferLike<T extends TransactionRequest> {
   name: string;
@@ -169,7 +169,7 @@ export class BaseTransfer<T extends TransactionRequest> {
 
     const witnesses = Array.from(transactionRequest.witnesses);
     const fakeSignatures = Array.from(
-      { length: vault.getConfigurable().SIGNATURES_COUNT },
+      { length: maxSigners },
       () => FAKE_WITNESSES,
     );
     transactionRequest.witnesses.push(...fakeSignatures);
