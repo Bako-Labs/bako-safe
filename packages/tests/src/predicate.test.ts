@@ -2,10 +2,23 @@ import { Vault, bakoCoder, SignatureType } from 'bakosafe/src/modules';
 import { networks, accounts, assets } from './mocks';
 import { mockAuthService, mockPredicateService } from './mocks/api';
 
-import { Provider, Wallet } from 'fuels';
+import {
+  arrayify,
+  ContractFactory,
+  CreateTransactionRequest,
+  hexlify,
+  Provider,
+  randomBytes,
+  ReceiptType,
+  Wallet,
+} from 'fuels';
+
+import { join } from 'path';
+import { readFileSync } from 'fs';
+
 import { sendCoins } from './utils/sendCoins';
 import { signin } from './utils/signin';
-import { ContractAbi__factory } from './types/sway';
+import { ContractAbi, ContractAbi__factory } from './types/sway';
 
 import contractBytecode from './types/sway/contracts/ContractAbi.hex';
 import {
@@ -26,13 +39,15 @@ jest.mock('bakosafe/src/api/predicates', () => {
   };
 });
 
-describe('[INSTACE]', () => {
-  beforeEach(() => {
+describe('[Create]', () => {
+  let provider: Provider;
+  beforeEach(async () => {
     jest.clearAllMocks();
+    provider = await Provider.create(networks['LOCAL']);
   });
 
-  it('Create', async () => {
-    const provider = await Provider.create(networks['LOCAL']);
+  it('Vault', async () => {
+    // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
       SIGNERS: [
@@ -41,26 +56,22 @@ describe('[INSTACE]', () => {
         accounts['USER_3'].address,
       ],
     });
-
     await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
 
+    // get balance
     const balance = (await vault.getBalance(assets['ETH'])).formatUnits(18);
     expect(0.0).toBeLessThan(Number(balance));
   });
 
-  it('Create a tx with assets to destination', async () => {
-    const provider = await Provider.create(networks['LOCAL']);
+  it('Simple transaction', async () => {
+    // create a vault
     const vault = new Vault(provider, {
-      SIGNATURES_COUNT: 2,
-      SIGNERS: [
-        accounts['USER_1'].address,
-        accounts['USER_2'].address,
-        accounts['USER_3'].address,
-      ],
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [accounts['USER_1'].address],
     });
-
     await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
 
+    // create a transaction
     const { tx, hashTxId } = await vault.BakoFormatTransfer([
       {
         amount: '0.1',
@@ -69,28 +80,21 @@ describe('[INSTACE]', () => {
       },
     ]);
 
+    // sign
     tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.Fuel,
         signature: await signin(hashTxId, 'USER_1'),
       },
-      {
-        type: SignatureType.Fuel,
-        signature: await signin(hashTxId, 'USER_3'),
-      },
     ]);
 
+    // send
     const result = await vault.sendTransactionToChain(tx);
-
     const response = await result.waitForResult();
-
     expect(response).toHaveProperty('status', 'success');
   });
 
-  it('Create a tx with tx script', async () => {
-    const provider = await Provider.create(networks['LOCAL']);
-    const webAuthnCredential = WebAuthn_createCredentials();
-
+  it('Transaction by tx ScriptTransactionRequest', async () => {
     // deploy a contract to call
     const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
     const deploy = await ContractAbi__factory.deployContract(
@@ -102,12 +106,7 @@ describe('[INSTACE]', () => {
     // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
-      SIGNERS: [
-        accounts['USER_1'].address,
-        accounts['USER_2'].address,
-        accounts['USER_3'].address,
-        webAuthnCredential.address,
-      ],
+      SIGNERS: [accounts['USER_1'].address],
     });
     await sendCoins(vault.address.toString(), '0.5', assets['ETH']);
 
@@ -115,9 +114,6 @@ describe('[INSTACE]', () => {
     const contractAbi = ContractAbi__factory.connect(deploy.contractId, vault);
     const contractMethod = contractAbi.functions.seven();
     const contractRequest = await contractMethod.fundWithRequiredCoins();
-
-    // let transactionRequest = contractRequest;
-
     const { tx, hashTxId } = await vault.BakoTransfer(contractRequest);
 
     tx.witnesses = bakoCoder.encode([
@@ -125,45 +121,50 @@ describe('[INSTACE]', () => {
         type: SignatureType.Fuel,
         signature: await signin(hashTxId, 'USER_1'),
       },
-      // {
-      //   type: SignatureType.Fuel,
-      //   signature: await signin(hashTxId, 'USER_3'),
-      // },
+    ]);
+
+    const result = await vault.sendTransactionToChain(tx);
+    const response = await result.waitForResult();
+
+    expect(response).toHaveProperty('status', 'success');
+    expect(response.receipts).toContainEqual(
+      expect.objectContaining({
+        type: ReceiptType.ReturnData,
+        data: '0x0000000000000007',
+      }),
+    );
+  });
+
+  it('Transaction by CreateTransactionRequest', async () => {
+    // create a vault
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [accounts['USER_1'].address],
+    });
+    await sendCoins(vault.address.toString(), '0.5', assets['ETH']);
+
+    const { contractId, transactionRequest } = new ContractFactory(
+      arrayify(contractBytecode),
+      ContractAbi__factory.abi,
+      vault,
+    ).createTransactionRequest();
+
+    console.log('contractId', contractId);
+    const { tx, hashTxId } = await vault.BakoTransfer(transactionRequest);
+
+    const signatures = bakoCoder.encode([
       {
-        type: SignatureType.WebAuthn,
-        ...(await WebAuthn_signChallange(webAuthnCredential, hashTxId)),
+        type: SignatureType.Fuel,
+        signature: await signin(hashTxId, 'USER_1'),
       },
     ]);
 
-    console.log(tx.witnesses);
+    tx.witnesses?.push(...signatures);
 
     const result = await vault.sendTransactionToChain(tx);
+    await result.waitForResult();
 
-    const response = await result.waitForResult();
-    console.log(response);
-    expect(response).toHaveProperty('status', 'success');
-
-    // const script = new ScriptTransactionRequest();
-    // //set this values on vault include, to add minimun required
-    // script.gasLimit = bn(0);
-    // script.maxFee = bn(0);
-
-    // const coins = await vault.getResourcesToSpend([
-    //   {
-    //     amount: bn(100),
-    //     assetId: provider.getBaseAssetId(),
-    //   },
-    // ]);
-    // script.addResources(coins);
-
-    // script.inputs?.forEach((input) => {
-    //   if (
-    //     input.type === InputType.Coin &&
-    //     hexlify(input.owner) === vault.address.toB256()
-    //   ) {
-    //     input.predicate = arrayify(vault.bytes);
-    //   }
-    // });
+    // call this contract
   });
 
   //   it('Inválid', async () => {
