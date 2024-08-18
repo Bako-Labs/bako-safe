@@ -14,7 +14,7 @@ export const ErrorMessages = {
   [ErrorCodes.OUT_OF_GAS]: 'Out of gas',
   [ErrorCodes.INSUFFICIENT_INPUT_AMOUNT]: 'Insufficient input amount',
   [ErrorCodes.DEFAULT]: '',
-} as const;
+};
 
 export const ErrorMessagesMapper = {
   [ErrorCodes.UTXO_NOT_EXISTS]: 'UTXO does not exist',
@@ -22,7 +22,8 @@ export const ErrorMessagesMapper = {
   [ErrorCodes.PREDICATE_VALIDATION_FAILED]: 'Panic(PredicateReturnedNonOne)',
   [ErrorCodes.OUT_OF_GAS]: 'PredicateVerificationFailed(OutOfGas)',
   [ErrorCodes.INSUFFICIENT_INPUT_AMOUNT]: 'Validity(InsufficientInputAmount',
-} as const;
+  [ErrorCodes.DEFAULT]: '',
+};
 
 export interface IBakoError {
   code: ErrorCodes;

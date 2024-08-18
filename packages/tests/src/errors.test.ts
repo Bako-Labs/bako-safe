@@ -1,12 +1,11 @@
 import { ErrorCode, FuelError } from 'fuels';
-import { BakoError } from '../../src';
-import { ErrorCodes } from '../../src/utils/errors/types';
+import { BakoError, ErrorCodes } from 'bakosafe/src';
 
 const createFuelError = (message: string) =>
   new FuelError(ErrorCode.TRANSACTION_FAILED, message);
 
 describe('[ERRORS]', () => {
-  test('Parse fuel error to bako error', () => {
+  it('Parse fuel error to bako error', () => {
     const utxoError = createFuelError(
       'Transaction is not inserted. UTXO does not exist',
     );
@@ -26,7 +25,7 @@ describe('[ERRORS]', () => {
     );
   });
 
-  test('Parse unknown error to default bako error', () => {
+  it('Parse unknown error to default bako error', () => {
     const unknownError = new Error('Error not in map');
     const unknownBakoError = BakoError.parse(unknownError);
 
