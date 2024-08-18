@@ -18,11 +18,15 @@ import {
   ZeroBytes32,
 } from 'fuels';
 
-import { makeHashPredicate, makeSubscribers } from './helpers';
-import { estimateFee, FAKE_WITNESSES } from '../transfers';
-
 import { PredicateAbi__factory } from '../../sway/predicates';
-import { Asset, ITransferAsset } from '../../utils/assets';
+
+import {
+  Asset,
+  ITransferAsset,
+  FAKE_WITNESSES,
+  makeHashPredicate,
+  makeSigners,
+} from '../../utils';
 
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
@@ -64,7 +68,7 @@ export class Vault extends Predicate<[]> {
   }): { [key: string]: any } {
     return {
       SIGNATURES_COUNT,
-      SIGNERS: makeSubscribers(SIGNERS),
+      SIGNERS: makeSigners(SIGNERS),
       HASH_PREDICATE: HASH_PREDICATE ?? makeHashPredicate(),
     };
   }
@@ -85,11 +89,8 @@ export class Vault extends Predicate<[]> {
         };
 
       case TransactionType.Create:
-        // calcule a fee com witness fake
-        // adicione os inputs
-        const create = new CreateTransactionRequest(tx);
-        create.maxFee = bn(0);
-        //create.gasLimit = bn(0); // TODO: check if this is necessary
+        let create = new CreateTransactionRequest(tx);
+        create = await this.prepareTransaction(create);
         return {
           tx: create,
           hashTxId: create
@@ -102,6 +103,7 @@ export class Vault extends Predicate<[]> {
     }
   }
 
+  /// TRANSFERS
   async BakoFormatTransfer(assets: ITransferAsset[]): Promise<{
     tx: TransactionRequestLike;
     hashTxId: string;
@@ -137,15 +139,13 @@ export class Vault extends Predicate<[]> {
       }
     });
 
-    const fee = await estimateFee(tx, this.provider, this.maxSigners);
-
-    tx.maxFee = fee.bako_max_fee;
-    tx.gasLimit = fee.bako_gas_limit;
-    tx.witnesses = [];
+    let trancation = await this.prepareTransaction(tx);
 
     return {
-      tx: tx,
-      hashTxId: tx.getTransactionId(this.provider.getChainId()).slice(2),
+      tx: trancation,
+      hashTxId: trancation
+        .getTransactionId(this.provider.getChainId())
+        .slice(2),
     };
   }
 
