@@ -1,13 +1,7 @@
 import { Provider, TransactionCreate, TransactionRequestLike } from 'fuels';
 import { IBakoSafeAuth } from '../../api/auth/types';
-import {
-  IListTransactions,
-  IPredicate,
-  IPredicateService,
-} from '../../api/predicates';
-import { IFormatTransfer, Transfer } from '../transfers';
+import { IPredicate, IPredicateService } from '../../api/predicates';
 import { ITransactionResume, TransactionType } from '../../api';
-import { IPagination } from '../../api/utils/pagination';
 
 export interface JsonAbiType {
   typeId: number;
@@ -73,8 +67,8 @@ export type IDeployContract = TransactionCreate & {
 };
 
 export type IBakoSafeIncludeTransaction =
-  | IFormatTransfer
-  | TransactionRequestLike;
+  // | IFormatTransfer
+  TransactionRequestLike;
 
 export interface IPayloadVault {
   configurable: Omit<IConfVault, 'chainId'>;
@@ -94,14 +88,14 @@ export interface IBakoSafeGetTransactions {
   type: TransactionType;
 }
 
-export interface IVault {
-  getAbi: () => { [name: string]: unknown };
-  getBin: () => string;
-  getConfigurable: () => IConfVault;
-  BakoSafeGetTransactions: (
-    params?: IListTransactions,
-  ) => Promise<IPagination<IBakoSafeGetTransactions>>;
-  BakoSafeIncludeTransaction: (
-    params: IBakoSafeIncludeTransaction,
-  ) => Promise<Transfer>;
-}
+// export interface IVault {
+//   getAbi: () => { [name: string]: unknown };
+//   getBin: () => string;
+//   getConfigurable: () => IConfVault;
+//   // BakoSafeGetTransactions: (
+//   //   params?: IListTransactions,
+//   // ) => Promise<IPagination<IBakoSafeGetTransactions>>;
+//   // BakoSafeIncludeTransaction: (
+//   //   params: IBakoSafeIncludeTransaction,
+//   // ) => Promise<Transfer>;
+// }
