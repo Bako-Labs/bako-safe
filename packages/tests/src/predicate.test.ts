@@ -35,6 +35,32 @@ describe('[Create]', () => {
     expect(0.0).toBeLessThan(Number(balance));
   });
 
+  it('Instantiated again', async () => {
+    // create a vault
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 2,
+      SIGNERS: [
+        accounts['USER_1'].address,
+        accounts['USER_2'].address,
+        accounts['USER_3'].address,
+      ],
+    });
+    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+    // create a vault again
+    const vault2 = new Vault(provider, vault.configurable);
+    // compare
+    expect(vault.address.toB256()).toBe(vault2.address.toB256());
+    expect(vault.configurable).toEqual(vault2.configurable);
+    expect(await vault.getBalances()).toEqual(await vault2.getBalances());
+  });
+});
+
+describe('[TRANSACTIONS]', () => {
+  let provider: Provider;
+  beforeEach(async () => {
+    provider = await Provider.create(networks['LOCAL']);
+  });
+
   it('Simple transaction', async () => {
     // create a vault
     const vault = new Vault(provider, {
@@ -156,4 +182,12 @@ describe('[Create]', () => {
       }),
     );
   });
+});
+
+describe('[SIGNATURES]', () => {
+  // let provider: Provider;
+  // beforeEach(async () => {
+  //   provider = await Provider.create(networks['LOCAL']);
+  // });
+  // it();
 });

@@ -33,7 +33,11 @@ import {
  */
 export class Vault extends Predicate<[]> {
   readonly maxSigners = 10;
-  public version?: string;
+  readonly configurable: {
+    SIGNATURES_COUNT: number;
+    SIGNERS: string[];
+    HASH_PREDICATE: string;
+  };
 
   constructor(
     provider: Provider,
@@ -43,12 +47,15 @@ export class Vault extends Predicate<[]> {
       HASH_PREDICATE?: string;
     },
   ) {
+    const conf = Vault.makePredicate(configurable);
     super({
       abi: PredicateAbi__factory.abi,
       bytecode: arrayify(PredicateAbi__factory.bin),
       provider: provider,
-      configurableConstants: Vault.makePredicate(configurable),
+      configurableConstants: conf,
     });
+
+    this.configurable = conf;
   }
 
   /**
@@ -65,7 +72,7 @@ export class Vault extends Predicate<[]> {
     SIGNATURES_COUNT: number;
     SIGNERS: string[];
     HASH_PREDICATE?: string;
-  }): { [key: string]: any } {
+  }): { SIGNATURES_COUNT: number; SIGNERS: string[]; HASH_PREDICATE: string } {
     return {
       SIGNATURES_COUNT,
       SIGNERS: makeSigners(SIGNERS),
