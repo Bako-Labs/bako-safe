@@ -1,5 +1,7 @@
 import {
+  Address,
   arrayify,
+  bn,
   ContractFactory,
   Provider,
   ReceiptType,
@@ -40,7 +42,7 @@ describe('[Create]', () => {
         accounts['USER_3'].address,
       ],
     });
-    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
     // get balance
     const balance = (await vault.getBalance(assets['ETH'])).formatUnits(18);
@@ -57,7 +59,7 @@ describe('[Create]', () => {
         accounts['USER_3'].address,
       ],
     });
-    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
     // create a vault again
     const vault2 = new Vault(provider, vault.configurable);
     // compare
@@ -79,7 +81,7 @@ describe('[Transactions]', () => {
       SIGNATURES_COUNT: 1,
       SIGNERS: [accounts['USER_1'].address],
     });
-    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+    await sendCoins(vault.address.toString(), '0.2', assets['ETH']);
 
     // create a transaction
     const { tx, hashTxId } = await vault.BakoFormatTransfer([
@@ -102,6 +104,64 @@ describe('[Transactions]', () => {
     const result = await vault.sendTransactionToChain(tx);
     const response = await result.waitForResult();
     expect(response).toHaveProperty('status', 'success');
+  });
+
+  it('With multiple asset ids', async () => {
+    // create a vault
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [accounts['USER_1'].address],
+    });
+    const wallet = Wallet.fromAddress(Address.fromRandom(), provider);
+
+    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
+    await sendCoins(vault.address.toString(), '0.3', assets['BTC']);
+
+    // create a transaction
+    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+      {
+        amount: '0.1',
+        assetId: assets['BTC'],
+        to: wallet.address.toString(),
+      },
+      {
+        amount: '0.1',
+        assetId: assets['ETH'],
+        to: wallet.address.toString(),
+      },
+      {
+        amount: '0.1',
+        assetId: assets['ETH'],
+        to: wallet.address.toString(),
+      },
+    ]);
+
+    // sign
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature: await signin(hashTxId, 'USER_1'),
+      },
+    ]);
+
+    // send
+    const result = await vault.sendTransactionToChain(tx);
+    const response = await result.waitForResult();
+    const walletBalance = await wallet.getBalances();
+
+    expect(response).toHaveProperty('status', 'success');
+    expect(walletBalance.balances).toContainEqual(
+      expect.objectContaining({
+        assetId: assets['BTC'],
+        amount: bn.parseUnits('0.1'),
+      }),
+    );
+    expect(walletBalance.balances).toContainEqual(
+      expect.objectContaining({
+        assetId: assets['ETH'],
+        amount: bn.parseUnits('0.2'),
+      }),
+    );
   });
 
   it('Transaction by ScriptTransactionRequest', async () => {
@@ -208,7 +268,7 @@ describe('[Send With]', () => {
       SIGNATURES_COUNT: 1,
       SIGNERS: [webAuthnCredential.address],
     });
-    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
     const { tx, hashTxId } = await vault.BakoFormatTransfer([
       {
@@ -237,7 +297,7 @@ describe('[Send With]', () => {
       SIGNATURES_COUNT: 2,
       SIGNERS: [webAuthnCredential.address, accounts['USER_1'].address],
     });
-    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
     const { tx, hashTxId } = await vault.BakoFormatTransfer([
       {
@@ -269,7 +329,7 @@ describe('[Send With]', () => {
       SIGNATURES_COUNT: 2,
       SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
     });
-    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
     const { tx, hashTxId } = await vault.BakoFormatTransfer([
       {
@@ -297,7 +357,7 @@ describe('[Send With]', () => {
       SIGNATURES_COUNT: 2,
       SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
     });
-    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
     const { tx, hashTxId } = await vault.BakoFormatTransfer([
       {
@@ -330,7 +390,7 @@ describe('[Send With]', () => {
       SIGNATURES_COUNT: 2,
       SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
     });
-    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
     const { tx, hashTxId } = await vault.BakoFormatTransfer([
       {
@@ -363,7 +423,7 @@ describe('[Send With]', () => {
       SIGNATURES_COUNT: 1,
       SIGNERS: [webAuthnCredential.address],
     });
-    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
     const { tx, hashTxId } = await vault.BakoFormatTransfer([
       {
@@ -392,7 +452,7 @@ describe('[Send With]', () => {
       SIGNATURES_COUNT: 1,
       SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
     });
-    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
     const { tx, hashTxId } = await vault.BakoFormatTransfer([
       {
