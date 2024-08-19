@@ -27,26 +27,16 @@ import {
   makeHashPredicate,
   makeSigners,
 } from '../../utils';
+import { VaultConfigurable } from './types';
 
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
  */
 export class Vault extends Predicate<[]> {
   readonly maxSigners = 10;
-  readonly configurable: {
-    SIGNATURES_COUNT: number;
-    SIGNERS: string[];
-    HASH_PREDICATE: string;
-  };
+  readonly configurable: VaultConfigurable;
 
-  constructor(
-    provider: Provider,
-    configurable: {
-      SIGNATURES_COUNT: number;
-      SIGNERS: string[];
-      HASH_PREDICATE?: string;
-    },
-  ) {
+  constructor(provider: Provider, configurable: VaultConfigurable) {
     const conf = Vault.makePredicate(configurable);
     super({
       abi: PredicateAbi__factory.abi,
@@ -61,18 +51,11 @@ export class Vault extends Predicate<[]> {
   /**
    * Make configurable of predicate
    *
-   * @param {IConfVault} configurable - The parameters of signature requirements.
+   * @param {IConfVault} params - The parameters of signature requirements.
    * @returns an formatted object to instance a new predicate
    */
-  private static makePredicate({
-    SIGNATURES_COUNT,
-    SIGNERS,
-    HASH_PREDICATE,
-  }: {
-    SIGNATURES_COUNT: number;
-    SIGNERS: string[];
-    HASH_PREDICATE?: string;
-  }): { SIGNATURES_COUNT: number; SIGNERS: string[]; HASH_PREDICATE: string } {
+  private static makePredicate(params: VaultConfigurable) {
+    const { SIGNATURES_COUNT, SIGNERS, HASH_PREDICATE } = params;
     return {
       SIGNATURES_COUNT,
       SIGNERS: makeSigners(SIGNERS),
@@ -80,6 +63,17 @@ export class Vault extends Predicate<[]> {
     };
   }
 
+  /**
+   * Using the vault, include the fee config in the transaction request.
+   *
+   *
+   * @param {TransactionRequest} tx - The transaction to include the fee.
+   * @returns {Promise<{
+   *  tx: TransactionRequestLike,
+   *  hashTxId: string,
+   * }>} TransactionRequestLike and hashTxId
+   *
+   */
   async BakoTransfer(tx: TransactionRequestLike): Promise<{
     tx: TransactionRequestLike;
     hashTxId: string;
@@ -110,7 +104,15 @@ export class Vault extends Predicate<[]> {
     }
   }
 
-  /// TRANSFERS
+  /**
+   * Create a new transactionScript using the vault resources.
+   *
+   * @param {ITransferAsset[]} assets - The transaction to send.
+   * @returns {Promise<{
+   *  tx: TransactionRequestLike,
+   *  hashTxId: string,
+   * }>} TransactionResponse
+   */
   async BakoFormatTransfer(assets: ITransferAsset[]): Promise<{
     tx: TransactionRequestLike;
     hashTxId: string;
@@ -156,6 +158,12 @@ export class Vault extends Predicate<[]> {
     };
   }
 
+  /**
+   * Using the vault, send a transaction to the chain.
+   *
+   * @param tx {TransactionRequestLike} - The transaction to send.
+   * @returns {Promise<TransactionResponse>} TransactionResponse
+   */
   async sendTransactionToChain(
     tx: TransactionRequestLike,
   ): Promise<TransactionResponse> {
@@ -210,6 +218,14 @@ export class Vault extends Predicate<[]> {
     return bn();
   }
 
+  /**
+   * Prepares a transaction by estimating gas usage, calculating fees, and adjusting transaction parameters.
+   *
+   *
+   * @template T - The type of the transaction request, extending the base `TransactionRequest` type.
+   * @param transactionRequest - The transaction request containing the details to be processed.
+   * @returns A promise that resolves with the prepared transaction request of type `T`.
+   */
   public async prepareTransaction<T extends TransactionRequest>(
     transactionRequest: T,
   ): Promise<T> {
