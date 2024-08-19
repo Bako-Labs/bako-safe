@@ -1,5 +1,3 @@
-export * from './contract';
-export * from './deploy';
 export * from './auth';
 export * from './delay';
 export * from './provider';
@@ -7,3 +5,4 @@ export * from './rootWallet';
 export * from './sendCoins';
 export * from './signin';
 export * from './vault';
+export * from './webauthn';

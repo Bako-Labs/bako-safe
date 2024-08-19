@@ -6,11 +6,23 @@ import {
   Wallet,
 } from 'fuels';
 
-import { signin, sendCoins } from './utils';
+import {
+  signin,
+  sendCoins,
+  WebAuthn_signChallange,
+  WebAuthn_createCredentials,
+} from './utils';
+
 import { ContractAbi__factory } from './types/sway';
 import { networks, accounts, assets } from './mocks';
 import contractBytecode from './types/sway/contracts/ContractAbi.hex';
-import { Vault, bakoCoder, SignatureType } from 'bakosafe/src/modules';
+import {
+  BakoError,
+  ErrorCodes,
+  Vault,
+  bakoCoder,
+  SignatureType,
+} from 'bakosafe/src';
 
 describe('[Create]', () => {
   let provider: Provider;
@@ -55,7 +67,7 @@ describe('[Create]', () => {
   });
 });
 
-describe('[TRANSACTIONS]', () => {
+describe('[Transactions]', () => {
   let provider: Provider;
   beforeEach(async () => {
     provider = await Provider.create(networks['LOCAL']);
@@ -184,10 +196,227 @@ describe('[TRANSACTIONS]', () => {
   });
 });
 
-describe('[SIGNATURES]', () => {
-  // let provider: Provider;
-  // beforeEach(async () => {
-  //   provider = await Provider.create(networks['LOCAL']);
-  // });
-  // it();
+describe('[Send With]', () => {
+  let provider: Provider;
+  beforeEach(async () => {
+    provider = await Provider.create(networks['LOCAL']);
+  });
+
+  it('Webauthn signer', async () => {
+    const webAuthnCredential = WebAuthn_createCredentials();
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [webAuthnCredential.address],
+    });
+    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+
+    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+      {
+        amount: '0.1',
+        assetId: assets['ETH'],
+        to: accounts['USER_1'].address,
+      },
+    ]);
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.WebAuthn,
+        ...(await WebAuthn_signChallange(webAuthnCredential, hashTxId)),
+      },
+    ]);
+
+    const result = await vault.sendTransactionToChain(tx);
+    const response = await result.waitForResult();
+
+    expect(response).toHaveProperty('status', 'success');
+  });
+
+  it('Webauthn and fuel signer', async () => {
+    const webAuthnCredential = WebAuthn_createCredentials();
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 2,
+      SIGNERS: [webAuthnCredential.address, accounts['USER_1'].address],
+    });
+    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+
+    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+      {
+        amount: '0.1',
+        assetId: assets['ETH'],
+        to: accounts['USER_1'].address,
+      },
+    ]);
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature: await signin(hashTxId, 'USER_1'),
+      },
+      {
+        type: SignatureType.WebAuthn,
+        ...(await WebAuthn_signChallange(webAuthnCredential, hashTxId)),
+      },
+    ]);
+
+    const result = await vault.sendTransactionToChain(tx).catch((e) => {
+      const error = BakoError.parse(e);
+      expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
+    });
+    // const response = await result.waitForResult();
+
+    // expect(response).toHaveProperty('status', 'success');
+  });
+
+  it('Pending signature', async () => {
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 2,
+      SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
+    });
+    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+
+    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+      {
+        amount: '0.1',
+        assetId: assets['ETH'],
+        to: accounts['USER_1'].address,
+      },
+    ]);
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature: await signin(hashTxId, 'USER_1'),
+      },
+    ]);
+
+    await vault.sendTransactionToChain(tx).catch((e) => {
+      const error = BakoError.parse(e);
+      expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
+    });
+  });
+
+  it('Duplicated signature', async () => {
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 2,
+      SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
+    });
+    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+
+    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+      {
+        amount: '0.1',
+        assetId: assets['ETH'],
+        to: accounts['USER_1'].address,
+      },
+    ]);
+
+    const signature = await signin(hashTxId, 'USER_1');
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature,
+      },
+      {
+        type: SignatureType.Fuel,
+        signature,
+      },
+    ]);
+
+    await vault.sendTransactionToChain(tx).catch((e) => {
+      const error = BakoError.parse(e);
+      expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
+    });
+  });
+
+  it('Invalid Fuel signature', async () => {
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 2,
+      SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
+    });
+    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+
+    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+      {
+        amount: '0.1',
+        assetId: assets['ETH'],
+        to: accounts['USER_1'].address,
+      },
+    ]);
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature: await signin(hashTxId, 'USER_1'),
+      },
+      {
+        type: SignatureType.Fuel,
+        signature: '0x',
+      },
+    ]);
+
+    await vault.sendTransactionToChain(tx).catch((e) => {
+      const error = BakoError.parse(e);
+      expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
+    });
+  });
+
+  it('Invalid WebAuthn signature', async () => {
+    const webAuthnCredential = WebAuthn_createCredentials();
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [webAuthnCredential.address],
+    });
+    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+
+    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+      {
+        amount: '0.1',
+        assetId: assets['ETH'],
+        to: accounts['USER_1'].address,
+      },
+    ]);
+
+    const signature = await WebAuthn_signChallange(
+      webAuthnCredential,
+      hashTxId,
+    );
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.WebAuthn,
+        ...signature,
+        signature: signature.signature.slice(0, -3) + '123',
+      },
+    ]);
+  });
+
+  it('Signer outside the vault ', async () => {
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
+    });
+    await sendCoins(vault.address.toString(), '0.1', assets['ETH']);
+
+    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+      {
+        amount: '0.1',
+        assetId: assets['ETH'],
+        to: accounts['STORE'].address,
+      },
+    ]);
+
+    const signature = await signin(hashTxId, 'USER_3');
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature,
+      },
+    ]);
+
+    await vault.sendTransactionToChain(tx).catch((e) => {
+      const error = BakoError.parse(e);
+      expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
+    });
+  });
 });
