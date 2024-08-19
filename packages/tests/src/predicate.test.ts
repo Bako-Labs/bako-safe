@@ -258,13 +258,10 @@ describe('[Send With]', () => {
       },
     ]);
 
-    const result = await vault.sendTransactionToChain(tx).catch((e) => {
-      const error = BakoError.parse(e);
-      expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
-    });
-    // const response = await result.waitForResult();
+    const result = await vault.sendTransactionToChain(tx);
+    const response = await result.waitForResult();
 
-    // expect(response).toHaveProperty('status', 'success');
+    expect(response).toHaveProperty('status', 'success');
   });
 
   it('Pending signature', async () => {
