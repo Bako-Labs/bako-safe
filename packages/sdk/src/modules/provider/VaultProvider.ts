@@ -49,21 +49,21 @@ export class VaultProvider extends Provider {
     this.signature = signature;
   }
 
-  static async newChallenge(
-    address: string,
-    provider: string,
-    encoder: TypeUser,
-  ) {
-    const service = new Api({});
+  // static async newChallenge(
+  //   address: string,
+  //   provider: string,
+  //   encoder: TypeUser,
+  // ) {
+  //   const service = new Api({});
 
-    const {
-      data: { code: challenge },
-    } = await service.post('/user', {
-      address,
-      provider,
-      encoder,
-    });
+  //   const {
+  //     data: { code: challenge },
+  //   } = await service.post('/user', {
+  //     address,
+  //     provider,
+  //     encoder,
+  //   });
 
-    return challenge;
-  }
+  //   return challenge;
+  // }
 }
