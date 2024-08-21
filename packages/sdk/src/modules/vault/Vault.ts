@@ -82,6 +82,7 @@ export class Vault extends Predicate<[]> {
       case TransactionType.Script:
         let script = new ScriptTransactionRequest(tx);
         script = await this.prepareTransaction(script);
+
         return {
           tx: script,
           hashTxId: script

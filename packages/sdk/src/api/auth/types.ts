@@ -49,7 +49,7 @@ export interface IAuthSignResponse {
 export interface ISelectWorkspaceResponse extends Workspace {}
 
 export interface IAuthService {
-  auth: (params: IAuthCreateRequest) => Promise<IAuthCreateResponse>;
+  code: (params: IAuthCreateRequest) => Promise<void>;
   sign: (params: IAuthSignRequest) => Promise<IAuthSignResponse>;
   setAuth: (auth: IBakoSafeAuth) => void;
   selectWorkspace: (workspaceId: string) => Promise<ISelectWorkspaceResponse>;

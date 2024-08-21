@@ -1,17 +1,30 @@
-import axios, { AxiosInstance } from 'axios';
-import { IBakoSafeAuth } from './auth/types';
-import { BakoSafe } from '../../configurables';
+import axios, { Axios } from 'axios';
+
+export type ApiConfigurable = {
+  address?: string;
+  signature?: string;
+  serverUrl?: string;
+};
+
+export const axiosConfig = ({ address, signature, url }: any) => {
+  return axios.create({
+    baseURL: url ?? 'http://localhost:3333',
+    headers: {
+      Authorization: signature,
+      'Signer-Address': address,
+    },
+  });
+};
 
 export class Api {
-  public client: AxiosInstance;
+  public autenticate(address: string, signature: string) {
+    //@ts-ignore
+    this.defaults.headers['Authorization'] = signature;
+    //@ts-ignore
+    this.defaults.headers['Signer-Address'] = address;
 
-  constructor(auth?: IBakoSafeAuth) {
-    this.client = axios.create({
-      baseURL: BakoSafe.getProviders('SERVER_URL'),
-      headers: {
-        Authorization: auth?.token,
-        Signeraddress: auth?.address,
-      },
-    });
+    return;
   }
+
+  public generateChallenge() {}
 }

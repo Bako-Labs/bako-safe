@@ -6,22 +6,26 @@ import {
   IAuthSignRequest,
   IAuthSignResponse,
   IBakoSafeAuth,
-  ISelectWorkspaceResponse
+  ISelectWorkspaceResponse,
 } from './types';
 
 import { Api } from '../api';
 
-export class AuthService extends Api implements IAuthService {
-  constructor() {
+export class AuthService extends Api {
+  readonly challenge: string;
+
+  constructor(code: string) {
     super();
+    this.challenge = code;
   }
 
   public setAuth(auth: IBakoSafeAuth) {
     this.client.defaults.headers[AuthRequestHeaders.AUTHORIZATION] = auth.token;
-    this.client.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS] = auth.address;
+    this.client.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS] =
+      auth.address;
   }
 
-  public async auth(params: IAuthCreateRequest): Promise<IAuthCreateResponse> {
+  public async code(params: IAuthCreateRequest): Promise<IAuthCreateResponse> {
     const { data } = await this.client.post('/user', params);
     return data;
   }
@@ -32,14 +36,14 @@ export class AuthService extends Api implements IAuthService {
   }
 
   public async selectWorkspace(
-    workspaceId: string
+    workspaceId: string,
   ): Promise<ISelectWorkspaceResponse> {
     if (!this.client.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS])
       throw new Error('Auth is required');
 
     const { data } = await this.client.put('/auth/workspace', {
       workspaceId,
-      userId: this.client.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS]
+      userId: this.client.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS],
     });
     return data;
   }
