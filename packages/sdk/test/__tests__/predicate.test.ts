@@ -253,7 +253,7 @@ describe('[PREDICATES]', () => {
       );
       const auxVault = await Vault.create({
         ...auth['USER_1'].BakoSafeAuth,
-        predicateAddress: vault.address.toString(),
+        predicateAddress: vault.address.toB256(),
       });
       expect(auxVault.BakoSafeVaultId).toStrictEqual(vault.BakoSafeVaultId);
       expect(auxVault.version).toStrictEqual(vault.version);

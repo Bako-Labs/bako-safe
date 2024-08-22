@@ -7,7 +7,7 @@
     "postinstall": "pnpm fuels build"
   },
   "dependencies": {
-    "fuels": "0.92.1"
+    "fuels": "0.94.0"
   },
   "devDependencies": {
     "dotenv": "^16.4.1"

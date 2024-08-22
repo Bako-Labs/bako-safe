@@ -10,7 +10,7 @@ import {
 } from 'fuels';
 import { join } from 'path';
 import { readFileSync } from 'fs';
-import { ContractAbi__factory } from '../../types/sway';
+import { TestContract } from '../../types/sway';
 
 export class BakoContractDeploy extends ContractFactory {
   readonly abi: JsonAbi;
@@ -27,7 +27,7 @@ export class BakoContractDeploy extends ContractFactory {
     this.abi = abi;
   }
 
-  async deploy(deployContractOptions: DeployContractOptions = {}) {
+  async getDeployRequest(deployContractOptions: DeployContractOptions = {}) {
     if (!this.predicate) {
       throw new Error('Predicate not set');
     }
@@ -63,12 +63,14 @@ export const createTransactionDeploy = async (
 
   const deploy_class = new BakoContractDeploy(
     byteCode,
-    ContractAbi__factory.abi,
+    // @ts-ignore
+    TestContract.abi,
     provider,
     vault.address.toB256(),
   );
 
-  const { transactionRequest, contractId } = await deploy_class.deploy();
+  const { transactionRequest, contractId } =
+    await deploy_class.getDeployRequest();
 
   const coins = await vault.getResourcesToSpend([
     {
