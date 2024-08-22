@@ -38,12 +38,6 @@ export class TransactionService extends Api implements ITransactionService {
       `/transaction/${transactionId}`,
     );
 
-    console.log('Find by id,', {
-      status: data.status,
-      resumeStatus: data.resume.status,
-      id: transactionId,
-    });
-
     return data;
   }
 
