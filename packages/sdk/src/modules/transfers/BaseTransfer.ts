@@ -139,10 +139,7 @@ export class BaseTransfer<T extends TransactionRequest> {
       await this.syncTrasanction();
     }
 
-    return new TransactionResponse(
-      this.BakoSafeTransactionId,
-      this.vault.provider,
-    );
+    return new TransactionResponse(this.getHashTxId(), this.vault.provider);
   }
 
   static async prepareTransaction<T extends TransactionRequest>(
