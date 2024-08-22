@@ -1,69 +1,77 @@
-import { Provider, ProviderOptions } from 'fuels';
-
+import { Address, Provider, ProviderOptions } from 'fuels';
+import { Service } from '../../api/auth/auth';
 import { TypeUser } from './types';
-import { Api } from 'src/api/api';
+import { networks } from '../../../../tests/src/mocks/networks';
+
+export type VaultProviderOptions = ProviderOptions & {
+  token: string;
+  address: string;
+  challenge: string;
+  encoder?: TypeUser;
+  serverUrl?: string;
+};
 
 export class VaultProvider extends Provider {
-  // readonly service: any;
-  readonly isAutenticated: boolean;
-  readonly challenge: string | undefined;
-  public signature: string;
+  public options: VaultProviderOptions;
+  public service: Service;
 
-  protected constructor(
-    providerInstance: Provider,
-    service: any,
-    challenge: string | undefined = undefined,
-  ) {
+  protected constructor(providerInstance: Provider) {
     // Chama o construtor da classe base usando uma instância existente de Provider
     super(providerInstance.url, providerInstance.options);
-    this.isAutenticated = false;
-    this.challenge = challenge;
-    this.signature = '';
+    this.options = providerInstance.options as VaultProviderOptions;
+    this.service = new Service({
+      address: this.options.address,
+      token: this.options.token,
+    });
   }
 
   static async create(
     url: string,
-    options?: ProviderOptions & {
-      encoder: TypeUser;
-      token: string;
-      address: string;
-      serverUrl: string;
-    },
+    options: VaultProviderOptions,
   ): Promise<VaultProvider> {
-    const hasRequiredOptionsAuth = options?.encoder && options?.address;
-    const providerInstance = await Provider.create(url, options);
-    // const service = new Api({
-    //   address: options?.address, //remove address of requests
-    //   signature: options?.token,
-    //   serverUrl: options?.serverUrl,
-    // });
-
-    const challenge = hasRequiredOptionsAuth
-      ? await VaultProvider.newChallenge(options.address, url, options.encoder)
-      : undefined;
-
-    return new VaultProvider(providerInstance, challenge);
+    const fuelProvider = await Provider.create(url, options);
+    await this.authenticate({
+      challenge: options.challenge,
+      token: options.token,
+      encoder: options.encoder,
+    });
+    return new VaultProvider(fuelProvider);
   }
 
-  async autenticate(signature: string) {
-    this.signature = signature;
+  public static async setup({
+    address,
+    encoder,
+    provider,
+  }: {
+    address: string;
+    encoder?: TypeUser;
+    provider?: string;
+  }) {
+    const { code: challenge, ...rest } = await Service.create({
+      name: 'from sdk - ' + address,
+      type: encoder ?? TypeUser.FUEL,
+      address: address,
+      provider: provider ?? networks['LOCAL'],
+    });
+
+    return challenge;
   }
 
-  // static async newChallenge(
-  //   address: string,
-  //   provider: string,
-  //   encoder: TypeUser,
-  // ) {
-  //   const service = new Api({});
+  private static async authenticate({
+    challenge,
+    token,
+    encoder,
+  }: {
+    challenge: string;
+    token: string;
+    encoder?: TypeUser;
+  }) {
+    await Service.sign({
+      signature: token,
+      encoder: encoder ?? TypeUser.FUEL,
+      digest: challenge,
+    });
 
-  //   const {
-  //     data: { code: challenge },
-  //   } = await service.post('/user', {
-  //     address,
-  //     provider,
-  //     encoder,
-  //   });
-
-  //   return challenge;
-  // }
+    return;
+  }
 }

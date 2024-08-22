@@ -1,57 +1,61 @@
-import {
-  AuthRequestHeaders,
-  IAuthCreateRequest,
-  IAuthCreateResponse,
-  IAuthService,
-  IAuthSignRequest,
-  IAuthSignResponse,
-  IBakoSafeAuth,
-  ISelectWorkspaceResponse,
-} from './types';
+import axios, { AxiosInstance } from 'axios';
 
-import { Api } from '../api';
+import { defaultConfig, AuthRequestHeaders, IUserCreate } from './types';
 
-export class AuthService extends Api {
-  readonly challenge: string;
+// keep here to sinc with the other files
+export const api = axios.create({
+  baseURL: defaultConfig.serverUrl,
+});
 
-  constructor(code: string) {
-    super();
-    this.challenge = code;
-  }
+// - static: non authenticated methods
+//     - create: create a user
+//     - sign: sign a challenge
+// - instance: authenticated methods
+export class Service {
+  private api: AxiosInstance;
+  private address?: string;
+  private token?: string;
 
-  public setAuth(auth: IBakoSafeAuth) {
-    this.client.defaults.headers[AuthRequestHeaders.AUTHORIZATION] = auth.token;
-    this.client.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS] =
-      auth.address;
-  }
+  constructor({ address, token }: { address?: string; token?: string }) {
+    this.api = api;
+    this.address = address;
+    this.token = token;
 
-  public async code(params: IAuthCreateRequest): Promise<IAuthCreateResponse> {
-    const { data } = await this.client.post('/user', params);
-    return data;
-  }
+    this.api.interceptors.request.use((config) => {
+      config.headers[AuthRequestHeaders.SIGNER_ADDRESS] = this.address;
+      config.headers[AuthRequestHeaders.AUTHORIZATION] = this.token;
 
-  public async sign(params: IAuthSignRequest): Promise<IAuthSignResponse> {
-    const { data } = await this.client.post('/auth/sign-in', params);
-    return data;
-  }
-
-  public async selectWorkspace(
-    workspaceId: string,
-  ): Promise<ISelectWorkspaceResponse> {
-    if (!this.client.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS])
-      throw new Error('Auth is required');
-
-    const { data } = await this.client.put('/auth/workspace', {
-      workspaceId,
-      userId: this.client.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS],
+      return config;
     });
+  }
+
+  // ------------------------ AUTH METHODS ------------------------
+  async getWorkspace() {
+    const { data } = await this.api.get('/workspace/by-user');
     return data;
   }
 
-  public async getWorkspaces(): Promise<ISelectWorkspaceResponse[]> {
-    if (!this.client.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS])
-      throw new Error('Auth is required');
-    const { data } = await this.client.get(`/workspace/by-user`);
+  async getToken() {
+    const { data } = await this.api.get('/user/latest/tokens');
+
+    return data;
+  }
+
+  // ------------------------ STATIC METHODS ------------------------
+  static async create(params: IUserCreate) {
+    const { data } = await api.post('/user', params);
+    return data;
+  }
+
+  // remove typeUser:
+  //  - se o usuário for to tipo FUEL, só poderá se autenticar como fuel
+  // - se o usuário for do tipo WEB_AUTHN, só poderá se autenticar como WEB_AUTHN
+  static async sign(params: {
+    signature: string;
+    encoder: string;
+    digest: string;
+  }) {
+    const { data } = await api.post('/auth/sign-in', params);
     return data;
   }
 }

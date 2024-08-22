@@ -3,9 +3,34 @@ export enum TypeUser {
   WEB_AUTHN = 'WEB_AUTHN',
 }
 
+export type ApiConfigurable = {
+  address?: string;
+  token?: string;
+  serverUrl?: string;
+};
+
+export const defaultConfig: ApiConfigurable = {
+  address: '',
+  token: '',
+  serverUrl: 'http://localhost:3333/',
+};
+
 export enum AuthRequestHeaders {
   AUTHORIZATION = 'Authorization',
   SIGNER_ADDRESS = 'Signeraddress',
+}
+
+export interface IAuthRequestCode {
+  address: string;
+  provider: string;
+  type?: TypeUser;
+}
+
+export interface IUserCreate {
+  name: string;
+  type: TypeUser;
+  address: string;
+  provider: string;
 }
 
 export interface Workspace {
@@ -18,12 +43,6 @@ export interface IBakoSafeAuth {
   address: string;
   token: string;
   worksapce?: string;
-}
-
-export interface IAuthCreateRequest {
-  address: string;
-  provider: string;
-  type: TypeUser;
 }
 
 export interface IAuthCreateResponse {
@@ -47,11 +66,3 @@ export interface IAuthSignResponse {
 }
 
 export interface ISelectWorkspaceResponse extends Workspace {}
-
-export interface IAuthService {
-  code: (params: IAuthCreateRequest) => Promise<void>;
-  sign: (params: IAuthSignRequest) => Promise<IAuthSignResponse>;
-  setAuth: (auth: IBakoSafeAuth) => void;
-  selectWorkspace: (workspaceId: string) => Promise<ISelectWorkspaceResponse>;
-  getWorkspaces: () => Promise<ISelectWorkspaceResponse[]>;
-}
