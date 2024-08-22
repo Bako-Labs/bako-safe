@@ -4,6 +4,7 @@ import {
   ICreateTransactionPayload,
   ITransaction,
   ITransactionService,
+  ITransactionStatusResponse,
 } from './types';
 
 export class TransactionService extends Api implements ITransactionService {
@@ -36,6 +37,12 @@ export class TransactionService extends Api implements ITransactionService {
     const { data } = await this.client.get<ITransaction>(
       `/transaction/${transactionId}`,
     );
+
+    console.log('Find by id,', {
+      status: data.status,
+      resumeStatus: data.resume.status,
+      id: transactionId,
+    });
 
     return data;
   }
@@ -75,10 +82,10 @@ export class TransactionService extends Api implements ITransactionService {
   }
 
   public async status(BakoSafeTransactionId: string) {
-    const { data } = await this.client.get(
+    const { data } = await this.client.get<ITransactionStatusResponse>(
       `/transaction/status/${BakoSafeTransactionId}`,
     );
 
-    return data;
+    return data.status;
   }
 }
