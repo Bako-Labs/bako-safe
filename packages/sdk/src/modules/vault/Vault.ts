@@ -30,6 +30,12 @@ import {
 import { VaultConfigurable } from './types';
 import { VaultProvider } from '../provider';
 
+// todo:
+//  - rename methdos of transactions -> .transaction(), .fromAssets(), .fromHash()
+//  - rename methods of predicates -> .predicate(), .fromAddress(), .fromId()
+//  - think about the save of the vault, .store() -> .save()
+//  - move fee methods to the provider -> think about, because all peoples need this, when don`t use bako ecossystem
+
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
  */
@@ -86,10 +92,12 @@ export class Vault extends Predicate<[]> {
     tx: TransactionRequestLike;
     hashTxId: string;
   }> {
+    let result = undefined;
+
     switch (tx.type) {
       case TransactionType.Script:
-        let script = new ScriptTransactionRequest(tx);
-        script = await this.prepareTransaction(script);
+        const script = new ScriptTransactionRequest(tx);
+        result = await this.prepareTransaction(script);
 
         return {
           tx: script,
@@ -99,8 +107,9 @@ export class Vault extends Predicate<[]> {
         };
 
       case TransactionType.Create:
-        let create = new CreateTransactionRequest(tx);
-        create = await this.prepareTransaction(create);
+        const create = new CreateTransactionRequest(tx);
+        result = await this.prepareTransaction(create);
+        // await this.store
         return {
           tx: create,
           hashTxId: create
@@ -158,6 +167,7 @@ export class Vault extends Predicate<[]> {
     });
 
     let trancation = await this.prepareTransaction(tx);
+    await this.transactionSave(trancation);
 
     return {
       tx: trancation,
@@ -306,5 +316,23 @@ export class Vault extends Predicate<[]> {
     );
 
     return predicate;
+  }
+
+  async transactionSave(
+    tx: ScriptTransactionRequest | CreateTransactionRequest,
+  ) {
+    if (this.provider instanceof VaultProvider) {
+      return await this.provider?.storeTransaction(tx, this.address.toB256());
+    }
+
+    throw new Error('Use a VaultProvider to consume this method');
+  }
+
+  async transactionFromHash(hash: string) {
+    if (this.provider instanceof VaultProvider) {
+      return await this.provider?.findTransaction(hash, this);
+    }
+
+    throw new Error('Use a VaultProvider to consume this method');
   }
 }

@@ -1,9 +1,18 @@
-import { Address, Provider, ProviderOptions } from 'fuels';
+import {
+  CreateTransactionRequest,
+  Provider,
+  ProviderOptions,
+  ScriptTransactionRequest,
+} from 'fuels';
 import { Service } from '../../api/auth/auth';
 import { TypeUser } from './types';
 import { networks } from '../../../../tests/src/mocks/networks';
 import { Vault } from '../vault';
-import { IPredicatePayload } from 'src/api';
+import {
+  ICreateTransactionPayload,
+  IPredicatePayload,
+  TransactionStatus,
+} from '../../api';
 
 export type VaultProviderOptions = ProviderOptions & {
   token: string;
@@ -87,7 +96,7 @@ export class VaultProvider extends Provider {
       provider: this.url,
     };
 
-    const predicate = await this.service.create(payload);
+    const predicate = await this.service.createPredicate(payload);
 
     return predicate;
   }
@@ -101,5 +110,27 @@ export class VaultProvider extends Provider {
       : await this.service.findById(reference);
 
     return predicate;
+  }
+
+  async storeTransaction(
+    tx: ScriptTransactionRequest | CreateTransactionRequest,
+    predicate: string,
+  ) {
+    const payload: ICreateTransactionPayload = {
+      name: 'randomname',
+      predicateAddress: predicate,
+      hash: tx.getTransactionId(this.getChainId()).slice(2),
+      txData: tx,
+      status: TransactionStatus.AWAIT_REQUIREMENTS, // todo: not send, just add on api create
+    };
+    const transaction = await this.service.createTransaction(payload);
+
+    return transaction;
+  }
+
+  async findTransaction(hash: string, vault: Vault) {
+    const transaction = await this.service.recoverTransaction(hash);
+
+    return vault.BakoTransfer(transaction.txData);
   }
 }
