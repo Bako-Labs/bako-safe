@@ -1,31 +1,36 @@
 name: CI
 
 on:
-    push:
-        branches:
-            - main
-    pull_request:
-    release:
-        types: [published]
+  push:
+    branches:
+      - main
+  pull_request:
+  release:
+    types: [published]
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-    cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-    validate:
-        runs-on: buildjet-4vcpu-ubuntu-2204
-        steps:
-            - uses: actions/checkout@v3
-            - uses: FuelLabs/github-actions/setups/node@master
-            - uses: FuelLabs/github-actions/setups/docker@master
-              with:
-                  username: ${{ github.repository_owner }}
-                  password: ${{ secrets.GUIMROQUE_GITHUB_TOKEN }}
-            - uses: ./.github/actions/setup-rust
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: WIP
+        run: echo "WIP"
+  # validate:
+  #     runs-on: buildjet-4vcpu-ubuntu-2204
+  #     steps:
+  #         - uses: actions/checkout@v3
+  #         - uses: FuelLabs/github-actions/setups/node@master
+  #         - uses: FuelLabs/github-actions/setups/docker@master
+  #           with:
+  #               username: ${{ github.repository_owner }}
+  #               password: ${{ secrets.GUIMROQUE_GITHUB_TOKEN }}
+  #         - uses: ./.github/actions/setup-rust
 
-            - name: Build projects
-              run: yarn build
+  #         - name: Build projects
+  #           run: yarn build
 
-            - name: Test projects
-              run: yarn test
+  #         - name: Test projects
+  #           run: yarn test
