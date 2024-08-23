@@ -4,6 +4,10 @@ import { defaultConfig, AuthRequestHeaders, IUserCreate } from './types';
 import { IPredicatePayload } from '../predicates';
 import { ICreateTransactionPayload } from '../transactions';
 
+// todo:
+//  - rename correctly methods
+//  - add type to methods
+
 // keep here to sinc with the other files
 export const api = axios.create({
   baseURL: defaultConfig.serverUrl,
