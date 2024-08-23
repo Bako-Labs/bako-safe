@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 
 import { defaultConfig, AuthRequestHeaders, IUserCreate } from './types';
+import { IPredicatePayload } from '../predicates';
 
 // keep here to sinc with the other files
 export const api = axios.create({
@@ -30,7 +31,7 @@ export class Service {
   }
 
   // ------------------------ AUTH METHODS ------------------------
-  async getWorkspace() {
+  async getWorkspaces() {
     const { data } = await this.api.get('/workspace/by-user');
     return data;
   }
@@ -38,6 +39,30 @@ export class Service {
   async getToken() {
     const { data } = await this.api.get('/user/latest/tokens');
 
+    return data;
+  }
+
+  async create(payload: IPredicatePayload) {
+    const { data } = await this.api.post('/predicate', payload);
+
+    return data;
+  }
+
+  async findByAddress(predicateAddress: string) {
+    const { data } = await this.api.get(
+      `/predicate/by-address/${predicateAddress}`,
+    );
+    return data;
+  }
+
+  async findById(predicateId: string) {
+    const { data } = await this.api.get(`/predicate/${predicateId}`);
+
+    return data;
+  }
+
+  async authInfo() {
+    const { data } = await this.api.get('/user/latest/info');
     return data;
   }
 
