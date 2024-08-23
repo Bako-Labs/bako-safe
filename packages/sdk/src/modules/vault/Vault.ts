@@ -28,6 +28,7 @@ import {
   makeSigners,
 } from '../../utils';
 import { VaultConfigurable } from './types';
+import { VaultProvider } from '../provider';
 
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
@@ -36,7 +37,12 @@ export class Vault extends Predicate<[]> {
   readonly maxSigners = 10;
   readonly configurable: VaultConfigurable;
 
-  constructor(provider: Provider, configurable: VaultConfigurable) {
+  __provider: Provider | VaultProvider;
+
+  constructor(
+    provider: Provider | VaultProvider,
+    configurable: VaultConfigurable,
+  ) {
     const conf = Vault.makePredicate(configurable);
     super({
       abi: PredicateAbi__factory.abi,
@@ -46,6 +52,8 @@ export class Vault extends Predicate<[]> {
     });
 
     this.configurable = conf;
+    //we need subscribe to the provider, bucause this prop is included on Address and vault exnteds address, and can`t set the provider different from the address
+    this.__provider = provider;
   }
 
   /**
@@ -275,5 +283,28 @@ export class Vault extends Predicate<[]> {
     transactionRequest.witnesses = witnesses;
 
     return transactionRequest;
+  }
+
+  public get provider(): Provider | VaultProvider {
+    return this.__provider;
+  }
+
+  async store() {
+    // todo: reuse this validation
+    if (this.provider instanceof VaultProvider) {
+      return await this.provider?.storePredicate(this);
+    }
+
+    throw new Error('Use a VaultProvider to consume this method');
+  }
+
+  static async stored(reference: string, provider: VaultProvider) {
+    const recoveredPredicate = await provider?.findPredicate(reference);
+    const predicate = new Vault(
+      provider,
+      JSON.parse(recoveredPredicate.configurable), // move this parse to the service
+    );
+
+    return predicate;
   }
 }

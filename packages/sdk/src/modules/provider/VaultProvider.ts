@@ -2,6 +2,8 @@ import { Address, Provider, ProviderOptions } from 'fuels';
 import { Service } from '../../api/auth/auth';
 import { TypeUser } from './types';
 import { networks } from '../../../../tests/src/mocks/networks';
+import { Vault } from '../vault';
+import { IPredicatePayload } from 'src/api';
 
 export type VaultProviderOptions = ProviderOptions & {
   token: string;
@@ -73,5 +75,31 @@ export class VaultProvider extends Provider {
     });
 
     return;
+  }
+
+  async storePredicate(vault: Vault) {
+    const payload: IPredicatePayload = {
+      name: vault.address.toB256(),
+      predicateAddress: vault.address.toB256(),
+      minSigners: vault.configurable.SIGNATURES_COUNT,
+      addresses: vault.configurable.SIGNERS,
+      configurable: JSON.stringify(vault.configurable),
+      provider: this.url,
+    };
+
+    const predicate = await this.service.create(payload);
+
+    return predicate;
+  }
+
+  async findPredicate(reference: string) {
+    // todo: move this
+    const isAddress = reference.length == 66;
+
+    const predicate = isAddress
+      ? await this.service.findByAddress(reference)
+      : await this.service.findById(reference);
+
+    return predicate;
   }
 }
