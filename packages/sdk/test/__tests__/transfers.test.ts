@@ -1,5 +1,5 @@
 import { Provider, TransactionStatus, Wallet } from 'fuels';
-import { ContractAbi__factory, contractBytecode } from 'bakosafe-test-utils';
+import { TestContract, TestContractFactory } from 'bakosafe-test-utils';
 import { authService, delay, IUserAuth, newVault, signin } from '../utils';
 import { BakoSafe } from '../../configurables';
 import { accounts, assets, DEFAULT_BALANCE_VALUE, networks } from '../mocks';
@@ -491,20 +491,17 @@ describe('[TRANSFERS]', () => {
       signers,
       provider,
       auth['USER_1'].BakoSafeAuth,
-      5000000,
+      10000,
       1,
     );
 
     // Deploy contract and set account to vault
     const wallet = Wallet.fromPrivateKey(auth['FULL'].privateKey, provider);
-    const deploy = await ContractAbi__factory.deployContract(
-      contractBytecode,
-      wallet,
-    );
+    const deploy = await TestContractFactory.deploy(wallet);
     await deploy.waitForResult();
 
     // Get transaction request of contract method
-    const contractAbi = ContractAbi__factory.connect(deploy.contractId, vault);
+    const contractAbi = new TestContract(deploy.contractId, vault);
     const contractMethod = contractAbi.functions.zero();
     const contractRequest = await contractMethod.fundWithRequiredCoins();
 

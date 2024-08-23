@@ -1,14 +1,14 @@
-import { ContractAbi, ContractAbi__factory } from '../../types/sway';
+import { TestContract, TestContractFactory } from '../../types/sway';
 import { Account } from 'fuels';
 
 export type ContractInstanceParams = { contractId: string; account: Account };
 
 export type ContractParams = ContractInstanceParams & {
-  method: keyof ContractAbi['functions'];
+  method: keyof TestContract['functions'];
 };
 
 export const getContractInstance = async (params: ContractInstanceParams) =>
-  ContractAbi__factory.connect(params.contractId, params.account);
+  new TestContract(params.contractId, params.account);
 
 export const callContractMethod = async (params: ContractParams) => {
   const contract = await getContractInstance(params);

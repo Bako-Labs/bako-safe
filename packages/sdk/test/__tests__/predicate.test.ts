@@ -253,7 +253,7 @@ describe('[PREDICATES]', () => {
       );
       const auxVault = await Vault.create({
         ...auth['USER_1'].BakoSafeAuth,
-        predicateAddress: vault.address.toString(),
+        predicateAddress: vault.address.toB256(),
       });
       expect(auxVault.BakoSafeVaultId).toStrictEqual(vault.BakoSafeVaultId);
       expect(auxVault.version).toStrictEqual(vault.version);
@@ -298,7 +298,7 @@ describe('[PREDICATES]', () => {
         signers,
         provider,
         auth['USER_1'].BakoSafeAuth,
-        5,
+        10000,
       );
       const tx_1 = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
       const tx_2 = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);

@@ -1,8 +1,5 @@
 import { ZeroBytes32, Address, bn, Provider } from 'fuels';
-import {
-  PredicateAbi__factory,
-  PredicateAbiInputs,
-} from '../../../sdk/src/sway/predicates';
+import { VaultPredicate } from '../../../sdk/src/sway/predicates';
 import { accounts } from '../../../sdk/test/mocks';
 import { seedAccount } from './seedAccount';
 import { CHAIN_URL } from './constants';
@@ -49,13 +46,13 @@ export const createPredicate = async ({
     _signers[i] = signers[i] ?? ZeroBytes32;
   }
 
-  const input: PredicateAbiInputs = [];
-
-  //@ts-ignore
-  const predicate = PredicateAbi__factory.createInstance(provider, input, {
-    SIGNATURES_COUNT: minSigners ?? signers.length,
-    SIGNERS: _signers,
-    HASH_PREDICATE: Address.fromRandom().toB256(),
+  const predicate = new VaultPredicate({
+    provider,
+    configurableConstants: {
+      SIGNATURES_COUNT: minSigners ?? signers.length,
+      SIGNERS: _signers,
+      HASH_PREDICATE: Address.fromRandom().toB256(),
+    },
   });
 
   await seedAccount(predicate.address, bn.parseUnits(amount), provider);

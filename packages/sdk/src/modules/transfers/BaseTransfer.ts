@@ -139,10 +139,7 @@ export class BaseTransfer<T extends TransactionRequest> {
       await this.syncTrasanction();
     }
 
-    return new TransactionResponse(
-      this.BakoSafeTransactionId,
-      this.vault.provider,
-    );
+    return new TransactionResponse(this.getHashTxId(), this.vault.provider);
   }
 
   static async prepareTransaction<T extends TransactionRequest>(
@@ -152,8 +149,7 @@ export class BaseTransfer<T extends TransactionRequest> {
     // Estimate the gas usage for the predicate
     const predicateGasUsed = await vault.maxGasUsed();
 
-    const transactionCost =
-      await vault.provider.getTransactionCost(transactionRequest);
+    const transactionCost = await vault.getTransactionCost(transactionRequest);
     transactionRequest.maxFee = transactionCost.maxFee;
     transactionRequest = await vault.fund(transactionRequest, transactionCost);
 

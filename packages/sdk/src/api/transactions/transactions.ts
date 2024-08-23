@@ -4,6 +4,7 @@ import {
   ICreateTransactionPayload,
   ITransaction,
   ITransactionService,
+  ITransactionStatusResponse,
 } from './types';
 
 export class TransactionService extends Api implements ITransactionService {
@@ -75,10 +76,10 @@ export class TransactionService extends Api implements ITransactionService {
   }
 
   public async status(BakoSafeTransactionId: string) {
-    const { data } = await this.client.get(
+    const { data } = await this.client.get<ITransactionStatusResponse>(
       `/transaction/status/${BakoSafeTransactionId}`,
     );
 
-    return data;
+    return data.status;
   }
 }

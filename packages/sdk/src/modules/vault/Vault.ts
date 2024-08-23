@@ -316,7 +316,7 @@ export class Vault extends Predicate<[]> implements IVault {
       request.addWitness(FAKE_WITNESSES),
     );
 
-    const transactionCost = await vault.provider.getTransactionCost(request);
+    const transactionCost = await vault.getTransactionCost(request);
     await vault.fund(request, transactionCost);
     await vault.provider.estimatePredicates(request);
     const input = request.inputs[0];

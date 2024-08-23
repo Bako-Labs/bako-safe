@@ -1,11 +1,6 @@
-import {
-  Address,
-  Provider,
-  Wallet,
-  arrayify,
-} from 'fuels';
+import { Address, Provider, Wallet, arrayify } from 'fuels';
 
-import { ScriptAbi__factory } from '../../../sdk/src/sway/scripts/';
+import { Script } from '../../../sdk/src/sway/scripts/';
 
 import { accounts } from '../../../sdk/test/mocks';
 import { signin } from '../../../sdk/test/utils/signin';
@@ -26,7 +21,7 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
   BakoSafe.setProviders({
     CHAIN_URL,
     SERVER_URL: 'http://localhost:3333',
-  })
+  });
 
   beforeAll(async () => {
     //todo: move to dynamic url of chain and remove of the BakoSafe
@@ -116,7 +111,7 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     //@ts-ignore
     const tx = await createTransactionScript(predicate);
 
-    tx.script = arrayify(ScriptAbi__factory.bin);
+    tx.script = arrayify(Script.bytecode);
 
     const id = tx.getTransactionId(provider.getChainId()).slice(2);
 
