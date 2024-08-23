@@ -164,4 +164,49 @@ describe('[AUTH]', () => {
       recoverBalance.formatUnits(18),
     );
   });
+
+  it('Shout save a transaction', async () => {
+    const address = accounts['USER_1'].account;
+
+    const challenge = await VaultProvider.setup({
+      address,
+    });
+
+    const token = await Wallet.fromPrivateKey(
+      accounts['USER_1'].privateKey,
+    ).signMessage(challenge);
+
+    const vaultProvider = await VaultProvider.create(networks['LOCAL'], {
+      address,
+      challenge,
+      token,
+    });
+
+    const predicate = new Vault(vaultProvider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [address],
+      HASH_PREDICATE: Address.fromRandom().toB256(),
+    });
+
+    // how to create a predicate on database on the instance time
+    const saved = await predicate.store();
+
+    const balanceValue = '0.1';
+    await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
+
+    const recover = await Vault.stored(saved.predicateAddress, vaultProvider);
+
+    const { hashTxId } = await recover.BakoFormatTransfer([
+      {
+        to: Address.fromRandom().toB256(),
+        amount: '0.1',
+        assetId: assets['ETH'],
+      },
+    ]);
+
+    const recoveredTx = await predicate.transactionFromHash(hashTxId);
+
+    expect(recoveredTx).toBeDefined();
+    expect(recoveredTx.hashTxId).toBe(hashTxId);
+  });
 });
