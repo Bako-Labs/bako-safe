@@ -1,15 +1,15 @@
-import { BaseTransfer, BaseTransferLike } from './BaseTransfer';
 import {
   ContractUtils,
   CreateTransactionRequest,
   OutputType,
-  TransactionCreate,
+  type TransactionCreate,
   transactionRequestify,
 } from 'fuels';
+import { BaseTransfer, type BaseTransferLike } from './BaseTransfer';
 
 import {
-  IBakoSafeAuth,
-  ITransaction,
+  type IBakoSafeAuth,
+  type ITransaction,
   TransactionService,
   TransactionStatus,
 } from '../../api';
@@ -82,7 +82,7 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
     options: DeployTransferFromTransaction,
   ): Promise<DeployTransfer> {
     const { name, vault, witnesses, auth, ...transaction } = options;
-    const transactionRequest = await this.createTransactionRequest({
+    const transactionRequest = await DeployTransfer.createTransactionRequest({
       witnesses,
       vault,
       ...transaction,
@@ -124,7 +124,7 @@ export class DeployTransfer extends BaseTransfer<CreateTransactionRequest> {
       throw new Error('Contract output and bytecode are required.');
     }
 
-    let transactionRequest = CreateTransactionRequest.from({
+    const transactionRequest = CreateTransactionRequest.from({
       inputs: [],
       salt: transaction.salt,
       witnesses: [bytecode.data],

@@ -1,5 +1,10 @@
+import { beforeAll, describe, expect, test } from 'bun:test';
 import { BakoSafe } from '../../configurables';
-import { Auth, IAuthCreateRequest, TypeUser } from '../../src/modules/auth';
+import {
+  Auth,
+  type IAuthCreateRequest,
+  TypeUser,
+} from '../../src/modules/auth';
 import { accounts, networks } from '../mocks';
 import { AuthTestUtil } from '../utils';
 
@@ -7,7 +12,7 @@ describe('[AUTH]', () => {
   beforeAll(() => {
     // set up BakoSafe
     BakoSafe.setProviders({
-      CHAIN_URL: networks['LOCAL'],
+      CHAIN_URL: networks.LOCAL,
       SERVER_URL: 'http://localhost:3333',
       CLIENT_URL: 'http://localhost:5174',
     });
@@ -15,14 +20,14 @@ describe('[AUTH]', () => {
 
   test('Authenticate', async () => {
     const params: IAuthCreateRequest = {
-      address: accounts['USER_1'].address,
+      address: accounts.USER_1.address,
       provider: BakoSafe.getProviders('CHAIN_URL'),
       type: TypeUser.FUEL,
     };
 
     const auth = await Auth.create(params);
     const signature = await AuthTestUtil.signerByPk(
-      accounts['USER_1'].privateKey,
+      accounts.USER_1.privateKey,
       auth.code,
     );
 
@@ -30,19 +35,19 @@ describe('[AUTH]', () => {
 
     expect(sig).toBe(auth.BakoSafeAuth?.token);
 
-    expect(auth.BakoSafeAuth?.address).toBe(accounts['USER_1'].address);
+    expect(auth.BakoSafeAuth?.address).toBe(accounts.USER_1.address);
   });
 
   test('Select workspace', async () => {
     const params: IAuthCreateRequest = {
-      address: accounts['USER_1'].address,
+      address: accounts.USER_1.address,
       provider: BakoSafe.getProviders('CHAIN_URL'),
       type: TypeUser.FUEL,
     };
 
     const auth = await Auth.create(params);
     const signature = await AuthTestUtil.signerByPk(
-      accounts['USER_1'].privateKey,
+      accounts.USER_1.privateKey,
       auth.code,
     );
 
@@ -58,20 +63,20 @@ describe('[AUTH]', () => {
 
   test('Sign by PK', async () => {
     const params: IAuthCreateRequest = {
-      address: accounts['USER_1'].address,
+      address: accounts.USER_1.address,
       provider: BakoSafe.getProviders('CHAIN_URL'),
       type: TypeUser.FUEL,
     };
 
     const auth = await Auth.create(params);
     const signature = await Auth.signerByPk(
-      accounts['USER_1'].privateKey,
+      accounts.USER_1.privateKey,
       auth.code,
     );
 
     const { token: sig } = await auth.sign(signature);
 
-    expect(auth.BakoSafeAuth?.address).toBe(accounts['USER_1'].address);
+    expect(auth.BakoSafeAuth?.address).toBe(accounts.USER_1.address);
     expect(sig).toBe(auth.BakoSafeAuth?.token);
   });
 });

@@ -1,14 +1,14 @@
+import { Provider, Wallet } from 'fuels';
 import { BakoSafe } from '../../../configurables';
-import { Wallet, Provider } from 'fuels';
 import { AuthService } from '../../api/auth';
 
 import {
-  IAuthCreateRequest,
-  IAuthService,
-  IBakoSafeAuth,
+  type IAuthCreateRequest,
+  type IAuthService,
+  type IBakoSafeAuth,
+  type ISelectWorkspaceResponse,
   TypeUser,
-  ISelectWorkspaceResponse,
-  Workspace,
+  type Workspace,
 } from './types';
 
 export class Auth {

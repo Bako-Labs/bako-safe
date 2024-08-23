@@ -1,9 +1,9 @@
-import { Provider } from 'fuels';
-import { IPayloadVault, Vault } from '../../src/modules';
+import type { Provider } from 'fuels';
+import type { IBakoSafeAuth } from '../../src/api';
+import { type IPayloadVault, Vault } from '../../src/modules';
+import { DEFAULT_BALANCE_VALUE, VALUES_DEFAULT_TO_MUL } from '../mocks/assets';
 import { rootWallet } from './rootWallet';
 import { sendPredicateCoins } from './sendCoins';
-import { IBakoSafeAuth } from '../../src/api';
-import { DEFAULT_BALANCE_VALUE, VALUES_DEFAULT_TO_MUL } from '../mocks/assets';
 
 //todo: remove else, and move assetsId to required params
 export const newVault = async (
@@ -30,11 +30,11 @@ export const newVault = async (
 
   if (assetIds) {
     for await (const assetId of assetIds) {
-      await sendPredicateCoins(vault!, new_balance, assetId, rootWallet);
+      await sendPredicateCoins(vault, new_balance, assetId, rootWallet);
     }
   } else {
     const baseAssetId = vault.provider.getBaseAssetId();
-    await sendPredicateCoins(vault!, new_balance, baseAssetId, rootWallet);
+    await sendPredicateCoins(vault, new_balance, baseAssetId, rootWallet);
   }
 
   return vault;

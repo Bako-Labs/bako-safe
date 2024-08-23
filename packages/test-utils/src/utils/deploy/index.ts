@@ -1,15 +1,15 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
-  BN,
-  bn,
-  BytesLike,
+  type BN,
+  type BytesLike,
   ContractFactory,
-  DeployContractOptions,
-  JsonAbi,
-  Predicate,
-  Provider,
+  type DeployContractOptions,
+  type JsonAbi,
+  type Predicate,
+  type Provider,
+  bn,
 } from 'fuels';
-import { join } from 'path';
-import { readFileSync } from 'fs';
 import { ContractAbi__factory } from '../../types/sway';
 
 export class BakoContractDeploy extends ContractFactory {
@@ -51,12 +51,13 @@ export class BakoContractDeploy extends ContractFactory {
 
 export const createTransactionDeploy = async (
   provider: Provider,
+  // biome-ignore lint/suspicious/noExplicitAny: in this case, we need it to be any
   vault: Predicate<any>,
-  maxFee?: BN | number,
+  _maxFee?: BN | number,
 ) => {
   const byteCodePath = join(
     __dirname,
-    `../../sway/contract/out/debug/contract.bin`,
+    '../../sway/contract/out/debug/contract.bin',
   );
 
   const byteCode = readFileSync(byteCodePath);

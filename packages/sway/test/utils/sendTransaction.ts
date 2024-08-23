@@ -1,9 +1,9 @@
 import {
-  hexlify,
-  Provider,
-  BytesLike,
-  TransactionRequest,
+  type BytesLike,
+  type Provider,
+  type TransactionRequest,
   TransactionResponse,
+  hexlify,
 } from 'fuels';
 
 export async function sendTransaction(

@@ -1,5 +1,5 @@
-import { Wallet, Address } from 'fuels';
-import { IBakoSafeAuth, TransactionService } from '../../src/api';
+import { Address, Wallet } from 'fuels';
+import { type IBakoSafeAuth, TransactionService } from '../../src/api';
 
 import { accounts } from '../mocks';
 import { LocalProvider } from './provider';

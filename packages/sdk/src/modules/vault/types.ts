@@ -1,13 +1,17 @@
-import { Provider, TransactionCreate, TransactionRequestLike } from 'fuels';
-import { IBakoSafeAuth } from '../../api/auth/types';
-import {
+import type {
+  Provider,
+  TransactionCreate,
+  TransactionRequestLike,
+} from 'fuels';
+import type { ITransactionResume, TransactionType } from '../../api';
+import type { IBakoSafeAuth } from '../../api/auth/types';
+import type {
   IListTransactions,
   IPredicate,
   IPredicateService,
 } from '../../api/predicates';
-import { IFormatTransfer, Transfer } from '../transfers';
-import { ITransactionResume, TransactionType } from '../../api';
-import { IPagination } from '../../api/utils/pagination';
+import type { IPagination } from '../../api/utils/pagination';
+import type { IFormatTransfer, Transfer } from '../transfers';
 
 export interface JsonAbiType {
   typeId: number;
@@ -38,7 +42,7 @@ export enum EConfigTypes {
 export interface IConfVault {
   network: string;
   chainId: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export enum ECreationtype {

@@ -1,18 +1,16 @@
 import {
   Address,
+  type BN,
+  type BytesLike,
   InputType,
-  Predicate,
-  Resource,
+  type Resource,
   ScriptTransactionRequest,
   arrayify,
-  hexlify,
-  BN,
-  BytesLike,
   bn,
+  hexlify,
 } from 'fuels';
-import { Vault } from '../vault/Vault';
-import { IAssetGroupByTo } from '../../utils/assets';
-import { estimateFee } from './fee';
+import type { IAssetGroupByTo } from '../../utils/assets';
+import type { Vault } from '../vault/Vault';
 import { BaseTransfer } from './BaseTransfer';
 
 interface BakoSafeScriptTransactionConstructor {

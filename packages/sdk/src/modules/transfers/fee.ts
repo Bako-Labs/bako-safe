@@ -1,4 +1,9 @@
-import { TransactionRequest, Provider, BN, transactionRequestify } from 'fuels';
+import {
+  type BN,
+  type Provider,
+  type TransactionRequest,
+  transactionRequestify,
+} from 'fuels';
 
 export const estimateFee = async (
   transaction: TransactionRequest,

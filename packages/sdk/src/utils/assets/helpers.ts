@@ -1,20 +1,22 @@
 import { assets } from '../../../test/mocks';
-import { IAsset } from './types';
+import type { IAsset } from './types';
 const assetsList: IAsset[] = [
   {
     name: 'Etherum',
     slug: 'ETH',
-    assetId: assets['ETH'],
+    assetId: assets.ETH,
   },
   {
     name: 'Dai',
     slug: 'DAI',
-    assetId: assets['DAI'],
+    // @ts-ignore
+    assetId: assets.DAI,
   },
   {
     name: 'sEther',
     slug: 'sETH',
-    assetId: assets['sETH'],
+    // @ts-ignore
+    assetId: assets.sETH,
   },
 ];
 

@@ -1,4 +1,4 @@
-import { BN } from 'fuels';
+import type { BN } from 'fuels';
 
 export type IAsset = {
   name: string;

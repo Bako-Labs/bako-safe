@@ -1,18 +1,18 @@
 import {
+  type TransactionRequest,
+  TransactionResponse,
   bn,
   calculateGasFee,
   hexlify,
-  TransactionRequest,
-  TransactionResponse,
 } from 'fuels';
+import { delay } from '../../../test/utils';
 import {
-  ITransaction,
-  ITransactionResume,
-  ITransactionService,
+  type ITransaction,
+  type ITransactionResume,
+  type ITransactionService,
   TransactionStatus,
 } from '../../api';
-import { Vault } from '../vault/Vault';
-import { delay } from '../../../test/utils';
+import type { Vault } from '../vault/Vault';
 import { FAKE_WITNESSES, maxSigners } from './fee';
 
 export interface BaseTransferLike<T extends TransactionRequest> {
@@ -46,12 +46,12 @@ export class BaseTransfer<T extends TransactionRequest> {
     BakoSafeTransaction,
     BakoSafeTransactionId,
   }: BaseTransferLike<T>) {
-    this.name = name!;
+    this.name = name;
     this.vault = vault;
     this.service = service;
     this.transactionRequest = transactionRequest;
-    this.BakoSafeTransaction = BakoSafeTransaction!;
-    this.BakoSafeTransactionId = BakoSafeTransactionId!;
+    this.BakoSafeTransaction = BakoSafeTransaction ?? ({} as ITransaction);
+    this.BakoSafeTransactionId = BakoSafeTransactionId ?? '';
 
     this.witnesses = [];
   }
@@ -70,6 +70,7 @@ export class BaseTransfer<T extends TransactionRequest> {
   }
 
   // get trasaction status on bakosafe-api
+  // @ts-ignore
   private getStatus(): TransactionStatus {
     // get transaction status on BakoSafeAPI
     // set BakoSafeTransaction status
@@ -134,7 +135,7 @@ export class BaseTransfer<T extends TransactionRequest> {
 
     await this.syncTrasanction();
 
-    if (this.BakoSafeTransaction.status == TransactionStatus.PENDING_SENDER) {
+    if (this.BakoSafeTransaction.status === TransactionStatus.PENDING_SENDER) {
       await this.service.send(this.BakoSafeTransactionId);
       await this.syncTrasanction();
     }
@@ -151,15 +152,15 @@ export class BaseTransfer<T extends TransactionRequest> {
   ): Promise<T> {
     // Estimate the gas usage for the predicate
     const predicateGasUsed = await vault.maxGasUsed();
+    let txRequest = transactionRequest;
 
-    const transactionCost =
-      await vault.provider.getTransactionCost(transactionRequest);
-    transactionRequest.maxFee = transactionCost.maxFee;
-    transactionRequest = await vault.fund(transactionRequest, transactionCost);
+    const transactionCost = await vault.provider.getTransactionCost(txRequest);
+    txRequest.maxFee = transactionCost.maxFee;
+    txRequest = await vault.fund(txRequest, transactionCost);
 
     // Calculate the total gas usage for the transaction
     let totalGasUsed = bn(0);
-    transactionRequest.inputs.forEach((input) => {
+    txRequest.inputs.forEach((input) => {
       if ('predicate' in input && input.predicate) {
         input.witnessIndex = 0;
         input.predicateGasUsed = undefined;
@@ -167,17 +168,17 @@ export class BaseTransfer<T extends TransactionRequest> {
       }
     });
 
-    const witnesses = Array.from(transactionRequest.witnesses);
+    const witnesses = Array.from(txRequest.witnesses);
     const fakeSignatures = Array.from(
       { length: maxSigners },
       () => FAKE_WITNESSES,
     );
-    transactionRequest.witnesses.push(...fakeSignatures);
+    txRequest.witnesses.push(...fakeSignatures);
 
     // Estimate the max fee for the transaction and calculate fee difference
     const { gasPriceFactor } = vault.provider.getGasConfig();
     const { maxFee, gasPrice } = await vault.provider.estimateTxGasAndFee({
-      transactionRequest,
+      transactionRequest: txRequest,
     });
 
     const predicateSuccessFeeDiff = calculateGasFee({
@@ -186,14 +187,14 @@ export class BaseTransfer<T extends TransactionRequest> {
       gasPrice,
     });
 
-    transactionRequest.maxFee = maxFee.add(predicateSuccessFeeDiff);
+    txRequest.maxFee = maxFee.add(predicateSuccessFeeDiff);
 
     // Attach missing inputs (including estimated predicate gas usage) / outputs to the request
-    await vault.provider.estimateTxDependencies(transactionRequest);
+    await vault.provider.estimateTxDependencies(txRequest);
 
-    transactionRequest.witnesses = witnesses;
+    txRequest.witnesses = witnesses;
 
-    return transactionRequest;
+    return txRequest;
   }
 
   /**

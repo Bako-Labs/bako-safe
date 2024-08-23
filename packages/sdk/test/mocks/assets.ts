@@ -25,12 +25,12 @@ export const DEFAULT_BALANCE_VALUE = bn.parseUnits(
 );
 
 export const DEFAULT_BALANCES = [
-  { assetId: assets['ETH'], amount: DEFAULT_BALANCE_VALUE },
+  { assetId: assets.ETH, amount: DEFAULT_BALANCE_VALUE },
 ];
 
 export const DEFAULT_MULTI_ASSET_BALANCES = [
-  { assetId: assets['ETH'], amount: DEFAULT_BALANCE_VALUE },
-  { assetId: assets['BTC'], amount: DEFAULT_BALANCE_VALUE },
-  { assetId: assets['USDC'], amount: DEFAULT_BALANCE_VALUE },
-  { assetId: assets['UNI'], amount: DEFAULT_BALANCE_VALUE },
+  { assetId: assets.ETH, amount: DEFAULT_BALANCE_VALUE },
+  { assetId: assets.BTC, amount: DEFAULT_BALANCE_VALUE },
+  { assetId: assets.USDC, amount: DEFAULT_BALANCE_VALUE },
+  { assetId: assets.UNI, amount: DEFAULT_BALANCE_VALUE },
 ];

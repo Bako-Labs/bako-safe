@@ -1,11 +1,11 @@
-import { Provider } from 'fuels';
-import { IFormatTransfer } from '../../src/modules';
+import type { Provider } from 'fuels';
+import { v4 as uuidv4 } from 'uuid';
+import type { IFormatTransfer } from '../../src/modules';
 import {
-  assets,
   DEFAULT_BALANCES,
   DEFAULT_MULTI_ASSET_BALANCES,
+  assets,
 } from './assets';
-import { v4 as uuidv4 } from 'uuid';
 
 export const DEFAULT_TRANSACTION_PAYLOAD = (
   address: string,
@@ -14,7 +14,7 @@ export const DEFAULT_TRANSACTION_PAYLOAD = (
   return {
     name: `tx_${uuidv4()}`,
     assets: DEFAULT_BALANCES.map((balance) => ({
-      assetId: !!provider ? provider.getBaseAssetId() : assets['ETH'],
+      assetId: provider ? provider.getBaseAssetId() : assets.ETH,
       amount: balance.amount.format(),
       to: address,
     })),

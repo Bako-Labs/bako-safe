@@ -1,19 +1,19 @@
-import { ZeroBytes32, Address, bn, Provider } from 'fuels';
+import { Address, Provider, ZeroBytes32, bn } from 'fuels';
 import {
+  type PredicateAbiInputs,
   PredicateAbi__factory,
-  PredicateAbiInputs,
 } from '../../../sdk/src/sway/predicates';
 import { accounts } from '../../../sdk/test/mocks';
-import { seedAccount } from './seedAccount';
 import { CHAIN_URL } from './constants';
+import { seedAccount } from './seedAccount';
 
 export const createPredicate = async ({
   amount = '0.1',
   minSigners = 3,
   signers = [
-    accounts['USER_1'].account,
-    accounts['USER_3'].account,
-    accounts['USER_4'].account,
+    accounts.USER_1.account,
+    accounts.USER_3.account,
+    accounts.USER_4.account,
   ],
 }: {
   amount: string;

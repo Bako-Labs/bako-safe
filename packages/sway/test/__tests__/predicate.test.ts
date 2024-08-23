@@ -1,24 +1,20 @@
-import {
-  Address,
-  Provider,
-  Wallet,
-  arrayify,
-} from 'fuels';
+import { Address, Provider, TransactionStatus, Wallet, arrayify } from 'fuels';
 
 import { ScriptAbi__factory } from '../../../sdk/src/sway/scripts/';
 
+import { beforeAll, describe, expect, test } from 'bun:test';
+import { BakoSafe } from '../../../sdk';
 import { accounts } from '../../../sdk/test/mocks';
 import { signin } from '../../../sdk/test/utils/signin';
+import { CHAIN_URL } from '../../../test-utils';
 import {
+  ERROR_DUPLICATED_WITNESSES,
+  WEBAUTHN,
+  createPredicate,
   createTransactionScript,
   sendTransaction,
   signTransaction,
-  CHAIN_URL,
-  createPredicate,
-  ERROR_DUPLICATED_WITNESSES,
-  WEBAUTHN,
 } from '../utils';
-import { BakoSafe } from '../../../sdk';
 
 describe('[SWAY_PREDICATE] Send transfers', () => {
   let provider: Provider;
@@ -26,7 +22,7 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
   BakoSafe.setProviders({
     CHAIN_URL,
     SERVER_URL: 'http://localhost:3333',
-  })
+  });
 
   beforeAll(async () => {
     //todo: move to dynamic url of chain and remove of the BakoSafe
@@ -39,9 +35,9 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
       amount: '0.1',
       minSigners: 3,
       signers: [
-        accounts['USER_1'].account,
-        accounts['USER_3'].account,
-        accounts['USER_4'].account,
+        accounts.USER_1.account,
+        accounts.USER_3.account,
+        accounts.USER_4.account,
       ],
     });
 
@@ -56,7 +52,8 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     ]);
     const result = await response.waitForResult();
 
-    expect(result.status).toBe('success');
+    expect(result.status).not.toBeNull();
+    expect(result.status).toBe(TransactionStatus.success);
   });
 
   test('With duplicated witnesses', async () => {
@@ -110,7 +107,7 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     const predicate = await createPredicate({
       amount: '0.1',
       minSigners: 1,
-      signers: [accounts['USER_1'].account],
+      signers: [accounts.USER_1.account],
     });
 
     //@ts-ignore
@@ -126,10 +123,11 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     ]);
 
     const res = await result.waitForResult();
-    expect(res.status).toBe('success');
+    expect(res.status).not.toBeNull();
+    expect(res.status).toBe(TransactionStatus.success);
 
     // verify if on the script, recover of static signature is equal to the static address
     //@ts-ignore
-    expect(res.receipts[0]['data']).toBe('0x01');
+    expect(res.receipts[0].data).toBe('0x01');
   });
 });

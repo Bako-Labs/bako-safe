@@ -1,9 +1,9 @@
-import { TransactionRequest } from 'fuels';
+import type { TransactionRequest } from 'fuels';
 
-import { ECreationTransactiontype, TransferFactory } from './types';
+import { ECreationTransactiontype, type TransferFactory } from './types';
 
-import { identifyCreateTransactionParams } from './helpers';
 import { BaseTransfer } from './BaseTransfer';
+import { identifyCreateTransactionParams } from './helpers';
 
 /**
  * `Transfer` are extension of ScriptTransactionRequest, to create and send transactions

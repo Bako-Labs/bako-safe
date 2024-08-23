@@ -1,6 +1,6 @@
-import axios, { AxiosInstance } from 'axios';
-import { IBakoSafeAuth } from './auth/types';
+import axios, { type AxiosInstance } from 'axios';
 import { BakoSafe } from '../../configurables';
+import type { IBakoSafeAuth } from './auth/types';
 
 export class Api {
   public client: AxiosInstance;

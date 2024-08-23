@@ -1,4 +1,4 @@
-import { WalletUnlocked, TransactionRequest, Provider } from 'fuels';
+import type { Provider, TransactionRequest, WalletUnlocked } from 'fuels';
 
 export async function signTransaction(
   wallet: WalletUnlocked,

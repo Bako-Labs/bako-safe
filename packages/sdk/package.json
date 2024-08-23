@@ -1,7 +1,7 @@
 {
-  "name": "bakosafe",
+  "name": "@bako-labs/bako-sdk",
   "version": "0.0.68",
-  "author": "Infinybase - Guilherme Roque",
+  "author": "Bako Labs <contact@bako.global>",
   "description": "A signature validation package built based on sway in the fuel network",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -13,14 +13,15 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsup",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
-    "test:watch:all": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --verbose --watch",
-    "test:name": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand -t"
+    "test": "bun test",
+    "test:watch:all": "bun test --watch",
+    "test:name": "bun test -t",
+    "lint:check": "biome check --apply-unsafe .",
+    "lint:ci": "biome lint --max-diagnostics=1000 --diagnostic-level=error .",
+    "format": "biome format --write ."
   },
   "license": "Apache-2.0",
   "devDependencies": {

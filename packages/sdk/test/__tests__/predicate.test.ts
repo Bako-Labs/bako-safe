@@ -1,13 +1,14 @@
+import { beforeAll, describe, expect, test } from 'bun:test';
 import { Provider, getRandomB256 } from 'fuels';
-import { signin, newVault, IUserAuth, authService } from '../utils';
-import { IPayloadVault, Vault } from '../../src/modules';
 import { BakoSafe } from '../../configurables';
+import type { IPredicateVersion } from '../../src/api';
+import { type IPayloadVault, Vault } from '../../src/modules';
 import {
   DEFAULT_BALANCES,
-  accounts,
   DEFAULT_TRANSACTION_PAYLOAD,
+  accounts,
 } from '../mocks';
-import { IPredicateVersion } from '../../src/api';
+import { type IUserAuth, authService, newVault, signin } from '../utils';
 
 describe('[PREDICATES]', () => {
   let auth: IUserAuth;
@@ -23,9 +24,9 @@ describe('[PREDICATES]', () => {
       provider.url,
     );
     signers = [
-      accounts['USER_1'].address,
-      accounts['USER_2'].address,
-      accounts['USER_3'].address,
+      accounts.USER_1.address,
+      accounts.USER_2.address,
+      accounts.USER_3.address,
     ];
     currentVersion = await Vault.BakoSafeGetCurrentVersion();
     const { data: versions } = await Vault.BakoSafeGetVersions();
@@ -41,7 +42,7 @@ describe('[PREDICATES]', () => {
         SIGNERS: signers,
         network: provider.url,
       },
-      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+      BakoSafeAuth: auth.USER_1.BakoSafeAuth,
     };
 
     await expect(
@@ -77,11 +78,7 @@ describe('[PREDICATES]', () => {
   });
 
   test('Created an valid vault', async () => {
-    const vault = await newVault(
-      signers,
-      provider,
-      auth['USER_1'].BakoSafeAuth,
-    );
+    const vault = await newVault(signers, provider, auth.USER_1.BakoSafeAuth);
     expect((await vault.getBalances()).balances).toStrictEqual(
       DEFAULT_BALANCES,
     );
@@ -92,7 +89,7 @@ describe('[PREDICATES]', () => {
       configurable: {
         network: provider.url,
       },
-      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+      BakoSafeAuth: auth.USER_1.BakoSafeAuth,
     };
 
     await expect(
@@ -123,7 +120,7 @@ describe('[PREDICATES]', () => {
         SIGNERS: signers,
         network: provider.url,
       },
-      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+      BakoSafeAuth: auth.USER_1.BakoSafeAuth,
     };
 
     VaultPayload.configurable.HASH_PREDICATE = 'hash_predicate';
@@ -131,7 +128,7 @@ describe('[PREDICATES]', () => {
       'HASH_PREDICATE must be a b256',
     );
 
-    delete VaultPayload.configurable.HASH_PREDICATE;
+    VaultPayload.configurable.HASH_PREDICATE = undefined;
     VaultPayload.configurable.SIGNATURES_COUNT = undefined;
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
       'SIGNATURES_COUNT must be an integer',
@@ -167,7 +164,7 @@ describe('[PREDICATES]', () => {
         SIGNERS: signers,
         network: provider.url,
       },
-      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+      BakoSafeAuth: auth.USER_1.BakoSafeAuth,
     };
 
     const vault = await Vault.create(VaultPayload);
@@ -190,12 +187,12 @@ describe('[PREDICATES]', () => {
         SIGNERS: signers,
         network: provider.url,
       },
-      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+      BakoSafeAuth: auth.USER_1.BakoSafeAuth,
       version: vaultVersion,
     };
     const vault = await Vault.create(VaultPayload);
     const auxVault = await Vault.create({
-      ...auth['USER_1'].BakoSafeAuth,
+      ...auth.USER_1.BakoSafeAuth,
       id: vault.BakoSafeVaultId,
     });
 
@@ -211,7 +208,7 @@ describe('[PREDICATES]', () => {
         SIGNERS: signers,
         network: provider.url,
       },
-      BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+      BakoSafeAuth: auth.USER_1.BakoSafeAuth,
     };
     const vault = await Vault.create(VaultPayload);
 
@@ -221,13 +218,9 @@ describe('[PREDICATES]', () => {
   test(
     'Instance an old Vault by BakoSafe Predicate ID',
     async () => {
-      const vault = await newVault(
-        signers,
-        provider,
-        auth['USER_1'].BakoSafeAuth,
-      );
+      const vault = await newVault(signers, provider, auth.USER_1.BakoSafeAuth);
       const auxVault = await Vault.create({
-        ...auth['USER_1'].BakoSafeAuth,
+        ...auth.USER_1.BakoSafeAuth,
         id: vault.BakoSafeVaultId,
       });
       expect(auxVault.BakoSafeVaultId).toStrictEqual(vault.BakoSafeVaultId);
@@ -246,13 +239,9 @@ describe('[PREDICATES]', () => {
   test(
     'Instance an old Vault by predicate address',
     async () => {
-      const vault = await newVault(
-        signers,
-        provider,
-        auth['USER_1'].BakoSafeAuth,
-      );
+      const vault = await newVault(signers, provider, auth.USER_1.BakoSafeAuth);
       const auxVault = await Vault.create({
-        ...auth['USER_1'].BakoSafeAuth,
+        ...auth.USER_1.BakoSafeAuth,
         predicateAddress: vault.address.toString(),
       });
       expect(auxVault.BakoSafeVaultId).toStrictEqual(vault.BakoSafeVaultId);
@@ -297,11 +286,11 @@ describe('[PREDICATES]', () => {
       const vault = await newVault(
         signers,
         provider,
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         5,
       );
-      const tx_1 = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
-      const tx_2 = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
+      const tx_1 = DEFAULT_TRANSACTION_PAYLOAD(accounts.STORE.address);
+      const tx_2 = DEFAULT_TRANSACTION_PAYLOAD(accounts.STORE.address);
 
       const transaction = await vault.BakoSafeIncludeTransaction(tx_1);
       await vault.BakoSafeIncludeTransaction(tx_2);
@@ -309,7 +298,7 @@ describe('[PREDICATES]', () => {
       await signin(
         transaction.getHashTxId(),
         'USER_2',
-        auth['USER_2'].BakoSafeAuth,
+        auth.USER_2.BakoSafeAuth,
         transaction.BakoSafeTransactionId,
       );
 

@@ -25,7 +25,7 @@ export const BakoSafe = {
     configurableKeys.forEach((key) => {
       if (key in defaultConfig && !unEditable.includes(key)) {
         // @ts-ignore
-        defaultConfig[key] = params[key]!;
+        defaultConfig[key] = params[key];
       }
     });
   },
@@ -35,7 +35,7 @@ export const BakoSafe = {
     configurableKeys.forEach((key) => {
       if (key in gasConfig) {
         // @ts-ignore
-        gasConfig[key] = params[key]!;
+        gasConfig[key] = params[key];
       }
     });
   },

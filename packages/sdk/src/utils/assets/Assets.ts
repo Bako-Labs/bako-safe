@@ -1,6 +1,5 @@
-import { BN, Coin, Provider, Resource, bn } from 'fuels';
-import { assets } from '../../../test/mocks';
-import { IAssetGroupById, IAssetGroupByTo, ITransferAsset } from './types';
+import { type BN, type Coin, type Provider, type Resource, bn } from 'fuels';
+import type { IAssetGroupById, IAssetGroupByTo, ITransferAsset } from './types';
 
 export class Asset {
   /**
@@ -65,11 +64,11 @@ export class Asset {
 
     const baseAssetId = await provider.getBaseAssetId();
 
-    let _assets_aux = _assets;
-    let containETH = !!_assets_aux[baseAssetId];
+    const _assets_aux = _assets;
+    const containETH = !!_assets_aux[baseAssetId];
 
     if (containETH) {
-      let value = bn(_fee).add(_assets_aux[baseAssetId]);
+      const value = bn(_fee).add(_assets_aux[baseAssetId]);
       _assets_aux[baseAssetId] = value;
     } else {
       _assets_aux[baseAssetId] = bn().add(_fee);
@@ -96,13 +95,12 @@ export class Asset {
           ...asset,
           //utxo: predicateCoin.id,
         };
-      } else {
-        return {
-          ...asset,
-          onPredicate: '',
-          //utxo: '',
-        };
       }
+      return {
+        ...asset,
+        onPredicate: '',
+        //utxo: '',
+      };
     });
   }
 }

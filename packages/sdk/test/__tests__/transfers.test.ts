@@ -1,43 +1,42 @@
-import { Provider, TransactionStatus, Wallet } from 'fuels';
+import { beforeAll, describe, expect, test } from 'bun:test';
 import { ContractAbi__factory, contractBytecode } from 'bakosafe-test-utils';
-import { authService, delay, IUserAuth, newVault, signin } from '../utils';
+import { Provider, Wallet } from 'fuels';
+import { v4 as uuidv4 } from 'uuid';
 import { BakoSafe } from '../../configurables';
-import { accounts, assets, DEFAULT_BALANCE_VALUE, networks } from '../mocks';
+import { Vault } from '../../src/modules/vault/Vault';
+import type { IPayloadVault } from '../../src/modules/vault/types';
+import { DEFAULT_BALANCE_VALUE, accounts, assets, networks } from '../mocks';
 import {
   DEFAULT_MULTI_ASSET_TRANSACTION_PAYLOAD,
   DEFAULT_TRANSACTION_PAYLOAD,
 } from '../mocks/transactions';
-import { Vault } from '../../src/modules/vault/Vault';
-import { IPayloadVault } from '../../src/modules/vault/types';
-import { v4 as uuidv4 } from 'uuid';
+import { type IUserAuth, authService, delay, newVault, signin } from '../utils';
 
 describe('[TRANSFERS]', () => {
-  let chainId: number;
   let auth: IUserAuth;
   let provider: Provider;
   let signers: string[];
 
   //example to sett up the provider
   BakoSafe.setProviders({
-    CHAIN_URL: 'http://localhost:4000/v1/graphql',
+    CHAIN_URL: 'http://localhost:4001/v1/graphql',
     SERVER_URL: 'http://localhost:3333',
     CLIENT_URL: 'http://localhost:5174',
   });
 
   beforeAll(async () => {
     provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
-    chainId = provider.getChainId();
     auth = await authService(
       ['FULL', 'USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
       provider.url,
     );
 
     signers = [
-      accounts['USER_1'].address,
-      accounts['USER_2'].address,
-      accounts['USER_3'].address,
+      accounts.USER_1.address,
+      accounts.USER_2.address,
+      accounts.USER_3.address,
     ];
-  }, 30 * 1000);
+  });
 
   test(
     'Created an valid transaction to vault and instance old transaction',
@@ -45,10 +44,10 @@ describe('[TRANSFERS]', () => {
       const vault = await newVault(
         signers,
         provider,
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         100,
       );
-      const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
+      const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts.STORE.address);
 
       const transaction = await vault.BakoSafeIncludeTransaction(tx);
 
@@ -57,7 +56,7 @@ describe('[TRANSFERS]', () => {
         await signin(
           transaction.getHashTxId(),
           'USER_3',
-          auth['USER_3'].BakoSafeAuth,
+          auth.USER_3.BakoSafeAuth,
           transaction.BakoSafeTransactionId,
         );
 
@@ -65,7 +64,7 @@ describe('[TRANSFERS]', () => {
         await signin(
           transaction.getHashTxId(),
           'USER_2',
-          auth['USER_2'].BakoSafeAuth,
+          auth.USER_2.BakoSafeAuth,
           transaction.BakoSafeTransactionId,
         );
       };
@@ -74,7 +73,7 @@ describe('[TRANSFERS]', () => {
       await signin(
         transaction.getHashTxId(),
         'USER_1',
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         transaction.BakoSafeTransactionId,
       );
 
@@ -84,7 +83,7 @@ describe('[TRANSFERS]', () => {
 
       oldTransaction.send();
 
-      // this process isan`t async, next line is async
+      // this process isn't async, next line is async
       signTimeout();
       const result = await transaction.wait();
 
@@ -99,17 +98,17 @@ describe('[TRANSFERS]', () => {
       const vault = await newVault(
         signers,
         provider,
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         100,
       );
-      const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
+      const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts.STORE.address);
 
       const transaction = await vault.BakoSafeIncludeTransaction(tx);
       expect(
         await signin(
           transaction.getHashTxId(),
           'USER_2',
-          auth['USER_2'].BakoSafeAuth,
+          auth.USER_2.BakoSafeAuth,
           transaction.BakoSafeTransactionId,
         ),
       ).toBe(true);
@@ -117,7 +116,7 @@ describe('[TRANSFERS]', () => {
         await signin(
           transaction.getHashTxId(),
           'USER_1',
-          auth['USER_1'].BakoSafeAuth,
+          auth.USER_1.BakoSafeAuth,
           transaction.BakoSafeTransactionId,
         ),
       ).toBe(true);
@@ -125,7 +124,7 @@ describe('[TRANSFERS]', () => {
         await signin(
           transaction.getHashTxId(),
           'USER_3',
-          auth['USER_3'].BakoSafeAuth,
+          auth.USER_3.BakoSafeAuth,
           transaction.BakoSafeTransactionId,
         ),
       ).toBe(true);
@@ -133,7 +132,7 @@ describe('[TRANSFERS]', () => {
         await signin(
           transaction.getHashTxId(),
           'USER_4',
-          auth['USER_4'].BakoSafeAuth,
+          auth.USER_4.BakoSafeAuth,
           transaction.BakoSafeTransactionId,
         ),
       ).toBe(false);
@@ -150,10 +149,10 @@ describe('[TRANSFERS]', () => {
       const vault = await newVault(
         signers,
         provider,
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         100,
       );
-      const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
+      const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts.STORE.address);
 
       // Create a transaction
       const transaction = await vault.BakoSafeIncludeTransaction(tx);
@@ -175,12 +174,8 @@ describe('[TRANSFERS]', () => {
   );
 
   test('Send an transaction to with vault without balance', async () => {
-    const vault = await newVault(
-      signers,
-      provider,
-      auth['USER_1'].BakoSafeAuth,
-    );
-    const tx_a = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
+    const vault = await newVault(signers, provider, auth.USER_1.BakoSafeAuth);
+    const tx_a = DEFAULT_TRANSACTION_PAYLOAD(accounts.STORE.address);
     tx_a.assets[0].amount = '100';
 
     await expect(vault.BakoSafeIncludeTransaction(tx_a)).rejects.toThrow(
@@ -190,7 +185,7 @@ describe('[TRANSFERS]', () => {
 
   test('Sent a transaction without BakoSafeAuth', async () => {
     const vault = await newVault(signers, provider, undefined, 100);
-    const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts['STORE'].address);
+    const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts.STORE.address);
 
     const transaction = await vault.BakoSafeIncludeTransaction(tx);
     transaction.witnesses = [
@@ -214,7 +209,7 @@ describe('[TRANSFERS]', () => {
   test(
     'Send a transaction with production fuel node',
     async () => {
-      const _provider = await Provider.create(networks['DEVNET']);
+      const _provider = await Provider.create(networks.DEVNET);
       //valid only for devnet
       const HASH_PREDICATE =
         '0xb2bf0410c0574e5a9abf4ac5579cdcbf5bd33c1015b2a74bb34acc9069b7dc8a';
@@ -226,7 +221,7 @@ describe('[TRANSFERS]', () => {
           network: _provider.url,
           HASH_PREDICATE,
         },
-        BakoSafeAuth: auth['USER_1'].BakoSafeAuth,
+        BakoSafeAuth: auth.USER_1.BakoSafeAuth,
       };
 
       const _vault = await Vault.create(VaultPayload);
@@ -238,7 +233,7 @@ describe('[TRANSFERS]', () => {
             assets: [
               {
                 assetId: _provider.getBaseAssetId(),
-                to: accounts['STORE'].address,
+                to: accounts.STORE.address,
                 amount: DEFAULT_BALANCE_VALUE.format(),
               },
             ],
@@ -254,7 +249,7 @@ describe('[TRANSFERS]', () => {
           assets: [
             {
               assetId: _provider.getBaseAssetId(),
-              to: accounts['STORE'].address,
+              to: accounts.STORE.address,
               amount: '0.5',
             },
           ],
@@ -270,7 +265,7 @@ describe('[TRANSFERS]', () => {
       const vault = await newVault(
         signers,
         provider,
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         100,
         1,
       );
@@ -290,7 +285,7 @@ describe('[TRANSFERS]', () => {
       await signin(
         transaction.getHashTxId(),
         'USER_1',
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         transaction.BakoSafeTransactionId,
       );
 
@@ -316,7 +311,7 @@ describe('[TRANSFERS]', () => {
       const vault = await newVault(
         signers,
         provider,
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         100,
         1,
       );
@@ -344,7 +339,7 @@ describe('[TRANSFERS]', () => {
       await signin(
         transaction.getHashTxId(),
         'USER_1',
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         transaction.BakoSafeTransactionId,
       );
 
@@ -379,7 +374,7 @@ describe('[TRANSFERS]', () => {
       const vault = await newVault(
         signers,
         provider,
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         100,
         1,
         txAssets,
@@ -396,7 +391,7 @@ describe('[TRANSFERS]', () => {
       await signin(
         transaction.getHashTxId(),
         'USER_1',
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         transaction.BakoSafeTransactionId,
       );
       await transaction.send();
@@ -427,7 +422,7 @@ describe('[TRANSFERS]', () => {
       const vault = await newVault(
         signers,
         provider,
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         100,
         1,
         Object.values(assets),
@@ -443,7 +438,7 @@ describe('[TRANSFERS]', () => {
       await signin(
         transaction.getHashTxId(),
         'USER_1',
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         transaction.BakoSafeTransactionId,
       );
       await transaction.send();
@@ -469,7 +464,7 @@ describe('[TRANSFERS]', () => {
     const vault = await newVault(
       signers,
       provider,
-      auth['USER_1'].BakoSafeAuth,
+      auth.USER_1.BakoSafeAuth,
       100,
       1,
       txAssets,
@@ -490,13 +485,13 @@ describe('[TRANSFERS]', () => {
     const vault = await newVault(
       signers,
       provider,
-      auth['USER_1'].BakoSafeAuth,
+      auth.USER_1.BakoSafeAuth,
       5000000,
       1,
     );
 
     // Deploy contract and set account to vault
-    const wallet = Wallet.fromPrivateKey(auth['FULL'].privateKey, provider);
+    const wallet = Wallet.fromPrivateKey(auth.FULL.privateKey, provider);
     const deploy = await ContractAbi__factory.deployContract(
       contractBytecode,
       wallet,
@@ -513,7 +508,7 @@ describe('[TRANSFERS]', () => {
     await signin(
       transaction.getHashTxId(),
       'USER_1',
-      auth['USER_1'].BakoSafeAuth,
+      auth.USER_1.BakoSafeAuth,
       transaction.BakoSafeTransactionId,
     );
 

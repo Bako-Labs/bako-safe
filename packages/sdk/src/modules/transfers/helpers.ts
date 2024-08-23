@@ -1,34 +1,37 @@
 import {
-  bn,
-  hashMessage,
   ScriptTransactionRequest,
   Signer,
-  transactionRequestify,
-  TransactionRequestLike,
+  type TransactionRequestLike,
   TransactionType,
+  bn,
+  hashMessage,
+  transactionRequestify,
 } from 'fuels';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  type ITransaction,
+  TransactionService,
+  TransactionStatus,
+} from '../../api';
+import { Asset } from '../../utils/assets';
+import type { Vault } from '../vault/Vault';
 import { defaultValues } from '../vault/helpers';
-import { ITransaction, TransactionService, TransactionStatus } from '../../api';
+import { BaseTransfer } from './BaseTransfer';
+import { BakoSafeScriptTransaction } from './ScriptTransaction';
 import {
   ECreationTransactiontype,
-  ICreationTransaction,
-  IFormatTransfer,
-  TransferConstructor,
-  TransferFactory,
+  type ICreationTransaction,
+  type IFormatTransfer,
+  type TransferConstructor,
+  type TransferFactory,
   TransferInstanceError,
 } from './types';
-import { Vault } from '../vault/Vault';
-import { Asset } from '../../utils/assets';
-import { BakoSafeScriptTransaction } from './ScriptTransaction';
-import { v4 as uuidv4 } from 'uuid';
-import { Transfer } from './Transfer';
-import { BaseTransfer } from './BaseTransfer';
 
 export function recoverSigner(signer: string, tx_id: string) {
-  if (tx_id == '0x') return;
+  if (tx_id === '0x') return;
 
   const a = Signer.recoverAddress(hashMessage(tx_id), signer);
-  return a ? a.toString() : defaultValues['address'];
+  return a ? a.toString() : defaultValues.address;
 }
 export const getHashTxId = (
   script: TransactionRequestLike,
@@ -59,7 +62,7 @@ export const formatTransaction = async ({
     const script_t = new BakoSafeScriptTransaction();
     await script_t.instanceTransaction(_coins, vault, outputs, witnesses);
     return script_t;
-  } catch (e: any) {
+  } catch (e: unknown) {
     throw new Error(e);
   }
 };
@@ -73,7 +76,7 @@ export const isNewTransaction = async ({
     transfer &&
     Object.entries(transfer).length <= 3 &&
     Object.entries(transfer).length > 0 &&
-    typeof transfer != 'string' &&
+    typeof transfer !== 'string' &&
     'assets' in transfer &&
     !!vault;
   const isNew = validation;
@@ -157,7 +160,7 @@ export const isOldTransaction = async ({
         : await service.findByHash(transfer);
 
     const scriptTransactionRequest = await formatTransaction({
-      name: transaction.name!,
+      name: transaction.name,
       vault: vault,
       assets: transaction.assets,
       witnesses: transaction.resume.witnesses
@@ -168,7 +171,7 @@ export const isOldTransaction = async ({
     const data: TransferConstructor = {
       vault,
       service,
-      name: transaction.name!,
+      name: transaction.name,
       BakoSafeScript: scriptTransactionRequest,
       transactionRequest: transactionRequestify(scriptTransactionRequest),
       witnesses: transaction.resume.witnesses.map((witness) => witness.account),
@@ -197,7 +200,7 @@ export const isNewTransactionByScript = async ({
   const isScript =
     transfer &&
     Object.entries(transfer).length > 3 &&
-    typeof transfer != 'string' &&
+    typeof transfer !== 'string' &&
     'type' in transfer &&
     transfer.type === TransactionType.Script;
 
@@ -233,12 +236,11 @@ export const isNewTransactionByScript = async ({
       });
     }
 
-    const witnesses =
-      transaction && transaction.resume.witnesses
-        ? transaction.resume.witnesses
-            .map((witness) => witness.signature)
-            .filter((signature) => !!signature)
-        : [];
+    const witnesses = transaction?.resume.witnesses
+      ? transaction.resume.witnesses
+          .map((witness) => witness.signature)
+          .filter((signature) => !!signature)
+      : [];
 
     const data = {
       vault,
@@ -269,24 +271,25 @@ export const identifyCreateTransactionParams = async (
   try {
     const { data: oldData, is: isOld } = await isOldTransaction(param);
     const { data: newData, is: isNew } = await isNewTransaction(param);
-    const { data: sData, is: isScript } = await isNewTransactionByScript(param);
+    const { data: sData } = await isNewTransactionByScript(param);
 
     if (isOld && !!oldData) {
       return {
         type: ECreationTransactiontype.IS_OLD,
-        payload: oldData!,
+        payload: oldData,
       };
-    } else if (isNew && !!newData) {
+    }
+    if (isNew && !!newData) {
       return {
         type: ECreationTransactiontype.IS_NEW,
-        payload: newData!,
+        payload: newData,
       };
     }
     return {
       type: ECreationTransactiontype.IS_SCRIPT,
-      payload: sData!,
+      payload: sData,
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     throw new Error(e.message);
   }
 };

@@ -1,11 +1,11 @@
 import {
-  Predicate,
-  InputValue,
-  ScriptTransactionRequest,
-  bn,
   InputType,
-  hexlify,
+  type InputValue,
+  type Predicate,
+  ScriptTransactionRequest,
   arrayify,
+  bn,
+  hexlify,
 } from 'fuels';
 import { GAS_LIMIT, MAX_FEE } from './constants';
 

@@ -1,17 +1,13 @@
 import { Api } from '../api';
-import { IBakoSafeAuth } from '../auth/types';
-import { GetTransactionParams } from '../transactions';
-import {
+import type { IBakoSafeAuth } from '../auth/types';
+import type { GetTransactionParams } from '../transactions';
+import type {
   GetPredicateVersionParams,
   IPredicatePayload,
   IPredicateService,
 } from './types';
 
 export class PredicateService extends Api implements IPredicateService {
-  constructor(auth?: IBakoSafeAuth) {
-    super(auth);
-  }
-
   public async create(payload: IPredicatePayload) {
     const { data } = await this.client.post('/predicate', payload);
 

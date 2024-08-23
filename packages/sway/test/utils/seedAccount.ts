@@ -1,5 +1,5 @@
-import { AbstractAddress, BN, Provider, Wallet } from 'fuels';
-import { PRIVATE_KEY, GAS_LIMIT } from './constants';
+import { type AbstractAddress, type BN, type Provider, Wallet } from 'fuels';
+import { GAS_LIMIT, PRIVATE_KEY } from './constants';
 
 export async function seedAccount(
   address: AbstractAddress,

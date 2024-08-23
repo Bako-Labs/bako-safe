@@ -1,5 +1,5 @@
-import { Operation, TransactionRequest } from 'fuels';
-import { ITransferAsset } from '../../utils/assets';
+import type { Operation, TransactionRequest } from 'fuels';
+import type { ITransferAsset } from '../../utils/assets';
 
 export enum SortOptionTx {
   ASC = 'ASC',

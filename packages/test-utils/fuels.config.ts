@@ -8,5 +8,5 @@ export default createConfig({
   contracts: ['./src/sway/contract'],
   providerUrl: process.env.PROVIDER_URL,
   privateKey: process.env.PRIVATE_KEY,
-  output: './src/types/sway'
+  output: './src/types/sway',
 });

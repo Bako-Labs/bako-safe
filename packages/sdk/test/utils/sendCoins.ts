@@ -1,6 +1,6 @@
-import { BN, WalletUnlocked, bn } from 'fuels';
+import { type BN, type WalletUnlocked, bn } from 'fuels';
 import { BakoSafe } from '../../configurables';
-import { Vault } from '../../src/modules/vault/Vault';
+import type { Vault } from '../../src/modules/vault/Vault';
 
 export const txParams = {
   maxFee: bn(BakoSafe.getGasConfig('MAX_FEE')),

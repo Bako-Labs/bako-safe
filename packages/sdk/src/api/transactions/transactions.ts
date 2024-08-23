@@ -1,16 +1,12 @@
 import { Api } from '../api';
-import { IBakoSafeAuth } from '../auth/types';
-import {
+import type { IBakoSafeAuth } from '../auth/types';
+import type {
   ICreateTransactionPayload,
   ITransaction,
   ITransactionService,
 } from './types';
 
 export class TransactionService extends Api implements ITransactionService {
-  constructor(auth: IBakoSafeAuth) {
-    super(auth);
-  }
-
   public async create(payload: ICreateTransactionPayload) {
     try {
       const { data } = await this.client.post<ITransaction>(
@@ -19,7 +15,7 @@ export class TransactionService extends Api implements ITransactionService {
       );
 
       return data;
-    } catch (e) {
+    } catch (_e) {
       throw new Error('ERRO AO CRIAR');
     }
   }

@@ -1,19 +1,20 @@
 import {
-  bn,
-  Wallet,
-  Provider,
-  ContractUtils,
-  CreateTransactionRequest,
-} from 'fuels';
-import {
   callContractMethod,
   createTransactionDeploy,
 } from 'bakosafe-test-utils';
+import {
+  ContractUtils,
+  type CreateTransactionRequest,
+  Provider,
+  Wallet,
+  bn,
+} from 'fuels';
 
-import { accounts } from '../mocks';
+import { beforeAll, describe, expect, test } from 'bun:test';
 import { BakoSafe } from '../../configurables';
 import { DeployTransfer, TransactionStatus, Vault } from '../../src';
-import { authService, IUserAuth, newVault, signin } from '../utils';
+import { accounts } from '../mocks';
+import { type IUserAuth, authService, newVault, signin } from '../utils';
 
 /* Test util to get id from transaction request */
 const getContractId = (request: CreateTransactionRequest) => {
@@ -34,7 +35,7 @@ describe('[TRANSFERS] Deploy', () => {
 
   // Set providers
   BakoSafe.setProviders({
-    CHAIN_URL: 'http://localhost:4000/v1/graphql',
+    CHAIN_URL: 'http://localhost:4001/v1/graphql',
     SERVER_URL: 'http://localhost:3333',
     CLIENT_URL: 'http://localhost:5174',
   });
@@ -47,18 +48,18 @@ describe('[TRANSFERS] Deploy', () => {
     );
 
     signers = [
-      accounts['FULL'].address,
-      accounts['USER_1'].address,
-      accounts['USER_3'].address,
-      accounts['USER_4'].address,
+      accounts.FULL.address,
+      accounts.USER_1.address,
+      accounts.USER_3.address,
+      accounts.USER_4.address,
     ];
-  }, 30 * 1000);
+  });
 
   test('Create a transaction request for deploy', async () => {
     const vault = await newVault(
       signers,
       provider,
-      auth['USER_1'].BakoSafeAuth,
+      auth.USER_1.BakoSafeAuth,
       100,
       1,
     );
@@ -85,7 +86,7 @@ describe('[TRANSFERS] Deploy', () => {
       const vault = await newVault(
         signers,
         provider,
-        auth['USER_1'].BakoSafeAuth,
+        auth.USER_1.BakoSafeAuth,
         100,
       );
 
@@ -202,12 +203,12 @@ describe('[TRANSFERS] Deploy', () => {
     );
 
     const genesisWallet = Wallet.fromPrivateKey(
-      genesisAccount.privateKey!,
+      genesisAccount.privateKey,
       provider,
     );
 
     // Create the transaction request
-    let { transactionRequest } = await createTransactionDeploy(
+    const { transactionRequest } = await createTransactionDeploy(
       provider,
       vault,
       BakoSafe.getGasConfig('MAX_FEE'),

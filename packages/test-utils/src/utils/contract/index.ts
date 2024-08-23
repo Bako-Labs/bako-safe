@@ -1,5 +1,5 @@
-import { ContractAbi, ContractAbi__factory } from '../../types/sway';
-import { Account } from 'fuels';
+import type { Account } from 'fuels';
+import { type ContractAbi, ContractAbi__factory } from '../../types/sway';
 
 export type ContractInstanceParams = { contractId: string; account: Account };
 

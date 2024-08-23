@@ -1,10 +1,10 @@
+import type { FuelWalletLocked } from '@fuel-wallet/sdk';
 import { BakoSafe } from '../../configurables';
-import { IBakoSafeAuth, TypeUser, ITransaction } from '../../src/api';
-import { FuelWalletLocked } from '@fuel-wallet/sdk';
+import { type IBakoSafeAuth, type ITransaction, TypeUser } from '../../src/api';
 
-import { IAccountKeys, IDefaultAccount, accounts } from '../mocks';
-import axios, { AxiosInstance } from 'axios';
-import { Wallet, Provider } from 'fuels';
+import axios, { type AxiosInstance } from 'axios';
+import { Provider, Wallet } from 'fuels';
+import { type IAccountKeys, type IDefaultAccount, accounts } from '../mocks';
 export interface IAuthAccount extends IDefaultAccount {
   BakoSafeAuth: IBakoSafeAuth;
 }
@@ -101,7 +101,7 @@ export const authService = async (
 
     result[acc] = {
       ...account,
-      BakoSafeAuth: auth.BakoSafeAuth!,
+      BakoSafeAuth: auth.BakoSafeAuth,
     };
   }
 

@@ -1,9 +1,9 @@
 import { Address, ZeroBytes32, isB256 } from 'fuels';
 import {
   EConfigTypes,
-  IConfVault,
-  JsonAbiConfigurable,
-  JsonAbiType,
+  type IConfVault,
+  type JsonAbiConfigurable,
+  type JsonAbiType,
 } from './types';
 
 export const formatConfigTypeDeclaration = (type: string) => {
@@ -28,10 +28,10 @@ export const validateConfigTypeArray = (
 
   const itemTypeId = versionTypes.find(
     (item) => formatConfigTypeDeclaration(item.type) === EConfigTypes.array,
-  )?.components![0].type;
+  )?.components?.[0].type;
   const itemType = versionTypes.find(
     (item) => item.typeId === itemTypeId,
-  )!.type;
+  )?.type;
 
   value.forEach((item) => {
     try {
@@ -128,7 +128,7 @@ export const validateConfigurable = (
   versionConfigs.forEach((config: JsonAbiConfigurable) => {
     const key = config.name;
     const typeId = config.configurableType.type;
-    const type = versionTypes.find((type) => type.typeId === typeId)!.type;
+    const type = versionTypes.find((type) => type.typeId === typeId)?.type;
     const formattedType = formatConfigTypeDeclaration(type);
     const value = configurable[key];
 
@@ -148,7 +148,7 @@ export const validations = (
   const { SIGNATURES_COUNT, SIGNERS } = configurable;
   const _SIGNERS = SIGNERS.filter((value: string) => value !== ZeroBytes32);
 
-  if (!SIGNATURES_COUNT || Number(SIGNATURES_COUNT) == 0) {
+  if (!SIGNATURES_COUNT || Number(SIGNATURES_COUNT) === 0) {
     throw new Error('SIGNATURES_COUNT is required must be granter than zero');
   }
   if (!_SIGNERS || _SIGNERS.length === 0) {

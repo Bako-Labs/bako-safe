@@ -1,8 +1,9 @@
-export {
+export type {
   ISelectWorkspaceResponse,
   IAuthCreateRequest,
   IAuthService,
   IBakoSafeAuth,
-  TypeUser,
   Workspace,
-} from '../../api/auth/types';
+} from '../../api/auth/types.ts';
+
+export { TypeUser } from '../../api/auth/types.ts';

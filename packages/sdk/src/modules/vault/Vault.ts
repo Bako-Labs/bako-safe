@@ -1,43 +1,43 @@
 import {
-  BN,
-  bn,
-  arrayify,
+  type BN,
   Predicate,
-  ZeroBytes32,
   ScriptTransactionRequest,
+  ZeroBytes32,
+  arrayify,
+  bn,
 } from 'fuels';
 
+import { v4 as uuidv4 } from 'uuid';
 import {
-  defaultListParams,
-  GetPredicateVersionParams,
-  IBakoSafeAuth,
-  IListTransactions,
-  IPagination,
-  IPredicate,
-  IPredicateService,
-  IPredicateVersion,
+  type GetPredicateVersionParams,
+  type IBakoSafeAuth,
+  type IListTransactions,
+  type IPagination,
+  type IPredicate,
+  type IPredicateService,
+  type IPredicateVersion,
   PredicateService,
   TransactionType,
+  defaultListParams,
 } from '../../api';
-import {
-  ECreationtype,
-  IBakoSafeApi,
-  IBakoSafeGetTransactions,
-  IBakoSafeIncludeTransaction,
-  IConfVault,
-  ICreationPayload,
-  IDeployContract,
-  IPayloadVault,
-  IVault,
-} from './types';
+import { AddressUtils } from '../../utils/address/Address';
+import { DeployTransfer, FAKE_WITNESSES, Transfer } from '../transfers';
 import {
   identifyCreateVaultParams,
   makeHashPredicate,
   makeSubscribers,
 } from './helpers';
-import { DeployTransfer, FAKE_WITNESSES, Transfer } from '../transfers';
-import { v4 as uuidv4 } from 'uuid';
-import { AddressUtils } from '../../utils/address/Address';
+import {
+  ECreationtype,
+  type IBakoSafeApi,
+  type IBakoSafeGetTransactions,
+  type IBakoSafeIncludeTransaction,
+  type IConfVault,
+  type ICreationPayload,
+  type IDeployContract,
+  type IPayloadVault,
+  type IVault,
+} from './types';
 
 /**
  * `Vault` are extension of predicates, to manager transactions, and sends.
@@ -95,11 +95,11 @@ export class Vault extends Predicate<[]> implements IVault {
     this.provider = provider;
     this.name = name || `Vault - ${uuidv4()}`;
     this.description = description;
-    this.BakoSafeVaultId = BakoSafeVaultId!;
+    this.BakoSafeVaultId = BakoSafeVaultId as string;
     this.transactionRecursiveTimeout = transactionRecursiveTimeout;
-    this.BakoSafeVault = BakoSafeVault!;
-    this.auth = BakoSafeAuth!;
-    this.api = api!;
+    this.BakoSafeVault = BakoSafeVault as IPredicate;
+    this.auth = BakoSafeAuth as IBakoSafeAuth;
+    this.api = api as IPredicateService;
     this.version = version;
   }
 
@@ -342,7 +342,7 @@ export class Vault extends Predicate<[]> implements IVault {
    * @returns details of predicate version
    */
   static async BakoSafeGetCurrentVersion(): Promise<IPredicateVersion> {
-    const api = this.getPredicateServiceInstance();
+    const api = Vault.getPredicateServiceInstance();
     return await api.findCurrentVersion();
   }
 
@@ -356,7 +356,7 @@ export class Vault extends Predicate<[]> implements IVault {
   static async BakoSafeGetVersionByCode(
     code: string,
   ): Promise<IPredicateVersion> {
-    const api = this.getPredicateServiceInstance();
+    const api = Vault.getPredicateServiceInstance();
     return await api.findVersionByCode(code);
   }
 
@@ -376,7 +376,7 @@ export class Vault extends Predicate<[]> implements IVault {
       page: 0,
       perPage: 10,
     };
-    const api = this.getPredicateServiceInstance();
+    const api = Vault.getPredicateServiceInstance();
     const predicateVersions = await api
       .listVersions(params ?? _params)
       .then((data) => {

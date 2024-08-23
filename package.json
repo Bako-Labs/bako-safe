@@ -1,29 +1,30 @@
 {
-  "name": "bako-safe",
+  "name": "@bako-labs/bako-safe",
   "version": "0.0.50",
   "description": "A signature validation package built based on sway in the fuel network",
-  "author": "InfinityBase - Guilherme Roque",
+  "author": "Bako Labs <contact@bako.global>",
   "license": "Apache-2.0",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
-  "files": [
-    "dist"
-  ],
-  "workspaces": [
-    "./packages/*"
-  ],
+  "files": ["dist"],
+  "workspaces": ["packages/*"],
   "scripts": {
     "build": "turbo run prebuild && turbo run build",
     "test": "turbo run test",
-    "chain:start": "make -C ./docker/chain up"
+    "lint:check": "biome check --write --unsafe .",
+    "lint:ci": "biome lint --max-diagnostics=2000 --diagnostic-level=error .",
+    "format": "biome format --write ."
   },
   "devDependencies": {
-    "turbo": "^1.10.0"
-  },
-  "dependencies": {
-    "@fuel-wallet/sdk": "^0.13.10",
+    "@types/bun": "^1.1.6",
+    "turbo": "^2.0.14",
+    "talkback": "^4.2.0",
+    "@biomejs/biome": "^1.8.3",
     "@fuel-wallet/types": "^0.13.10",
     "@types/jest": "^29.5.4",
     "@types/mocha": "^10.0.1"
+  },
+  "dependencies": {
+    "@fuel-wallet/sdk": "^0.13.10"
   }
 }

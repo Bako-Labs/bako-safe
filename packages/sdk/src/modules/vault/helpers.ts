@@ -1,14 +1,14 @@
-import { Address, B256Address, Provider, ZeroBytes32 } from 'fuels';
+import { Address, type B256Address, Provider, ZeroBytes32 } from 'fuels';
+import { BakoSafe } from '../../../configurables';
+import { PredicateService } from '../../api/predicates';
+import { Vault } from './Vault';
 import {
   ECreationtype,
-  IBakoSafeApi,
-  ICreation,
-  ICreationPayload,
-  IPayloadVault,
+  type IBakoSafeApi,
+  type ICreation,
+  type ICreationPayload,
+  type IPayloadVault,
 } from './types';
-import { PredicateService } from '../../api/predicates';
-import { BakoSafe } from '../../../configurables';
-import { Vault } from './Vault';
 import { validations } from './validations';
 
 export const defaultValues: { [name: string]: string } = {
@@ -33,7 +33,7 @@ export const instanceByOldUtil = async (
   const { id, predicateAddress, token, address } = params;
   const hasId = 'id' in params && id;
 
-  if (predicateAddress == undefined && id == undefined) {
+  if (predicateAddress === undefined && id === undefined) {
     throw new Error('predicateAddress or BakoSafePredicateId is required');
   }
 
@@ -44,7 +44,7 @@ export const instanceByOldUtil = async (
 
   const result = hasId
     ? await api.findById(id)
-    : await api.findByAddress(predicateAddress!);
+    : await api.findByAddress(predicateAddress);
 
   if (!result) {
     throw new Error('BakoSafeVault not found');
@@ -72,9 +72,9 @@ export const instanceByNewUtil = async (
   params: IPayloadVault,
 ): Promise<ICreationPayload> => {
   const hasAuth = 'BakoSafeAuth' in params && params.BakoSafeAuth;
-  let api;
+  let api: PredicateService;
   if (hasAuth) {
-    const { address, token } = params.BakoSafeAuth!;
+    const { address, token } = params.BakoSafeAuth;
     api = new PredicateService({
       address,
       token,
@@ -85,7 +85,7 @@ export const instanceByNewUtil = async (
   );
   const hasVersion = !!params.version;
   const { code, abi, bytes } = hasVersion
-    ? await Vault.BakoSafeGetVersionByCode(params.version!)
+    ? await Vault.BakoSafeGetVersionByCode(params.version)
         .then((data) => data)
         .catch(() => {
           throw new Error('Invalid predicate version');
@@ -96,7 +96,7 @@ export const instanceByNewUtil = async (
     api,
     configurable: {
       ...params.configurable,
-      chainId: await provider.getChainId(),
+      chainId: provider.getChainId(),
       network: params.configurable.network,
     },
     provider,
@@ -142,19 +142,19 @@ export const identifyCreateVaultParams = async (
 
     const abi = isOld ? oldData?.abi : newData?.abi;
     const configurable = isOld ? oldData?.configurable : newData?.configurable;
-    validations(configurable!, abi!);
+    validations(configurable, abi);
 
     if (isOld && !!oldData) {
       return {
         type: ECreationtype.IS_OLD,
-        payload: oldData!,
+        payload: oldData,
       };
     }
     return {
       type: ECreationtype.IS_NEW,
-      payload: newData!,
+      payload: newData,
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     throw new Error(e.message);
   }
 };

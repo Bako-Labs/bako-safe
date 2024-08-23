@@ -1,17 +1,17 @@
-import {
+import type {
   BN,
   ScriptTransactionRequest,
   TransactionRequest,
   TransactionRequestLike,
 } from 'fuels';
-import { ITransferAsset } from '../../utils/assets/types';
-import {
+import type { IBakoSafeAuth } from '../../api';
+import type {
   ITransaction,
   ITransactionResume,
   ITransactionService,
 } from '../../api/transactions';
-import { Vault } from '../vault';
-import { IBakoSafeAuth } from '../../api';
+import type { ITransferAsset } from '../../utils/assets/types';
+import type { Vault } from '../vault';
 
 export interface TransferConstructor {
   name: string;

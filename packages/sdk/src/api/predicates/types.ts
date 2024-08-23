@@ -1,6 +1,6 @@
-import { GetTransactionParams, ITransaction } from '../transactions';
-import { IPagination } from '../utils/pagination';
-import { Operation, TransactionRequest } from 'fuels';
+import type { Operation, TransactionRequest } from 'fuels';
+import type { GetTransactionParams, ITransaction } from '../transactions';
+import type { IPagination } from '../utils/pagination';
 
 export enum SortOption {
   asc = 'ASC',
