@@ -24,6 +24,7 @@ import {
   Vault,
   bakoCoder,
   SignatureType,
+  VaultProvider,
 } from 'bakosafe/src';
 
 describe('[Create]', () => {
@@ -66,6 +67,46 @@ describe('[Create]', () => {
     expect(vault.address.toB256()).toBe(vault2.address.toB256());
     expect(vault.configurable).toEqual(vault2.configurable);
     expect(await vault.getBalances()).toEqual(await vault2.getBalances());
+  });
+
+  it('Using a VaultProvider', async () => {
+    const address = accounts['USER_1'].account;
+
+    const challenge = await VaultProvider.setup({
+      address,
+    });
+
+    const token = await Wallet.fromPrivateKey(
+      accounts['USER_1'].privateKey,
+    ).signMessage(challenge);
+
+    const vaultProvider = await VaultProvider.create(networks['LOCAL'], {
+      address,
+      challenge,
+      token,
+    });
+
+    const predicate = new Vault(vaultProvider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [address],
+      HASH_PREDICATE: Address.fromRandom().toB256(),
+    });
+
+    const saved = await predicate.store();
+
+    const balanceValue = '0.1';
+    await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
+
+    const recover = await Vault.stored(saved.id, vaultProvider);
+
+    const predicateBalance = await predicate.getBalance(assets['ETH']);
+    const recoverBalance = await recover.getBalance(assets['ETH']);
+
+    // 18 is max of decimals to represent value
+    expect(predicate.address.toB256()).toBe(recover.address.toB256());
+    expect(predicateBalance.formatUnits(18)).toBe(
+      recoverBalance.formatUnits(18),
+    );
   });
 });
 
