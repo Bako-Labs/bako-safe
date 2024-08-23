@@ -22,7 +22,6 @@ export interface ICreateTransactionPayload {
   hash: string; // HASH OF TRANSACTION
   txData: TransactionRequest;
   status: TransactionStatus;
-  assets: ITransferAsset[];
   sendTime?: Date;
   gasUsed?: string;
 }

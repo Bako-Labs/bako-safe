@@ -2,6 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 
 import { defaultConfig, AuthRequestHeaders, IUserCreate } from './types';
 import { IPredicatePayload } from '../predicates';
+import { ICreateTransactionPayload } from '../transactions';
 
 // keep here to sinc with the other files
 export const api = axios.create({
@@ -42,7 +43,7 @@ export class Service {
     return data;
   }
 
-  async create(payload: IPredicatePayload) {
+  async createPredicate(payload: IPredicatePayload) {
     const { data } = await this.api.post('/predicate', payload);
 
     return data;
@@ -63,6 +64,18 @@ export class Service {
 
   async authInfo() {
     const { data } = await this.api.get('/user/latest/info');
+    return data;
+  }
+
+  async createTransaction(params: ICreateTransactionPayload) {
+    const { data } = await this.api.post('/transaction', params);
+    return data;
+  }
+
+  async recoverTransaction(transactionId: string) {
+    const { data } = await this.api.get(
+      `/transaction/by-hash/${transactionId}`,
+    );
     return data;
   }
 
