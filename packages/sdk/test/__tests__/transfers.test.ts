@@ -1,33 +1,34 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
-import { ContractAbi__factory, contractBytecode } from 'bakosafe-test-utils';
-import { Provider, Wallet } from 'fuels';
-import { v4 as uuidv4 } from 'uuid';
-import { BakoSafe } from '../../configurables';
-import { Vault } from '../../src/modules/vault/Vault';
-import type { IPayloadVault } from '../../src/modules/vault/types';
-import { DEFAULT_BALANCE_VALUE, accounts, assets, networks } from '../mocks';
+import { beforeAll, describe, expect, test } from "bun:test";
+import { Provider, Wallet } from "fuels";
+import { v4 as uuidv4 } from "uuid";
+import { Provider, TransactionStatus, Wallet } from "fuels";
+import { TestContract, TestContractFactory } from "bakosafe-test-utils";
+import { BakoSafe } from "../../configurables";
+import { Vault } from "../../src/modules/vault/Vault";
+import type { IPayloadVault } from "../../src/modules/vault/types";
+import { DEFAULT_BALANCE_VALUE, accounts, assets, networks } from "../mocks";
 import {
   DEFAULT_MULTI_ASSET_TRANSACTION_PAYLOAD,
   DEFAULT_TRANSACTION_PAYLOAD,
-} from '../mocks/transactions';
-import { type IUserAuth, authService, delay, newVault, signin } from '../utils';
+} from "../mocks/transactions";
+import { type IUserAuth, authService, delay, newVault, signin } from "../utils";
 
-describe('[TRANSFERS]', () => {
+describe("[TRANSFERS]", () => {
   let auth: IUserAuth;
   let provider: Provider;
   let signers: string[];
 
   //example to sett up the provider
   BakoSafe.setProviders({
-    CHAIN_URL: 'http://localhost:4001/v1/graphql',
-    SERVER_URL: 'http://localhost:3333',
-    CLIENT_URL: 'http://localhost:5174',
+    CHAIN_URL: "http://localhost:4001/v1/graphql",
+    SERVER_URL: "http://localhost:3333",
+    CLIENT_URL: "http://localhost:5174",
   });
 
   beforeAll(async () => {
-    provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
+    provider = await Provider.create(BakoSafe.getProviders("CHAIN_URL"));
     auth = await authService(
-      ['FULL', 'USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
+      ["FULL", "USER_1", "USER_2", "USER_3", "USER_5", "USER_4"],
       provider.url,
     );
 
@@ -39,7 +40,7 @@ describe('[TRANSFERS]', () => {
   });
 
   test(
-    'Created an valid transaction to vault and instance old transaction',
+    "Created an valid transaction to vault and instance old transaction",
     async () => {
       const vault = await newVault(
         signers,
@@ -55,7 +56,7 @@ describe('[TRANSFERS]', () => {
         await delay(5000);
         await signin(
           transaction.getHashTxId(),
-          'USER_3',
+          "USER_3",
           auth.USER_3.BakoSafeAuth,
           transaction.BakoSafeTransactionId,
         );
@@ -63,7 +64,7 @@ describe('[TRANSFERS]', () => {
         await delay(5000);
         await signin(
           transaction.getHashTxId(),
-          'USER_2',
+          "USER_2",
           auth.USER_2.BakoSafeAuth,
           transaction.BakoSafeTransactionId,
         );
@@ -72,7 +73,7 @@ describe('[TRANSFERS]', () => {
       // Signin transaction
       await signin(
         transaction.getHashTxId(),
-        'USER_1',
+        "USER_1",
         auth.USER_1.BakoSafeAuth,
         transaction.BakoSafeTransactionId,
       );
@@ -93,7 +94,7 @@ describe('[TRANSFERS]', () => {
   );
 
   test(
-    'Sign transactions with invalid users',
+    "Sign transactions with invalid users",
     async () => {
       const vault = await newVault(
         signers,
@@ -107,7 +108,7 @@ describe('[TRANSFERS]', () => {
       expect(
         await signin(
           transaction.getHashTxId(),
-          'USER_2',
+          "USER_2",
           auth.USER_2.BakoSafeAuth,
           transaction.BakoSafeTransactionId,
         ),
@@ -115,7 +116,7 @@ describe('[TRANSFERS]', () => {
       expect(
         await signin(
           transaction.getHashTxId(),
-          'USER_1',
+          "USER_1",
           auth.USER_1.BakoSafeAuth,
           transaction.BakoSafeTransactionId,
         ),
@@ -123,7 +124,7 @@ describe('[TRANSFERS]', () => {
       expect(
         await signin(
           transaction.getHashTxId(),
-          'USER_3',
+          "USER_3",
           auth.USER_3.BakoSafeAuth,
           transaction.BakoSafeTransactionId,
         ),
@@ -131,7 +132,7 @@ describe('[TRANSFERS]', () => {
       expect(
         await signin(
           transaction.getHashTxId(),
-          'USER_4',
+          "USER_4",
           auth.USER_4.BakoSafeAuth,
           transaction.BakoSafeTransactionId,
         ),
@@ -144,7 +145,7 @@ describe('[TRANSFERS]', () => {
   );
 
   test(
-    'Instance old transaction',
+    "Instance old transaction",
     async () => {
       const vault = await newVault(
         signers,
@@ -173,29 +174,29 @@ describe('[TRANSFERS]', () => {
     10 * 1000,
   );
 
-  test('Send an transaction to with vault without balance', async () => {
+  test("Send an transaction to with vault without balance", async () => {
     const vault = await newVault(signers, provider, auth.USER_1.BakoSafeAuth);
     const tx_a = DEFAULT_TRANSACTION_PAYLOAD(accounts.STORE.address);
-    tx_a.assets[0].amount = '100';
+    tx_a.assets[0].amount = "100";
 
     await expect(vault.BakoSafeIncludeTransaction(tx_a)).rejects.toThrow(
-      'FuelError: not enough coins to fit the target',
+      "FuelError: not enough coins to fit the target",
     );
   });
 
-  test('Sent a transaction without BakoSafeAuth', async () => {
+  test("Sent a transaction without BakoSafeAuth", async () => {
     const vault = await newVault(signers, provider, undefined, 100);
     const tx = DEFAULT_TRANSACTION_PAYLOAD(accounts.STORE.address);
 
     const transaction = await vault.BakoSafeIncludeTransaction(tx);
     transaction.witnesses = [
-      await signin(transaction.getHashTxId(), 'USER_1'),
-      await signin(transaction.getHashTxId(), 'USER_2'),
-      await signin(transaction.getHashTxId(), 'USER_3'),
+      await signin(transaction.getHashTxId(), "USER_1"),
+      await signin(transaction.getHashTxId(), "USER_2"),
+      await signin(transaction.getHashTxId(), "USER_3"),
     ];
 
     const result = await transaction.send().then(async (tx) => {
-      if ('wait' in tx) {
+      if ("wait" in tx) {
         return await tx.wait();
       }
       return {
@@ -207,13 +208,13 @@ describe('[TRANSFERS]', () => {
   });
 
   test(
-    'Send a transaction with production fuel node',
+    "Send a transaction with production fuel node",
     async () => {
       const _provider = await Provider.create(networks.DEVNET);
       //valid only for devnet
       const HASH_PREDICATE =
-        '0xb2bf0410c0574e5a9abf4ac5579cdcbf5bd33c1015b2a74bb34acc9069b7dc8a';
-      const tx_name = 'Test Transaction on DEVNET';
+        "0xb2bf0410c0574e5a9abf4ac5579cdcbf5bd33c1015b2a74bb34acc9069b7dc8a";
+      const tx_name = "Test Transaction on DEVNET";
       const VaultPayload: IPayloadVault = {
         configurable: {
           SIGNATURES_COUNT: 1,
@@ -250,17 +251,17 @@ describe('[TRANSFERS]', () => {
             {
               assetId: _provider.getBaseAssetId(),
               to: accounts.STORE.address,
-              amount: '0.5',
+              amount: "0.5",
             },
           ],
         }),
-      ).rejects.toThrow('FuelError: not enough coins to fit the target');
+      ).rejects.toThrow("FuelError: not enough coins to fit the target");
     },
     100 * 1000,
   );
 
   test(
-    'Send transaction with same asset ids and recipients',
+    "Send transaction with same asset ids and recipients",
     async () => {
       const vault = await newVault(
         signers,
@@ -284,7 +285,7 @@ describe('[TRANSFERS]', () => {
 
       await signin(
         transaction.getHashTxId(),
-        'USER_1',
+        "USER_1",
         auth.USER_1.BakoSafeAuth,
         transaction.BakoSafeTransactionId,
       );
@@ -306,7 +307,7 @@ describe('[TRANSFERS]', () => {
   );
 
   test(
-    'Send transaction with same asset ids and multiple recipients',
+    "Send transaction with same asset ids and multiple recipients",
     async () => {
       const vault = await newVault(
         signers,
@@ -338,7 +339,7 @@ describe('[TRANSFERS]', () => {
 
       await signin(
         transaction.getHashTxId(),
-        'USER_1',
+        "USER_1",
         auth.USER_1.BakoSafeAuth,
         transaction.BakoSafeTransactionId,
       );
@@ -368,7 +369,7 @@ describe('[TRANSFERS]', () => {
   );
 
   test(
-    'Send transaction with multiple asset ids',
+    "Send transaction with multiple asset ids",
     async () => {
       const txAssets = Object.values(assets);
       const vault = await newVault(
@@ -390,7 +391,7 @@ describe('[TRANSFERS]', () => {
 
       await signin(
         transaction.getHashTxId(),
-        'USER_1',
+        "USER_1",
         auth.USER_1.BakoSafeAuth,
         transaction.BakoSafeTransactionId,
       );
@@ -416,7 +417,7 @@ describe('[TRANSFERS]', () => {
   );
 
   test(
-    'Send transaction with multiple asset ids without sending ETH',
+    "Send transaction with multiple asset ids without sending ETH",
     async () => {
       const txAssets = [assets.BTC, assets.USDC, assets.UNI];
       const vault = await newVault(
@@ -437,7 +438,7 @@ describe('[TRANSFERS]', () => {
 
       await signin(
         transaction.getHashTxId(),
-        'USER_1',
+        "USER_1",
         auth.USER_1.BakoSafeAuth,
         transaction.BakoSafeTransactionId,
       );
@@ -459,7 +460,7 @@ describe('[TRANSFERS]', () => {
     100 * 1000,
   );
 
-  test('Send transaction with multiple asset ids without ETH on vault', async () => {
+  test("Send transaction with multiple asset ids without ETH on vault", async () => {
     const txAssets = [assets.BTC, assets.USDC, assets.UNI];
     const vault = await newVault(
       signers,
@@ -477,29 +478,26 @@ describe('[TRANSFERS]', () => {
     );
 
     await expect(vault.BakoSafeIncludeTransaction(tx)).rejects.toThrow(
-      'FuelError: not enough coins to fit the target',
+      "FuelError: not enough coins to fit the target",
     );
   });
 
-  test('Call script with contract', async () => {
+  test("Call script with contract", async () => {
     const vault = await newVault(
       signers,
       provider,
       auth.USER_1.BakoSafeAuth,
-      5000000,
+      10000,
       1,
     );
 
     // Deploy contract and set account to vault
     const wallet = Wallet.fromPrivateKey(auth.FULL.privateKey, provider);
-    const deploy = await ContractAbi__factory.deployContract(
-      contractBytecode,
-      wallet,
-    );
+    const deploy = await TestContractFactory.deploy(wallet);
     await deploy.waitForResult();
 
     // Get transaction request of contract method
-    const contractAbi = ContractAbi__factory.connect(deploy.contractId, vault);
+    const contractAbi = new TestContract(deploy.contractId, vault);
     const contractMethod = contractAbi.functions.zero();
     const contractRequest = await contractMethod.fundWithRequiredCoins();
 
@@ -507,7 +505,7 @@ describe('[TRANSFERS]', () => {
 
     await signin(
       transaction.getHashTxId(),
-      'USER_1',
+      "USER_1",
       auth.USER_1.BakoSafeAuth,
       transaction.BakoSafeTransactionId,
     );

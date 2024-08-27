@@ -4,16 +4,16 @@ import {
   bn,
   calculateGasFee,
   hexlify,
-} from 'fuels';
-import { delay } from '../../../test/utils';
+} from "fuels";
+import { delay } from "../../../test/utils";
 import {
   type ITransaction,
   type ITransactionResume,
   type ITransactionService,
   TransactionStatus,
-} from '../../api';
-import type { Vault } from '../vault/Vault';
-import { FAKE_WITNESSES, maxSigners } from './fee';
+} from "../../api";
+import type { Vault } from "../vault/Vault";
+import { FAKE_WITNESSES, maxSigners } from "./fee";
 
 export interface BaseTransferLike<T extends TransactionRequest> {
   name: string;
@@ -51,7 +51,7 @@ export class BaseTransfer<T extends TransactionRequest> {
     this.service = service;
     this.transactionRequest = transactionRequest;
     this.BakoSafeTransaction = BakoSafeTransaction ?? ({} as ITransaction);
-    this.BakoSafeTransactionId = BakoSafeTransactionId ?? '';
+    this.BakoSafeTransactionId = BakoSafeTransactionId ?? "";
 
     this.witnesses = [];
   }
@@ -66,7 +66,7 @@ export class BaseTransfer<T extends TransactionRequest> {
       ? `https://fuellabs.github.io/block-explorer-v2/transaction/${this.getHashTxId()}?providerUrl=${encodeURIComponent(
           this.vault.provider.url,
         )}`
-      : '';
+      : "";
   }
 
   // get trasaction status on bakosafe-api
@@ -140,10 +140,7 @@ export class BaseTransfer<T extends TransactionRequest> {
       await this.syncTrasanction();
     }
 
-    return new TransactionResponse(
-      this.BakoSafeTransactionId,
-      this.vault.provider,
-    );
+    return new TransactionResponse(this.getHashTxId(), this.vault.provider);
   }
 
   static async prepareTransaction<T extends TransactionRequest>(
@@ -161,7 +158,7 @@ export class BaseTransfer<T extends TransactionRequest> {
     // Calculate the total gas usage for the transaction
     let totalGasUsed = bn(0);
     txRequest.inputs.forEach((input) => {
-      if ('predicate' in input && input.predicate) {
+      if ("predicate" in input && input.predicate) {
         input.witnessIndex = 0;
         input.predicateGasUsed = undefined;
         totalGasUsed = totalGasUsed.add(predicateGasUsed);
@@ -209,7 +206,7 @@ export class BaseTransfer<T extends TransactionRequest> {
    */
   public async wait(): Promise<ITransactionResume> {
     if (!this.service) {
-      throw Error('Implement this.');
+      throw Error("Implement this.");
     }
 
     await this.syncTrasanction();

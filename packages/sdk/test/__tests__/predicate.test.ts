@@ -1,16 +1,16 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
-import { Provider, getRandomB256 } from 'fuels';
-import { BakoSafe } from '../../configurables';
-import type { IPredicateVersion } from '../../src/api';
-import { type IPayloadVault, Vault } from '../../src/modules';
+import { beforeAll, describe, expect, test } from "bun:test";
+import { Provider, getRandomB256 } from "fuels";
+import { BakoSafe } from "../../configurables";
+import type { IPredicateVersion } from "../../src/api";
+import { type IPayloadVault, Vault } from "../../src/modules";
 import {
   DEFAULT_BALANCES,
   DEFAULT_TRANSACTION_PAYLOAD,
   accounts,
-} from '../mocks';
-import { type IUserAuth, authService, newVault, signin } from '../utils';
+} from "../mocks";
+import { type IUserAuth, authService, newVault, signin } from "../utils";
 
-describe('[PREDICATES]', () => {
+describe("[PREDICATES]", () => {
   let auth: IUserAuth;
   let provider: Provider;
   let signers: string[];
@@ -18,9 +18,9 @@ describe('[PREDICATES]', () => {
   let oldVersions: Partial<IPredicateVersion>[];
 
   beforeAll(async () => {
-    provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
+    provider = await Provider.create(BakoSafe.getProviders("CHAIN_URL"));
     auth = await authService(
-      ['USER_1', 'USER_2', 'USER_3', 'USER_5', 'USER_4'],
+      ["USER_1", "USER_2", "USER_3", "USER_5", "USER_4"],
       provider.url,
     );
     signers = [
@@ -33,9 +33,9 @@ describe('[PREDICATES]', () => {
     oldVersions = versions.filter(
       (version) => version.code !== currentVersion.code,
     );
-  }, 20 * 1000);
+  });
 
-  test('Create an inválid vault', async () => {
+  test("Create an inválid vault", async () => {
     const VaultPayload: IPayloadVault = {
       configurable: {
         SIGNATURES_COUNT: 3,
@@ -46,8 +46,8 @@ describe('[PREDICATES]', () => {
     };
 
     await expect(
-      Vault.create({ ...VaultPayload, version: 'fake_version' }),
-    ).rejects.toThrow('Invalid predicate version');
+      Vault.create({ ...VaultPayload, version: "fake_version" }),
+    ).rejects.toThrow("Invalid predicate version");
 
     //Validations
     const duplicated = [
@@ -56,35 +56,35 @@ describe('[PREDICATES]', () => {
     ];
     VaultPayload.configurable.SIGNERS = duplicated;
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
-      'SIGNERS must be unique',
+      "SIGNERS must be unique",
     );
 
     VaultPayload.configurable.SIGNATURES_COUNT = 0;
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
-      'SIGNATURES_COUNT is required must be granter than zero',
+      "SIGNATURES_COUNT is required must be granter than zero",
     );
 
     VaultPayload.configurable.SIGNATURES_COUNT = 3;
     VaultPayload.configurable.SIGNERS = [];
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
-      'SIGNERS must be greater than zero',
+      "SIGNERS must be greater than zero",
     );
 
     VaultPayload.configurable.SIGNERS = signers;
     VaultPayload.configurable.SIGNATURES_COUNT = 5;
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
-      'Required Signers must be less than signers',
+      "Required Signers must be less than signers",
     );
   });
 
-  test('Created an valid vault', async () => {
+  test("Created an valid vault", async () => {
     const vault = await newVault(signers, provider, auth.USER_1.BakoSafeAuth);
     expect((await vault.getBalances()).balances).toStrictEqual(
       DEFAULT_BALANCES,
     );
   });
 
-  test('Create vault missing configurable params', async () => {
+  test("Create vault missing configurable params", async () => {
     const VaultPayload: IPayloadVault = {
       configurable: {
         network: provider.url,
@@ -100,7 +100,7 @@ describe('[PREDICATES]', () => {
           SIGNERS: signers,
         },
       }),
-    ).rejects.toThrow('SIGNATURES_COUNT is required');
+    ).rejects.toThrow("SIGNATURES_COUNT is required");
 
     await expect(
       Vault.create({
@@ -110,10 +110,10 @@ describe('[PREDICATES]', () => {
           SIGNATURES_COUNT: 3,
         },
       }),
-    ).rejects.toThrow('SIGNERS is required');
+    ).rejects.toThrow("SIGNERS is required");
   });
 
-  test('Create vault with invalid configurable params', async () => {
+  test("Create vault with invalid configurable params", async () => {
     const VaultPayload: IPayloadVault = {
       configurable: {
         SIGNATURES_COUNT: 3,
@@ -123,40 +123,40 @@ describe('[PREDICATES]', () => {
       BakoSafeAuth: auth.USER_1.BakoSafeAuth,
     };
 
-    VaultPayload.configurable.HASH_PREDICATE = 'hash_predicate';
+    VaultPayload.configurable.HASH_PREDICATE = "hash_predicate";
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
-      'HASH_PREDICATE must be a b256',
+      "HASH_PREDICATE must be a b256",
     );
 
     VaultPayload.configurable.HASH_PREDICATE = undefined;
     VaultPayload.configurable.SIGNATURES_COUNT = undefined;
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
-      'SIGNATURES_COUNT must be an integer',
+      "SIGNATURES_COUNT must be an integer",
     );
 
     VaultPayload.configurable.SIGNATURES_COUNT = 0.5;
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
-      'SIGNATURES_COUNT must be an integer',
+      "SIGNATURES_COUNT must be an integer",
     );
 
     VaultPayload.configurable.SIGNATURES_COUNT = 3;
     VaultPayload.configurable.SIGNERS = undefined;
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
-      'SIGNERS must be an array',
+      "SIGNERS must be an array",
     );
 
-    VaultPayload.configurable.SIGNERS = ['signer', 'signer2', 'signer3'];
+    VaultPayload.configurable.SIGNERS = ["signer", "signer2", "signer3"];
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
-      'SIGNERS must be an array of b256',
+      "SIGNERS must be an array of b256",
     );
 
     VaultPayload.configurable.TEST = null;
     await expect(Vault.create(VaultPayload)).rejects.toThrow(
-      'TEST is an invalid parameter',
+      "TEST is an invalid parameter",
     );
   });
 
-  test('Create vault with valid configurable params', async () => {
+  test("Create vault with valid configurable params", async () => {
     const VaultPayload: IPayloadVault = {
       configurable: {
         HASH_PREDICATE: getRandomB256(),
@@ -168,18 +168,18 @@ describe('[PREDICATES]', () => {
     };
 
     const vault = await Vault.create(VaultPayload);
-    expect(vault).toHaveProperty('address');
-    expect(vault).toHaveProperty('version');
+    expect(vault).toHaveProperty("address");
+    expect(vault).toHaveProperty("version");
     expect(vault.version).toStrictEqual(currentVersion.code);
 
     VaultPayload.configurable.HASH_PREDICATE = undefined;
     const auxVault = await Vault.create(VaultPayload);
-    expect(auxVault).toHaveProperty('address');
-    expect(auxVault).toHaveProperty('version');
+    expect(auxVault).toHaveProperty("address");
+    expect(auxVault).toHaveProperty("version");
     expect(auxVault.version).toStrictEqual(currentVersion.code);
   });
 
-  test('Create vault with predicate version', async () => {
+  test("Create vault with predicate version", async () => {
     const vaultVersion = oldVersions[0].code;
     const VaultPayload: IPayloadVault = {
       configurable: {
@@ -201,7 +201,7 @@ describe('[PREDICATES]', () => {
     expect(vault.version).toStrictEqual(auxVault.BakoSafeVault.version.code);
   });
 
-  test('Create vault without predicate version', async () => {
+  test("Create vault without predicate version", async () => {
     const VaultPayload: IPayloadVault = {
       configurable: {
         SIGNATURES_COUNT: 3,
@@ -216,7 +216,7 @@ describe('[PREDICATES]', () => {
   });
 
   test(
-    'Instance an old Vault by BakoSafe Predicate ID',
+    "Instance an old Vault by BakoSafe Predicate ID",
     async () => {
       const vault = await newVault(signers, provider, auth.USER_1.BakoSafeAuth);
       const auxVault = await Vault.create({
@@ -237,12 +237,12 @@ describe('[PREDICATES]', () => {
   );
 
   test(
-    'Instance an old Vault by predicate address',
+    "Instance an old Vault by predicate address",
     async () => {
       const vault = await newVault(signers, provider, auth.USER_1.BakoSafeAuth);
       const auxVault = await Vault.create({
         ...auth.USER_1.BakoSafeAuth,
-        predicateAddress: vault.address.toString(),
+        predicateAddress: vault.address.toB256(),
       });
       expect(auxVault.BakoSafeVaultId).toStrictEqual(vault.BakoSafeVaultId);
       expect(auxVault.version).toStrictEqual(vault.version);
@@ -257,7 +257,7 @@ describe('[PREDICATES]', () => {
   );
 
   test(
-    'Recover equal Vault by payload',
+    "Recover equal Vault by payload",
     async () => {
       const vault = await newVault(signers, provider, undefined, 2);
 
@@ -281,13 +281,13 @@ describe('[PREDICATES]', () => {
   );
 
   test(
-    'Find a transactions of predicate and return an list of Transfer instances',
+    "Find a transactions of predicate and return an list of Transfer instances",
     async () => {
       const vault = await newVault(
         signers,
         provider,
         auth.USER_1.BakoSafeAuth,
-        5,
+        10000,
       );
       const tx_1 = DEFAULT_TRANSACTION_PAYLOAD(accounts.STORE.address);
       const tx_2 = DEFAULT_TRANSACTION_PAYLOAD(accounts.STORE.address);
@@ -297,7 +297,7 @@ describe('[PREDICATES]', () => {
 
       await signin(
         transaction.getHashTxId(),
-        'USER_2',
+        "USER_2",
         auth.USER_2.BakoSafeAuth,
         transaction.BakoSafeTransactionId,
       );
@@ -322,38 +322,38 @@ describe('[PREDICATES]', () => {
     100 * 1000,
   );
 
-  test('Call an method of vault depends of auth without credentials', async () => {
+  test("Call an method of vault depends of auth without credentials", async () => {
     const vault = await newVault(signers, provider);
 
     await expect(vault.getConfigurable().SIGNATURES_COUNT).toBe(3);
     await expect(vault.BakoSafeGetTransactions()).rejects.toThrow(
-      'Auth is required',
+      "Auth is required",
     );
   });
 
-  test('Find current predicate version', async () => {
-    expect(currentVersion).toHaveProperty('id');
-    expect(currentVersion).toHaveProperty('name');
-    expect(currentVersion).toHaveProperty('description');
-    expect(currentVersion).toHaveProperty('code');
-    expect(currentVersion).toHaveProperty('abi');
-    expect(currentVersion).toHaveProperty('bytes');
-    expect(currentVersion).toHaveProperty('active');
+  test("Find current predicate version", async () => {
+    expect(currentVersion).toHaveProperty("id");
+    expect(currentVersion).toHaveProperty("name");
+    expect(currentVersion).toHaveProperty("description");
+    expect(currentVersion).toHaveProperty("code");
+    expect(currentVersion).toHaveProperty("abi");
+    expect(currentVersion).toHaveProperty("bytes");
+    expect(currentVersion).toHaveProperty("active");
   });
 
-  test('Find current predicate version by code', async () => {
+  test("Find current predicate version by code", async () => {
     const version = await Vault.BakoSafeGetVersionByCode(currentVersion.code);
 
-    expect(version).toHaveProperty('id', currentVersion.id);
-    expect(version).toHaveProperty('name', currentVersion.name);
-    expect(version).toHaveProperty('description', currentVersion.description);
-    expect(version).toHaveProperty('code', currentVersion.code);
-    expect(version).toHaveProperty('abi', currentVersion.abi);
-    expect(version).toHaveProperty('bytes', currentVersion.bytes);
-    expect(version).toHaveProperty('active', currentVersion.active);
+    expect(version).toHaveProperty("id", currentVersion.id);
+    expect(version).toHaveProperty("name", currentVersion.name);
+    expect(version).toHaveProperty("description", currentVersion.description);
+    expect(version).toHaveProperty("code", currentVersion.code);
+    expect(version).toHaveProperty("abi", currentVersion.abi);
+    expect(version).toHaveProperty("bytes", currentVersion.bytes);
+    expect(version).toHaveProperty("active", currentVersion.active);
   });
 
-  test('List predicate versions with pagination', async () => {
+  test("List predicate versions with pagination", async () => {
     const page = 1;
     const perPage = 8;
     const paginatedVersions = await Vault.BakoSafeGetVersions({
@@ -361,10 +361,10 @@ describe('[PREDICATES]', () => {
       perPage,
     });
 
-    expect(paginatedVersions).toHaveProperty('data');
-    expect(paginatedVersions).toHaveProperty('total');
+    expect(paginatedVersions).toHaveProperty("data");
+    expect(paginatedVersions).toHaveProperty("total");
     expect(paginatedVersions.data.length).toBeLessThanOrEqual(perPage);
-    expect(paginatedVersions).toHaveProperty('currentPage', page);
-    expect(paginatedVersions).toHaveProperty('perPage', perPage);
+    expect(paginatedVersions).toHaveProperty("currentPage", page);
+    expect(paginatedVersions).toHaveProperty("perPage", perPage);
   });
 });

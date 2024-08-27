@@ -1,12 +1,10 @@
-import { Address, Provider, TransactionStatus, Wallet, arrayify } from 'fuels';
+import { Address, Provider, Wallet, arrayify } from "fuels";
 
-import { ScriptAbi__factory } from '../../../sdk/src/sway/scripts/';
-
-import { beforeAll, describe, expect, test } from 'bun:test';
-import { BakoSafe } from '../../../sdk';
-import { accounts } from '../../../sdk/test/mocks';
-import { signin } from '../../../sdk/test/utils/signin';
-import { CHAIN_URL } from '../../../test-utils';
+import { beforeAll, describe, expect, test } from "bun:test";
+import { BakoSafe } from "../../../sdk";
+import { accounts } from "../../../sdk/test/mocks";
+import { signin } from "../../../sdk/test/utils/signin";
+import { CHAIN_URL } from "../../../test-utils";
 import {
   ERROR_DUPLICATED_WITNESSES,
   WEBAUTHN,
@@ -14,14 +12,15 @@ import {
   createTransactionScript,
   sendTransaction,
   signTransaction,
-} from '../utils';
+} from "../utils";
+import { ScriptAbi__factory } from "../../../sdk/src/sway";
 
-describe('[SWAY_PREDICATE] Send transfers', () => {
+describe("[SWAY_PREDICATE] Send transfers", () => {
   let provider: Provider;
 
   BakoSafe.setProviders({
     CHAIN_URL,
-    SERVER_URL: 'http://localhost:3333',
+    SERVER_URL: "http://localhost:3333",
   });
 
   beforeAll(async () => {
@@ -30,9 +29,9 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     provider = await Provider.create(CHAIN_URL);
   });
 
-  test('By predicate', async () => {
+  test("By predicate", async () => {
     const predicate = await createPredicate({
-      amount: '0.1',
+      amount: "0.1",
       minSigners: 3,
       signers: [
         accounts.USER_1.account,
@@ -46,9 +45,9 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     const id = tx.getTransactionId(provider.getChainId()).slice(2);
 
     const response = await sendTransaction(provider, tx, [
-      await signin(id, 'USER_1', undefined),
-      await signin(id, 'USER_3', undefined),
-      await signin(id, 'USER_4', undefined),
+      await signin(id, "USER_1", undefined),
+      await signin(id, "USER_3", undefined),
+      await signin(id, "USER_4", undefined),
     ]);
     const result = await response.waitForResult();
 
@@ -56,13 +55,13 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     expect(result.status).toBe(TransactionStatus.success);
   });
 
-  test('With duplicated witnesses', async () => {
+  test("With duplicated witnesses", async () => {
     const wallet = Wallet.generate({
       provider,
     });
 
     const predicate = await createPredicate({
-      amount: '0.1',
+      amount: "0.1",
       minSigners: 2,
       signers: [wallet.address.toB256(), Address.fromRandom().toB256()],
     });
@@ -78,13 +77,13 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     });
   });
 
-  test('With duplicated signers', async () => {
+  test("With duplicated signers", async () => {
     const wallet = Wallet.generate({
       provider,
     });
 
     const predicate = await createPredicate({
-      amount: '0.1',
+      amount: "0.1",
       minSigners: 2,
       signers: [wallet.address.toB256(), wallet.address.toB256()],
     });
@@ -103,9 +102,9 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
   // this test is an adptation, becouse we dont sign messages on node using webauthn
   // add, to validate this, whe have a constants with values signed by webauthn
   // and this transaction, recives a script with this constants and check
-  test('By webauthn', async () => {
+  test("By webauthn", async () => {
     const predicate = await createPredicate({
-      amount: '0.1',
+      amount: "0.1",
       minSigners: 1,
       signers: [accounts.USER_1.account],
     });
@@ -118,7 +117,7 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
     const id = tx.getTransactionId(provider.getChainId()).slice(2);
 
     const result = await sendTransaction(provider, tx, [
-      await signin(id, 'USER_1', undefined),
+      await signin(id, "USER_1", undefined),
       WEBAUTHN.signature,
     ]);
 
@@ -128,6 +127,6 @@ describe('[SWAY_PREDICATE] Send transfers', () => {
 
     // verify if on the script, recover of static signature is equal to the static address
     //@ts-ignore
-    expect(res.receipts[0].data).toBe('0x01');
+    expect(res.receipts[0].data).toBe("0x01");
   });
 });

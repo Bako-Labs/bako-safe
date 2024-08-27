@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   type BN,
   type BytesLike,
@@ -9,8 +9,8 @@ import {
   type Predicate,
   type Provider,
   bn,
-} from 'fuels';
-import { ContractAbi__factory } from '../../types/sway';
+} from "fuels";
+import { TestContract } from "../../types/sway";
 
 export class BakoContractDeploy extends ContractFactory {
   readonly abi: JsonAbi;
@@ -27,9 +27,9 @@ export class BakoContractDeploy extends ContractFactory {
     this.abi = abi;
   }
 
-  async deploy(deployContractOptions: DeployContractOptions = {}) {
+  async getDeployRequest(deployContractOptions: DeployContractOptions = {}) {
     if (!this.predicate) {
-      throw new Error('Predicate not set');
+      throw new Error("Predicate not set");
     }
 
     const { configurableConstants } = deployContractOptions;
@@ -57,19 +57,21 @@ export const createTransactionDeploy = async (
 ) => {
   const byteCodePath = join(
     __dirname,
-    '../../sway/contract/out/debug/contract.bin',
+    "../../sway/contract/out/debug/contract.bin",
   );
 
   const byteCode = readFileSync(byteCodePath);
 
   const deploy_class = new BakoContractDeploy(
     byteCode,
-    ContractAbi__factory.abi,
+    // @ts-ignore
+    TestContract.abi,
     provider,
     vault.address.toB256(),
   );
 
-  const { transactionRequest, contractId } = await deploy_class.deploy();
+  const { transactionRequest, contractId } =
+    await deploy_class.getDeployRequest();
 
   const coins = await vault.getResourcesToSpend([
     {

@@ -96,6 +96,11 @@ export enum TransactionType {
   DEPOSIT = 'DEPOSIT',
 }
 
+export interface ITransactionStatusResponse {
+  status: TransactionStatus;
+  id: string;
+}
+
 export interface ITransaction extends ICreateTransactionPayload {
   id: string;
   name: string;
