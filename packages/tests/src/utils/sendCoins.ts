@@ -13,7 +13,7 @@ export const sendCoins = async (
   amount: string,
   asset: string,
 ) => {
-  const _amount = bn.parseUnits(amount, 18);
+  const _amount = bn.parseUnits(amount);
   const rootWallet = Wallet.fromPrivateKey(
     accounts['FULL'].privateKey,
     await Provider.create(networks['LOCAL']),
