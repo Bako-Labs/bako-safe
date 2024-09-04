@@ -39,7 +39,7 @@ configurable {
 
 fn main() -> bool {
     let mut i_witnesses = 0;
-    let mut verified_signatures = Vec::with_capacity(MAX_SIGNERS);
+    let mut verified_signatures: Vec<Address> = Vec::with_capacity(MAX_SIGNERS);
 
     while i_witnesses < tx_witnesses_count() {
         let mut witness_ptr = __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA);
@@ -57,7 +57,9 @@ fn main() -> bool {
                     );
                     private_key
                 },
-                SignatureType::Fuel(signature) => {
+                SignatureType::Fuel(signature_fuel) => {
+                    // to prevent warning on build
+                    let _ = signature_fuel;
                     // TODO: talk with Sway team to see why the value is not correctly parsed it looks to be skiping 24 bytes
                     // this is why we need to use the pointer to read the B512 value, this problem dosen't happen on the webauth
                     let signature = witness_ptr.read::<B512>();
