@@ -1,4 +1,4 @@
-import { BN, Coin, Provider, Resource, bn } from 'fuels';
+import { bn } from 'fuels';
 import { IAssetGroupById, IAssetGroupByTo, ITransferAsset } from './types';
 
 export class Asset {
@@ -47,61 +47,5 @@ export class Asset {
       }
       return acc;
     }, {}) as IAssetGroupByTo;
-  }
-
-  public static addTransactionFee(
-    _assets: IAssetGroupById,
-    _fee: BN,
-    baseAssetId: string,
-  ) {
-    /**
-     * Checks if there is an eth asset in the transaction to pay for the gas and inserts a minimum amount
-     *
-     * @param _fee - value in BN to add on amount of eth of transaction
-     * @param assets - group of assets to sended of transaction
-     * @returns An object with n unique keys, each key being a destination address and the value of each key is equivalent to the sum of the equivalent assets received.
-     */
-
-    // const baseAssetId = await provider.getBaseAssetId();
-
-    let _assets_aux = _assets;
-    let containETH = !!_assets_aux[baseAssetId];
-
-    if (containETH) {
-      let value = bn(_fee).add(_assets_aux[baseAssetId]);
-      _assets_aux[baseAssetId] = value;
-    } else {
-      _assets_aux[baseAssetId] = bn().add(_fee);
-    }
-
-    return Object.entries(_assets_aux).map(([key, value]) => {
-      return {
-        amount: value,
-        assetId: key,
-      };
-    });
-  }
-
-  public static includeSpecificAmount(
-    predicateCoins: Resource[],
-    assets: ITransferAsset[],
-  ): ITransferAsset[] {
-    return assets.map((asset: ITransferAsset) => {
-      const predicateCoin: Coin = predicateCoins.find(
-        (coin: Resource) => coin,
-      ) as Coin;
-      if (predicateCoin) {
-        return {
-          ...asset,
-          //utxo: predicateCoin.id,
-        };
-      } else {
-        return {
-          ...asset,
-          onPredicate: '',
-          //utxo: '',
-        };
-      }
-    });
   }
 }

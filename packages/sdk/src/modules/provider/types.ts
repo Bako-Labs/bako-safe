@@ -1,7 +1,5 @@
 export {
   ISelectWorkspaceResponse,
-  IAuthCreateRequest,
-  IAuthService,
   IBakoSafeAuth,
   TypeUser,
   Workspace,

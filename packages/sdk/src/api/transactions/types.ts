@@ -1,126 +1,110 @@
-import { Operation, TransactionRequest } from 'fuels';
-import { ITransferAsset } from '../../utils/assets';
-import { IBakoError } from '../../utils/errors/types';
+// import { Operation, TransactionRequest } from 'fuels';
+// import { ITransferAsset } from '../../utils/assets';
+// import { IBakoError } from '../../utils/errors/types';
 
-export enum SortOptionTx {
-  ASC = 'ASC',
-  DESC = 'DESC',
-}
+// export interface ICreateTransactionPayload {
+//   predicateAddress: string; // ADDRESS OF PREDICATE
+//   name?: string;
+//   hash: string; // HASH OF TRANSACTION
+//   txData: TransactionRequest;
+//   status: TransactionStatus;
+// }
 
-export enum TransactionStatus {
-  AWAIT_REQUIREMENTS = 'await_requirements', // -> AWAIT SIGNATURES
-  PENDING_SENDER = 'pending_sender', // -> AWAIT SENDER, BEFORE AWAIT STATUS
-  PROCESS_ON_CHAIN = 'process_on_chain', // -> AWAIT DONE ON CHAIN
-  SUCCESS = 'success', // -> SENDED
-  DECLINED = 'declined', // -> DECLINED
-  FAILED = 'failed', // -> FAILED
-}
+// export enum WitnessStatus {
+//   REJECTED = 'REJECTED',
+//   DONE = 'DONE',
+//   PENDING = 'PENDING',
+// }
 
-export interface ICreateTransactionPayload {
-  predicateAddress: string; // ADDRESS OF PREDICATE
-  name?: string;
-  hash: string; // HASH OF TRANSACTION
-  txData: TransactionRequest;
-  status: TransactionStatus;
-  sendTime?: Date;
-  gasUsed?: string;
-}
+// export interface IWitnesses {
+//   account: string;
+//   signature: string;
+//   status: WitnessStatus;
+//   updatedAt: string;
+// }
 
-export enum WitnessStatus {
-  REJECTED = 'REJECTED',
-  DONE = 'DONE',
-  PENDING = 'PENDING',
-}
+// export interface GetTransactionParams {
+//   predicateId?: string[];
+//   to?: string;
+//   hash?: string;
+//   status?: TransactionStatus[];
+//   perPage?: number;
+//   page?: number;
+//   orderBy?: string;
+//   sort?: SortOptionTx;
+// }
 
-export interface IWitnesses {
-  account: string;
-  signature: string;
-  status: WitnessStatus;
-  updatedAt: string;
-}
+// export enum TransactionProcessStatus {
+//   SUCCESS = 'SuccessStatus',
+//   SQUIZED = 'SqueezedOutStatus',
+//   SUBMITED = 'SubmittedStatus',
+//   FAILED = 'FailureStatus',
+// }
 
-export interface GetTransactionParams {
-  predicateId?: string[];
-  to?: string;
-  hash?: string;
-  status?: TransactionStatus[];
-  perPage?: number;
-  page?: number;
-  orderBy?: string;
-  sort?: SortOptionTx;
-}
+// export interface ITransactionPredicate {
+//   id: string;
+//   address: string;
+// }
 
-export enum TransactionProcessStatus {
-  SUCCESS = 'SuccessStatus',
-  SQUIZED = 'SqueezedOutStatus',
-  SUBMITED = 'SubmittedStatus',
-  FAILED = 'FailureStatus',
-}
+// export interface ITransactionResume {
+//   id: string;
+//   hash: string;
+//   totalSigners: number;
+//   requiredSigners: number;
+//   witnesses: IWitnesses[];
+//   status: TransactionStatus;
+//   predicate: ITransactionPredicate;
+//   gasUsed?: string;
+//   sendTime?: Date;
+//   error?: IBakoError;
+// }
 
-export interface ITransactionPredicate {
-  id: string;
-  address: string;
-}
+// export interface BaseSummary {
+//   operations: Operation[];
+// }
 
-export interface ITransactionResume {
-  id: string;
-  hash: string;
-  totalSigners: number;
-  requiredSigners: number;
-  witnesses: IWitnesses[];
-  status: TransactionStatus;
-  predicate: ITransactionPredicate;
-  gasUsed?: string;
-  sendTime?: Date;
-  error?: IBakoError;
-}
+// export interface IConnectorSummary extends BaseSummary {
+//   type: 'connector';
+//   origin: string;
+//   name: string;
+//   image?: string;
+// }
 
-export interface BaseSummary {
-  operations: Operation[];
-}
+// export interface ICliSummary extends BaseSummary {
+//   type: 'cli';
+// }
 
-export interface IConnectorSummary extends BaseSummary {
-  type: 'connector';
-  origin: string;
-  name: string;
-  image?: string;
-}
+// export type ITransactionSummary = IConnectorSummary | ICliSummary;
 
-export interface ICliSummary extends BaseSummary {
-  type: 'cli';
-}
+// export enum TransactionType {
+//   TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',
+//   TRANSACTION_CREATE = 'TRANSACTION_CREATE',
+//   DEPOSIT = 'DEPOSIT',
+// }
 
-export type ITransactionSummary = IConnectorSummary | ICliSummary;
+// export interface ITransaction
+//   extends Omit<ICreateTransactionPayload, 'predicateAddress'> {
+//   id: string;
+//   name: string;
+//   type: TransactionType;
+//   resume: ITransactionResume;
+//   summary?: ITransactionSummary;
 
-export enum TransactionType {
-  TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',
-  TRANSACTION_CREATE = 'TRANSACTION_CREATE',
-  DEPOSIT = 'DEPOSIT',
-}
+//   createdAt: string;
+//   updatedAt: string;
+// }
 
-export interface ITransaction
-  extends Omit<ICreateTransactionPayload, 'predicateAddress'> {
-  id: string;
-  name: string;
-  type: TransactionType;
-  resume: ITransactionResume;
-  summary?: ITransactionSummary;
-
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ITransactionService {
-  create: (payload: ICreateTransactionPayload) => Promise<ITransaction>;
-  findByHash: (hash: string) => Promise<ITransaction>;
-  findByTransactionID: (transactionId: string) => Promise<ITransaction>;
-  sign: (
-    BakoSafeTransactionId: string,
-    account: string,
-    signer: string,
-    approve?: boolean,
-  ) => Promise<ITransaction>;
-  send: (BakoSafeTransactionId: string) => Promise<ITransactionResume>;
-  verify: (BakoSafeTransactionId: string) => Promise<ITransactionResume>;
-  status: (BakoSafeTransactionId: string) => Promise<TransactionStatus>;
-}
+// export interface ITransactionService {
+//   create: (payload: ICreateTransactionPayload) => Promise<ITransaction>;
+//   findByHash: (hash: string) => Promise<ITransaction>;
+//   findByTransactionID: (transactionId: string) => Promise<ITransaction>;
+//   sign: (
+//     BakoSafeTransactionId: string,
+//     account: string,
+//     signer: string,
+//     approve?: boolean,
+//   ) => Promise<ITransaction>;
+//   send: (BakoSafeTransactionId: string) => Promise<ITransactionResume>;
+//   verify: (BakoSafeTransactionId: string) => Promise<ITransactionResume>;
+//   status: (BakoSafeTransactionId: string) => Promise<TransactionStatus>;
+// }

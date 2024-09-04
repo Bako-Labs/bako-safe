@@ -1,4 +1,7 @@
-import { SortOptionTx } from '../transactions';
+export enum SortOptionTx {
+  ASC = 'ASC',
+  DESC = 'DESC',
+}
 
 export interface IPagination<T> {
   currentPage: number;
