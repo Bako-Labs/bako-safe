@@ -1,12 +1,4 @@
-import {
-  Address,
-  arrayify,
-  bn,
-  ContractFactory,
-  Provider,
-  ReceiptType,
-  Wallet,
-} from 'fuels';
+import { Address, arrayify, bn, Provider, ReceiptType, Wallet } from 'fuels';
 
 import {
   signin,
@@ -15,9 +7,8 @@ import {
   WebAuthn_createCredentials,
 } from './utils';
 
-import { ContractAbi__factory } from './types/sway';
+import { ContractFactory } from 'fuels';
 import { networks, accounts, assets } from './mocks';
-import contractBytecode from './types/sway/contracts/ContractAbi.hex';
 import {
   BakoError,
   ErrorCodes,
@@ -26,6 +17,8 @@ import {
   SignatureType,
   VaultProvider,
 } from 'bakosafe/src';
+import { ExampleContract } from './types/sway/contracts/ExampleContract';
+import { ExampleContractFactory } from './types/sway/contracts/ExampleContractFactory';
 
 describe('[Create]', () => {
   let provider: Provider;
@@ -69,7 +62,7 @@ describe('[Create]', () => {
     expect(await vault.getBalances()).toEqual(await vault2.getBalances());
   });
 
-  it('Using a VaultProvider', async () => {
+  it.only('Using a VaultProvider', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await VaultProvider.setup({
@@ -92,12 +85,12 @@ describe('[Create]', () => {
       HASH_PREDICATE: Address.fromRandom().toB256(),
     });
 
-    const saved = await predicate.store();
+    const saved = await predicate.save();
 
     const balanceValue = '0.1';
     await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
 
-    const recover = await Vault.stored(saved.id, vaultProvider);
+    const recover = await Vault.fromAddress(saved.id, vaultProvider);
 
     const predicateBalance = await predicate.getBalance(assets['ETH']);
     const recoverBalance = await recover.getBalance(assets['ETH']);
@@ -125,7 +118,7 @@ describe('[Transactions]', () => {
     await sendCoins(vault.address.toString(), '0.2', assets['ETH']);
 
     // create a transaction
-    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+    const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
         assetId: assets['ETH'],
@@ -142,7 +135,7 @@ describe('[Transactions]', () => {
     ]);
 
     // send
-    const result = await vault.sendTransactionToChain(tx);
+    const result = await vault.send(tx);
     const response = await result.waitForResult();
     expect(response).toHaveProperty('status', 'success');
   });
@@ -159,7 +152,7 @@ describe('[Transactions]', () => {
     await sendCoins(vault.address.toString(), '0.3', assets['BTC']);
 
     // create a transaction
-    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+    const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
         assetId: assets['BTC'],
@@ -186,7 +179,7 @@ describe('[Transactions]', () => {
     ]);
 
     // send
-    const result = await vault.sendTransactionToChain(tx);
+    const result = await vault.send(tx);
     const response = await result.waitForResult();
     const walletBalance = await wallet.getBalances();
 
@@ -206,13 +199,12 @@ describe('[Transactions]', () => {
   });
 
   it('Transaction by ScriptTransactionRequest', async () => {
-    // deploy a contract to call
+    // deploy a contract
     const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
-    const deploy = await ContractAbi__factory.deployContract(
-      contractBytecode,
-      wallet,
-    );
-    await deploy.waitForResult();
+    const contractToDeploy = new ExampleContractFactory(wallet);
+    const { contractId, transactionRequest } =
+      contractToDeploy.createTransactionRequest();
+    await wallet.sendTransaction(transactionRequest);
 
     // create a vault
     const vault = new Vault(provider, {
@@ -222,9 +214,11 @@ describe('[Transactions]', () => {
     await sendCoins(vault.address.toString(), '0.5', assets['ETH']);
 
     // Get transaction request of contract method
-    const contractAbi = ContractAbi__factory.connect(deploy.contractId, vault);
-    const contractMethod = contractAbi.functions.seven();
-    const contractRequest = await contractMethod.fundWithRequiredCoins();
+    const contract = new ExampleContract(contractId, vault);
+
+    const contractRequest = await contract.functions
+      .seven()
+      .fundWithRequiredCoins();
     const { tx, hashTxId } = await vault.BakoTransfer(contractRequest);
 
     tx.witnesses = bakoCoder.encode([
@@ -234,7 +228,7 @@ describe('[Transactions]', () => {
       },
     ]);
 
-    const result = await vault.sendTransactionToChain(tx);
+    const result = await vault.send(tx);
     const response = await result.waitForResult();
 
     expect(response).toHaveProperty('status', 'success');
@@ -254,11 +248,10 @@ describe('[Transactions]', () => {
     });
     await sendCoins(vault.address.toString(), '0.5', assets['ETH']);
 
-    const { contractId, transactionRequest } = new ContractFactory(
-      arrayify(contractBytecode),
-      ContractAbi__factory.abi,
-      vault,
-    ).createTransactionRequest();
+    const contract = new ExampleContractFactory(vault);
+
+    const { contractId, transactionRequest } =
+      contract.createTransactionRequest();
 
     const { tx, hashTxId } = await vault.BakoTransfer(transactionRequest);
 
@@ -273,13 +266,13 @@ describe('[Transactions]', () => {
     tx.witnesses?.push(...signatures);
 
     // send
-    const result = await vault.sendTransactionToChain(tx);
+    const result = await vault.send(tx);
     const response = await result.waitForResult();
 
     // call this contract
     const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
-    const contractAbi = ContractAbi__factory.connect(contractId, wallet);
-    const contractMethod = contractAbi.functions.seven();
+
+    const contractMethod = ContractFactory.call(contractId, wallet).seven();
     const contractRequest = await contractMethod.fundWithRequiredCoins();
 
     const callResult = await wallet.sendTransaction(contractRequest);
@@ -311,7 +304,7 @@ describe('[Send With]', () => {
     });
     await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
-    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+    const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
         assetId: assets['ETH'],
@@ -326,7 +319,7 @@ describe('[Send With]', () => {
       },
     ]);
 
-    const result = await vault.sendTransactionToChain(tx);
+    const result = await vault.send(tx);
     const response = await result.waitForResult();
 
     expect(response).toHaveProperty('status', 'success');
@@ -340,7 +333,7 @@ describe('[Send With]', () => {
     });
     await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
-    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+    const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
         assetId: assets['ETH'],
@@ -359,7 +352,7 @@ describe('[Send With]', () => {
       },
     ]);
 
-    const result = await vault.sendTransactionToChain(tx);
+    const result = await vault.send(tx);
     const response = await result.waitForResult();
 
     expect(response).toHaveProperty('status', 'success');
@@ -372,7 +365,7 @@ describe('[Send With]', () => {
     });
     await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
-    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+    const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
         assetId: assets['ETH'],
@@ -387,7 +380,7 @@ describe('[Send With]', () => {
       },
     ]);
 
-    await vault.sendTransactionToChain(tx).catch((e) => {
+    await vault.send(tx).catch((e) => {
       const error = BakoError.parse(e);
       expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
     });
@@ -400,7 +393,7 @@ describe('[Send With]', () => {
     });
     await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
-    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+    const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
         assetId: assets['ETH'],
@@ -420,7 +413,7 @@ describe('[Send With]', () => {
       },
     ]);
 
-    await vault.sendTransactionToChain(tx).catch((e) => {
+    await vault.send(tx).catch((e) => {
       const error = BakoError.parse(e);
       expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
     });
@@ -433,7 +426,7 @@ describe('[Send With]', () => {
     });
     await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
-    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+    const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
         assetId: assets['ETH'],
@@ -452,7 +445,7 @@ describe('[Send With]', () => {
       },
     ]);
 
-    await vault.sendTransactionToChain(tx).catch((e) => {
+    await vault.send(tx).catch((e) => {
       const error = BakoError.parse(e);
       expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
     });
@@ -466,7 +459,7 @@ describe('[Send With]', () => {
     });
     await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
-    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+    const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
         assetId: assets['ETH'],
@@ -495,7 +488,7 @@ describe('[Send With]', () => {
     });
     await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
 
-    const { tx, hashTxId } = await vault.BakoFormatTransfer([
+    const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
         assetId: assets['ETH'],
@@ -512,7 +505,7 @@ describe('[Send With]', () => {
       },
     ]);
 
-    await vault.sendTransactionToChain(tx).catch((e) => {
+    await vault.send(tx).catch((e) => {
       const error = BakoError.parse(e);
       expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
     });

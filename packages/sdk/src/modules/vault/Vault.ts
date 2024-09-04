@@ -18,7 +18,7 @@ import {
   ZeroBytes32,
 } from 'fuels';
 
-import { PredicateAbi__factory } from '../../sway/predicates';
+import { BakoPredicate } from '../../sway/predicates';
 
 import {
   Asset,
@@ -40,6 +40,7 @@ import { VaultProvider } from '../provider';
  * `Vault` are extension of predicates, to manager transactions, and sends.
  */
 export class Vault extends Predicate<[]> {
+  readonly bakoFee = bn(0);
   readonly maxSigners = 10;
   readonly configurable: VaultConfigurable;
 
@@ -51,8 +52,8 @@ export class Vault extends Predicate<[]> {
   ) {
     const conf = Vault.makePredicate(configurable);
     super({
-      abi: PredicateAbi__factory.abi,
-      bytecode: arrayify(PredicateAbi__factory.bin),
+      abi: BakoPredicate.abi,
+      bytecode: arrayify(BakoPredicate.bytecode),
       provider: provider,
       configurableConstants: conf,
     });
@@ -92,8 +93,7 @@ export class Vault extends Predicate<[]> {
     tx: TransactionRequestLike;
     hashTxId: string;
   }> {
-    let result = undefined;
-
+    let result: TransactionRequest;
     switch (tx.type) {
       case TransactionType.Script:
         const script = new ScriptTransactionRequest(tx);
@@ -123,71 +123,22 @@ export class Vault extends Predicate<[]> {
   }
 
   /**
-   * Create a new transactionScript using the vault resources.
-   *
-   * @param {ITransferAsset[]} assets - The transaction to send.
-   * @returns {Promise<{
-   *  tx: TransactionRequestLike,
-   *  hashTxId: string,
-   * }>} TransactionResponse
-   */
-  async BakoFormatTransfer(assets: ITransferAsset[]): Promise<{
-    tx: TransactionRequestLike;
-    hashTxId: string;
-  }> {
-    const tx = new ScriptTransactionRequest();
-
-    const outputs = Asset.assetsGroupByTo(assets);
-    const coins = Asset.assetsGroupById(assets);
-
-    const transactionCoins = Asset.addTransactionFee(
-      coins,
-      bn(0),
-      this.provider.getBaseAssetId(),
-    );
-
-    const _coins = await this.getResourcesToSpend(transactionCoins);
-
-    tx.addResources(_coins);
-    Object.entries(outputs).map(([, value]) => {
-      tx.addCoinOutput(
-        Address.fromString(value.to),
-        value.amount,
-        value.assetId,
-      );
-    });
-
-    tx.inputs?.forEach((input) => {
-      if (
-        input.type === InputType.Coin &&
-        hexlify(input.owner) === this.address.toB256()
-      ) {
-        input.predicate = arrayify(this.bytes);
-      }
-    });
-
-    let trancation = await this.prepareTransaction(tx);
-    await this.transactionSave(trancation);
-
-    return {
-      tx: trancation,
-      hashTxId: trancation
-        .getTransactionId(this.provider.getChainId())
-        .slice(2),
-    };
-  }
-
-  /**
    * Using the vault, send a transaction to the chain.
    *
    * @param tx {TransactionRequestLike} - The transaction to send.
    * @returns {Promise<TransactionResponse>} TransactionResponse
    */
-  async sendTransactionToChain(
-    tx: TransactionRequestLike,
-  ): Promise<TransactionResponse> {
-    // this.transactionRequest.witnesses = this.witnesses;
+  async send(tx: TransactionRequestLike): Promise<TransactionResponse> {
     const txRequest = transactionRequestify(tx);
+
+    if (this.provider instanceof VaultProvider) {
+      const txHash = await txRequest.getTransactionId(
+        this.provider.getChainId(),
+      );
+
+      return await this.provider.send(txHash);
+    }
+
     await this.provider.estimatePredicates(txRequest);
     const encodedTransaction = hexlify(txRequest.toTransactionBytes());
     const {
@@ -227,7 +178,15 @@ export class Vault extends Predicate<[]> {
     );
 
     const transactionCost = await vault.provider.getTransactionCost(request);
-    await vault.fund(request, transactionCost);
+    await vault.fund(request, {
+      ...transactionCost,
+      requiredQuantities: [
+        {
+          amount: new BN(),
+          assetId: '',
+        },
+      ],
+    });
     await vault.provider.estimatePredicates(request);
     const input = request.inputs[0];
     if ('predicate' in input && input.predicate) {
@@ -254,7 +213,17 @@ export class Vault extends Predicate<[]> {
     const transactionCost =
       await this.provider.getTransactionCost(transactionRequest);
     transactionRequest.maxFee = transactionCost.maxFee;
-    transactionRequest = await this.fund(transactionRequest, transactionCost);
+    transactionRequest = await this.fund(transactionRequest, {
+      ...transactionCost,
+      requiredQuantities: transactionRequest.inputs
+        .filter((input) => input.type === InputType.Coin)
+        .map((data) => {
+          return {
+            amount: bn(data.amount),
+            assetId: hexlify(data.assetId),
+          };
+        }),
+    });
 
     // Calculate the total gas usage for the transaction
     let totalGasUsed = bn(0);
@@ -299,17 +268,18 @@ export class Vault extends Predicate<[]> {
     return this.__provider;
   }
 
-  async store() {
+  async save() {
     // todo: reuse this validation
     if (this.provider instanceof VaultProvider) {
-      return await this.provider?.storePredicate(this);
+      return await this.provider?.savePredicate(this);
     }
 
     throw new Error('Use a VaultProvider to consume this method');
   }
 
-  static async stored(reference: string, provider: VaultProvider) {
-    const recoveredPredicate = await provider?.findPredicate(reference);
+  static async fromAddress(reference: string, provider: VaultProvider) {
+    const recoveredPredicate =
+      await provider?.findPredicateByAddress(reference);
     const predicate = new Vault(
       provider,
       JSON.parse(recoveredPredicate.configurable), // move this parse to the service
@@ -318,21 +288,66 @@ export class Vault extends Predicate<[]> {
     return predicate;
   }
 
-  async transactionSave(
-    tx: ScriptTransactionRequest | CreateTransactionRequest,
-  ) {
-    if (this.provider instanceof VaultProvider) {
-      return await this.provider?.storeTransaction(tx, this.address.toB256());
-    }
-
-    throw new Error('Use a VaultProvider to consume this method');
-  }
-
   async transactionFromHash(hash: string) {
     if (this.provider instanceof VaultProvider) {
       return await this.provider?.findTransaction(hash, this);
     }
 
     throw new Error('Use a VaultProvider to consume this method');
+  }
+
+  /**
+   * Create a new transactionScript using the vault resources.
+   *
+   * @param {ITransferAsset[]} assets - The transaction to send.
+   * @returns {Promise<{
+   *  tx: TransactionRequestLike,
+   *  hashTxId: string,
+   * }>} TransactionResponse
+   */
+  async transaction(assets: ITransferAsset[]): Promise<{
+    tx: TransactionRequestLike;
+    hashTxId: string;
+  }> {
+    const tx = new ScriptTransactionRequest();
+
+    const outputs = Asset.assetsGroupByTo(assets);
+    const coins = Asset.assetsGroupById(assets);
+
+    const transactionCoins = Object.entries(coins).map(([assetId, amount]) => ({
+      assetId,
+      amount,
+    }));
+
+    tx.addResources(await this.getResourcesToSpend(transactionCoins));
+    Object.entries(outputs).map(([, value]) => {
+      tx.addCoinOutput(
+        Address.fromString(value.to),
+        value.amount,
+        value.assetId,
+      );
+    });
+
+    tx.inputs?.forEach((input) => {
+      if (
+        input.type === InputType.Coin &&
+        hexlify(input.owner) === this.address.toB256()
+      ) {
+        input.predicate = arrayify(this.bytes);
+      }
+    });
+
+    let trancation = await this.prepareTransaction(tx);
+
+    if (this.provider instanceof VaultProvider) {
+      await this.provider.saveTransaction(trancation, this.address.toB256());
+    }
+
+    return {
+      tx: trancation,
+      hashTxId: trancation
+        .getTransactionId(this.provider.getChainId())
+        .slice(2),
+    };
   }
 }
