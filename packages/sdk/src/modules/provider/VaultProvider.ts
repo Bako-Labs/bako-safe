@@ -3,6 +3,8 @@ import {
   Provider,
   ProviderOptions,
   ScriptTransactionRequest,
+  TransactionRequest,
+  TransactionResponse,
 } from 'fuels';
 import { Service } from '../../api/auth/auth';
 import { TypeUser } from './types';
@@ -11,6 +13,7 @@ import { Vault } from '../vault';
 import {
   ICreateTransactionPayload,
   IPredicatePayload,
+  ISignTransaction,
   TransactionStatus,
 } from '../../api';
 
@@ -86,7 +89,7 @@ export class VaultProvider extends Provider {
     return;
   }
 
-  async storePredicate(vault: Vault) {
+  async savePredicate(vault: Vault) {
     const payload: IPredicatePayload = {
       name: vault.address.toB256(),
       predicateAddress: vault.address.toB256(),
@@ -101,18 +104,11 @@ export class VaultProvider extends Provider {
     return predicate;
   }
 
-  async findPredicate(reference: string) {
-    // todo: move this
-    const isAddress = reference.length == 66;
-
-    const predicate = isAddress
-      ? await this.service.findByAddress(reference)
-      : await this.service.findById(reference);
-
-    return predicate;
+  async findPredicateByAddress(address: string) {
+    return await this.service.findByAddress(address);
   }
 
-  async storeTransaction(
+  async saveTransaction(
     tx: ScriptTransactionRequest | CreateTransactionRequest,
     predicate: string,
   ) {
@@ -128,9 +124,27 @@ export class VaultProvider extends Provider {
     return transaction;
   }
 
-  async findTransaction(hash: string, vault: Vault) {
-    const transaction = await this.service.recoverTransaction(hash);
+  async findTransaction(identifier: string, vault: Vault) {
+    const transaction = await this.service.findTransactionByHash(identifier);
+    // const transaction = await this.service.recoverTransaction(hash);
 
     return vault.BakoTransfer(transaction.txData);
+  }
+
+  async signTransaction(params: ISignTransaction) {
+    const { hash, signature, approve, vault } = params;
+    const transaction = await this.service.signTransaction({
+      hash,
+      signature,
+      approve: approve ?? true,
+    });
+
+    return vault.signTransaction(transaction.txData);
+  }
+
+  async send(hash: string) {
+    await this.service.sendTransaction(hash);
+
+    return new TransactionResponse(hash, this);
   }
 }
