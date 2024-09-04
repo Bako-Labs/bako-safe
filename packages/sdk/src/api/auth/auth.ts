@@ -1,8 +1,13 @@
 import axios, { AxiosInstance } from 'axios';
 
-import { defaultConfig, AuthRequestHeaders, IUserCreate } from './types';
-import { IPredicatePayload } from '../predicates';
-import { ICreateTransactionPayload } from '../transactions';
+import {
+  defaultConfig,
+  AuthRequestHeaders,
+  IUserCreate,
+  ISignTransactionRequest,
+  ICreateTransactionPayload,
+  IPredicatePayload,
+} from './types';
 
 // todo:
 //  - rename correctly methods
@@ -76,10 +81,26 @@ export class Service {
     return data;
   }
 
-  async recoverTransaction(transactionId: string) {
+  async findTransactionByHash(transactionId: string) {
     const { data } = await this.api.get(
       `/transaction/by-hash/${transactionId}`,
     );
+    return data;
+  }
+
+  public async signTransaction(params: ISignTransactionRequest) {
+    const { hash, ...rest } = params;
+    const { data } = await this.api.put(
+      `/transaction/signer/${params.hash}`,
+      rest,
+    );
+
+    return data;
+  }
+
+  public async sendTransaction(hash: string) {
+    const { data } = await this.api.put(`/transaction/send/${hash}`);
+
     return data;
   }
 
