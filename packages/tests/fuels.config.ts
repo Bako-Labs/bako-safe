@@ -1,7 +1,6 @@
 import { createConfig } from 'fuels';
 
 import dotenv from 'dotenv';
-import { accounts, networks } from './src/mocks';
 
 dotenv.config();
 
