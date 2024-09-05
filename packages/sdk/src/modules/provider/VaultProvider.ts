@@ -126,7 +126,6 @@ export class VaultProvider extends Provider {
 
   async findTransaction(identifier: string, vault: Vault) {
     const transaction = await this.service.findTransactionByHash(identifier);
-    // const transaction = await this.service.recoverTransaction(hash);
 
     return vault.BakoTransfer(transaction.txData);
   }
