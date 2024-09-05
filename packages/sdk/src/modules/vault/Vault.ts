@@ -177,16 +177,8 @@ export class Vault extends Predicate<[]> {
       request.addWitness(FAKE_WITNESSES),
     );
 
-    const transactionCost = await vault.provider.getTransactionCost(request);
-    await vault.fund(request, {
-      ...transactionCost,
-      requiredQuantities: [
-        {
-          amount: new BN(),
-          assetId: '',
-        },
-      ],
-    });
+    const transactionCost = await vault.getTransactionCost(request);
+    await vault.fund(request, transactionCost);
     await vault.provider.estimatePredicates(request);
     const input = request.inputs[0];
     if ('predicate' in input && input.predicate) {
@@ -210,20 +202,9 @@ export class Vault extends Predicate<[]> {
     // Estimate the gas usage for the predicate
     const predicateGasUsed = await this.maxGasUsed();
 
-    const transactionCost =
-      await this.provider.getTransactionCost(transactionRequest);
+    const transactionCost = await this.getTransactionCost(transactionRequest);
     transactionRequest.maxFee = transactionCost.maxFee;
-    transactionRequest = await this.fund(transactionRequest, {
-      ...transactionCost,
-      requiredQuantities: transactionRequest.inputs
-        .filter((input) => input.type === InputType.Coin)
-        .map((data) => {
-          return {
-            amount: bn(data.amount),
-            assetId: hexlify(data.assetId),
-          };
-        }),
-    });
+    transactionRequest = await this.fund(transactionRequest, transactionCost);
 
     // Calculate the total gas usage for the transaction
     let totalGasUsed = bn(0);

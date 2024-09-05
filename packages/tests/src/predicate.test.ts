@@ -62,7 +62,7 @@ describe('[Create]', () => {
     expect(await vault.getBalances()).toEqual(await vault2.getBalances());
   });
 
-  it.only('Using a VaultProvider', async () => {
+  it('Using a VaultProvider', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await VaultProvider.setup({
@@ -85,12 +85,15 @@ describe('[Create]', () => {
       HASH_PREDICATE: Address.fromRandom().toB256(),
     });
 
-    const saved = await predicate.save();
+    await predicate.save();
 
     const balanceValue = '0.1';
     await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
 
-    const recover = await Vault.fromAddress(saved.id, vaultProvider);
+    const recover = await Vault.fromAddress(
+      predicate.address.toB256(),
+      vaultProvider,
+    );
 
     const predicateBalance = await predicate.getBalance(assets['ETH']);
     const recoverBalance = await recover.getBalance(assets['ETH']);
@@ -202,9 +205,10 @@ describe('[Transactions]', () => {
     // deploy a contract
     const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
     const contractToDeploy = new ExampleContractFactory(wallet);
-    const { contractId, transactionRequest } =
-      contractToDeploy.createTransactionRequest();
-    await wallet.sendTransaction(transactionRequest);
+    const txDeploy = await contractToDeploy.deploy();
+    await txDeploy.waitForResult();
+
+    const { contractId } = txDeploy;
 
     // create a vault
     const vault = new Vault(provider, {
@@ -218,7 +222,8 @@ describe('[Transactions]', () => {
 
     const contractRequest = await contract.functions
       .seven()
-      .fundWithRequiredCoins();
+      .getTransactionRequest();
+
     const { tx, hashTxId } = await vault.BakoTransfer(contractRequest);
 
     tx.witnesses = bakoCoder.encode([
@@ -267,26 +272,19 @@ describe('[Transactions]', () => {
 
     // send
     const result = await vault.send(tx);
-    const response = await result.waitForResult();
+    await result.waitForResult();
 
     // call this contract
     const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
-
-    const contractMethod = ContractFactory.call(contractId, wallet).seven();
-    const contractRequest = await contractMethod.fundWithRequiredCoins();
-
-    const callResult = await wallet.sendTransaction(contractRequest);
-    const callResponse = await callResult.waitForResult();
+    const deployedContract = new ExampleContract(contractId, wallet);
+    const contractRequest = await deployedContract.functions.seven().call();
+    const callResponse = await contractRequest.waitForResult();
+    // const callResult = await wallet.sendTransaction(req);
+    // console.log(callResult);
+    // const callResponse = await callResult.waitForResult();
 
     // expect
-    expect(response).toHaveProperty('status', 'success');
-    expect(callResponse).toHaveProperty('status', 'success');
-    expect(callResponse.receipts).toContainEqual(
-      expect.objectContaining({
-        type: ReceiptType.ReturnData,
-        data: '0x0000000000000007',
-      }),
-    );
+    expect(callResponse.value.toHex()).toEqual('0x7');
   });
 });
 
