@@ -279,71 +279,61 @@ describe('[AUTH]', () => {
     expect(res).toBeDefined();
   });
 
-  // it.only('Should sign vault 2:3 with provider and wait', async () => {
-  //   const address = accounts['USER_1'].account;
+  it.only('Should try send before sign transaction', async () => {
+    const address = accounts['USER_1'].account;
 
-  //   const challenge = await VaultProvider.setup({
-  //     address,
-  //   });
+    const challenge = await VaultProvider.setup({
+      address,
+    });
 
-  //   const token = await Wallet.fromPrivateKey(
-  //     accounts['USER_1'].privateKey,
-  //   ).signMessage(challenge);
+    const token = await Wallet.fromPrivateKey(
+      accounts['USER_1'].privateKey,
+    ).signMessage(challenge);
 
-  //   const vaultProvider = await VaultProvider.create(networks['LOCAL'], {
-  //     address,
-  //     challenge,
-  //     token,
-  //   });
+    const vaultProviderClient1 = await VaultProvider.create(networks['LOCAL'], {
+      address,
+      challenge,
+      token,
+    });
 
-  //   const predicate = new Vault(vaultProvider, {
-  //     SIGNATURES_COUNT: 2,
-  //     SIGNERS: [address, accounts['USER_2'].account],
-  //     HASH_PREDICATE: Address.fromRandom().toB256(),
-  //   });
+    const predicate = new Vault(vaultProviderClient1, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [address],
+      HASH_PREDICATE: Address.fromRandom().toB256(),
+    });
 
-  //   // how to create a predicate on database on the instance time
-  //   const saved = await predicate.save();
-  //   const balanceValue = '0.3';
-  //   await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
+    // how to create a predicate on database on the instance time
+    const saved = await predicate.save();
+    const balanceValue = '0.3';
+    await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
 
-  //   const vaultRecover = await Vault.fromAddress(
-  //     saved.predicateAddress,
-  //     vaultProvider,
-  //   );
+    const vaultRecover = await Vault.fromAddress(
+      saved.predicateAddress,
+      vaultProviderClient1,
+    );
 
-  //   const { hashTxId, tx } = await vaultRecover.transaction([
-  //     {
-  //       to: Address.fromRandom().toB256(),
-  //       amount: '0.1',
-  //       assetId: assets['ETH'],
-  //     },
-  //   ]);
+    const { hashTxId, tx } = await vaultRecover.transaction([
+      {
+        to: Address.fromRandom().toB256(),
+        amount: '0.1',
+        assetId: assets['ETH'],
+      },
+    ]);
 
-  //   await vaultProvider.signTransaction({
-  //     hash: `0x${hashTxId}`,
-  //     signature: bakoCoder.encode([
-  //       {
-  //         type: SignatureType.Fuel,
-  //         signature: await signin(hashTxId, 'USER_1'),
-  //       },
-  //     ])[0],
-  //   });
+    const response = await predicate.send(tx);
 
-  //   const response = await predicate.send(tx);
+    await vaultProviderClient1.signTransaction({
+      hash: `0x${hashTxId}`,
+      signature: bakoCoder.encode([
+        {
+          type: SignatureType.Fuel,
+          signature: await signin(hashTxId, 'USER_1'),
+        },
+      ])[0],
+    });
 
-  //   await vaultProvider.signTransaction({
-  //     hash: `0x${hashTxId}`,
-  //     signature: bakoCoder.encode([
-  //       {
-  //         type: SignatureType.Fuel,
-  //         signature: await signin(hashTxId, 'USER_2'),
-  //       },
-  //     ])[0],
-  //   });
+    const res = await response.wait();
 
-  //   const res = await response.wait();
-
-  //   expect(res).toBeDefined();
-  // });
+    expect(res).toBeDefined();
+  }, 10000);
 });
