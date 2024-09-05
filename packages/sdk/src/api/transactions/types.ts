@@ -10,19 +10,6 @@
 //   status: TransactionStatus;
 // }
 
-// export enum WitnessStatus {
-//   REJECTED = 'REJECTED',
-//   DONE = 'DONE',
-//   PENDING = 'PENDING',
-// }
-
-// export interface IWitnesses {
-//   account: string;
-//   signature: string;
-//   status: WitnessStatus;
-//   updatedAt: string;
-// }
-
 // export interface GetTransactionParams {
 //   predicateId?: string[];
 //   to?: string;
@@ -41,40 +28,7 @@
 //   FAILED = 'FailureStatus',
 // }
 
-// export interface ITransactionPredicate {
-//   id: string;
-//   address: string;
-// }
-
-// export interface ITransactionResume {
-//   id: string;
-//   hash: string;
-//   totalSigners: number;
-//   requiredSigners: number;
-//   witnesses: IWitnesses[];
-//   status: TransactionStatus;
-//   predicate: ITransactionPredicate;
-//   gasUsed?: string;
-//   sendTime?: Date;
-//   error?: IBakoError;
-// }
-
-// export interface BaseSummary {
-//   operations: Operation[];
-// }
-
-// export interface IConnectorSummary extends BaseSummary {
-//   type: 'connector';
-//   origin: string;
-//   name: string;
-//   image?: string;
-// }
-
-// export interface ICliSummary extends BaseSummary {
-//   type: 'cli';
-// }
-
-// export type ITransactionSummary = IConnectorSummary | ICliSummary;
+// export interface ITransactionPredicate
 
 // export enum TransactionType {
 //   TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',

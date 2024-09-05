@@ -222,7 +222,7 @@ describe('[AUTH]', () => {
     expect(recoveredTx.hashTxId).toBe(hashTxId);
   });
 
-  it.only('Should sign with provider', async () => {
+  it('Should sign vault 1:1 with provider', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await VaultProvider.setup({
@@ -247,7 +247,6 @@ describe('[AUTH]', () => {
 
     // how to create a predicate on database on the instance time
     const saved = await predicate.save();
-
     const balanceValue = '0.3';
     await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
 
@@ -256,7 +255,7 @@ describe('[AUTH]', () => {
       vaultProvider,
     );
 
-    const { hashTxId } = await vaultRecover.transaction([
+    const { hashTxId, tx } = await vaultRecover.transaction([
       {
         to: Address.fromRandom().toB256(),
         amount: '0.1',
@@ -264,10 +263,8 @@ describe('[AUTH]', () => {
       },
     ]);
 
-    const { hashTxId: recoveredTxId, tx } =
-      await predicate.transactionFromHash(hashTxId);
-    const a = await vaultProvider.signTransaction({
-      hash: `0x${recoveredTxId}`,
+    await vaultProvider.signTransaction({
+      hash: `0x${hashTxId}`,
       signature: bakoCoder.encode([
         {
           type: SignatureType.Fuel,
@@ -279,7 +276,74 @@ describe('[AUTH]', () => {
     const response = await predicate.send(tx);
     const res = await response.wait();
 
-    //console.log(res);
     expect(res).toBeDefined();
-  }, 10000);
+  });
+
+  // it.only('Should sign vault 2:3 with provider and wait', async () => {
+  //   const address = accounts['USER_1'].account;
+
+  //   const challenge = await VaultProvider.setup({
+  //     address,
+  //   });
+
+  //   const token = await Wallet.fromPrivateKey(
+  //     accounts['USER_1'].privateKey,
+  //   ).signMessage(challenge);
+
+  //   const vaultProvider = await VaultProvider.create(networks['LOCAL'], {
+  //     address,
+  //     challenge,
+  //     token,
+  //   });
+
+  //   const predicate = new Vault(vaultProvider, {
+  //     SIGNATURES_COUNT: 2,
+  //     SIGNERS: [address, accounts['USER_2'].account],
+  //     HASH_PREDICATE: Address.fromRandom().toB256(),
+  //   });
+
+  //   // how to create a predicate on database on the instance time
+  //   const saved = await predicate.save();
+  //   const balanceValue = '0.3';
+  //   await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
+
+  //   const vaultRecover = await Vault.fromAddress(
+  //     saved.predicateAddress,
+  //     vaultProvider,
+  //   );
+
+  //   const { hashTxId, tx } = await vaultRecover.transaction([
+  //     {
+  //       to: Address.fromRandom().toB256(),
+  //       amount: '0.1',
+  //       assetId: assets['ETH'],
+  //     },
+  //   ]);
+
+  //   await vaultProvider.signTransaction({
+  //     hash: `0x${hashTxId}`,
+  //     signature: bakoCoder.encode([
+  //       {
+  //         type: SignatureType.Fuel,
+  //         signature: await signin(hashTxId, 'USER_1'),
+  //       },
+  //     ])[0],
+  //   });
+
+  //   const response = await predicate.send(tx);
+
+  //   await vaultProvider.signTransaction({
+  //     hash: `0x${hashTxId}`,
+  //     signature: bakoCoder.encode([
+  //       {
+  //         type: SignatureType.Fuel,
+  //         signature: await signin(hashTxId, 'USER_2'),
+  //       },
+  //     ])[0],
+  //   });
+
+  //   const res = await response.wait();
+
+  //   expect(res).toBeDefined();
+  // });
 });

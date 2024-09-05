@@ -81,10 +81,8 @@ export class Service {
     return data;
   }
 
-  async findTransactionByHash(transactionId: string) {
-    const { data } = await this.api.get(
-      `/transaction/by-hash/${transactionId}`,
-    );
+  async findTransactionByHash(hash: string) {
+    const { data } = await this.api.get(`/transaction/by-hash/${hash}`);
     return data;
   }
 

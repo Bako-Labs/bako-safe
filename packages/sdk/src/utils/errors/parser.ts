@@ -1,9 +1,15 @@
 import { FuelError } from 'fuels';
 import { ErrorCodes, ErrorMessages, ErrorMessagesMapper } from './types';
 
+interface FuelErrorObject {
+  message: string;
+  VERSIONS: unknown; // Substitua `unknown` pelo tipo correto de VERSIONS, se disponível
+}
+
 export class FuelErrorParser {
   static parse(error: FuelError) {
-    const { message, VERSIONS } = error.toObject();
+    const { message, VERSIONS }: FuelErrorObject =
+      error.toObject() as FuelErrorObject;
 
     const messages = Object.keys(ErrorMessagesMapper) as ErrorCodes[];
     const code = messages.find((code) =>

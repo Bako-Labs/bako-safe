@@ -13,11 +13,7 @@ export class BakoError extends Error {
 
     if (isFuelError) {
       const fuelError = FuelErrorParser.parse(<FuelError>error);
-      return new BakoError(
-        fuelError.code,
-        fuelError.message,
-        fuelError.metadata,
-      );
+      return new BakoError(fuelError.code, fuelError.message);
     }
 
     if (error instanceof Object && 'message' in error) {

@@ -1,5 +1,5 @@
-import { TransactionRequest } from 'fuels';
-import { Vault } from 'src/modules';
+import { Operation, TransactionRequest } from 'fuels';
+import { IBakoError } from '../../utils/errors/types';
 
 export enum TypeUser {
   FUEL = 'FUEL',
@@ -100,6 +100,14 @@ export enum TransactionStatus {
   FAILED = 'failed', // -> FAILED
 }
 
+export enum TransactionType {
+  TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',
+  TRANSACTION_CREATE = 'TRANSACTION_CREATE',
+  TRANSACTION_UPGRADE = 'TRANSACTION_UPGRADE',
+  TRANSACTION_UPLOAD = 'TRANSACTION_UPLOAD',
+  DEPOSIT = 'DEPOSIT',
+}
+
 export interface ICreateTransactionPayload {
   predicateAddress: string; // ADDRESS OF PREDICATE
   name?: string;
@@ -107,3 +115,49 @@ export interface ICreateTransactionPayload {
   txData: TransactionRequest;
   status: TransactionStatus;
 }
+
+export enum WitnessStatus {
+  REJECTED = 'REJECTED',
+  DONE = 'DONE',
+  PENDING = 'PENDING',
+}
+
+export interface IWitnesses {
+  account: string;
+  signature: string;
+  status: WitnessStatus;
+  updatedAt: string;
+}
+
+export interface ITransactionResume {
+  id: string;
+  hash: string;
+  totalSigners: number;
+  requiredSigners: number;
+  witnesses: IWitnesses[];
+  status: TransactionStatus;
+  predicate: {
+    id: string;
+    address: string;
+  };
+  gasUsed?: string;
+  sendTime?: Date;
+  error?: IBakoError;
+}
+
+export interface BaseSummary {
+  operations: Operation[];
+}
+
+export interface IConnectorSummary extends BaseSummary {
+  type: 'connector';
+  origin: string;
+  name: string;
+  image?: string;
+}
+
+export interface ICliSummary extends BaseSummary {
+  type: 'cli';
+}
+
+export type ITransactionSummary = IConnectorSummary | ICliSummary;
