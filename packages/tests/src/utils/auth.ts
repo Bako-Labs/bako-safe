@@ -80,7 +80,7 @@ export class AuthTestUtil {
     const msg = await wallet.signMessage(data.hash);
 
     await this.client
-      .put(`/transaction/signer/${BakoSafeAuthTransactionId}`, {
+      .put(`/transaction/sign/${BakoSafeAuthTransactionId}`, {
         account: wallet.address.toString(),
         signer: msg,
         confirm: approve ?? true,

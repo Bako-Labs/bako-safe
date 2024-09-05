@@ -91,7 +91,7 @@ export class Service {
   public async signTransaction(params: ISignTransactionRequest) {
     const { hash, ...rest } = params;
     const { data } = await this.api.put(
-      `/transaction/signer/${params.hash}`,
+      `/transaction/sign/${params.hash}`,
       rest,
     );
 
@@ -99,7 +99,7 @@ export class Service {
   }
 
   public async sendTransaction(hash: string) {
-    const { data } = await this.api.put(`/transaction/send/${hash}`);
+    const { data } = await this.api.post(`/transaction/send/${hash}`);
 
     return data;
   }

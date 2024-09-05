@@ -131,14 +131,14 @@ export class VaultProvider extends Provider {
   }
 
   async signTransaction(params: ISignTransaction) {
-    const { hash, signature, approve, vault } = params;
+    const { hash, signature, approve } = params;
     const transaction = await this.service.signTransaction({
       hash,
       signature,
       approve: approve ?? true,
     });
 
-    return vault.signTransaction(transaction.txData);
+    return transaction;
   }
 
   async send(hash: string) {

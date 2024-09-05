@@ -69,7 +69,6 @@ export interface IAuthSignResponse {
 }
 
 export interface ISignTransaction {
-  vault: Vault;
   hash: string;
   signature: string;
   approve?: boolean;

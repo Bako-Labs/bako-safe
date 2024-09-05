@@ -1,8 +1,13 @@
 import { Address, Wallet } from 'fuels';
 
 import { accounts, assets, networks } from './mocks';
-import { VaultProvider, Vault } from '../../sdk/src/modules/';
-import { sendCoins } from './utils';
+import {
+  VaultProvider,
+  Vault,
+  bakoCoder,
+  SignatureType,
+} from '../../sdk/src/modules/';
+import { sendCoins, signin } from './utils';
 
 // User auth resources:
 //    - auth -> ok (fuel, webauthn?)
@@ -13,6 +18,7 @@ import { sendCoins } from './utils';
 //    - vault recover -> ok
 //    - tx store -> ok
 //    - tx recover -> ok
+//    - tx sign -> ok
 //    - tx send
 //    - tx wait
 
@@ -215,4 +221,65 @@ describe('[AUTH]', () => {
     expect(recoveredTx).toBeDefined();
     expect(recoveredTx.hashTxId).toBe(hashTxId);
   });
+
+  it.only('Should sign with provider', async () => {
+    const address = accounts['USER_1'].account;
+
+    const challenge = await VaultProvider.setup({
+      address,
+    });
+
+    const token = await Wallet.fromPrivateKey(
+      accounts['USER_1'].privateKey,
+    ).signMessage(challenge);
+
+    const vaultProvider = await VaultProvider.create(networks['LOCAL'], {
+      address,
+      challenge,
+      token,
+    });
+
+    const predicate = new Vault(vaultProvider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [address],
+      HASH_PREDICATE: Address.fromRandom().toB256(),
+    });
+
+    // how to create a predicate on database on the instance time
+    const saved = await predicate.save();
+
+    const balanceValue = '0.3';
+    await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
+
+    const vaultRecover = await Vault.fromAddress(
+      saved.predicateAddress,
+      vaultProvider,
+    );
+
+    const { hashTxId } = await vaultRecover.transaction([
+      {
+        to: Address.fromRandom().toB256(),
+        amount: '0.1',
+        assetId: assets['ETH'],
+      },
+    ]);
+
+    const { hashTxId: recoveredTxId, tx } =
+      await predicate.transactionFromHash(hashTxId);
+    const a = await vaultProvider.signTransaction({
+      hash: `0x${recoveredTxId}`,
+      signature: bakoCoder.encode([
+        {
+          type: SignatureType.Fuel,
+          signature: await signin(hashTxId, 'USER_1'),
+        },
+      ])[0],
+    });
+
+    const response = await predicate.send(tx);
+    const res = await response.wait();
+
+    //console.log(res);
+    expect(res).toBeDefined();
+  }, 10000);
 });
