@@ -11,8 +11,8 @@ import { sendCoins } from './utils';
 //    - get userInfo -> ok
 //    - vault store -> ok
 //    - vault recover -> ok
-//    - tx store
-//    - tx recover
+//    - tx store -> ok
+//    - tx recover -> ok
 //    - tx send
 //    - tx wait
 
@@ -117,7 +117,7 @@ describe('[AUTH]', () => {
       HASH_PREDICATE: Address.fromRandom().toB256(),
     });
 
-    const saved = await predicate.store();
+    const saved = await predicate.save();
 
     expect(saved).toBeDefined();
     expect(saved.predicateAddress).toBeDefined();
@@ -148,12 +148,15 @@ describe('[AUTH]', () => {
       HASH_PREDICATE: Address.fromRandom().toB256(),
     });
 
-    const saved = await predicate.store();
+    const saved = await predicate.save();
 
     const balanceValue = '0.1';
     await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
 
-    const recover = await Vault.stored(saved.predicateAddress, vaultProvider);
+    const recover = await Vault.fromAddress(
+      saved.predicateAddress,
+      vaultProvider,
+    );
 
     const predicateBalance = await predicate.getBalance(assets['ETH']);
     const recoverBalance = await recover.getBalance(assets['ETH']);
@@ -165,7 +168,7 @@ describe('[AUTH]', () => {
     );
   });
 
-  it('Shout save a transaction', async () => {
+  it('Should save a transaction', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await VaultProvider.setup({
@@ -189,14 +192,17 @@ describe('[AUTH]', () => {
     });
 
     // how to create a predicate on database on the instance time
-    const saved = await predicate.store();
+    const saved = await predicate.save();
 
-    const balanceValue = '0.1';
+    const balanceValue = '0.3';
     await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
 
-    const recover = await Vault.stored(saved.predicateAddress, vaultProvider);
+    const recover = await Vault.fromAddress(
+      saved.predicateAddress,
+      vaultProvider,
+    );
 
-    const { hashTxId } = await recover.BakoFormatTransfer([
+    const { hashTxId } = await recover.transaction([
       {
         to: Address.fromRandom().toB256(),
         amount: '0.1',

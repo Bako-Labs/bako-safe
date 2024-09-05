@@ -279,9 +279,6 @@ describe('[Transactions]', () => {
     const deployedContract = new ExampleContract(contractId, wallet);
     const contractRequest = await deployedContract.functions.seven().call();
     const callResponse = await contractRequest.waitForResult();
-    // const callResult = await wallet.sendTransaction(req);
-    // console.log(callResult);
-    // const callResponse = await callResult.waitForResult();
 
     // expect
     expect(callResponse.value.toHex()).toEqual('0x7');
