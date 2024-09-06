@@ -1,38 +1,29 @@
 import {
-  CreateTransactionRequest,
   Provider,
-  ProviderOptions,
-  ScriptTransactionRequest,
-  TransactionRequest,
   TransactionResponse,
+  ScriptTransactionRequest,
+  CreateTransactionRequest,
 } from 'fuels';
-import { Service } from '../../api/auth/auth';
-import { TypeUser } from './types';
-import { networks } from '../../../../tests/src/mocks/networks';
-import { Vault } from '../vault';
+
 import {
+  Service,
   ICreateTransactionPayload,
   IPredicatePayload,
   ISignTransaction,
   TransactionStatus,
-} from '../../api';
+} from 'src/api';
 
-export type VaultProviderOptions = ProviderOptions & {
-  token: string;
-  address: string;
-  challenge: string;
-  encoder?: TypeUser;
-  serverUrl?: string;
-};
+import { Vault } from '../vault';
+import { TypeUser, BakoProviderOptions } from './types';
+import { networks } from '../../../../tests/src/mocks/networks';
 
-export class VaultProvider extends Provider {
-  public options: VaultProviderOptions;
+export class BakoProvider extends Provider {
+  public options: BakoProviderOptions;
   public service: Service;
 
   protected constructor(providerInstance: Provider) {
-    // Chama o construtor da classe base usando uma instância existente de Provider
     super(providerInstance.url, providerInstance.options);
-    this.options = providerInstance.options as VaultProviderOptions;
+    this.options = providerInstance.options as BakoProviderOptions;
     this.service = new Service({
       address: this.options.address,
       token: this.options.token,
@@ -41,15 +32,15 @@ export class VaultProvider extends Provider {
 
   static async create(
     url: string,
-    options: VaultProviderOptions,
-  ): Promise<VaultProvider> {
+    options: BakoProviderOptions,
+  ): Promise<BakoProvider> {
     const fuelProvider = await Provider.create(url, options);
     await this.authenticate({
       challenge: options.challenge,
       token: options.token,
       encoder: options.encoder,
     });
-    return new VaultProvider(fuelProvider);
+    return new BakoProvider(fuelProvider);
   }
 
   public static async setup({

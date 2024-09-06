@@ -2,7 +2,7 @@ import { Address, Wallet } from 'fuels';
 
 import { accounts, assets, networks } from './mocks';
 import {
-  VaultProvider,
+  BakoProvider,
   Vault,
   bakoCoder,
   SignatureType,
@@ -19,8 +19,8 @@ import { sendCoins, signin } from './utils';
 //    - tx store -> ok
 //    - tx recover -> ok
 //    - tx sign -> ok
-//    - tx send
-//    - tx wait
+//    - tx send -> ok
+//    - tx wait -> ok
 
 // type returned data of services
 
@@ -28,7 +28,7 @@ describe('[AUTH]', () => {
   it('Should authenticate with a token', async () => {
     const address = accounts['USER_1'].account;
 
-    const challenge = await VaultProvider.setup({
+    const challenge = await BakoProvider.setup({
       address,
     });
 
@@ -36,7 +36,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await VaultProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
       address,
       challenge,
       token,
@@ -56,7 +56,7 @@ describe('[AUTH]', () => {
   it('Should find my workspaces', async () => {
     const address = accounts['USER_1'].account;
 
-    const challenge = await VaultProvider.setup({
+    const challenge = await BakoProvider.setup({
       address,
     });
 
@@ -64,7 +64,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await VaultProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
       address,
       challenge,
       token,
@@ -78,7 +78,7 @@ describe('[AUTH]', () => {
   it('Should get infos of current auth', async () => {
     const address = accounts['USER_1'].account;
 
-    const challenge = await VaultProvider.setup({
+    const challenge = await BakoProvider.setup({
       address,
     });
 
@@ -86,7 +86,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await VaultProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
       address,
       challenge,
       token,
@@ -103,7 +103,7 @@ describe('[AUTH]', () => {
   it('Should store a vault', async () => {
     const address = accounts['USER_1'].account;
 
-    const challenge = await VaultProvider.setup({
+    const challenge = await BakoProvider.setup({
       address,
     });
 
@@ -111,7 +111,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await VaultProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
       address,
       challenge,
       token,
@@ -134,7 +134,7 @@ describe('[AUTH]', () => {
   it('Should recover a vault', async () => {
     const address = accounts['USER_1'].account;
 
-    const challenge = await VaultProvider.setup({
+    const challenge = await BakoProvider.setup({
       address,
     });
 
@@ -142,7 +142,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await VaultProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
       address,
       challenge,
       token,
@@ -177,7 +177,7 @@ describe('[AUTH]', () => {
   it('Should save a transaction', async () => {
     const address = accounts['USER_1'].account;
 
-    const challenge = await VaultProvider.setup({
+    const challenge = await BakoProvider.setup({
       address,
     });
 
@@ -185,7 +185,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await VaultProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
       address,
       challenge,
       token,
@@ -225,7 +225,7 @@ describe('[AUTH]', () => {
   it('Should sign vault 1:1 with provider', async () => {
     const address = accounts['USER_1'].account;
 
-    const challenge = await VaultProvider.setup({
+    const challenge = await BakoProvider.setup({
       address,
     });
 
@@ -233,7 +233,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await VaultProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
       address,
       challenge,
       token,
@@ -282,7 +282,7 @@ describe('[AUTH]', () => {
   it.only('Should try send before sign transaction', async () => {
     const address = accounts['USER_1'].account;
 
-    const challenge = await VaultProvider.setup({
+    const challenge = await BakoProvider.setup({
       address,
     });
 
@@ -290,7 +290,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProviderClient1 = await VaultProvider.create(networks['LOCAL'], {
+    const vaultProviderClient1 = await BakoProvider.create(networks['LOCAL'], {
       address,
       challenge,
       token,
