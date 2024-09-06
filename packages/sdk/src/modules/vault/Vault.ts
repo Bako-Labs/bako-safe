@@ -28,7 +28,7 @@ import {
   makeSigners,
 } from '../../utils';
 import { VaultConfigurable } from './types';
-import { VaultProvider } from '../provider';
+import { BakoProvider } from '../provider';
 
 // todo:
 //  - rename methdos of transactions -> .transaction(), .fromAssets(), .fromHash()
@@ -44,10 +44,10 @@ export class Vault extends Predicate<[]> {
   readonly maxSigners = 10;
   readonly configurable: VaultConfigurable;
 
-  __provider: Provider | VaultProvider;
+  __provider: Provider | BakoProvider;
 
   constructor(
-    provider: Provider | VaultProvider,
+    provider: Provider | BakoProvider,
     configurable: VaultConfigurable,
   ) {
     const conf = Vault.makePredicate(configurable);
@@ -131,7 +131,7 @@ export class Vault extends Predicate<[]> {
   async send(tx: TransactionRequestLike): Promise<TransactionResponse> {
     const txRequest = transactionRequestify(tx);
 
-    if (this.provider instanceof VaultProvider) {
+    if (this.provider instanceof BakoProvider) {
       const txHash = await txRequest.getTransactionId(
         this.provider.getChainId(),
       );
@@ -245,20 +245,20 @@ export class Vault extends Predicate<[]> {
     return transactionRequest;
   }
 
-  public get provider(): Provider | VaultProvider {
+  public get provider(): Provider | BakoProvider {
     return this.__provider;
   }
 
   async save() {
     // todo: reuse this validation
-    if (this.provider instanceof VaultProvider) {
+    if (this.provider instanceof BakoProvider) {
       return await this.provider?.savePredicate(this);
     }
 
     throw new Error('Use a VaultProvider to consume this method');
   }
 
-  static async fromAddress(reference: string, provider: VaultProvider) {
+  static async fromAddress(reference: string, provider: BakoProvider) {
     const recoveredPredicate =
       await provider?.findPredicateByAddress(reference);
     const predicate = new Vault(
@@ -270,7 +270,7 @@ export class Vault extends Predicate<[]> {
   }
 
   async transactionFromHash(hash: string) {
-    if (this.provider instanceof VaultProvider) {
+    if (this.provider instanceof BakoProvider) {
       return await this.provider?.findTransaction(hash, this);
     }
 
@@ -320,7 +320,7 @@ export class Vault extends Predicate<[]> {
 
     let trancation = await this.prepareTransaction(tx);
 
-    if (this.provider instanceof VaultProvider) {
+    if (this.provider instanceof BakoProvider) {
       await this.provider.saveTransaction(trancation, this.address.toB256());
     }
 

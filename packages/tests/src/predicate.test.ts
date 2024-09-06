@@ -15,7 +15,7 @@ import {
   Vault,
   bakoCoder,
   SignatureType,
-  VaultProvider,
+  BakoProvider,
 } from 'bakosafe/src';
 import { ExampleContract } from './types/sway/contracts/ExampleContract';
 import { ExampleContractFactory } from './types/sway/contracts/ExampleContractFactory';
@@ -65,7 +65,7 @@ describe('[Create]', () => {
   it('Using a VaultProvider', async () => {
     const address = accounts['USER_1'].account;
 
-    const challenge = await VaultProvider.setup({
+    const challenge = await BakoProvider.setup({
       address,
     });
 
@@ -73,7 +73,7 @@ describe('[Create]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await VaultProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
       address,
       challenge,
       token,

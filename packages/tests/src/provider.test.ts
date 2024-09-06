@@ -6,26 +6,11 @@ import {
   Vault,
   bakoCoder,
   SignatureType,
-} from '../../sdk/src/modules/';
+} from 'bakosafe/src/modules';
 import { sendCoins, signin } from './utils';
 
-// User auth resources:
-//    - auth -> ok (fuel, webauthn?)
-//    - get workspaces -> ok
-//    - create workspace -> ?
-//    - get userInfo -> ok
-//    - vault store -> ok
-//    - vault recover -> ok
-//    - tx store -> ok
-//    - tx recover -> ok
-//    - tx sign -> ok
-//    - tx send -> ok
-//    - tx wait -> ok
-
-// type returned data of services
-
 describe('[AUTH]', () => {
-  it('Should authenticate with a token', async () => {
+  it('Should authenticate successfully with a valid token', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await BakoProvider.setup({
@@ -53,7 +38,7 @@ describe('[AUTH]', () => {
     expect(tokens.length).toBeGreaterThan(0);
   });
 
-  it('Should find my workspaces', async () => {
+  it('Should retrieve all user workspaces successfully', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await BakoProvider.setup({
@@ -75,7 +60,7 @@ describe('[AUTH]', () => {
     expect(workspaces.length).toBeGreaterThanOrEqual(0);
   });
 
-  it('Should get infos of current auth', async () => {
+  it('Should retrieve current authentication information', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await BakoProvider.setup({
@@ -100,7 +85,7 @@ describe('[AUTH]', () => {
     expect(authInfo.onSingleWorkspace).toBe(true);
   });
 
-  it('Should store a vault', async () => {
+  it('Should store a vault successfully', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await BakoProvider.setup({
@@ -131,7 +116,7 @@ describe('[AUTH]', () => {
     expect(saved.predicateAddress).toBe(predicate.address.toB256());
   });
 
-  it('Should recover a vault', async () => {
+  it('Should recover a vault successfully', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await BakoProvider.setup({
@@ -174,7 +159,7 @@ describe('[AUTH]', () => {
     );
   });
 
-  it('Should save a transaction', async () => {
+  it('Should save a transaction to the service', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await BakoProvider.setup({
@@ -222,7 +207,7 @@ describe('[AUTH]', () => {
     expect(recoveredTx.hashTxId).toBe(hashTxId);
   });
 
-  it('Should sign vault 1:1 with provider', async () => {
+  it('Should sign vault with the provider (1:1 signature)', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await BakoProvider.setup({
@@ -279,7 +264,7 @@ describe('[AUTH]', () => {
     expect(res).toBeDefined();
   });
 
-  it.only('Should try send before sign transaction', async () => {
+  it('Should fail to send transaction before signing', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await BakoProvider.setup({
@@ -335,5 +320,5 @@ describe('[AUTH]', () => {
     const res = await response.wait();
 
     expect(res).toBeDefined();
-  }, 10000);
+  });
 });

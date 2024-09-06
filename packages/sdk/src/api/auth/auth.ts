@@ -81,7 +81,8 @@ export class Service {
     return data;
   }
 
-  async findTransactionByHash(hash: string) {
+  async findTransactionByHash(_hash: string) {
+    const hash = _hash.startsWith('0x') ? _hash : `0x${_hash}`;
     const { data } = await this.api.get(`/transaction/by-hash/${hash}`);
     return data;
   }
