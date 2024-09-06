@@ -250,12 +250,10 @@ describe('[AUTH]', () => {
 
     await vaultProvider.signTransaction({
       hash: `0x${hashTxId}`,
-      signature: bakoCoder.encode([
-        {
-          type: SignatureType.Fuel,
-          signature: await signin(hashTxId, 'USER_1'),
-        },
-      ])[0],
+      signature: bakoCoder.encode({
+        type: SignatureType.Fuel,
+        signature: await signin(hashTxId, 'USER_1'),
+      }),
     });
 
     const response = await predicate.send(tx);
@@ -309,12 +307,10 @@ describe('[AUTH]', () => {
 
     await vaultProviderClient1.signTransaction({
       hash: `0x${hashTxId}`,
-      signature: bakoCoder.encode([
-        {
-          type: SignatureType.Fuel,
-          signature: await signin(hashTxId, 'USER_1'),
-        },
-      ])[0],
+      signature: bakoCoder.encode({
+        type: SignatureType.Fuel,
+        signature: await signin(hashTxId, 'USER_1'),
+      }),
     });
 
     const res = await response.wait();
