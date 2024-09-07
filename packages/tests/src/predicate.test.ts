@@ -1,5 +1,3 @@
-import { Address, arrayify, bn, Provider, ReceiptType, Wallet } from 'fuels';
-
 import {
   signin,
   sendCoins,
@@ -7,8 +5,6 @@ import {
   WebAuthn_createCredentials,
 } from './utils';
 
-import { ContractFactory } from 'fuels';
-import { networks, accounts, assets } from './mocks';
 import {
   BakoError,
   ErrorCodes,
@@ -17,6 +13,9 @@ import {
   SignatureType,
   BakoProvider,
 } from 'bakosafe/src';
+
+import { networks, accounts, assets } from './mocks';
+import { Address, bn, Provider, ReceiptType, Wallet } from 'fuels';
 import { ExampleContract } from './types/sway/contracts/ExampleContract';
 import { ExampleContractFactory } from './types/sway/contracts/ExampleContractFactory';
 
@@ -26,7 +25,7 @@ describe('[Create]', () => {
     provider = await Provider.create(networks['LOCAL']);
   });
 
-  it('Vault', async () => {
+  it('Should successfully create a Vault instance', async () => {
     // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
@@ -43,7 +42,7 @@ describe('[Create]', () => {
     expect(0.0).toBeLessThan(Number(balance));
   });
 
-  it('Instantiated again', async () => {
+  it('Should reinstantiate the Vault successfully', async () => {
     // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
@@ -62,7 +61,7 @@ describe('[Create]', () => {
     expect(await vault.getBalances()).toEqual(await vault2.getBalances());
   });
 
-  it('Using a VaultProvider', async () => {
+  it('Should initialize correctly using a VaultProvider', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await BakoProvider.setup({
@@ -112,7 +111,7 @@ describe('[Transactions]', () => {
     provider = await Provider.create(networks['LOCAL']);
   });
 
-  it('Simple transaction', async () => {
+  it('Should process a simple transaction', async () => {
     // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
@@ -143,7 +142,7 @@ describe('[Transactions]', () => {
     expect(response).toHaveProperty('status', 'success');
   });
 
-  it('With multiple asset ids', async () => {
+  it('Should handle transactions with multiple asset IDs', async () => {
     // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
@@ -201,7 +200,7 @@ describe('[Transactions]', () => {
     );
   });
 
-  it('Transaction by ScriptTransactionRequest', async () => {
+  it('Should process transaction initiated by ScriptTransactionRequest', async () => {
     // deploy a contract
     const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
     const contractToDeploy = new ExampleContractFactory(wallet);
@@ -245,7 +244,7 @@ describe('[Transactions]', () => {
     );
   });
 
-  it('Transaction by CreateTransactionRequest', async () => {
+  it('Should process transaction initiated by CreateTransactionRequest', async () => {
     // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
@@ -291,7 +290,7 @@ describe('[Send With]', () => {
     provider = await Provider.create(networks['LOCAL']);
   });
 
-  it('Webauthn signer', async () => {
+  it('Should process a valid Webauthn signer', async () => {
     const webAuthnCredential = WebAuthn_createCredentials();
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
@@ -320,7 +319,7 @@ describe('[Send With]', () => {
     expect(response).toHaveProperty('status', 'success');
   });
 
-  it('Webauthn and fuel signer', async () => {
+  it('Should process both Webauthn and fuel signatures', async () => {
     const webAuthnCredential = WebAuthn_createCredentials();
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
@@ -353,7 +352,7 @@ describe('[Send With]', () => {
     expect(response).toHaveProperty('status', 'success');
   });
 
-  it('Pending signature', async () => {
+  it('Should process pending signature correctly', async () => {
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
       SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
@@ -381,7 +380,7 @@ describe('[Send With]', () => {
     });
   });
 
-  it('Duplicated signature', async () => {
+  it('Should detect and handle duplicated signatures', async () => {
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
       SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
@@ -414,7 +413,7 @@ describe('[Send With]', () => {
     });
   });
 
-  it('Invalid Fuel signature', async () => {
+  it('Should reject invalid Fuel signatures', async () => {
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
       SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
@@ -446,7 +445,7 @@ describe('[Send With]', () => {
     });
   });
 
-  it('Invalid WebAuthn signature', async () => {
+  it('Should reject invalid WebAuthn signatures', async () => {
     const webAuthnCredential = WebAuthn_createCredentials();
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
@@ -476,7 +475,7 @@ describe('[Send With]', () => {
     ]);
   });
 
-  it('Signer outside the vault ', async () => {
+  it('Should handle signers located outside of the vault', async () => {
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
       SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
