@@ -3,7 +3,6 @@ import {
   TransactionResponse,
   ScriptTransactionRequest,
   CreateTransactionRequest,
-  transactionRequestify,
 } from 'fuels';
 
 import {
@@ -12,7 +11,7 @@ import {
   IPredicatePayload,
   ISignTransaction,
   TransactionStatus,
-} from '../../api';
+} from '../service';
 
 import {
   TypeUser,
@@ -55,10 +54,10 @@ export class BakoProvider extends Provider {
    * @returns A challenge string for authentication.
    */
   static async setup(params: BakoProviderSetup) {
-    const { address, encoder, provider } = params;
+    const { address, encoder, provider, name } = params;
 
     const { code: challenge } = await Service.create({
-      name: 'from sdk - ' + address,
+      name: name ?? `from sdk - ${address}`,
       type: encoder ?? TypeUser.FUEL,
       address: address,
       provider: provider ?? networks['LOCAL'],

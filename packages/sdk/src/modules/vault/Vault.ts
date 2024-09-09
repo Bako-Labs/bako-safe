@@ -258,12 +258,8 @@ export class Vault extends Predicate<[]> {
    * @returns {Promise<Vault>} A `Vault` instance recovered from the address.
    */
   static async fromAddress(reference: string, provider: BakoProvider) {
-    const recoveredPredicate =
-      await provider?.findPredicateByAddress(reference);
-    const predicate = new Vault(
-      provider,
-      JSON.parse(recoveredPredicate.configurable),
-    );
+    const { configurable } = await provider?.findPredicateByAddress(reference);
+    const predicate = new Vault(provider, configurable);
 
     return predicate;
   }

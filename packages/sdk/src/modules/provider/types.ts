@@ -1,12 +1,5 @@
 import { ProviderOptions } from 'fuels';
-import { TypeUser } from '../../api/auth/types';
-
-export {
-  ISelectWorkspaceResponse,
-  IBakoSafeAuth,
-  TypeUser,
-  Workspace,
-} from '../../api';
+export { ISelectWorkspaceResponse, IBakoSafeAuth, Workspace } from '../service';
 
 export type BakoProviderOptions = ProviderOptions & {
   token: string;
@@ -16,8 +9,14 @@ export type BakoProviderOptions = ProviderOptions & {
   serverUrl?: string;
 };
 
+export enum TypeUser {
+  FUEL = 'FUEL',
+  WEB_AUTHN = 'WEB_AUTHN',
+}
+
 export type BakoProviderSetup = {
   address: string;
+  name?: string;
   encoder?: TypeUser;
   provider?: string;
 };
