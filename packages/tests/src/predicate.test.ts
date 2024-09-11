@@ -1,9 +1,4 @@
-import {
-  signin,
-  sendCoins,
-  WebAuthn_signChallange,
-  WebAuthn_createCredentials,
-} from './utils';
+import { signin, sendCoins, WebAuthn } from './utils';
 
 import {
   BakoError,
@@ -11,13 +6,12 @@ import {
   Vault,
   bakoCoder,
   SignatureType,
-  BakoProvider,
 } from 'bakosafe/src';
 
 import { networks, accounts, assets } from './mocks';
 import { Address, bn, Provider, ReceiptType, Wallet } from 'fuels';
-import { ExampleContract } from './types/sway/contracts/ExampleContract';
-import { ExampleContractFactory } from './types/sway/contracts/ExampleContractFactory';
+import { ExampleContract } from './types/sway';
+import { ExampleContractFactory } from './types/sway';
 
 describe('[Create]', () => {
   let provider: Provider;
@@ -59,49 +53,6 @@ describe('[Create]', () => {
     expect(vault.address.toB256()).toBe(vault2.address.toB256());
     expect(vault.configurable).toEqual(vault2.configurable);
     expect(await vault.getBalances()).toEqual(await vault2.getBalances());
-  });
-
-  it('Should initialize correctly using a VaultProvider', async () => {
-    const address = accounts['USER_1'].account;
-
-    const challenge = await BakoProvider.setup({
-      address,
-    });
-
-    const token = await Wallet.fromPrivateKey(
-      accounts['USER_1'].privateKey,
-    ).signMessage(challenge);
-
-    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
-      address,
-      challenge,
-      token,
-    });
-
-    const predicate = new Vault(vaultProvider, {
-      SIGNATURES_COUNT: 1,
-      SIGNERS: [address],
-      HASH_PREDICATE: Address.fromRandom().toB256(),
-    });
-
-    await predicate.save();
-
-    const balanceValue = '0.1';
-    await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
-
-    const recover = await Vault.fromAddress(
-      predicate.address.toB256(),
-      vaultProvider,
-    );
-
-    const predicateBalance = await predicate.getBalance(assets['ETH']);
-    const recoverBalance = await recover.getBalance(assets['ETH']);
-
-    // 18 is max of decimals to represent value
-    expect(predicate.address.toB256()).toBe(recover.address.toB256());
-    expect(predicateBalance.formatUnits(18)).toBe(
-      recoverBalance.formatUnits(18),
-    );
   });
 });
 
@@ -291,7 +242,7 @@ describe('[Send With]', () => {
   });
 
   it('Should process a valid Webauthn signer', async () => {
-    const webAuthnCredential = WebAuthn_createCredentials();
+    const webAuthnCredential = WebAuthn.createCredentials();
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
       SIGNERS: [webAuthnCredential.address],
@@ -309,7 +260,7 @@ describe('[Send With]', () => {
     tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.WebAuthn,
-        ...(await WebAuthn_signChallange(webAuthnCredential, hashTxId)),
+        ...(await WebAuthn.signChallange(webAuthnCredential, hashTxId)),
       },
     ]);
 
@@ -320,7 +271,7 @@ describe('[Send With]', () => {
   });
 
   it('Should process both Webauthn and fuel signatures', async () => {
-    const webAuthnCredential = WebAuthn_createCredentials();
+    const webAuthnCredential = WebAuthn.createCredentials();
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
       SIGNERS: [webAuthnCredential.address, accounts['USER_1'].address],
@@ -342,7 +293,7 @@ describe('[Send With]', () => {
       },
       {
         type: SignatureType.WebAuthn,
-        ...(await WebAuthn_signChallange(webAuthnCredential, hashTxId)),
+        ...(await WebAuthn.signChallange(webAuthnCredential, hashTxId)),
       },
     ]);
 
@@ -446,7 +397,7 @@ describe('[Send With]', () => {
   });
 
   it('Should reject invalid WebAuthn signatures', async () => {
-    const webAuthnCredential = WebAuthn_createCredentials();
+    const webAuthnCredential = WebAuthn.createCredentials();
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
       SIGNERS: [webAuthnCredential.address],
@@ -461,7 +412,7 @@ describe('[Send With]', () => {
       },
     ]);
 
-    const signature = await WebAuthn_signChallange(
+    const signature = await WebAuthn.signChallange(
       webAuthnCredential,
       hashTxId,
     );

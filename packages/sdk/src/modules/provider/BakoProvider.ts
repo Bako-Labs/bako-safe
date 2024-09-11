@@ -1,9 +1,4 @@
-import {
-  Provider,
-  TransactionResponse,
-  ScriptTransactionRequest,
-  CreateTransactionRequest,
-} from 'fuels';
+import { Provider, TransactionResponse, TransactionRequest } from 'fuels';
 
 import {
   Service,
@@ -143,10 +138,7 @@ export class BakoProvider extends Provider {
    * @param predicate The address of the predicate for the transaction.
    * @returns The created transaction.
    */
-  async saveTransaction(
-    tx: ScriptTransactionRequest | CreateTransactionRequest,
-    predicate: string,
-  ) {
+  async saveTransaction(tx: TransactionRequest, predicate: string) {
     const payload: ICreateTransactionPayload = {
       name: `vault ${randomBytes(16).toString('hex')}`,
       predicateAddress: predicate,

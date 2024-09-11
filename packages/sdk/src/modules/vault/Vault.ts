@@ -2,8 +2,8 @@ import {
   bn,
   BN,
   Address,
-  hexlify,
   arrayify,
+  hexlify,
   Provider,
   Predicate,
   InputType,
@@ -30,7 +30,8 @@ import { VaultConfigurable } from './types';
 
 import { BakoProvider } from '../provider';
 
-import { BakoPredicate } from '../../sway/predicates';
+import { BakoPredicate } from '../../sway';
+
 /**
  * The `Vault` class is an extension of `Predicate` that manages transactions,
  * sending operations, and includes additional functionality specific to
@@ -86,48 +87,36 @@ export class Vault extends Predicate<[]> {
    * Prepares a transaction for the vault by including the fee configuration and predicate data.
    *
    * @param {TransactionRequestLike} tx - The transaction request.
-   * @returns {Promise<{ tx: TransactionRequestLike, hashTxId: string }>} The prepared transaction and its hash.
+   * @returns {Promise<{ tx: TransactionRequest, hashTxId: string }>} The prepared transaction and its hash.
    * @throws Will throw an error if the transaction type is not implemented.
    */
   async BakoTransfer(tx: TransactionRequestLike): Promise<{
-    tx: TransactionRequestLike;
+    tx: TransactionRequest;
     hashTxId: string;
   }> {
     let result: TransactionRequest;
+
     switch (tx.type) {
       case TransactionType.Script:
-        const script = new ScriptTransactionRequest(tx);
-        result = await this.prepareTransaction(script);
-        return {
-          tx: script,
-          hashTxId: script
-            .getTransactionId(this.provider.getChainId())
-            .slice(2),
-        };
-
+        result = new ScriptTransactionRequest(tx);
+        break;
       case TransactionType.Create:
-        const create = new CreateTransactionRequest(tx);
-        result = await this.prepareTransaction(create);
-        return {
-          tx: create,
-          hashTxId: create
-            .getTransactionId(this.provider.getChainId())
-            .slice(2),
-        };
-
-      // case TransactionType.Create:
-      //   const create = new CreateTransactionRequest(tx);
-      //   result = await this.prepareTransaction(create);
-      //   return {
-      //     tx: create,
-      //     hashTxId: create
-      //       .getTransactionId(this.provider.getChainId())
-      //       .slice(2),
-      //   };
-
+        result = new CreateTransactionRequest(tx);
+        break;
       default:
         throw new Error('Not implemented');
     }
+
+    result = await this.prepareTransaction(result);
+
+    if (this.provider instanceof BakoProvider) {
+      await this.provider.saveTransaction(result, this.address.toB256());
+    }
+
+    return {
+      tx: result,
+      hashTxId: result.getTransactionId(this.provider.getChainId()).slice(2),
+    };
   }
 
   /**
@@ -140,12 +129,11 @@ export class Vault extends Predicate<[]> {
     const txRequest = transactionRequestify(tx);
 
     if (this.provider instanceof BakoProvider) {
-      const txHash = await txRequest.getTransactionId(
-        this.provider.getChainId(),
-      );
+      const txHash = txRequest.getTransactionId(this.provider.getChainId());
 
-      return await this.provider.send(txHash);
+      return this.provider.send(txHash);
     }
+
     await this.provider.estimatePredicates(txRequest);
     const encodedTransaction = hexlify(txRequest.toTransactionBytes());
     const {
@@ -248,12 +236,12 @@ export class Vault extends Predicate<[]> {
   /**
    * Saves the vault's predicate to the blockchain if using a BakoProvider.
    *
-   * @returns {Promise<any>} The result of the save operation.
-   * @throws Will throw an error if the provider is not a BakoProvider.
+   * @returns {Promise<PredicateResponse>} The result of the save operation.
+   * @throws {Error} Will throw an error if the provider is not a BakoProvider.
    */
   async save() {
     if (this.provider instanceof BakoProvider) {
-      return await this.provider?.savePredicate(this);
+      return this.provider.savePredicate(this);
     }
 
     throw new Error('Use a VaultProvider to consume this method');
@@ -266,11 +254,12 @@ export class Vault extends Predicate<[]> {
    * @param {BakoProvider} provider - The provider instance used to recover the predicate.
    * @returns {Promise<Vault>} A `Vault` instance recovered from the address.
    */
-  static async fromAddress(reference: string, provider: BakoProvider) {
-    const { configurable } = await provider?.findPredicateByAddress(reference);
-    const predicate = new Vault(provider, configurable);
-
-    return predicate;
+  static async fromAddress(
+    reference: string,
+    provider: BakoProvider,
+  ): Promise<Vault> {
+    const { configurable } = await provider.findPredicateByAddress(reference);
+    return new Vault(provider, configurable);
   }
 
   /**
@@ -278,11 +267,11 @@ export class Vault extends Predicate<[]> {
    *
    * @param {string} hash - The transaction hash.
    * @returns {Promise<any>} The transaction data.
-   * @throws Will throw an error if the provider is not a BakoProvider.
+   * @throws {Error} Will throw an error if the provider is not a BakoProvider.
    */
   async transactionFromHash(hash: string) {
     if (this.provider instanceof BakoProvider) {
-      return await this.provider?.findTransaction(hash, this);
+      return this.provider.findTransaction(hash, this);
     }
 
     throw new Error('Use a VaultProvider to consume this method');
@@ -292,10 +281,10 @@ export class Vault extends Predicate<[]> {
    * Creates a new transaction script using the vault resources.
    *
    * @param {ITransferAsset[]} assets - The transaction assets to send.
-   * @returns {Promise<{ tx: TransactionRequestLike, hashTxId: string }>} The prepared transaction and its hash.
+   * @returns {Promise<{ tx: TransactionRequest, hashTxId: string }>} The prepared transaction and its hash.
    */
   async transaction(assets: ITransferAsset[]): Promise<{
-    tx: TransactionRequestLike;
+    tx: TransactionRequest;
     hashTxId: string;
   }> {
     const tx = new ScriptTransactionRequest();
@@ -326,21 +315,14 @@ export class Vault extends Predicate<[]> {
       }
     });
 
-    let trancation = await this.prepareTransaction(tx);
-
-    if (this.provider instanceof BakoProvider) {
-      await this.provider.saveTransaction(trancation, this.address.toB256());
-    }
-
-    return {
-      tx: trancation,
-      hashTxId: trancation
-        .getTransactionId(this.provider.getChainId())
-        .slice(2),
-    };
+    return this.BakoTransfer(tx);
   }
 
   public get provider(): Provider | BakoProvider {
     return this.__provider;
+  }
+
+  public set provider(provider: Provider | BakoProvider) {
+    this.__provider = provider;
   }
 }
