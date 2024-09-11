@@ -115,6 +115,16 @@ export class Vault extends Predicate<[]> {
             .slice(2),
         };
 
+      // case TransactionType.Create:
+      //   const create = new CreateTransactionRequest(tx);
+      //   result = await this.prepareTransaction(create);
+      //   return {
+      //     tx: create,
+      //     hashTxId: create
+      //       .getTransactionId(this.provider.getChainId())
+      //       .slice(2),
+      //   };
+
       default:
         throw new Error('Not implemented');
     }
