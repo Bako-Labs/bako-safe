@@ -138,6 +138,7 @@ jest.mock('../../sdk/src/modules/service', () => {
   }));
 
   // Métodos estáticos da classe Service
+  // @ts-ignore
   mockService.create = jest
     .fn()
     .mockResolvedValue({ code: 'mocked_challenge' });
@@ -145,6 +146,7 @@ jest.mock('../../sdk/src/modules/service', () => {
   // set signature
   // verify signature requirements
   // send transaction
+  // @ts-ignore
   mockService.sign = jest
     .fn()
     .mockImplementation(async (params: ISignTransactionRequest) => {
