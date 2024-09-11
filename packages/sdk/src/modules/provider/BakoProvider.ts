@@ -78,11 +78,16 @@ export class BakoProvider extends Provider {
     options: BakoProviderOptions,
   ): Promise<BakoProvider> {
     const fuelProvider = await Provider.create(url, options);
-    await this.authenticate({
+
+    console.log('aa');
+    const a = await this.authenticate({
       challenge: options.challenge,
       token: options.token,
       encoder: options.encoder,
     });
+
+    console.log('a', a);
+
     return new BakoProvider(fuelProvider);
   }
 
@@ -152,7 +157,6 @@ export class BakoProvider extends Provider {
       txData: tx,
       status: TransactionStatus.AWAIT_REQUIREMENTS,
     };
-
     const transaction = await this.service.createTransaction(payload);
 
     return transaction;
