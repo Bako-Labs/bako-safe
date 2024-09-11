@@ -79,14 +79,11 @@ export class BakoProvider extends Provider {
   ): Promise<BakoProvider> {
     const fuelProvider = await Provider.create(url, options);
 
-    console.log('aa');
     const a = await this.authenticate({
       challenge: options.challenge,
       token: options.token,
       encoder: options.encoder,
     });
-
-    console.log('a', a);
 
     return new BakoProvider(fuelProvider);
   }

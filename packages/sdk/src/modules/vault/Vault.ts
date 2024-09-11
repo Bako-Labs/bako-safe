@@ -136,7 +136,6 @@ export class Vault extends Predicate<[]> {
 
       return await this.provider.send(txHash);
     }
-    console.log('txRequest NAO RETORNADO');
     await this.provider.estimatePredicates(txRequest);
     const encodedTransaction = hexlify(txRequest.toTransactionBytes());
     const {

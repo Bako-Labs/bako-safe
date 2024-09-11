@@ -76,7 +76,6 @@ jest.mock('../../sdk/src/modules/service', () => {
     createTransaction: jest
       .fn()
       .mockImplementation((params: ICreateTransactionPayload) => {
-        console.log('[CREATE_TX]');
         const { hash, txData, predicateAddress } = params;
         transactions[hash] = {
           ...txData,
@@ -84,7 +83,6 @@ jest.mock('../../sdk/src/modules/service', () => {
           predicateAddress,
         };
 
-        console.log(transactions);
         return {
           transactionId: hash,
         };
@@ -100,9 +98,6 @@ jest.mock('../../sdk/src/modules/service', () => {
       .fn()
       .mockImplementation(async (params: ISignTransactionRequest) => {
         const { signature, hash } = params;
-        console.log('[SIGN]');
-        // console.log(transactions[hash.slice(2)]);
-        // console.log(transactions, hash);
 
         let tx = transactions[hash.slice(2)];
 
@@ -111,26 +106,15 @@ jest.mock('../../sdk/src/modules/service', () => {
           witnesses: [...tx.witnesses, signature],
         };
 
-        console.log(predicates, tx.predicateAddress);
-
         const predicate = predicates[tx.predicateAddress];
-        console.log('[encontrado]', predicate);
         const predicateConfig = JSON.parse(predicate);
 
-        console.log({
-          witnesses: tx.witnesses.length,
-          required: predicate,
-          predicateConfig,
-        });
-
         if (tx.witnesses.length >= predicateConfig.SIGNATURES_COUNT) {
-          console.log('[PARA ENVIAR]');
           const vault = new Vault(
             await Provider.create(networks['LOCAL']),
             predicateConfig,
           );
-          const res = await vault.send(tx.txData);
-          console.log(res);
+          await vault.send(tx);
         }
         return true;
       }),
@@ -138,19 +122,9 @@ jest.mock('../../sdk/src/modules/service', () => {
     // verifique os requisitos
     // envie a transação
     sendTransaction: jest.fn().mockImplementation(async (hash: string) => {
-      console.log('[SEND]');
-      // console.log(transactions[hash.slice(2)]);
-
       let tx = transactions[hash.slice(2)];
-      console.log('[busca]');
-      console.log(predicates, tx.predicateAddress);
 
       let predicate = predicates[tx.predicateAddress];
-      console.log('[encontrado]');
-      console.log({
-        witnesses: tx.witnesses.length,
-        required: predicate,
-      });
 
       if (tx.witnesses.length >= predicate.SIGNATURES_COUNT) {
         const vault = new Vault(
@@ -167,11 +141,6 @@ jest.mock('../../sdk/src/modules/service', () => {
   mockService.create = jest
     .fn()
     .mockResolvedValue({ code: 'mocked_challenge' });
-
-  // mockService.authenticate = jest.fn().mockImplementation(async () => {
-  //   console.log('[AUTH]');
-  //   return true;
-  // });
 
   // set signature
   // verify signature requirements
@@ -389,7 +358,7 @@ describe('[AUTH]', () => {
     expect(recoveredTx.hashTxId).toBe(hashTxId);
   });
 
-  it.only('Should sign vault with the provider (1:1 signature)', async () => {
+  it('Should sign vault with the provider (1:1 signature)', async () => {
     const address = accounts['USER_1'].account;
 
     const challenge = await BakoProvider.setup({
@@ -440,65 +409,64 @@ describe('[AUTH]', () => {
     });
 
     const response = await predicate.send(tx);
-    // console.log(response);
     const res = await response.wait();
 
     expect(res).toBeDefined();
   }, 10000);
 
-  // it('Should fail to send transaction before signing', async () => {
-  //   const address = accounts['USER_1'].account;
+  it('Should fail to send transaction before signing', async () => {
+    const address = accounts['USER_1'].account;
 
-  //   const challenge = await BakoProvider.setup({
-  //     address,
-  //   });
+    const challenge = await BakoProvider.setup({
+      address,
+    });
 
-  //   const token = await Wallet.fromPrivateKey(
-  //     accounts['USER_1'].privateKey,
-  //   ).signMessage(challenge);
+    const token = await Wallet.fromPrivateKey(
+      accounts['USER_1'].privateKey,
+    ).signMessage(challenge);
 
-  //   const vaultProviderClient1 = await BakoProvider.create(networks['LOCAL'], {
-  //     address,
-  //     challenge,
-  //     token,
-  //   });
+    const vaultProviderClient1 = await BakoProvider.create(networks['LOCAL'], {
+      address,
+      challenge,
+      token,
+    });
 
-  //   const predicate = new Vault(vaultProviderClient1, {
-  //     SIGNATURES_COUNT: 1,
-  //     SIGNERS: [address],
-  //     HASH_PREDICATE: Address.fromRandom().toB256(),
-  //   });
+    const predicate = new Vault(vaultProviderClient1, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [address],
+      HASH_PREDICATE: Address.fromRandom().toB256(),
+    });
 
-  //   // how to create a predicate on database on the instance time
-  //   const saved = await predicate.save();
-  //   const balanceValue = '0.3';
-  //   await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
+    // how to create a predicate on database on the instance time
+    const saved = await predicate.save();
+    const balanceValue = '0.3';
+    await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
 
-  //   const vaultRecover = await Vault.fromAddress(
-  //     saved.predicateAddress,
-  //     vaultProviderClient1,
-  //   );
+    const vaultRecover = await Vault.fromAddress(
+      saved.predicateAddress,
+      vaultProviderClient1,
+    );
 
-  //   const { hashTxId, tx } = await vaultRecover.transaction([
-  //     {
-  //       to: Address.fromRandom().toB256(),
-  //       amount: '0.1',
-  //       assetId: assets['ETH'],
-  //     },
-  //   ]);
+    const { hashTxId, tx } = await vaultRecover.transaction([
+      {
+        to: Address.fromRandom().toB256(),
+        amount: '0.1',
+        assetId: assets['ETH'],
+      },
+    ]);
 
-  //   const response = await predicate.send(tx);
+    const response = await predicate.send(tx);
 
-  //   await vaultProviderClient1.signTransaction({
-  //     hash: `0x${hashTxId}`,
-  //     signature: bakoCoder.encode({
-  //       type: SignatureType.Fuel,
-  //       signature: await signin(hashTxId, 'USER_1'),
-  //     }),
-  //   });
+    await vaultProviderClient1.signTransaction({
+      hash: `0x${hashTxId}`,
+      signature: bakoCoder.encode({
+        type: SignatureType.Fuel,
+        signature: await signin(hashTxId, 'USER_1'),
+      }),
+    });
 
-  //   const res = await response.wait();
+    const res = await response.wait();
 
-  //   expect(res).toBeDefined();
-  // });
+    expect(res).toBeDefined();
+  });
 });

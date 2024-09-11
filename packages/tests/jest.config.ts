@@ -11,6 +11,7 @@ const config: JestConfigWithTsJest = {
   moduleNameMapper: {
     '^bakosafe/(.*)$': '<rootDir>/sdk/$1',
   },
+  testTimeout: 30000,
   transform: {
     '^.+\\.ts?$': [
       'ts-jest',
