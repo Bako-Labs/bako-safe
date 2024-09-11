@@ -8,7 +8,6 @@ import {
   SignatureType,
 } from '../../sdk/src/modules/';
 import { sendCoins, signin } from './utils';
-import mockAuthService from './mocks/api/auth';
 import {
   ICreateTransactionPayload,
   IPredicatePayload,

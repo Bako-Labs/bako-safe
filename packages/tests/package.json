@@ -9,9 +9,7 @@
   },
   "scripts": {
     "postinstall": "pnpm fuels build",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
-    "test:watch:all": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --verbose --watch",
-    "test:name": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand -t"
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand"
   },
   "dependencies": {
     "@jest/globals": "^29.7.0",
