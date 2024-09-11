@@ -58,6 +58,7 @@ describe('[Create]', () => {
 
 describe('[Transactions]', () => {
   let provider: Provider;
+
   beforeEach(async () => {
     provider = await Provider.create(networks['LOCAL']);
   });

@@ -16,7 +16,7 @@
     "@noble/curves": "^1.5.0",
     "axios": "^1.7.2",
     "bakosafe": "workspace:*",
-    "fuels": "0.94.3",
+    "fuels": "0.94.5",
     "jest": "29.6.4",
     "jest-axios": "^0.2.1",
     "ts-jest": "29.1.1",

@@ -16,6 +16,8 @@ import {
   TransactionRequestLike,
   CreateTransactionRequest,
   ScriptTransactionRequest,
+  UploadTransactionRequest,
+  UpgradeTransactionRequest,
 } from 'fuels';
 
 import {
@@ -102,6 +104,12 @@ export class Vault extends Predicate<[]> {
         break;
       case TransactionType.Create:
         result = new CreateTransactionRequest(tx);
+        break;
+      case TransactionType.Upload:
+        result = new UploadTransactionRequest(tx);
+        break;
+      case TransactionType.Upgrade:
+        result = new UpgradeTransactionRequest(tx);
         break;
       default:
         throw new Error('Not implemented');
