@@ -1,4 +1,4 @@
-import { bakoCoder, SignatureType } from 'bakosafe/src/modules';
+import { bakoCoder, SignatureType } from 'bakosafe';
 import { WebAuthn } from './utils';
 import { Address, Wallet } from 'fuels';
 import { accounts } from './mocks';

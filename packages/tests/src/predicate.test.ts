@@ -15,6 +15,7 @@ import { ExampleContractFactory } from './types/sway';
 
 describe('[Create]', () => {
   let provider: Provider;
+
   beforeEach(async () => {
     provider = await Provider.create(networks['LOCAL']);
   });

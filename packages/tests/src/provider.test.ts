@@ -12,11 +12,12 @@ import {
   IPredicatePayload,
   ISignTransactionRequest,
   TypeUser,
-} from 'bakosafe';
+} from 'bakosafe/src';
 
 jest.mock('../../sdk/src/modules/service', () => {
   // Carrega o valor real de TypeUser
   const actualService = jest.requireActual('../../sdk/src/modules/service');
+  const actualProvider = jest.requireActual('../../sdk/src/modules/provider');
 
   let predicates = new Map();
   let transactions = new Map();
@@ -56,7 +57,7 @@ jest.mock('../../sdk/src/modules/service', () => {
 
     authInfo: jest.fn().mockResolvedValue({
       id: '123456',
-      type: TypeUser.FUEL, // ou qualquer tipo que corresponda ao enum TypeUser
+      type: actualProvider.TypeUser.FUEL, // ou qualquer tipo que corresponda ao enum TypeUser
       avatar: 'https://example.com/avatar.png',
       address: accounts['USER_1'].account,
       onSingleWorkspace: true,
@@ -155,7 +156,7 @@ jest.mock('../../sdk/src/modules/service', () => {
     // Retorna o mock da classe com métodos estáticos e de instância
     Service: mockService,
     // Mantém TypeUser real
-    TypeUser: actualService.TypeUser,
+    TypeUser: actualProvider.TypeUser,
     TransactionStatus: actualService.TransactionStatus,
   };
 });
@@ -181,14 +182,15 @@ describe('[AUTH]', () => {
 
   it('Should authenticate successfully with a valid token', async () => {
     const address = accounts['USER_1'].account;
+    const provider = networks['LOCAL'];
 
-    const challenge = await BakoProvider.setup({ address });
+    const challenge = await BakoProvider.setup({ address, provider });
 
     const token = await Wallet.fromPrivateKey(
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.authenticate(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.authenticate(provider, {
       address,
       challenge,
       token,

@@ -17,7 +17,6 @@ import {
 
 import { Vault } from '../vault';
 import { randomBytes } from 'crypto';
-import { networks } from '../../../../tests/src/mocks/networks';
 
 /**
  * BakoProvider class extends the Provider (FuelProvider) class to include additional
@@ -56,7 +55,7 @@ export class BakoProvider extends Provider {
       name: name ?? `from sdk - ${address}`,
       type: encoder ?? TypeUser.FUEL,
       address: address,
-      provider: provider ?? networks['LOCAL'],
+      provider,
     });
 
     return challenge;
