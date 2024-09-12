@@ -18,8 +18,7 @@
   "author": "",
   "license": "Apache-2.0",
   "scripts": {
-    "prebuild": "fuels build",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand"
+    "prebuild": "fuels build"
   },
   "devDependencies": {
     "@types/jest": "29.5.4",
@@ -31,6 +30,6 @@
     "ts-jest": "29.1.1"
   },
   "dependencies": {
-    "fuels": "0.94.3"
+    "fuels": "0.94.5"
   }
 }
