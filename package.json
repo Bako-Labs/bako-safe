@@ -2,7 +2,7 @@
   "name": "bako-safe",
   "version": "0.0.50",
   "description": "A signature validation package built based on sway in the fuel network",
-  "author": "InfinityBase - Guilherme Roque",
+  "author": "Bako labs",
   "license": "Apache-2.0",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
