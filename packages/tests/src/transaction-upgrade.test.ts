@@ -1,4 +1,10 @@
-import { BytesLike, hexlify, UpgradeTransactionRequest, Provider } from 'fuels';
+import {
+  BytesLike,
+  hexlify,
+  UpgradeTransactionRequest,
+  UploadTransactionRequest,
+  Provider,
+} from 'fuels';
 import {
   accounts,
   assets,
@@ -8,8 +14,8 @@ import {
 import { randomBytes } from 'crypto';
 import { launchTestNode } from 'fuels/test-utils';
 import { bakoCoder, SignatureType, Vault } from '../../sdk/src';
-import { signin } from './utils';
-import { expect } from '@jest/globals';
+import { signin, subsectionFromBytecode } from './utils';
+import { beforeAll, describe, expect } from '@jest/globals';
 
 const baseAssetId = assets['ETH'];
 
@@ -136,5 +142,92 @@ describe('[Transaction Upgrade]', () => {
 
     // Check if gas costs have been updated
     expect(gasCostsAfter).not.toEqual(gasCostsBefore);
+  });
+});
+
+describe('[Transaction Upload]', () => {
+  let node: Awaited<ReturnType<typeof setupTestNode>>;
+  let vault: Vault;
+
+  let bytecodeSubsections: ReturnType<typeof subsectionFromBytecode>;
+
+  beforeAll(async () => {
+    const initialNode = await launchTestNode();
+    vault = new Vault(initialNode.provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [accounts['USER_1'].address],
+    });
+    node = await setupTestNode(vault);
+    bytecodeSubsections = subsectionFromBytecode();
+    initialNode.cleanup();
+  });
+
+  afterAll(() => {
+    node.cleanup();
+  });
+
+  it('should correctly upload the bytecode slowly', async () => {
+    const {
+      wallets: [wallet],
+    } = node;
+    const { subsections } = bytecodeSubsections;
+    const requests = subsections.map((subsection) => {
+      const request = UploadTransactionRequest.from({});
+      request.addSubsection({
+        proofSet: subsection.proofSet,
+        subsection: subsection.subsection,
+        root: subsection.root,
+        subsectionsNumber: subsection.subsectionsNumber,
+        subsectionIndex: subsection.subsectionIndex,
+      });
+      return request;
+    });
+
+    // Upload the subsections
+    for (const request of requests) {
+      const cost = await wallet.getTransactionCost(request);
+      request.maxFee = cost.maxFee;
+      await wallet.fund(request, cost);
+      request.maxFee = cost.maxFee.add(1);
+      const response = await wallet.sendTransaction(request);
+      const { isTypeUpload, isStatusSuccess } = await response.waitForResult();
+      expect(isTypeUpload).toBeTruthy();
+      expect(isStatusSuccess).toBeTruthy();
+    }
+  });
+
+  it('should correctly upgrade chain with uploaded bytecode', async () => {
+    const { vault, provider } = node;
+
+    const { merkleRoot } = bytecodeSubsections;
+
+    // Upgrade the chain with the root
+    const request = new UpgradeTransactionRequest();
+    request.addStateTransitionUpgradePurpose(merkleRoot);
+
+    const { tx, hashTxId } = await vault.BakoTransfer(request);
+    const signature = await signin(hashTxId, 'USER_1', vault.provider);
+    const witness = bakoCoder.encode({
+      type: SignatureType.Fuel,
+      signature,
+    });
+    tx.witnesses.push(witness);
+
+    const response = await vault.send(tx);
+    const { isTypeUpgrade, isStatusSuccess, blockId } =
+      await response.waitForResult();
+    expect(isTypeUpgrade).toBeTruthy();
+    expect(isStatusSuccess).toBeTruthy();
+
+    // Check the bytecode version has changed
+    const block = await provider.getBlock(blockId as string);
+    await provider.produceBlocks(1);
+    const nextBlock = await provider.getBlock('latest');
+
+    const versionBeforeUpgrade = block?.header.stateTransitionBytecodeVersion;
+    const versionAfterUpgrade =
+      nextBlock?.header.stateTransitionBytecodeVersion;
+
+    expect(versionBeforeUpgrade).not.toEqual(versionAfterUpgrade);
   });
 });

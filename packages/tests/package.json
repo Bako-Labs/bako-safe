@@ -25,7 +25,8 @@
   "devDependencies": {
     "@types/jest": "29.5.4",
     "@types/uuid": "^9.0.6",
-    "dotenv": "^16.4.1"
+    "dotenv": "^16.4.1",
+    "@fuel-ts/merkle": "0.94.5"
   },
   "keywords": [],
   "author": "",

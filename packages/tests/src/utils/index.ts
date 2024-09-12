@@ -1,4 +1,5 @@
 export * from './auth';
+export * from './bytecode';
 export * from './delay';
 export * from './sendCoins';
 export * from './signin';
