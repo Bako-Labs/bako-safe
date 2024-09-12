@@ -1,14 +1,13 @@
 import { Address, bn, getRandomB256, Provider, Wallet } from 'fuels';
 
 import { accounts, assets, networks } from './mocks';
+
+import { sendCoins, signin } from './utils';
 import {
   BakoProvider,
   Vault,
   bakoCoder,
   SignatureType,
-} from '../../sdk/src/modules/';
-import { sendCoins, signin } from './utils';
-import {
   ICreateTransactionPayload,
   IPredicatePayload,
   ISignTransactionRequest,

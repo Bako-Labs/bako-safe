@@ -1,13 +1,14 @@
+import dotenv from 'dotenv';
 import { createConfig } from 'fuels';
 
-import dotenv from 'dotenv';
+import { networks, accounts } from './src/mocks';
 
 dotenv.config();
 
 export default createConfig({
   contracts: ['./src/sway/contract'],
   scripts: ['./src/sway/script'],
-  providerUrl: process.env.PROVIDER_URL,
-  privateKey: process.env.PRIVATE_KEY,
+  providerUrl: networks['LOCAL'],
+  privateKey: accounts['USER_1'].privateKey,
   output: './src/types/sway',
 });
