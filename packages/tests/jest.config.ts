@@ -7,9 +7,9 @@ const config: JestConfigWithTsJest = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   testMatch: ['**/src/**/*.test.ts'],
-  rootDir: '../',
+  rootDir: './',
   moduleNameMapper: {
-    '^bakosafe/(.*)$': '<rootDir>/sdk/$1',
+    '^bakosafe/(.*)$': '<rootDir>/../sdk/$1',
   },
   testTimeout: 30000,
   transform: {

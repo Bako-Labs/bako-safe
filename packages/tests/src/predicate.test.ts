@@ -260,7 +260,7 @@ describe('[Send With]', () => {
     tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.WebAuthn,
-        ...(await WebAuthn.signChallange(webAuthnCredential, hashTxId)),
+        ...(await WebAuthn.signChallenge(webAuthnCredential, hashTxId)),
       },
     ]);
 
@@ -293,7 +293,7 @@ describe('[Send With]', () => {
       },
       {
         type: SignatureType.WebAuthn,
-        ...(await WebAuthn.signChallange(webAuthnCredential, hashTxId)),
+        ...(await WebAuthn.signChallenge(webAuthnCredential, hashTxId)),
       },
     ]);
 
@@ -412,7 +412,7 @@ describe('[Send With]', () => {
       },
     ]);
 
-    const signature = await WebAuthn.signChallange(
+    const signature = await WebAuthn.signChallenge(
       webAuthnCredential,
       hashTxId,
     );
