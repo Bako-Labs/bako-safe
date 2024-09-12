@@ -24,7 +24,7 @@
     "target": "es2020",
     "outDir": "./dist",
     "baseUrl": ".",
-    "rootDir": "../"
+    "rootDir": "./"
   },
   "ts-node": {
     "compilerOptions": {

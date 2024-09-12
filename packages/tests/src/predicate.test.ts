@@ -6,7 +6,7 @@ import {
   Vault,
   bakoCoder,
   SignatureType,
-} from 'bakosafe/src';
+} from 'bakosafe';
 
 import { networks, accounts, assets } from './mocks';
 import { Address, bn, Provider, ReceiptType, Wallet } from 'fuels';
@@ -15,6 +15,7 @@ import { ExampleContractFactory } from './types/sway';
 
 describe('[Create]', () => {
   let provider: Provider;
+
   beforeEach(async () => {
     provider = await Provider.create(networks['LOCAL']);
   });
@@ -261,7 +262,7 @@ describe('[Send With]', () => {
     tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.WebAuthn,
-        ...(await WebAuthn.signChallange(webAuthnCredential, hashTxId)),
+        ...(await WebAuthn.signChallenge(webAuthnCredential, hashTxId)),
       },
     ]);
 
@@ -294,7 +295,7 @@ describe('[Send With]', () => {
       },
       {
         type: SignatureType.WebAuthn,
-        ...(await WebAuthn.signChallange(webAuthnCredential, hashTxId)),
+        ...(await WebAuthn.signChallenge(webAuthnCredential, hashTxId)),
       },
     ]);
 
@@ -413,7 +414,7 @@ describe('[Send With]', () => {
       },
     ]);
 
-    const signature = await WebAuthn.signChallange(
+    const signature = await WebAuthn.signChallenge(
       webAuthnCredential,
       hashTxId,
     );

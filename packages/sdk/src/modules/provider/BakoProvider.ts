@@ -10,14 +10,13 @@ import {
 
 import {
   TypeUser,
-  BakoProviderOptions,
   BakoProviderSetup,
-  BakoProviderAuth,
+  BakoProviderOptions,
+  BakoProviderAuthOptions,
 } from './types';
 
 import { Vault } from '../vault';
 import { randomBytes } from 'crypto';
-import { networks } from '../../../../tests/src/mocks/networks';
 
 /**
  * BakoProvider class extends the Provider (FuelProvider) class to include additional
@@ -31,11 +30,12 @@ export class BakoProvider extends Provider {
   /**
    * Protected constructor to initialize BakoProvider.
    *
-   * @param providerInstance An instance of the base Provider class.
+   * @param url The URL of the provider.
+   * @param options The options for the provider, including address and token.
    */
-  protected constructor(providerInstance: Provider) {
-    super(providerInstance.url, providerInstance.options);
-    this.options = providerInstance.options as BakoProviderOptions;
+  protected constructor(url: string, options: BakoProviderOptions) {
+    super(url, options);
+    this.options = options as BakoProviderOptions;
     this.service = new Service({
       address: this.options.address,
       token: this.options.token,
@@ -55,7 +55,7 @@ export class BakoProvider extends Provider {
       name: name ?? `from sdk - ${address}`,
       type: encoder ?? TypeUser.FUEL,
       address: address,
-      provider: provider ?? networks['LOCAL'],
+      provider,
     });
 
     return challenge;
@@ -72,32 +72,26 @@ export class BakoProvider extends Provider {
     url: string,
     options: BakoProviderOptions,
   ): Promise<BakoProvider> {
-    const fuelProvider = await Provider.create(url, options);
-
-    const a = await this.authenticate({
-      challenge: options.challenge,
-      token: options.token,
-      encoder: options.encoder,
-    });
-
-    return new BakoProvider(fuelProvider);
+    return new BakoProvider(url, options);
   }
 
   /**
-   * Authenticates the BakoProvider using a challenge, token, and encoder.
+   * Static method to authenticate and create a BakoProvider instance.
    *
-   * @param params Authentication parameters including challenge, token, and encoder.
+   * @param url The URL of the provider.
+   * @param options The same options for Provider, including the auth options.
+   * @returns A Promise that resolves to a BakoProvider instance.
    */
-  private static async authenticate(params: BakoProviderAuth) {
-    const { challenge, token, encoder } = params;
-
+  static async authenticate(
+    url: string,
+    options: BakoProviderAuthOptions,
+  ): Promise<BakoProvider> {
     await Service.sign({
-      signature: token,
-      encoder: encoder ?? TypeUser.FUEL,
-      digest: challenge,
+      digest: options.challenge,
+      encoder: options.encoder ?? TypeUser.FUEL,
+      signature: options.token,
     });
-
-    return;
+    return new BakoProvider(url, options);
   }
 
   /**

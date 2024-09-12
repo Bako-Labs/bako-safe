@@ -4,6 +4,9 @@ export { ISelectWorkspaceResponse, IBakoSafeAuth, Workspace } from '../service';
 export type BakoProviderOptions = ProviderOptions & {
   token: string;
   address: string;
+};
+
+export type BakoProviderAuthOptions = BakoProviderOptions & {
   challenge: string;
   encoder?: TypeUser;
   serverUrl?: string;
@@ -18,7 +21,7 @@ export type BakoProviderSetup = {
   address: string;
   name?: string;
   encoder?: TypeUser;
-  provider?: string;
+  provider: string;
 };
 
 export type BakoProviderAuth = {

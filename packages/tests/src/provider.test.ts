@@ -1,26 +1,25 @@
-import { Address, bn, Provider, Wallet } from 'fuels';
+import { Address, bn, getRandomB256, Provider, Wallet } from 'fuels';
 
 import { accounts, assets, networks } from './mocks';
+
+import { sendCoins, signin } from './utils';
 import {
   BakoProvider,
   Vault,
   bakoCoder,
   SignatureType,
-} from '../../sdk/src/modules/';
-import { sendCoins, signin } from './utils';
-import {
   ICreateTransactionPayload,
   IPredicatePayload,
   ISignTransactionRequest,
-  TypeUser,
-} from 'bakosafe';
+} from 'bakosafe/src';
 
 jest.mock('../../sdk/src/modules/service', () => {
   // Carrega o valor real de TypeUser
   const actualService = jest.requireActual('../../sdk/src/modules/service');
+  const actualProvider = jest.requireActual('../../sdk/src/modules/provider');
 
-  let predicates = {};
-  let transactions = {};
+  let predicates = new Map();
+  let transactions = new Map();
 
   // Mock da classe Service
   const mockService = jest.fn().mockImplementation(() => ({
@@ -41,7 +40,7 @@ jest.mock('../../sdk/src/modules/service', () => {
       .fn()
       .mockImplementation((params: IPredicatePayload) => {
         const { predicateAddress, configurable } = params;
-        predicates[predicateAddress] = configurable;
+        predicates.set(predicateAddress, configurable);
         return {
           predicateAddress,
           configurable,
@@ -51,13 +50,13 @@ jest.mock('../../sdk/src/modules/service', () => {
     findByAddress: jest.fn().mockImplementation((predicateAddress: string) => {
       return {
         predicateAddress,
-        configurable: JSON.parse(predicates[predicateAddress]),
+        configurable: JSON.parse(predicates.get(predicateAddress)),
       };
     }),
 
     authInfo: jest.fn().mockResolvedValue({
       id: '123456',
-      type: TypeUser.FUEL, // ou qualquer tipo que corresponda ao enum TypeUser
+      type: actualProvider.TypeUser.FUEL, // ou qualquer tipo que corresponda ao enum TypeUser
       avatar: 'https://example.com/avatar.png',
       address: accounts['USER_1'].account,
       onSingleWorkspace: true,
@@ -76,11 +75,11 @@ jest.mock('../../sdk/src/modules/service', () => {
       .fn()
       .mockImplementation((params: ICreateTransactionPayload) => {
         const { hash, txData, predicateAddress } = params;
-        transactions[hash] = {
+        transactions.set(hash, {
           ...txData,
           witnesses: [],
           predicateAddress,
-        };
+        });
 
         return {
           transactionId: hash,
@@ -89,7 +88,7 @@ jest.mock('../../sdk/src/modules/service', () => {
 
     findTransactionByHash: jest.fn().mockImplementation((hash: string) => {
       return {
-        txData: transactions[hash],
+        txData: transactions.get(hash),
       };
     }),
 
@@ -98,14 +97,14 @@ jest.mock('../../sdk/src/modules/service', () => {
       .mockImplementation(async (params: ISignTransactionRequest) => {
         const { signature, hash } = params;
 
-        let tx = transactions[hash.slice(2)];
+        let tx = transactions.get(hash.slice(2));
 
         tx = {
           ...tx,
           witnesses: [...tx.witnesses, signature],
         };
 
-        const predicate = predicates[tx.predicateAddress];
+        const predicate = predicates.get(tx.predicateAddress);
         const predicateConfig = JSON.parse(predicate);
 
         if (tx.witnesses.length >= predicateConfig.SIGNATURES_COUNT) {
@@ -121,9 +120,9 @@ jest.mock('../../sdk/src/modules/service', () => {
     // verifique os requisitos
     // envie a transação
     sendTransaction: jest.fn().mockImplementation(async (hash: string) => {
-      let tx = transactions[hash.slice(2)];
+      let tx = transactions.get(hash.slice(2));
 
-      let predicate = predicates[tx.predicateAddress];
+      let predicate = predicates.get(tx.predicateAddress);
 
       if (tx.witnesses.length >= predicate.SIGNATURES_COUNT) {
         const vault = new Vault(
@@ -156,24 +155,41 @@ jest.mock('../../sdk/src/modules/service', () => {
     // Retorna o mock da classe com métodos estáticos e de instância
     Service: mockService,
     // Mantém TypeUser real
-    TypeUser: actualService.TypeUser,
+    TypeUser: actualProvider.TypeUser,
     TransactionStatus: actualService.TransactionStatus,
   };
 });
 
 describe('[AUTH]', () => {
+  it('Should create a instance of bako provider', async () => {
+    const { account } = accounts['USER_1'];
+
+    const expectedAuth = {
+      address: account,
+      token: getRandomB256(),
+    };
+
+    const provider = await BakoProvider.create(networks['LOCAL'], {
+      address: expectedAuth.address,
+      token: expectedAuth.token,
+    });
+
+    const { address, token } = provider.options;
+    expect(expectedAuth.address).toBe(address);
+    expect(expectedAuth.token).toBe(token);
+  });
+
   it('Should authenticate successfully with a valid token', async () => {
     const address = accounts['USER_1'].account;
+    const provider = networks['LOCAL'];
 
-    const challenge = await BakoProvider.setup({
-      address,
-    });
+    const challenge = await BakoProvider.setup({ address, provider });
 
     const token = await Wallet.fromPrivateKey(
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.authenticate(provider, {
       address,
       challenge,
       token,
@@ -185,7 +201,6 @@ describe('[AUTH]', () => {
     expect(vaultProvider).toBeDefined();
     expect(vaultProvider.options.address).toBe(address);
     expect(vaultProvider.options.token).toBe(token);
-    expect(vaultProvider.options.challenge).toBe(challenge);
     expect(tokens).toBeDefined();
     expect(tokens.length).toBeGreaterThan(0);
   });
@@ -201,7 +216,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.authenticate(networks['LOCAL'], {
       address,
       challenge,
       token,
@@ -223,7 +238,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.authenticate(networks['LOCAL'], {
       address,
       challenge,
       token,
@@ -248,7 +263,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.authenticate(networks['LOCAL'], {
       address,
       challenge,
       token,
@@ -279,7 +294,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.authenticate(networks['LOCAL'], {
       address,
       challenge,
       token,
@@ -322,7 +337,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.authenticate(networks['LOCAL'], {
       address,
       challenge,
       token,
@@ -370,7 +385,7 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.create(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.authenticate(networks['LOCAL'], {
       address,
       challenge,
       token,
@@ -426,11 +441,14 @@ describe('[AUTH]', () => {
       accounts['USER_1'].privateKey,
     ).signMessage(challenge);
 
-    const vaultProviderClient1 = await BakoProvider.create(networks['LOCAL'], {
-      address,
-      challenge,
-      token,
-    });
+    const vaultProviderClient1 = await BakoProvider.authenticate(
+      networks['LOCAL'],
+      {
+        address,
+        challenge,
+        token,
+      },
+    );
 
     const predicate = new Vault(vaultProviderClient1, {
       SIGNATURES_COUNT: 1,

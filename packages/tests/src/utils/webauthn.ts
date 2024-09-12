@@ -1,6 +1,6 @@
 import { concat, hexlify, sha256 } from 'fuels';
 import { secp256r1 } from '@noble/curves/p256';
-import { parseSignChallangeResponse } from 'bakosafe/src';
+import { parseSignChallangeResponse } from 'bakosafe';
 import { randomBytes } from 'crypto';
 
 type MockWebAuthnCredential = {
@@ -20,7 +20,7 @@ export class WebAuthn {
     };
   }
 
-  static signChallange(credential: MockWebAuthnCredential, challenge: string) {
+  static signChallenge(credential: MockWebAuthnCredential, challenge: string) {
     const dataJSON: Record<string, string | boolean> = {
       type: 'webauthn.get',
       challenge,

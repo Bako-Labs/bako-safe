@@ -1,5 +1,5 @@
-import { bakoCoder, SignatureType } from 'bakosafe/src/modules';
-import { WebAuthn_createCredentials, WebAuthn_signChallange } from './utils';
+import { bakoCoder, SignatureType } from 'bakosafe';
+import { WebAuthn } from './utils';
 import { Address, Wallet } from 'fuels';
 import { accounts } from './mocks';
 
@@ -34,10 +34,10 @@ describe('[BAKO CODERS]', () => {
   });
 
   it('Should Webauthn encode a signature successfully', async () => {
-    const webAuthnCredential = WebAuthn_createCredentials();
+    const webAuthnCredential = WebAuthn.createCredentials();
     const webAuthnBytes = '0000000000000000';
     const bakoPrefix = '0x42414b4f';
-    const sign = await WebAuthn_signChallange(
+    const sign = await WebAuthn.signChallenge(
       webAuthnCredential,
       Address.fromRandom().toB256().slice(2),
     );

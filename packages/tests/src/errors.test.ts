@@ -1,5 +1,5 @@
 import { ErrorCode, FuelError } from 'fuels';
-import { BakoError, ErrorCodes } from 'bakosafe/src';
+import { BakoError, ErrorCodes } from 'bakosafe';
 
 const createFuelError = (message: string) =>
   new FuelError(ErrorCode.TRANSACTION_FAILED, message);
