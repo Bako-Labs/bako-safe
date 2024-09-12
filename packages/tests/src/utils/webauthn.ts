@@ -20,7 +20,7 @@ export class WebAuthn {
     };
   }
 
-  static signChallange(credential: MockWebAuthnCredential, challenge: string) {
+  static signChallenge(credential: MockWebAuthnCredential, challenge: string) {
     const dataJSON: Record<string, string | boolean> = {
       type: 'webauthn.get',
       challenge,
@@ -38,7 +38,6 @@ export class WebAuthn {
     const clientDataJSON = new TextEncoder().encode(JSON.stringify(dataJSON));
     // Hash data in the same order webauthn does before signing
     const clientHash = sha256(clientDataJSON);
-    //@ts-ignore
     const digest = sha256(concat([authenticatorData, clientHash]));
     // Sign the digest using the credential private key
     const sig = secp256r1.sign(digest.slice(2), credential.privateKey);
@@ -53,7 +52,6 @@ export class WebAuthn {
     return parseSignChallangeResponse(
       hexlify(credential.publicKey),
       challenge,
-      //@ts-ignore
       mockReponseWebAuthn,
     );
   }

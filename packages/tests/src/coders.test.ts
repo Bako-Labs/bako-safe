@@ -37,7 +37,7 @@ describe('[BAKO CODERS]', () => {
     const webAuthnCredential = WebAuthn.createCredentials();
     const webAuthnBytes = '0000000000000000';
     const bakoPrefix = '0x42414b4f';
-    const sign = await WebAuthn.signChallange(
+    const sign = await WebAuthn.signChallenge(
       webAuthnCredential,
       Address.fromRandom().toB256().slice(2),
     );

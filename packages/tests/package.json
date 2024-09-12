@@ -5,27 +5,29 @@
   "description": "",
   "main": "src/index.ts",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "postinstall": "pnpm fuels build",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand"
   },
   "dependencies": {
-    "@jest/globals": "^29.7.0",
     "@noble/curves": "^1.5.0",
     "axios": "^1.7.2",
     "bakosafe": "workspace:*",
     "fuels": "0.94.3",
-    "jest": "29.6.4",
-    "jest-axios": "^0.2.1",
-    "ts-jest": "29.1.1",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@fuel-ts/merkle": "0.94.5",
+    "@jest/globals": "^29.7.0",
     "@types/jest": "29.5.4",
     "@types/uuid": "^9.0.6",
-    "dotenv": "^16.4.1"
+    "dotenv": "^16.4.1",
+    "jest": "29.6.4",
+    "jest-axios": "^0.2.1",
+    "ts-jest": "29.1.1",
+    "typescript": "~5.4.5"
   },
   "keywords": [],
   "author": "",
