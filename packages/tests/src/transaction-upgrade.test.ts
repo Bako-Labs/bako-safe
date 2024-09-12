@@ -13,7 +13,7 @@ import {
 } from './mocks';
 import { randomBytes } from 'crypto';
 import { launchTestNode } from 'fuels/test-utils';
-import { bakoCoder, SignatureType, Vault } from '../../sdk/src';
+import { bakoCoder, SignatureType, Vault } from 'bakosafe/src';
 import { signin, subsectionFromBytecode } from './utils';
 import { beforeAll, describe, expect } from '@jest/globals';
 

@@ -11,6 +11,7 @@ import {
   ICreateTransactionPayload,
   IPredicatePayload,
   ISignTransactionRequest,
+  TypeUser,
 } from 'bakosafe/src';
 
 jest.mock('../../sdk/src/modules/service', () => {
@@ -207,9 +208,11 @@ describe('[AUTH]', () => {
 
   it('Should retrieve all user workspaces successfully', async () => {
     const address = accounts['USER_1'].account;
+    const provider = networks['LOCAL'];
 
     const challenge = await BakoProvider.setup({
       address,
+      provider,
     });
 
     const token = await Wallet.fromPrivateKey(
@@ -229,9 +232,11 @@ describe('[AUTH]', () => {
 
   it('Should retrieve current authentication information', async () => {
     const address = accounts['USER_1'].account;
+    const provider = networks['LOCAL'];
 
     const challenge = await BakoProvider.setup({
       address,
+      provider,
     });
 
     const token = await Wallet.fromPrivateKey(
@@ -254,9 +259,11 @@ describe('[AUTH]', () => {
 
   it('Should store a vault successfully', async () => {
     const address = accounts['USER_1'].account;
+    const provider = networks['LOCAL'];
 
     const challenge = await BakoProvider.setup({
       address,
+      provider,
     });
 
     const token = await Wallet.fromPrivateKey(
@@ -285,9 +292,11 @@ describe('[AUTH]', () => {
 
   it('Should recover a vault successfully', async () => {
     const address = accounts['USER_1'].account;
+    const provider = networks['LOCAL'];
 
     const challenge = await BakoProvider.setup({
       address,
+      provider,
     });
 
     const token = await Wallet.fromPrivateKey(
@@ -328,9 +337,11 @@ describe('[AUTH]', () => {
 
   it('Should save a transaction to the service', async () => {
     const address = accounts['USER_1'].account;
+    const provider = networks['LOCAL'];
 
     const challenge = await BakoProvider.setup({
       address,
+      provider,
     });
 
     const token = await Wallet.fromPrivateKey(
@@ -376,9 +387,11 @@ describe('[AUTH]', () => {
 
   it('Should sign vault with the provider (1:1 signature)', async () => {
     const address = accounts['USER_1'].account;
+    const provider = networks['LOCAL'];
 
     const challenge = await BakoProvider.setup({
       address,
+      provider,
     });
 
     const token = await Wallet.fromPrivateKey(
@@ -432,9 +445,11 @@ describe('[AUTH]', () => {
 
   it('Should fail to send transaction before signing', async () => {
     const address = accounts['USER_1'].account;
+    const provider = networks['LOCAL'];
 
     const challenge = await BakoProvider.setup({
       address,
+      provider,
     });
 
     const token = await Wallet.fromPrivateKey(
