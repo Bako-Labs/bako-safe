@@ -11,7 +11,6 @@ import {
   ICreateTransactionPayload,
   IPredicatePayload,
   ISignTransactionRequest,
-  TypeUser,
 } from 'bakosafe/src';
 
 jest.mock('../../sdk/src/modules/service', () => {
