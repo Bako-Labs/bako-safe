@@ -5,7 +5,7 @@
   "description": "",
   "main": "src/index.ts",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "postinstall": "pnpm fuels build",
