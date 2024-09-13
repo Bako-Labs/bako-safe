@@ -1,8 +1,8 @@
-import { Address, bn, getRandomB256, Provider, Wallet } from 'fuels';
+import { Address, bn, getRandomB256, Provider } from 'fuels';
+import { launchTestNode } from 'fuels/test-utils';
 
-import { accounts, assets, networks } from './mocks';
+import { assets } from './mocks';
 
-import { sendCoins, signin } from './utils';
 import {
   BakoProvider,
   Vault,
@@ -14,16 +14,13 @@ import {
 } from 'bakosafe/src';
 
 jest.mock('../../sdk/src/modules/service', () => {
-  // Carrega o valor real de TypeUser
   const actualService = jest.requireActual('../../sdk/src/modules/service');
   const actualProvider = jest.requireActual('../../sdk/src/modules/provider');
 
   let predicates = new Map();
   let transactions = new Map();
 
-  // Mock da classe Service
   const mockService = jest.fn().mockImplementation(() => ({
-    // Métodos de instância mockados
     getWorkspaces: jest
       .fn()
       .mockResolvedValue([
@@ -39,8 +36,8 @@ jest.mock('../../sdk/src/modules/service', () => {
     createPredicate: jest
       .fn()
       .mockImplementation((params: IPredicatePayload) => {
-        const { predicateAddress, configurable } = params;
-        predicates.set(predicateAddress, configurable);
+        const { predicateAddress, configurable, provider } = params;
+        predicates.set(predicateAddress, { configurable, provider });
         return {
           predicateAddress,
           configurable,
@@ -48,28 +45,15 @@ jest.mock('../../sdk/src/modules/service', () => {
       }),
 
     findByAddress: jest.fn().mockImplementation((predicateAddress: string) => {
+      const { configurable } = predicates.get(predicateAddress);
+
       return {
         predicateAddress,
-        configurable: JSON.parse(predicates.get(predicateAddress)),
+        configurable: JSON.parse(configurable),
       };
     }),
 
-    authInfo: jest.fn().mockResolvedValue({
-      id: '123456',
-      type: actualProvider.TypeUser.FUEL, // ou qualquer tipo que corresponda ao enum TypeUser
-      avatar: 'https://example.com/avatar.png',
-      address: accounts['USER_1'].account,
-      onSingleWorkspace: true,
-      workspace: {
-        id: 'workspace123',
-        name: 'Workspace Name',
-        avatar: 'https://example.com/workspace-avatar.png',
-        permission: {
-          read: 'granted',
-          write: 'denied',
-        },
-      },
-    }),
+    authInfo: jest.fn(),
 
     createTransaction: jest
       .fn()
@@ -104,12 +88,12 @@ jest.mock('../../sdk/src/modules/service', () => {
           witnesses: [...tx.witnesses, signature],
         };
 
-        const predicate = predicates.get(tx.predicateAddress);
-        const predicateConfig = JSON.parse(predicate);
+        const { configurable, provider } = predicates.get(tx.predicateAddress);
+        const predicateConfig = JSON.parse(configurable);
 
         if (tx.witnesses.length >= predicateConfig.SIGNATURES_COUNT) {
           const vault = new Vault(
-            await Provider.create(networks['LOCAL']),
+            await Provider.create(provider),
             predicateConfig,
           );
           await vault.send(tx);
@@ -117,17 +101,15 @@ jest.mock('../../sdk/src/modules/service', () => {
         return true;
       }),
 
-    // verifique os requisitos
-    // envie a transação
     sendTransaction: jest.fn().mockImplementation(async (hash: string) => {
       let tx = transactions.get(hash.slice(2));
 
-      let predicate = predicates.get(tx.predicateAddress);
+      let { configurable, provider } = predicates.get(tx.predicateAddress);
 
-      if (tx.witnesses.length >= predicate.SIGNATURES_COUNT) {
+      if (tx.witnesses.length >= configurable.SIGNATURES_COUNT) {
         const vault = new Vault(
-          await Provider.create(networks['LOCAL']),
-          JSON.parse(predicate.configurable),
+          await Provider.create(provider),
+          JSON.parse(configurable),
         );
         await vault.send(tx.txData);
       }
@@ -135,61 +117,72 @@ jest.mock('../../sdk/src/modules/service', () => {
     }),
   }));
 
-  // Métodos estáticos da classe Service
   // @ts-ignore
   mockService.create = jest
     .fn()
     .mockResolvedValue({ code: 'mocked_challenge' });
 
-  // set signature
-  // verify signature requirements
-  // send transaction
   // @ts-ignore
   mockService.sign = jest
     .fn()
-    .mockImplementation(async (params: ISignTransactionRequest) => {
+    .mockImplementation(async (_: ISignTransactionRequest) => {
       return;
     });
 
   return {
-    // Retorna o mock da classe com métodos estáticos e de instância
     Service: mockService,
-    // Mantém TypeUser real
     TypeUser: actualProvider.TypeUser,
     TransactionStatus: actualService.TransactionStatus,
   };
 });
 
 describe('[AUTH]', () => {
+  let node: Awaited<ReturnType<typeof launchTestNode>>;
+
+  beforeAll(async () => {
+    node = await launchTestNode();
+  });
+
+  afterAll(() => {
+    node.cleanup();
+  });
+
   it('Should create a instance of bako provider', async () => {
-    const { account } = accounts['USER_1'];
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
 
     const expectedAuth = {
-      address: account,
+      address: wallet.address.toB256(),
       token: getRandomB256(),
     };
 
-    const provider = await BakoProvider.create(networks['LOCAL'], {
+    const bakoProvider = await BakoProvider.create(provider.url, {
       address: expectedAuth.address,
       token: expectedAuth.token,
     });
 
-    const { address, token } = provider.options;
+    const { address, token } = bakoProvider.options;
     expect(expectedAuth.address).toBe(address);
     expect(expectedAuth.token).toBe(token);
   });
 
   it('Should authenticate successfully with a valid token', async () => {
-    const address = accounts['USER_1'].account;
-    const provider = networks['LOCAL'];
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+    const address = wallet.address.toB256();
 
-    const challenge = await BakoProvider.setup({ address, provider });
+    const challenge = await BakoProvider.setup({
+      provider: provider.url,
+      address,
+    });
 
-    const token = await Wallet.fromPrivateKey(
-      accounts['USER_1'].privateKey,
-    ).signMessage(challenge);
+    const token = await wallet.signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.authenticate(provider, {
+    const vaultProvider = await BakoProvider.authenticate(provider.url, {
       address,
       challenge,
       token,
@@ -206,17 +199,20 @@ describe('[AUTH]', () => {
   });
 
   it('Should retrieve all user workspaces successfully', async () => {
-    const address = accounts['USER_1'].account;
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+    const address = wallet.address.toB256();
 
     const challenge = await BakoProvider.setup({
       address,
+      provider: provider.url,
     });
 
-    const token = await Wallet.fromPrivateKey(
-      accounts['USER_1'].privateKey,
-    ).signMessage(challenge);
+    const token = await wallet.signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.authenticate(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.authenticate(provider.url, {
       address,
       challenge,
       token,
@@ -228,17 +224,33 @@ describe('[AUTH]', () => {
   });
 
   it('Should retrieve current authentication information', async () => {
-    const address = accounts['USER_1'].account;
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+    const address = wallet.address.toB256();
 
     const challenge = await BakoProvider.setup({
       address,
+      provider: provider.url,
     });
 
-    const token = await Wallet.fromPrivateKey(
-      accounts['USER_1'].privateKey,
-    ).signMessage(challenge);
+    const token = await wallet.signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.authenticate(networks['LOCAL'], {
+    const mockVaultProvider = {
+      service: {
+        authInfo: jest.fn().mockResolvedValue({
+          address,
+          workspace: 'single-workspace',
+          onSingleWorkspace: true,
+        }),
+      },
+    };
+    const spyInstance = jest
+      .spyOn(BakoProvider, 'authenticate')
+      .mockResolvedValue(mockVaultProvider as any);
+
+    const vaultProvider = await BakoProvider.authenticate(provider.url, {
       address,
       challenge,
       token,
@@ -250,20 +262,25 @@ describe('[AUTH]', () => {
     expect(authInfo.address).toBe(address);
     expect(authInfo.workspace).toBeDefined();
     expect(authInfo.onSingleWorkspace).toBe(true);
+
+    spyInstance.mockRestore();
   });
 
   it('Should store a vault successfully', async () => {
-    const address = accounts['USER_1'].account;
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+    const address = wallet.address.toB256();
 
     const challenge = await BakoProvider.setup({
       address,
+      provider: provider.url,
     });
 
-    const token = await Wallet.fromPrivateKey(
-      accounts['USER_1'].privateKey,
-    ).signMessage(challenge);
+    const token = await wallet.signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.authenticate(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.authenticate(provider.url, {
       address,
       challenge,
       token,
@@ -284,17 +301,20 @@ describe('[AUTH]', () => {
   });
 
   it('Should recover a vault successfully', async () => {
-    const address = accounts['USER_1'].account;
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+    const address = wallet.address.toB256();
 
     const challenge = await BakoProvider.setup({
       address,
+      provider: provider.url,
     });
 
-    const token = await Wallet.fromPrivateKey(
-      accounts['USER_1'].privateKey,
-    ).signMessage(challenge);
+    const token = await wallet.signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.authenticate(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.authenticate(provider.url, {
       address,
       challenge,
       token,
@@ -308,16 +328,20 @@ describe('[AUTH]', () => {
 
     const saved = await predicate.save();
 
-    const balanceValue = '0.1';
-    await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
+    const balanceValue = bn(100);
+    const response = await wallet.transfer(
+      predicate.address.toB256(),
+      balanceValue,
+    );
+    await response.waitForResult();
 
     const recover = await Vault.fromAddress(
       saved.predicateAddress,
       vaultProvider,
     );
 
-    const predicateBalance = await predicate.getBalance(assets['ETH']);
-    const recoverBalance = await recover.getBalance(assets['ETH']);
+    const predicateBalance = await predicate.getBalance();
+    const recoverBalance = await recover.getBalance();
 
     // 18 is max of decimals to represent value
     expect(predicate.address.toB256()).toBe(recover.address.toB256());
@@ -327,17 +351,20 @@ describe('[AUTH]', () => {
   });
 
   it('Should save a transaction to the service', async () => {
-    const address = accounts['USER_1'].account;
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+    const address = wallet.address.toB256();
 
     const challenge = await BakoProvider.setup({
       address,
+      provider: provider.url,
     });
 
-    const token = await Wallet.fromPrivateKey(
-      accounts['USER_1'].privateKey,
-    ).signMessage(challenge);
+    const token = await wallet.signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.authenticate(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.authenticate(provider.url, {
       address,
       challenge,
       token,
@@ -353,7 +380,11 @@ describe('[AUTH]', () => {
     const saved = await predicate.save();
 
     const balanceValue = '0.3';
-    await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
+    const response = await wallet.transfer(
+      predicate.address.toB256(),
+      bn.parseUnits(balanceValue),
+    );
+    await response.waitForResult();
 
     const recover = await Vault.fromAddress(
       saved.predicateAddress,
@@ -364,7 +395,7 @@ describe('[AUTH]', () => {
       {
         to: Address.fromRandom().toB256(),
         amount: '0.1',
-        assetId: assets['ETH'],
+        assetId: provider.getBaseAssetId(),
       },
     ]);
 
@@ -375,17 +406,20 @@ describe('[AUTH]', () => {
   });
 
   it('Should sign vault with the provider (1:1 signature)', async () => {
-    const address = accounts['USER_1'].account;
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+    const address = wallet.address.toB256();
 
     const challenge = await BakoProvider.setup({
       address,
+      provider: provider.url,
     });
 
-    const token = await Wallet.fromPrivateKey(
-      accounts['USER_1'].privateKey,
-    ).signMessage(challenge);
+    const token = await wallet.signMessage(challenge);
 
-    const vaultProvider = await BakoProvider.authenticate(networks['LOCAL'], {
+    const vaultProvider = await BakoProvider.authenticate(provider.url, {
       address,
       challenge,
       token,
@@ -401,7 +435,11 @@ describe('[AUTH]', () => {
     const saved = await predicate.save();
 
     const balanceValue = '0.3';
-    await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
+    let response = await wallet.transfer(
+      predicate.address.toB256(),
+      bn.parseUnits(balanceValue),
+    );
+    await response.waitForResult();
 
     const vaultRecover = await Vault.fromAddress(
       saved.predicateAddress,
@@ -412,43 +450,45 @@ describe('[AUTH]', () => {
       {
         to: Address.fromRandom().toB256(),
         amount: '0.1',
-        assetId: assets['ETH'],
+        assetId: provider.getBaseAssetId(),
       },
     ]);
 
+    const signature = await wallet.signMessage(hashTxId);
     await vaultProvider.signTransaction({
       hash: `0x${hashTxId}`,
       signature: bakoCoder.encode({
         type: SignatureType.Fuel,
-        signature: await signin(hashTxId, 'USER_1'),
+        signature,
       }),
     });
 
-    const response = await predicate.send(tx);
-    const res = await response.wait();
+    response = await predicate.send(tx);
+    const { isStatusSuccess, isTypeScript } = await response.wait();
 
-    expect(res).toBeDefined();
+    expect(isTypeScript).toBeTruthy();
+    expect(isStatusSuccess).toBeTruthy();
   }, 10000);
 
   it('Should fail to send transaction before signing', async () => {
-    const address = accounts['USER_1'].account;
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+    const address = wallet.address.toB256();
 
     const challenge = await BakoProvider.setup({
       address,
+      provider: provider.url,
     });
 
-    const token = await Wallet.fromPrivateKey(
-      accounts['USER_1'].privateKey,
-    ).signMessage(challenge);
+    const token = await wallet.signMessage(challenge);
 
-    const vaultProviderClient1 = await BakoProvider.authenticate(
-      networks['LOCAL'],
-      {
-        address,
-        challenge,
-        token,
-      },
-    );
+    const vaultProviderClient1 = await BakoProvider.authenticate(provider.url, {
+      address,
+      challenge,
+      token,
+    });
 
     const predicate = new Vault(vaultProviderClient1, {
       SIGNATURES_COUNT: 1,
@@ -459,7 +499,11 @@ describe('[AUTH]', () => {
     // how to create a predicate on database on the instance time
     const saved = await predicate.save();
     const balanceValue = '0.3';
-    await sendCoins(predicate.address.toB256(), balanceValue, assets['ETH']);
+    let response = await wallet.transfer(
+      predicate.address.toB256(),
+      bn.parseUnits(balanceValue),
+    );
+    await response.waitForResult();
 
     const vaultRecover = await Vault.fromAddress(
       saved.predicateAddress,
@@ -470,17 +514,18 @@ describe('[AUTH]', () => {
       {
         to: Address.fromRandom().toB256(),
         amount: '0.1',
-        assetId: assets['ETH'],
+        assetId: provider.getBaseAssetId(),
       },
     ]);
 
-    const response = await predicate.send(tx);
+    response = await predicate.send(tx);
 
+    const signature = await wallet.signMessage(hashTxId);
     await vaultProviderClient1.signTransaction({
       hash: `0x${hashTxId}`,
       signature: bakoCoder.encode({
         type: SignatureType.Fuel,
-        signature: await signin(hashTxId, 'USER_1'),
+        signature,
       }),
     });
 

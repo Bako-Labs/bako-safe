@@ -72,7 +72,9 @@ export class BakoProvider extends Provider {
     url: string,
     options: BakoProviderOptions,
   ): Promise<BakoProvider> {
-    return new BakoProvider(url, options);
+    const provider = new BakoProvider(url, options);
+    await provider.fetchChainAndNodeInfo();
+    return provider;
   }
 
   /**
@@ -91,7 +93,7 @@ export class BakoProvider extends Provider {
       encoder: options.encoder ?? TypeUser.FUEL,
       signature: options.token,
     });
-    return new BakoProvider(url, options);
+    return BakoProvider.create(url, options);
   }
 
   /**
