@@ -19,9 +19,4 @@ Currently, our predicate contract supports only two types of signatures:
 
 ## Build your contract
 
-- Create a new file `.env` based on `.env.example`
-- Add the desired configurations to the `fuels.config.ts` file:
-
-```
-yarn fuels build
-```
+- `pnpm fuels build`

@@ -1,4 +1,4 @@
-import { signin, sendCoins, WebAuthn } from './utils';
+import { WebAuthn } from './utils';
 
 import {
   BakoError,
@@ -6,50 +6,77 @@ import {
   Vault,
   bakoCoder,
   SignatureType,
-} from 'bakosafe';
+} from 'bakosafe/src';
 
-import { networks, accounts, assets } from './mocks';
-import { Address, bn, Provider, ReceiptType, Wallet } from 'fuels';
+import { accounts, assets } from './mocks';
+import { bn, ReceiptType, WalletUnlocked } from 'fuels';
 import { ExampleContract } from './types/sway';
 import { ExampleContractFactory } from './types/sway';
+import { launchTestNode } from 'fuels/test-utils';
+
+const createTestAsset = (assetId: string) => ({ value: assetId });
+const testAssets = [
+  createTestAsset(assets['BTC']),
+  createTestAsset(assets['DAI']),
+  createTestAsset(assets['UNI']),
+  createTestAsset(assets['USDC']),
+];
 
 describe('[Create]', () => {
-  let provider: Provider;
+  let node: Awaited<ReturnType<typeof launchTestNode>>;
 
-  beforeEach(async () => {
-    provider = await Provider.create(networks['LOCAL']);
+  beforeAll(async () => {
+    node = await launchTestNode({
+      walletsConfig: {
+        count: 3,
+        assets: testAssets,
+        coinsPerAsset: 1,
+        amountPerCoin: 10_000_000_000,
+      },
+    });
+  });
+
+  afterAll(() => {
+    node.cleanup();
   });
 
   it('Should successfully create a Vault instance', async () => {
+    const { provider, wallets } = node;
+
+    const [wallet] = wallets;
+
     // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
-      SIGNERS: [
-        accounts['USER_1'].address,
-        accounts['USER_2'].address,
-        accounts['USER_3'].address,
-      ],
+      SIGNERS: wallets.map((w) => w.address.toB256()),
     });
-    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
 
     // get balance
-    const balance = (await vault.getBalance(assets['ETH'])).formatUnits(18);
+    const balance = (await vault.getBalance()).formatUnits(18);
     expect(0.0).toBeLessThan(Number(balance));
   });
 
   it('Should reinstantiate the Vault successfully', async () => {
+    const { provider, wallets } = node;
+
+    const [wallet] = wallets;
+
     // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
-      SIGNERS: [
-        accounts['USER_1'].address,
-        accounts['USER_2'].address,
-        accounts['USER_3'].address,
-      ],
+      SIGNERS: wallets.map((w) => w.address.toB256()),
     });
-    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
     // create a vault again
     const vault2 = new Vault(provider, vault.configurable);
+
     // compare
     expect(vault.address.toB256()).toBe(vault2.address.toB256());
     expect(vault.configurable).toEqual(vault2.configurable);
@@ -58,104 +85,134 @@ describe('[Create]', () => {
 });
 
 describe('[Transactions]', () => {
-  let provider: Provider;
+  let node: Awaited<ReturnType<typeof launchTestNode>>;
 
-  beforeEach(async () => {
-    provider = await Provider.create(networks['LOCAL']);
+  beforeAll(async () => {
+    node = await launchTestNode({
+      walletsConfig: {
+        assets: testAssets,
+        coinsPerAsset: 1,
+        amountPerCoin: 10_000_000_000,
+      },
+    });
+  });
+
+  afterAll(() => {
+    node.cleanup();
   });
 
   it('Should process a simple transaction', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+    const address = wallet.address.toB256();
+
     // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
-      SIGNERS: [accounts['USER_1'].address],
+      SIGNERS: [address],
     });
-    await sendCoins(vault.address.toString(), '0.2', assets['ETH']);
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
 
     // create a transaction
     const { tx, hashTxId } = await vault.transaction([
       {
+        to: address,
         amount: '0.1',
-        assetId: assets['ETH'],
-        to: accounts['USER_1'].address,
+        assetId: provider.getBaseAssetId(),
       },
     ]);
+    const signature = await wallet.signMessage(hashTxId);
 
     // sign
     tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.Fuel,
-        signature: await signin(hashTxId, 'USER_1'),
+        signature: signature,
       },
     ]);
 
     // send
-    const result = await vault.send(tx);
-    const response = await result.waitForResult();
-    expect(response).toHaveProperty('status', 'success');
+    const { isStatusSuccess, isTypeScript } = await vault
+      .send(tx)
+      .then((r) => r.waitForResult());
+    expect(isStatusSuccess).toBeTruthy();
+    expect(isTypeScript).toBeTruthy();
   });
 
   it('Should handle transactions with multiple asset IDs', async () => {
+    const {
+      provider,
+      wallets: [genesisWallet],
+    } = node;
+    const receiverWallet = WalletUnlocked.generate({ provider });
+
     // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
-      SIGNERS: [accounts['USER_1'].address],
+      SIGNERS: [genesisWallet.address.toB256()],
     });
-    const wallet = Wallet.fromAddress(Address.fromRandom(), provider);
 
-    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
-    await sendCoins(vault.address.toString(), '0.3', assets['BTC']);
+    await genesisWallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    await genesisWallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'), assets['BTC'])
+      .then((r) => r.waitForResult());
 
     // create a transaction
     const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
         assetId: assets['BTC'],
-        to: wallet.address.toString(),
+        to: receiverWallet.address.toString(),
       },
       {
         amount: '0.1',
-        assetId: assets['ETH'],
-        to: wallet.address.toString(),
+        assetId: provider.getBaseAssetId(),
+        to: receiverWallet.address.toString(),
       },
       {
         amount: '0.1',
-        assetId: assets['ETH'],
-        to: wallet.address.toString(),
+        assetId: provider.getBaseAssetId(),
+        to: receiverWallet.address.toString(),
       },
     ]);
 
     // sign
+    const signature = await genesisWallet.signMessage(hashTxId);
     tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.Fuel,
-        signature: await signin(hashTxId, 'USER_1'),
+        signature,
       },
     ]);
 
     // send
     const result = await vault.send(tx);
-    const response = await result.waitForResult();
-    const walletBalance = await wallet.getBalances();
+    const { isStatusSuccess } = await result.waitForResult();
 
-    expect(response).toHaveProperty('status', 'success');
-    expect(walletBalance.balances).toContainEqual(
-      expect.objectContaining({
-        assetId: assets['BTC'],
-        amount: bn.parseUnits('0.1'),
-      }),
+    const btcBalance = await receiverWallet.getBalance(assets['BTC']);
+    const ethBalance = await receiverWallet.getBalance(
+      provider.getBaseAssetId(),
     );
-    expect(walletBalance.balances).toContainEqual(
-      expect.objectContaining({
-        assetId: assets['ETH'],
-        amount: bn.parseUnits('0.2'),
-      }),
-    );
+
+    expect(isStatusSuccess).toBeTruthy();
+    expect(btcBalance).toEqual(bn.parseUnits('0.1'));
+    expect(ethBalance).toEqual(bn.parseUnits('0.2'));
   });
 
   it('Should process transaction initiated by ScriptTransactionRequest', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+
     // deploy a contract
-    const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
     const contractToDeploy = new ExampleContractFactory(wallet);
     const txDeploy = await contractToDeploy.deploy();
     await txDeploy.waitForResult();
@@ -165,9 +222,11 @@ describe('[Transactions]', () => {
     // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
-      SIGNERS: [accounts['USER_1'].address],
+      SIGNERS: [wallet.address.toB256()],
     });
-    await sendCoins(vault.address.toString(), '0.5', assets['ETH']);
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
 
     // Get transaction request of contract method
     const contract = new ExampleContract(contractId, vault);
@@ -178,10 +237,11 @@ describe('[Transactions]', () => {
 
     const { tx, hashTxId } = await vault.BakoTransfer(contractRequest);
 
+    const signature = await wallet.signMessage(hashTxId);
     tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.Fuel,
-        signature: await signin(hashTxId, 'USER_1'),
+        signature: signature,
       },
     ]);
 
@@ -198,12 +258,19 @@ describe('[Transactions]', () => {
   });
 
   it('Should process transaction initiated by CreateTransactionRequest', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+
     // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
-      SIGNERS: [accounts['USER_1'].address],
+      SIGNERS: [wallet.address.toB256()],
     });
-    await sendCoins(vault.address.toString(), '0.5', assets['ETH']);
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
 
     const contract = new ExampleContractFactory(vault);
 
@@ -212,10 +279,11 @@ describe('[Transactions]', () => {
 
     const { tx, hashTxId } = await vault.BakoTransfer(transactionRequest);
 
+    const signature = await wallet.signMessage(hashTxId);
     const signatures = bakoCoder.encode([
       {
         type: SignatureType.Fuel,
-        signature: await signin(hashTxId, 'USER_1'),
+        signature,
       },
     ]);
     // keep the first signature position
@@ -227,7 +295,6 @@ describe('[Transactions]', () => {
     await result.waitForResult();
 
     // call this contract
-    const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
     const deployedContract = new ExampleContract(contractId, wallet);
     const contractRequest = await deployedContract.functions.seven().call();
     const callResponse = await contractRequest.waitForResult();
@@ -238,24 +305,42 @@ describe('[Transactions]', () => {
 });
 
 describe('[Send With]', () => {
-  let provider: Provider;
-  beforeEach(async () => {
-    provider = await Provider.create(networks['LOCAL']);
+  let node: Awaited<ReturnType<typeof launchTestNode>>;
+
+  beforeAll(async () => {
+    node = await launchTestNode({
+      walletsConfig: {
+        assets: testAssets,
+        coinsPerAsset: 1,
+        amountPerCoin: 10_000_000_000,
+      },
+    });
+  });
+
+  afterAll(() => {
+    node.cleanup();
   });
 
   it('Should process a valid Webauthn signer', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+
     const webAuthnCredential = WebAuthn.createCredentials();
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
       SIGNERS: [webAuthnCredential.address],
     });
-    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
 
     const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
-        assetId: assets['ETH'],
-        to: accounts['USER_1'].address,
+        assetId: provider.getBaseAssetId(),
+        to: wallet.address.toB256(),
       },
     ]);
 
@@ -273,25 +358,32 @@ describe('[Send With]', () => {
   });
 
   it('Should process both Webauthn and fuel signatures', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+
     const webAuthnCredential = WebAuthn.createCredentials();
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
-      SIGNERS: [webAuthnCredential.address, accounts['USER_1'].address],
+      SIGNERS: [webAuthnCredential.address, wallet.address.toB256()],
     });
-    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
 
     const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
-        assetId: assets['ETH'],
-        to: accounts['USER_1'].address,
+        assetId: provider.getBaseAssetId(),
+        to: wallet.address.toB256(),
       },
     ]);
 
     tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.Fuel,
-        signature: await signin(hashTxId, 'USER_1'),
+        signature: await wallet.signMessage(hashTxId),
       },
       {
         type: SignatureType.WebAuthn,
@@ -306,24 +398,31 @@ describe('[Send With]', () => {
   });
 
   it('Should process pending signature correctly', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
       SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
     });
-    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
 
     const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
-        assetId: assets['ETH'],
-        to: accounts['USER_1'].address,
+        assetId: provider.getBaseAssetId(),
+        to: wallet.address.toB256(),
       },
     ]);
 
     tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.Fuel,
-        signature: await signin(hashTxId, 'USER_1'),
+        signature: await wallet.signMessage(hashTxId),
       },
     ]);
 
@@ -334,21 +433,28 @@ describe('[Send With]', () => {
   });
 
   it('Should detect and handle duplicated signatures', async () => {
+    const {
+      provider,
+      wallets: [owner, signer],
+    } = node;
+
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
-      SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
+      SIGNERS: [owner.address.toB256(), signer.address.toB256()],
     });
-    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
+    await owner
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
 
     const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
-        assetId: assets['ETH'],
-        to: accounts['USER_1'].address,
+        assetId: provider.getBaseAssetId(),
+        to: owner.address.toB256(),
       },
     ]);
 
-    const signature = await signin(hashTxId, 'USER_1');
+    const signature = await owner.signMessage(hashTxId);
     tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.Fuel,
@@ -367,24 +473,31 @@ describe('[Send With]', () => {
   });
 
   it('Should reject invalid Fuel signatures', async () => {
+    const {
+      provider,
+      wallets: [owner, signer],
+    } = node;
+
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
-      SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
+      SIGNERS: [owner.address.toB256(), signer.address.toB256()],
     });
-    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
+    await owner
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
 
     const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
-        assetId: assets['ETH'],
-        to: accounts['USER_1'].address,
+        assetId: provider.getBaseAssetId(),
+        to: owner.address.toB256(),
       },
     ]);
 
     tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.Fuel,
-        signature: await signin(hashTxId, 'USER_1'),
+        signature: await owner.signMessage(hashTxId),
       },
       {
         type: SignatureType.Fuel,
@@ -399,18 +512,25 @@ describe('[Send With]', () => {
   });
 
   it('Should reject invalid WebAuthn signatures', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+
     const webAuthnCredential = WebAuthn.createCredentials();
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
       SIGNERS: [webAuthnCredential.address],
     });
-    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
 
     const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
-        assetId: assets['ETH'],
-        to: accounts['USER_1'].address,
+        assetId: provider.getBaseAssetId(),
+        to: wallet.address.toB256(),
       },
     ]);
 
@@ -429,22 +549,28 @@ describe('[Send With]', () => {
   });
 
   it('Should handle signers located outside of the vault', async () => {
+    const {
+      provider,
+      wallets: [owner, signer],
+    } = node;
+
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
-      SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
+      SIGNERS: [owner.address.toB256(), signer.address.toB256()],
     });
-    await sendCoins(vault.address.toString(), '0.3', assets['ETH']);
+    await owner
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
 
     const { tx, hashTxId } = await vault.transaction([
       {
         amount: '0.1',
-        assetId: assets['ETH'],
-        to: accounts['STORE'].address,
+        assetId: provider.getBaseAssetId(),
+        to: owner.address.toB256(),
       },
     ]);
 
-    const signature = await signin(hashTxId, 'USER_3');
-
+    const signature = await owner.signMessage(hashTxId);
     tx.witnesses = bakoCoder.encode([
       {
         type: SignatureType.Fuel,
