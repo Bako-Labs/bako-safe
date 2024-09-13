@@ -1,5 +1,5 @@
-import { bn } from 'fuels';
-import { IAssetGroupById, IAssetGroupByTo, ITransferAsset } from './types';
+import { bn } from "fuels";
+import { IAssetGroupById, IAssetGroupByTo, ITransferAsset } from "./types";
 
 export class Asset {
   /**

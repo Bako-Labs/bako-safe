@@ -16,7 +16,7 @@ import {
   TransactionRequestLike,
   CreateTransactionRequest,
   ScriptTransactionRequest,
-} from 'fuels';
+} from "fuels";
 
 import {
   Asset,
@@ -24,13 +24,13 @@ import {
   ITransferAsset,
   FAKE_WITNESSES,
   makeHashPredicate,
-} from '../../utils';
+} from "../../utils";
 
-import { VaultConfigurable } from './types';
+import { VaultConfigurable } from "./types";
 
-import { BakoProvider } from '../provider';
+import { BakoProvider } from "../provider";
 
-import { BakoPredicate } from '../../sway';
+import { BakoPredicate } from "../../sway";
 
 /**
  * The `Vault` class is an extension of `Predicate` that manages transactions,
@@ -104,7 +104,7 @@ export class Vault extends Predicate<[]> {
         result = new CreateTransactionRequest(tx);
         break;
       default:
-        throw new Error('Not implemented');
+        throw new Error("Not implemented");
     }
 
     result = await this.prepareTransaction(result);
@@ -174,7 +174,7 @@ export class Vault extends Predicate<[]> {
     await vault.fund(request, transactionCost);
     await vault.provider.estimatePredicates(request);
     const input = request.inputs[0];
-    if ('predicate' in input && input.predicate) {
+    if ("predicate" in input && input.predicate) {
       return bn(input.predicateGasUsed);
     }
 
@@ -199,7 +199,7 @@ export class Vault extends Predicate<[]> {
 
     let totalGasUsed = bn(0);
     transactionRequest.inputs.forEach((input) => {
-      if ('predicate' in input && input.predicate) {
+      if ("predicate" in input && input.predicate) {
         input.witnessIndex = 0;
         input.predicateGasUsed = undefined;
         totalGasUsed = totalGasUsed.add(predicateGasUsed);
@@ -244,7 +244,7 @@ export class Vault extends Predicate<[]> {
       return this.provider.savePredicate(this);
     }
 
-    throw new Error('Use a VaultProvider to consume this method');
+    throw new Error("Use a VaultProvider to consume this method");
   }
 
   /**
@@ -274,7 +274,7 @@ export class Vault extends Predicate<[]> {
       return this.provider.findTransaction(hash, this);
     }
 
-    throw new Error('Use a VaultProvider to consume this method');
+    throw new Error("Use a VaultProvider to consume this method");
   }
 
   /**

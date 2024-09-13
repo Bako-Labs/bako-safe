@@ -1,6 +1,6 @@
-import { defineConfig } from 'tsup';
 //@ts-ignore
 import dotenv from 'dotenv';
+import { defineConfig } from 'tsup';
 
 dotenv.config();
 

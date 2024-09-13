@@ -1,0 +1,41 @@
+{
+  "encoding": "1",
+  "types": [
+    {
+      "typeId": 0,
+      "type": "()",
+      "components": [],
+      "typeParameters": null
+    },
+    {
+      "typeId": 1,
+      "type": "bool",
+      "components": null,
+      "typeParameters": null
+    }
+  ],
+  "functions": [
+    {
+      "inputs": [],
+      "name": "main",
+      "output": {
+        "name": "",
+        "type": 0,
+        "typeArguments": null
+      },
+      "attributes": null
+    }
+  ],
+  "loggedTypes": [
+    {
+      "logId": "13213829929622723620",
+      "loggedType": {
+        "name": "",
+        "type": 1,
+        "typeArguments": null
+      }
+    }
+  ],
+  "messagesTypes": [],
+  "configurables": []
+}

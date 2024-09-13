@@ -1,4 +1,4 @@
-# BAKO SAFE
+# Bako SDK
 
 This repo is part of [Bako ecossistem](https://www.bako.global/)
 
@@ -19,6 +19,6 @@ On this repo, we have:
 ## Tests
 
 1. Install [Fuel Toolchain](https://docs.fuel.network/guides/installation/)
-2. Install dependencies with pnpm: `pnpm install`
-3. Build packages: `pnpm -w build`
-4. Run the tests: `pnpm test`
+2. Install dependencies with bun: `bun install`
+3. Build packages: `bun build`
+4. Run the tests: `bun test`

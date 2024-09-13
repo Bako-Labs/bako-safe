@@ -1,10 +1,11 @@
 /**/node_modules
 /**/.env
 /**/dist
-pnpm-lock.yaml
-
 .idea
 .DS_Store
 .turbo
+.vscode
+.zed
+./tapes
 .local/
 local/

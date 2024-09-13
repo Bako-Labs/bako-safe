@@ -1,5 +1,5 @@
 {
-  "name": "@bako-safe/sway",
+  "name": "@bako-labs/sway",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -11,14 +11,16 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "keywords": [],
   "author": "",
   "license": "Apache-2.0",
   "scripts": {
-    "prebuild": "fuels build"
+    "prebuild": "bun fuels build",
+    "test": "bun test",
+    "lint:check": "biome check --apply-unsafe .",
+    "lint:ci": "biome lint --max-diagnostics=1000 --diagnostic-level=error .",
+    "format": "biome format --write ."
   },
   "devDependencies": {
     "@types/node": "^16.18.104",
