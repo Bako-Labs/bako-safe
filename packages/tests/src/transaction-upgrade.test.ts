@@ -1,6 +1,7 @@
 import {
-  BytesLike,
   hexlify,
+  BytesLike,
+  WalletUnlocked,
   UpgradeTransactionRequest,
   UploadTransactionRequest,
   Provider,
@@ -14,12 +15,28 @@ import {
 import { randomBytes } from 'crypto';
 import { launchTestNode } from 'fuels/test-utils';
 import { bakoCoder, SignatureType, Vault } from 'bakosafe/src';
-import { signin, subsectionFromBytecode } from './utils';
-import { beforeAll, describe, expect } from '@jest/globals';
+import { subsectionFromBytecode } from './utils';
+import { beforeAll } from '@jest/globals';
 
 const baseAssetId = assets['ETH'];
 
-const setupTestNode = async (vault: Vault) => {
+class FakeProvider extends Provider {
+  // eslint-disable-next-line @typescript-eslint/require-await
+  static async create(url: string) {
+    return new FakeProvider(url, {});
+  }
+
+  getChainId(): number {
+    return 1;
+  }
+}
+
+const setupTestNode = async (signers: WalletUnlocked[]) => {
+  const fakeProvider = await FakeProvider.create('http://example.com');
+  const vault = new Vault(fakeProvider, {
+    SIGNATURES_COUNT: 1,
+    SIGNERS: signers.map((signer) => signer.address.toB256()),
+  });
   const predicateAddress = vault.address.toB256();
   const consensusParameters = {
     V1: {
@@ -52,6 +69,7 @@ const setupTestNode = async (vault: Vault) => {
     },
   });
   vault.provider = provider;
+  signers.forEach((signer) => (signer.provider = provider));
 
   return {
     vault,
@@ -65,12 +83,13 @@ const setupTestNode = async (vault: Vault) => {
 const upgradeConsensusParameters = async (
   vault: Vault,
   bytecode: BytesLike,
+  signer: WalletUnlocked,
 ) => {
   const request = new UpgradeTransactionRequest();
   request.addConsensusParametersUpgradePurpose(bytecode);
 
   const { tx, hashTxId } = await vault.BakoTransfer(request);
-  const signature = await signin(hashTxId, 'USER_1', vault.provider);
+  const signature = await signer.signMessage(hashTxId);
   const witness = bakoCoder.encode({
     type: SignatureType.Fuel,
     signature,
@@ -82,47 +101,40 @@ const upgradeConsensusParameters = async (
 };
 
 describe('[Transaction Upgrade]', () => {
-  let node: Awaited<ReturnType<typeof launchTestNode>>;
-  let vault: Vault;
+  let signers: WalletUnlocked[];
 
-  beforeEach(async () => {
-    node = await launchTestNode();
-    vault = new Vault(node.provider, {
-      SIGNATURES_COUNT: 1,
-      SIGNERS: [accounts['USER_1'].address],
-    });
-  });
-
-  afterEach(() => {
-    node.cleanup();
+  beforeAll(async () => {
+    signers = [WalletUnlocked.generate(), WalletUnlocked.generate()];
   });
 
   it('should correctly upgrade privileged address of chain', async () => {
-    using node = await setupTestNode(vault);
-    const { vault: privilegedVault } = node;
+    using node = await setupTestNode(signers);
+
+    const { vault } = node;
+    const [signer] = signers;
 
     // Upgrade privileged address to a new address
     const { isStatusSuccess, isTypeUpgrade } = await upgradeConsensusParameters(
-      privilegedVault,
+      vault,
       PRIVILEGED_CONSENSUS_BYTECODE,
+      signer,
     );
     expect(isStatusSuccess).toBeTruthy();
     expect(isTypeUpgrade).toBeTruthy();
 
-    await privilegedVault.provider.fetchChainAndNodeInfo();
+    await vault.provider.fetchChainAndNodeInfo();
 
     // Check if the privileged address has been updated
     await expect(() =>
-      upgradeConsensusParameters(
-        privilegedVault,
-        PRIVILEGED_CONSENSUS_BYTECODE,
-      ),
+      upgradeConsensusParameters(vault, PRIVILEGED_CONSENSUS_BYTECODE, signer),
     ).rejects.toThrowError(/Validity\(TransactionUpgradeNoPrivilegedAddress\)/);
   });
 
   it('should correctly upgrade gas costs of chain', async () => {
-    using node = await setupTestNode(vault);
-    const { vault: privilegedVault, provider } = node;
+    using node = await setupTestNode(signers);
+
+    const { vault, provider } = node;
+    const [signer] = signers;
 
     const {
       consensusParameters: { gasCosts: gasCostsBefore },
@@ -130,8 +142,9 @@ describe('[Transaction Upgrade]', () => {
 
     // Upgrade gas costs of chain to free
     const { isStatusSuccess, isTypeUpgrade } = await upgradeConsensusParameters(
-      privilegedVault,
+      vault,
       GAS_COSTS_CONSENSUS_BYTECODE,
+      signer,
     );
     expect(isStatusSuccess).toBeTruthy();
     expect(isTypeUpgrade).toBeTruthy();
@@ -147,17 +160,13 @@ describe('[Transaction Upgrade]', () => {
 
 describe('[Transaction Upload]', () => {
   let node: Awaited<ReturnType<typeof setupTestNode>>;
-  let vault: Vault;
-
+  let signers: WalletUnlocked[];
   let bytecodeSubsections: ReturnType<typeof subsectionFromBytecode>;
 
   beforeAll(async () => {
     const initialNode = await launchTestNode();
-    vault = new Vault(initialNode.provider, {
-      SIGNATURES_COUNT: 1,
-      SIGNERS: [accounts['USER_1'].address],
-    });
-    node = await setupTestNode(vault);
+    signers = [WalletUnlocked.generate(), WalletUnlocked.generate()];
+    node = await setupTestNode(signers);
     bytecodeSubsections = subsectionFromBytecode();
     initialNode.cleanup();
   });
@@ -198,6 +207,7 @@ describe('[Transaction Upload]', () => {
 
   it('should correctly upgrade chain with uploaded bytecode', async () => {
     const { vault, provider } = node;
+    const [signer] = signers;
 
     const { merkleRoot } = bytecodeSubsections;
 
@@ -206,7 +216,7 @@ describe('[Transaction Upload]', () => {
     request.addStateTransitionUpgradePurpose(merkleRoot);
 
     const { tx, hashTxId } = await vault.BakoTransfer(request);
-    const signature = await signin(hashTxId, 'USER_1', vault.provider);
+    const signature = await signer.signMessage(hashTxId);
     const witness = bakoCoder.encode({
       type: SignatureType.Fuel,
       signature,

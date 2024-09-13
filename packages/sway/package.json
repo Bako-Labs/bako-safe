@@ -26,6 +26,6 @@
     "elliptic": "^6.5.6"
   },
   "dependencies": {
-    "fuels": "0.94.5"
+    "fuels": "0.94.6"
   }
 }
