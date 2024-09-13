@@ -1,6 +1,14 @@
 [[package]]
+name = "bako-predicate"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
 name = "core"
-source = "path+from-root-CC22FE9C5CBB0084"
+source = "path+from-root-4BB20845430AF9CF"
 
 [[package]]
 name = "libraries"
@@ -9,13 +17,5 @@ dependencies = ["std"]
 
 [[package]]
 name = "std"
-source = "git+https://github.com/fuellabs/sway?tag=v0.61.2#e1b1c2bee73e0ba825e07736cefa6c0abd079595"
+source = "git+https://github.com/fuellabs/sway?tag=v0.63.5#31a1d6f98395f571cd3674b492d9bf4773c55f65"
 dependencies = ["core"]
-
-[[package]]
-name = "vault-predicate"
-source = "member"
-dependencies = [
-    "libraries",
-    "std",
-]
