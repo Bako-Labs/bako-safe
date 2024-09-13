@@ -7,9 +7,9 @@ This repo is part of [Bako ecossistem](https://www.bako.global/)
 A streamlined solution within the Fuel ecosystem, enabling seamless implementation and effortless coin transfers in a collaborative wallet environment.
 On this repo, we have:
 
-#### 📦 Bako Safe SDK : [This](https://github.com/infinitybase/bako-safe/blob/master/packages/sdk/README.md) package have all implementations of vaults, transactions and auth.
+#### 📦 Bako Safe SDK : [This](https://github.com/Bako-Labs/bako-safe/blob/main/packages/sdk/README.md) package have all implementations of vaults, transactions and auth.
 
-#### 📑 Bako Safe Contracts: [This](https://github.com/infinitybase/bako-safe/blob/master/packages/sway/README.md) package have the contract used by sdk to implement a multsig based on predicates.
+#### 📑 Bako Safe Contracts: [This](https://github.com/Bako-Labs/bako-safe/blob/main/packages/sway/README.md) package have the contract used by sdk to implement a multsig based on predicates.
 
 ## Requirements
 
