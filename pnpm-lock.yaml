@@ -1,5 +1,22 @@
 lockfileVersion: '6.0'
 
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+overrides:
+  axios@<0.21.1: '>=0.21.1'
+  follow-redirects@<1.14.8: '>=1.14.8'
+  axios@<0.21.2: '>=0.21.2'
+  follow-redirects@<1.14.7: '>=1.14.7'
+  follow-redirects@<1.15.4: '>=1.15.4'
+  follow-redirects@<=1.15.5: '>=1.15.6'
+  axios@>=0.8.1 <0.28.0: '>=0.28.0'
+  axios@>=1.3.2 <=1.7.3: '>=1.7.4'
+  elliptic@>=4.0.0 <=6.5.6: '>=6.5.7'
+  elliptic@>=2.0.0 <=6.5.6: '>=6.5.7'
+  elliptic@>=5.2.1 <=6.5.6: '>=6.5.7'
+
 importers:
 
   .:
@@ -27,8 +44,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       axios:
-        specifier: ^1.5.1
-        version: 1.7.2
+        specifier: '>=1.7.4'
+        version: 1.7.7
       uuid:
         specifier: ^9.0.1
         version: 9.0.1
@@ -77,8 +94,8 @@ importers:
         specifier: ^16.4.5
         version: 16.4.5
       elliptic:
-        specifier: ^6.5.6
-        version: 6.5.6
+        specifier: '>=6.5.7'
+        version: 6.5.7
 
   packages/tests:
     dependencies:
@@ -86,8 +103,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       axios:
-        specifier: ^1.7.2
-        version: 1.7.2
+        specifier: '>=1.7.4'
+        version: 1.7.7
       bakosafe:
         specifier: workspace:*
         version: link:../sdk
@@ -1654,24 +1671,14 @@ packages:
     engines: {node: '>= 4.0.0'}
     dev: true
 
-  /axios@0.19.2:
-    resolution: {integrity: sha512-fjgm5MvRHLhx+osE2xoekY70AhARk3a6hkN+3Io1jc00jtquGvxYlKlsFUhmUET0V5te6CcZI7lcv2Ym61mjHA==}
-    deprecated: Critical security vulnerability fixed in v0.21.1. For more information, see https://github.com/axios/axios/pull/3410
-    dependencies:
-      follow-redirects: 1.5.10
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /axios@1.7.2:
-    resolution: {integrity: sha512-2A8QhOMrbomlDuiLeK9XibIBzuHeRcqqNOHp0Cyp5EoJ1IFDh+XZH3A6BkXtv0K4gFGCI0Y4BM7B1wOEi0Rmgw==}
+  /axios@1.7.7:
+    resolution: {integrity: sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==}
     dependencies:
       follow-redirects: 1.15.9
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
-    dev: false
 
   /babel-jest@29.7.0(@babel/core@7.25.2):
     resolution: {integrity: sha512-BrvGY3xZSwEcCzKvKsCi2GgHqDqsYkOP4/by5xCgIwGXQxIEh+8ew3gmrE1y7XRR6LHZIj6yLYnUi/mm2KXKBg==}
@@ -2017,17 +2024,6 @@ packages:
       shebang-command: 2.0.0
       which: 2.0.2
 
-  /debug@3.1.0:
-    resolution: {integrity: sha512-OX8XqP7/1a9cqkxYw2yXss15f26NKWBpDXQd0/uK/KPqdQhxbPa994hnzjcE2VqQpDslf55723cKPUOGSmMY3g==}
-    peerDependencies:
-      supports-color: '*'
-    peerDependenciesMeta:
-      supports-color:
-        optional: true
-    dependencies:
-      ms: 2.0.0
-    dev: true
-
   /debug@3.2.7:
     resolution: {integrity: sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ==}
     peerDependencies:
@@ -2122,8 +2118,8 @@ packages:
     resolution: {integrity: sha512-74mdl6Fs1HHzK9SUX4CKFxAtAe3nUns48y79TskHNAG6fGOlLfyKA4j855x+0b5u8rWJIrlaG9tcTPstMlwjIw==}
     dev: true
 
-  /elliptic@6.5.6:
-    resolution: {integrity: sha512-mpzdtpeCLuS3BmE3pO3Cpp5bbjlOPY2Q0PgoF+Od1XZrHLYI28Xe3ossCmYCQt11FQKEYd9+PF8jymTvtWJSHQ==}
+  /elliptic@6.5.7:
+    resolution: {integrity: sha512-ESVCtTwiA+XhY3wyh24QqRGBoP3rEdDUl3EDUUo9tft074fi19IrdpH7hLCMMP3CIj7jb3W96rn8lt/BqIlt5Q==}
     dependencies:
       bn.js: 4.12.0
       brorand: 1.1.0
@@ -2339,16 +2335,6 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
-    dev: false
-
-  /follow-redirects@1.5.10:
-    resolution: {integrity: sha512-0V5l4Cizzvqt5D44aTXbFZz+FtyXV1vrDN6qrelxtfYQKW0KO0W2T/hkE8xvGa/540LkZlkaUjO4ailYTFtHVQ==}
-    engines: {node: '>=4.0'}
-    dependencies:
-      debug: 3.1.0
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
 
   /foreground-child@3.3.0:
     resolution: {integrity: sha512-Ld2g8rrAyMYFXBhEqMz8ZAHBi4J4uS1i/CxGMDnjyFWddMXLVcDp051DZfu+t7+ab7Wv6SMqpWmyFIj5UbfFvg==}
@@ -2372,7 +2358,6 @@ packages:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       mime-types: 2.1.35
-    dev: false
 
   /fs-extra@9.1.0:
     resolution: {integrity: sha512-hcg3ZmepS30/7BSFqRvoo3DOMQu7IjqxO5nCDt+zM9XWjb33Wg7ziNT+Qvqbuc3+gWpzO02JubVyk2G4Zvo1OQ==}
@@ -2781,10 +2766,10 @@ packages:
   /jest-axios@0.2.1:
     resolution: {integrity: sha512-0bRwPZvqBq6hcK8HcxijvW7cRWbE5k+APlr5Gu/6vJ5B3zW3bIfOFFTxzvUQQVLUhpm92hkisZV0mtypg9bT3w==}
     dependencies:
-      axios: 0.19.2
+      axios: 1.7.7
       lodash: 4.17.21
     transitivePeerDependencies:
-      - supports-color
+      - debug
     dev: true
 
   /jest-changed-files@29.7.0:
@@ -3395,10 +3380,6 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  /ms@2.0.0:
-    resolution: {integrity: sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==}
-    dev: true
-
   /ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
@@ -3646,7 +3627,6 @@ packages:
 
   /proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
-    dev: false
 
   /punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
