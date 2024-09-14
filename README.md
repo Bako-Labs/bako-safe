@@ -21,4 +21,5 @@ On this repo, we have:
 1. Install [Fuel Toolchain](https://docs.fuel.network/guides/installation/)
 2. Install dependencies with pnpm: `pnpm install`
 3. Build packages: `pnpm -w build`
-4. Run the tests: `pnpm test`
+4. `cd packages/tests`
+5. Run the tests: `pnpm test`
