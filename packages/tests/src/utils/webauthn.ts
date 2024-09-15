@@ -1,4 +1,4 @@
-import { concat, hexlify, sha256 } from 'fuels';
+import { arrayify, concat, hexlify, sha256 } from 'fuels';
 import { secp256r1 } from '@noble/curves/p256';
 import { parseSignChallangeResponse } from 'bakosafe';
 import { randomBytes } from 'crypto';
@@ -10,9 +10,13 @@ type MockWebAuthnCredential = {
 };
 
 export class WebAuthn {
-  static createCredentials(): MockWebAuthnCredential {
-    const privateKey = secp256r1.utils.randomPrivateKey();
-    const publicKey = secp256r1.getPublicKey(privateKey, false).slice(1);
+  static createCredentials(initialPrivateKey?: string): MockWebAuthnCredential {
+    const privateKey = initialPrivateKey
+      ? arrayify(initialPrivateKey)
+      : secp256r1.utils.randomPrivateKey();
+    const fullPublicKey = secp256r1.getPublicKey(privateKey, false);
+    const publicKey = fullPublicKey.slice(1);
+
     return {
       address: sha256(publicKey),
       publicKey,
@@ -20,7 +24,14 @@ export class WebAuthn {
     };
   }
 
-  static signChallenge(credential: MockWebAuthnCredential, challenge: string) {
+  static signChallenge(
+    credential: MockWebAuthnCredential,
+    challenge: string,
+    options?: {
+      authenticatorData: string;
+      addRandom: boolean;
+    },
+  ) {
     const dataJSON: Record<string, string | boolean> = {
       type: 'webauthn.get',
       challenge,
@@ -29,11 +40,16 @@ export class WebAuthn {
     };
     // Emulates random data injected by WebAuthn to make sure
     // that developers know that dataJSON struct can change over time
-    if (Math.random() * 100 > 40) {
+    if (
+      (!options?.addRandom && Math.random() * 100 > 40) ||
+      options?.addRandom
+    ) {
       dataJSON.random = 'Random data';
     }
     // On this case we ignore the authenticatorData field and just generate random data
-    const authenticatorData = randomBytes(64);
+    const authenticatorData = options
+      ? arrayify(options.authenticatorData)
+      : randomBytes(64);
     // Convert the dataJSON to a byte array
     const clientDataJSON = new TextEncoder().encode(JSON.stringify(dataJSON));
     // Hash data in the same order webauthn does before signing

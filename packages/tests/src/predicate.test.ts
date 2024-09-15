@@ -6,7 +6,7 @@ import {
   Vault,
   bakoCoder,
   SignatureType,
-} from 'bakosafe/src';
+} from 'bakosafe';
 
 import { accounts, assets } from './mocks';
 import { bn, ReceiptType, WalletUnlocked } from 'fuels';

@@ -9,6 +9,9 @@
   },
   "scripts": {
     "postinstall": "pnpm fuels build",
+    "debbug:build": "pnpm fuels build",
+    "debbug:setup": "ts-node ./src/scripts/debbug-setup.ts && pnpm fuels build",
+    "debbug:script": "ts-node ./src/scripts/debbug-script.ts",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand"
   },
   "dependencies": {
@@ -22,6 +25,7 @@
     "@fuel-ts/merkle": "0.94.5",
     "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.13",
+    "@types/node": "^22.5.5",
     "@types/uuid": "^9.0.6",
     "dotenv": "^16.4.1",
     "jest": "29.6.4",
