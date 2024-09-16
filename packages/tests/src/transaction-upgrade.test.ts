@@ -14,7 +14,7 @@ import {
 } from './mocks';
 import { randomBytes } from 'crypto';
 import { launchTestNode } from 'fuels/test-utils';
-import { bakoCoder, SignatureType, Vault } from 'bakosafe/src';
+import { bakoCoder, SignatureType, Vault } from 'bakosafe';
 import { subsectionFromBytecode } from './utils';
 import { beforeAll } from '@jest/globals';
 
