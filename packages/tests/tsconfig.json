@@ -2,8 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "types": ["jest"],
-    "baseUrl": "./"
+    "types": ["jest", "node"],
+    "baseUrl": "./",
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "lib": ["ESNext"]
   },
   "include": ["src", "test/**/*"]
 }
