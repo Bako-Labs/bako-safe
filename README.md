@@ -13,7 +13,7 @@ Within the packages folder, you will find the following subdirectories:
 - **[sway:](https://github.com/Bako-Labs/bako-safe/tree/main/packages/sdk)** Contains the predicates and libraries (e.g., webauthn).
 - **[sdk:](https://github.com/Bako-Labs/bako-safe/tree/main/packages/sdk)** Our TypeScript SDK that interacts with Bako.
 
-For for information, check out the Documentation page.
+For for information, check out the [Documentation page](https://doc-safe.bako.global/).
 
 ## Requirements
 
