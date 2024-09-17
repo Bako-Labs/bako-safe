@@ -130,21 +130,22 @@ export class BakoProvider extends Provider {
   /**
    * Saves a transaction associated with a specific predicate.
    *
-   * @param tx The transaction request, either ScriptTransaction or CreateTransaction.
-   * @param predicate The address of the predicate for the transaction.
+   * @param request The transaction request, either ScriptTransaction or CreateTransaction.
+   * @param transaction The address of the predicate for the transaction.
    * @returns The created transaction.
    */
-  async saveTransaction(tx: TransactionRequest, predicate: string) {
+  async saveTransaction(
+    request: TransactionRequest,
+    transaction: Pick<ICreateTransactionPayload, 'name' | 'predicateAddress'>,
+  ) {
     const payload: ICreateTransactionPayload = {
-      name: `vault ${randomBytes(16).toString('hex')}`,
-      predicateAddress: predicate,
-      hash: tx.getTransactionId(this.getChainId()).slice(2),
-      txData: tx,
+      name: transaction.name ?? `vault ${randomBytes(16).toString('hex')}`,
+      predicateAddress: transaction.predicateAddress,
+      hash: request.getTransactionId(this.getChainId()).slice(2),
+      txData: request,
       status: TransactionStatus.AWAIT_REQUIREMENTS,
     };
-    const transaction = await this.service.createTransaction(payload);
-
-    return transaction;
+    return this.service.createTransaction(payload);
   }
 
   /**
