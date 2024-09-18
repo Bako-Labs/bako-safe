@@ -23,12 +23,13 @@ import {
 import {
   Asset,
   makeSigners,
-  ITransferAsset,
   FAKE_WITNESSES,
   makeHashPredicate,
 } from '../../utils';
 
-import { VaultConfigurable } from './types';
+import { VaultConfigurable, VaultTransaction } from './types';
+
+import { ICreateTransactionPayload } from '../service';
 
 import { BakoProvider } from '../provider';
 
@@ -89,10 +90,14 @@ export class Vault extends Predicate<[]> {
    * Prepares a transaction for the vault by including the fee configuration and predicate data.
    *
    * @param {TransactionRequestLike} tx - The transaction request.
+   * @param {ICreateTransactionPayload} options - Additional options for the transaction.
    * @returns {Promise<{ tx: TransactionRequest, hashTxId: string }>} The prepared transaction and its hash.
    * @throws Will throw an error if the transaction type is not implemented.
    */
-  async BakoTransfer(tx: TransactionRequestLike): Promise<{
+  async BakoTransfer(
+    tx: TransactionRequestLike,
+    options?: Pick<ICreateTransactionPayload, 'name'>,
+  ): Promise<{
     tx: TransactionRequest;
     hashTxId: string;
   }> {
@@ -118,7 +123,10 @@ export class Vault extends Predicate<[]> {
     result = await this.prepareTransaction(result);
 
     if (this.provider instanceof BakoProvider) {
-      await this.provider.saveTransaction(result, this.address.toB256());
+      await this.provider.saveTransaction(result, {
+        name: options?.name,
+        predicateAddress: this.address.toB256(),
+      });
     }
 
     return {
@@ -291,10 +299,11 @@ export class Vault extends Predicate<[]> {
    * @param {ITransferAsset[]} assets - The transaction assets to send.
    * @returns {Promise<{ tx: TransactionRequest, hashTxId: string }>} The prepared transaction and its hash.
    */
-  async transaction(assets: ITransferAsset[]): Promise<{
+  async transaction(params: VaultTransaction): Promise<{
     tx: TransactionRequest;
     hashTxId: string;
   }> {
+    const { assets } = params;
     const tx = new ScriptTransactionRequest();
 
     const outputs = Asset.assetsGroupByTo(assets);
@@ -323,7 +332,7 @@ export class Vault extends Predicate<[]> {
       }
     });
 
-    return this.BakoTransfer(tx);
+    return this.BakoTransfer(tx, { name: params.name });
   }
 
   public get provider(): Provider | BakoProvider {

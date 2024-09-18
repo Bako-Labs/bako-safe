@@ -391,13 +391,16 @@ describe('[AUTH]', () => {
       vaultProvider,
     );
 
-    const { hashTxId } = await recover.transaction([
-      {
-        to: Address.fromRandom().toB256(),
-        amount: '0.1',
-        assetId: provider.getBaseAssetId(),
-      },
-    ]);
+    const { hashTxId } = await recover.transaction({
+      name: 'Transaction',
+      assets: [
+        {
+          to: Address.fromRandom().toB256(),
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+        },
+      ],
+    });
 
     const recoveredTx = await predicate.transactionFromHash(hashTxId);
 
@@ -446,13 +449,16 @@ describe('[AUTH]', () => {
       vaultProvider,
     );
 
-    const { hashTxId, tx } = await vaultRecover.transaction([
-      {
-        to: Address.fromRandom().toB256(),
-        amount: '0.1',
-        assetId: provider.getBaseAssetId(),
-      },
-    ]);
+    const { hashTxId, tx } = await vaultRecover.transaction({
+      name: 'Transaction',
+      assets: [
+        {
+          to: Address.fromRandom().toB256(),
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+        },
+      ],
+    });
 
     const signature = await wallet.signMessage(hashTxId);
     await vaultProvider.signTransaction({
@@ -510,13 +516,16 @@ describe('[AUTH]', () => {
       vaultProviderClient1,
     );
 
-    const { hashTxId, tx } = await vaultRecover.transaction([
-      {
-        to: Address.fromRandom().toB256(),
-        amount: '0.1',
-        assetId: provider.getBaseAssetId(),
-      },
-    ]);
+    const { hashTxId, tx } = await vaultRecover.transaction({
+      name: 'Transaction',
+      assets: [
+        {
+          to: Address.fromRandom().toB256(),
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+        },
+      ],
+    });
 
     response = await predicate.send(tx);
 
