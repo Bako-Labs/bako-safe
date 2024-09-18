@@ -101,25 +101,7 @@ export class Vault extends Predicate<[]> {
     tx: TransactionRequest;
     hashTxId: string;
   }> {
-    let result: TransactionRequest;
-
-    switch (tx.type) {
-      case TransactionType.Script:
-        result = new ScriptTransactionRequest(tx);
-        break;
-      case TransactionType.Create:
-        result = new CreateTransactionRequest(tx);
-        break;
-      case TransactionType.Upload:
-        result = new UploadTransactionRequest(tx);
-        break;
-      case TransactionType.Upgrade:
-        result = new UpgradeTransactionRequest(tx);
-        break;
-      default:
-        throw new Error('Not implemented');
-    }
-
+    let result: TransactionRequest = transactionRequestify(tx);
     result = await this.prepareTransaction(result);
 
     if (this.provider instanceof BakoProvider) {
