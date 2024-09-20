@@ -133,6 +133,7 @@ export enum TransactionStatus {
 export type TokenResponse = [string, number][];
 
 export enum TransactionType {
+  TRANSACTION_BLOB = 'TRANSACTION_BLOB',
   TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',
   TRANSACTION_CREATE = 'TRANSACTION_CREATE',
   TRANSACTION_UPGRADE = 'TRANSACTION_UPGRADE',

@@ -27,7 +27,7 @@
     "@types/ramda": "^0.30.0",
     "@types/uuid": "^9.0.6",
     "dotenv": "^16.4.1",
-    "fuels": "0.94.5",
+    "fuels": "0.94.6",
     "patch-package": "8.0.0",
     "prettier": "3.0.3",
     "tsup": "^7.2.0",
@@ -39,6 +39,6 @@
     "uuid": "^9.0.1"
   },
   "peerDependencies": {
-    "fuels": "0.94.3"
+    "fuels": "0.94.6"
   }
 }

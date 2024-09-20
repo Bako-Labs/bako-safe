@@ -26,8 +26,6 @@ export const api = axios.create({
  */
 export class Service {
   private api: AxiosInstance;
-  private address?: string;
-  private token?: string;
 
   /**
    * Initializes the Service with authentication data.
@@ -36,16 +34,12 @@ export class Service {
    *  @param {string} token     - The token of the user.
    */
   constructor({ address, token }: AuthService) {
-    this.api = api;
-    this.address = address;
-    this.token = token;
+    this.api = axios.create(api.defaults);
 
-    this.api.interceptors.request.use((config) => {
-      config.headers[AuthRequestHeaders.SIGNER_ADDRESS] = this.address;
-      config.headers[AuthRequestHeaders.AUTHORIZATION] = this.token;
-
-      return config;
-    });
+    if (address && token) {
+      this.api.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS] = address;
+      this.api.defaults.headers[AuthRequestHeaders.AUTHORIZATION] = token;
+    }
   }
 
   /**

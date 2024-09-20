@@ -118,13 +118,16 @@ describe('[Transactions]', () => {
       .then((r) => r.waitForResult());
 
     // create a transaction
-    const { tx, hashTxId } = await vault.transaction([
-      {
-        to: address,
-        amount: '0.1',
-        assetId: provider.getBaseAssetId(),
-      },
-    ]);
+    const { tx, hashTxId } = await vault.transaction({
+      name: 'Test',
+      assets: [
+        {
+          to: address,
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+        },
+      ],
+    });
     const signature = await wallet.signMessage(hashTxId);
 
     // sign
@@ -165,23 +168,26 @@ describe('[Transactions]', () => {
       .then((r) => r.waitForResult());
 
     // create a transaction
-    const { tx, hashTxId } = await vault.transaction([
-      {
-        amount: '0.1',
-        assetId: assets['BTC'],
-        to: receiverWallet.address.toString(),
-      },
-      {
-        amount: '0.1',
-        assetId: provider.getBaseAssetId(),
-        to: receiverWallet.address.toString(),
-      },
-      {
-        amount: '0.1',
-        assetId: provider.getBaseAssetId(),
-        to: receiverWallet.address.toString(),
-      },
-    ]);
+    const { tx, hashTxId } = await vault.transaction({
+      name: 'Test',
+      assets: [
+        {
+          amount: '0.1',
+          assetId: assets['BTC'],
+          to: receiverWallet.address.toString(),
+        },
+        {
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+          to: receiverWallet.address.toString(),
+        },
+        {
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+          to: receiverWallet.address.toString(),
+        },
+      ],
+    });
 
     // sign
     const signature = await genesisWallet.signMessage(hashTxId);
@@ -336,13 +342,16 @@ describe('[Send With]', () => {
       .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
       .then((r) => r.waitForResult());
 
-    const { tx, hashTxId } = await vault.transaction([
-      {
-        amount: '0.1',
-        assetId: provider.getBaseAssetId(),
-        to: wallet.address.toB256(),
-      },
-    ]);
+    const { tx, hashTxId } = await vault.transaction({
+      name: 'Test',
+      assets: [
+        {
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+          to: wallet.address.toB256(),
+        },
+      ],
+    });
 
     tx.witnesses = bakoCoder.encode([
       {
@@ -372,13 +381,15 @@ describe('[Send With]', () => {
       .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
       .then((r) => r.waitForResult());
 
-    const { tx, hashTxId } = await vault.transaction([
-      {
-        amount: '0.1',
-        assetId: provider.getBaseAssetId(),
-        to: wallet.address.toB256(),
-      },
-    ]);
+    const { tx, hashTxId } = await vault.transaction({
+      assets: [
+        {
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+          to: wallet.address.toB256(),
+        },
+      ],
+    });
 
     tx.witnesses = bakoCoder.encode([
       {
@@ -411,13 +422,16 @@ describe('[Send With]', () => {
       .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
       .then((r) => r.waitForResult());
 
-    const { tx, hashTxId } = await vault.transaction([
-      {
-        amount: '0.1',
-        assetId: provider.getBaseAssetId(),
-        to: wallet.address.toB256(),
-      },
-    ]);
+    const { tx, hashTxId } = await vault.transaction({
+      name: 'Test',
+      assets: [
+        {
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+          to: wallet.address.toB256(),
+        },
+      ],
+    });
 
     tx.witnesses = bakoCoder.encode([
       {
@@ -446,13 +460,15 @@ describe('[Send With]', () => {
       .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
       .then((r) => r.waitForResult());
 
-    const { tx, hashTxId } = await vault.transaction([
-      {
-        amount: '0.1',
-        assetId: provider.getBaseAssetId(),
-        to: owner.address.toB256(),
-      },
-    ]);
+    const { tx, hashTxId } = await vault.transaction({
+      assets: [
+        {
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+          to: owner.address.toB256(),
+        },
+      ],
+    });
 
     const signature = await owner.signMessage(hashTxId);
     tx.witnesses = bakoCoder.encode([
@@ -486,13 +502,16 @@ describe('[Send With]', () => {
       .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
       .then((r) => r.waitForResult());
 
-    const { tx, hashTxId } = await vault.transaction([
-      {
-        amount: '0.1',
-        assetId: provider.getBaseAssetId(),
-        to: owner.address.toB256(),
-      },
-    ]);
+    const { tx, hashTxId } = await vault.transaction({
+      name: 'Test',
+      assets: [
+        {
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+          to: owner.address.toB256(),
+        },
+      ],
+    });
 
     tx.witnesses = bakoCoder.encode([
       {
@@ -526,13 +545,15 @@ describe('[Send With]', () => {
       .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
       .then((r) => r.waitForResult());
 
-    const { tx, hashTxId } = await vault.transaction([
-      {
-        amount: '0.1',
-        assetId: provider.getBaseAssetId(),
-        to: wallet.address.toB256(),
-      },
-    ]);
+    const { tx, hashTxId } = await vault.transaction({
+      assets: [
+        {
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+          to: wallet.address.toB256(),
+        },
+      ],
+    });
 
     const signature = await WebAuthn.signChallenge(
       webAuthnCredential,
@@ -562,13 +583,15 @@ describe('[Send With]', () => {
       .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
       .then((r) => r.waitForResult());
 
-    const { tx, hashTxId } = await vault.transaction([
-      {
-        amount: '0.1',
-        assetId: provider.getBaseAssetId(),
-        to: owner.address.toB256(),
-      },
-    ]);
+    const { tx, hashTxId } = await vault.transaction({
+      assets: [
+        {
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+          to: owner.address.toB256(),
+        },
+      ],
+    });
 
     const signature = await owner.signMessage(hashTxId);
     tx.witnesses = bakoCoder.encode([
