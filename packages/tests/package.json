@@ -7,6 +7,9 @@
   "engines": {
     "node": ">=22.0.0"
   },
+  "types": "./dist/index.d.ts",
+  "require": "./dist/index.js",
+  "import": "./dist/index.mjs",
   "scripts": {
     "postinstall": "pnpm fuels build",
     "debbug:build": "pnpm fuels build",
