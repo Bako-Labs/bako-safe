@@ -1,8 +1,5 @@
 library;
 
-use std::{
-  constants::ZERO_B256,
-};
 use ::constants::{
   INVALID_ADDRESS,
   MAX_SIGNERS,
@@ -28,7 +25,7 @@ pub fn check_duplicated_signers(
 ) {
   let mut i = 0;
 
-  if Address::from(INVALID_ADDRESS) == public_key { //stop condition
+  if INVALID_ADDRESS == public_key { //stop condition
     return;
   }
 
@@ -65,14 +62,14 @@ pub fn check_signer_exists(
     if Address::from(signers[i]) == public_key {
       return public_key;
     }
-    if Address::from(signers[i]) == Address::from(ZERO_B256) {
-      return Address::from(INVALID_ADDRESS);
+    if Address::from(signers[i]) == Address::zero() {
+      return INVALID_ADDRESS;
     }
 
     i += 1;
   }
 
-  return Address::from(INVALID_ADDRESS);
+  INVALID_ADDRESS
 }
 
 
