@@ -1,16 +1,22 @@
 {
   "$schema": "https://turborepo.org/schema.json",
-  "pipeline": {
+  "tasks": {
     "prebuild": {
-      "dependsOn": ["^prebuild"],
-      "outputs": ["dist/sway/**"],
-      "outputMode": "hash-only",
-      "cache": false
+      "dependsOn": [
+        "^prebuild"
+      ],
+      "outputs": [
+        "dist/sway/**"
+      ],
+      "cache": false,
+      "outputLogs": "hash-only"
     },
     "build": {
-      "outputs": ["dist/**"],
-      "outputMode": "new-only",
-      "cache": false
+      "outputs": [
+        "dist/**"
+      ],
+      "cache": false,
+      "outputLogs": "new-only"
     }
   }
 }
