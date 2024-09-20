@@ -59,10 +59,8 @@ fn main() -> bool {
                     )
                 },
                 SignatureType::Fuel(_) => {
-                    // TODO: talk with Sway team to see why the value is not correctly parsed it looks to be skiping 24 bytes
-                    // this is why we need to use the pointer to read the B512 value, this problem dosen't happen on the webauth
                     let signature = witness_ptr.read::<B512>();
-                    
+
                     fuel_verify(signature, tx_bytes)
                 },
                 _ => INVALID_ADDRESS,
