@@ -4,7 +4,7 @@ import { join } from 'path';
 const FUNCTION_CALL = `configurable {
     SIGNERS: [b256; 10] = EMPTY_SIGNERS,
     SIGNATURES_COUNT: u64 = 0,
-    HASH_PREDICATE: b256 = ZERO_B256,
+    HASH_PREDICATE: b256 = b256::zero(),
 }
 
 fn main() -> bool {`;
