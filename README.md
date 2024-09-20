@@ -10,6 +10,7 @@ The Bako Safe SDK manages all the logic of the Bako Safe multisig wallet, includ
 - **Utility and Helper Functions:** Providing error handling and SDK customization options.
 
 Within the packages folder, you will find the following subdirectories:
+
 - **[sway:](https://github.com/Bako-Labs/bako-safe/tree/main/packages/sdk)** Contains the predicates and libraries (e.g., webauthn).
 - **[sdk:](https://github.com/Bako-Labs/bako-safe/tree/main/packages/sdk)** Our TypeScript SDK that interacts with Bako.
 
@@ -18,7 +19,8 @@ For for information, check out the [Documentation page](https://doc-safe.bako.gl
 ## Requirements
 
 - fuel-core@0.35.0
-- forc@0.63.5
+- forc@0.63.6
+- fuels-ts@0.94.6
 
 ## Tests
 
