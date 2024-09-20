@@ -1,6 +1,6 @@
 script;
 
-use std::{b512::B512, constants::ZERO_B256, tx::{GTF_WITNESS_DATA, tx_id, tx_witnesses_count}};
+use std::{b512::B512, tx::{GTF_WITNESS_DATA, tx_id, tx_witnesses_count}};
 
 use libraries::{
     constants::{
@@ -68,7 +68,7 @@ fn main(tx_id: b256, config: PredicateConfig) -> bool {
                     let signature = witness_ptr.read::<B512>();
                     fuel_verify(signature, tx_bytes)
                 },
-                _ => Address::from(INVALID_ADDRESS),
+                _ => INVALID_ADDRESS,
             };
 
             let is_valid_signer = check_signer_exists(pk, SIGNERS);
