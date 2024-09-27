@@ -191,6 +191,13 @@ export class Vault extends Predicate<[]> {
   ): Promise<T> {
     const predicateGasUsed = await this.maxGasUsed();
 
+    const witnesses = Array.from(transactionRequest.witnesses);
+    const fakeSignatures = Array.from(
+      { length: this.maxSigners },
+      () => FAKE_WITNESSES,
+    );
+    transactionRequest.witnesses.push(...fakeSignatures);
+
     const transactionCost = await this.getTransactionCost(transactionRequest);
     transactionRequest.maxFee = transactionCost.maxFee;
     transactionRequest = await this.fund(transactionRequest, transactionCost);
@@ -204,14 +211,6 @@ export class Vault extends Predicate<[]> {
       }
     });
 
-    const witnesses = Array.from(transactionRequest.witnesses);
-    const fakeSignatures = Array.from(
-      { length: this.maxSigners },
-      () => FAKE_WITNESSES,
-    );
-
-    transactionRequest.witnesses.push(...fakeSignatures);
-
     const { gasPriceFactor } = this.provider.getGasConfig();
     const { maxFee, gasPrice } = await this.provider.estimateTxGasAndFee({
       transactionRequest,
@@ -224,6 +223,8 @@ export class Vault extends Predicate<[]> {
     });
 
     transactionRequest.maxFee = maxFee.add(predicateSuccessFeeDiff);
+
+    console.log('SDK', transactionRequest);
 
     await this.provider.estimateTxDependencies(transactionRequest);
     transactionRequest.witnesses = witnesses;
@@ -308,15 +309,7 @@ export class Vault extends Predicate<[]> {
         value.assetId,
       );
     });
-
-    tx.inputs?.forEach((input) => {
-      if (
-        input.type === InputType.Coin &&
-        hexlify(input.owner) === this.address.toB256()
-      ) {
-        input.predicate = arrayify(this.bytes);
-      }
-    });
+    this.populateTransactionPredicateData(tx);
 
     return this.BakoTransfer(tx, { name: params.name });
   }
