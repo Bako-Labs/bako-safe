@@ -6,18 +6,13 @@ import {
   hexlify,
   Provider,
   Predicate,
-  InputType,
   ZeroBytes32,
   calculateGasFee,
-  TransactionType,
   TransactionRequest,
   TransactionResponse,
   transactionRequestify,
   TransactionRequestLike,
-  CreateTransactionRequest,
   ScriptTransactionRequest,
-  UploadTransactionRequest,
-  UpgradeTransactionRequest,
 } from 'fuels';
 
 import {

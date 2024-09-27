@@ -1,6 +1,6 @@
 {
   "name": "bakosafe",
-  "version": "0.0.79-beta",
+  "version": "0.0.80-beta",
   "author": "Infinybase - Guilherme Roque",
   "description": "A signature validation package built based on sway in the fuel network",
   "main": "dist/index.js",
