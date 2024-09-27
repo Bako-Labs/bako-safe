@@ -16,6 +16,7 @@ export enum AuthRequestHeaders {
 export type AuthService = {
   token?: string;
   address?: string;
+  serverApi?: string;
 };
 
 export interface IAuthCreateResponse {

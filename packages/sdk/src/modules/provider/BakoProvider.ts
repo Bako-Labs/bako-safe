@@ -1,4 +1,9 @@
-import { Provider, TransactionResponse, TransactionRequest } from 'fuels';
+import {
+  Provider,
+  TransactionResponse,
+  TransactionRequest,
+  randomUUID,
+} from 'fuels';
 
 import {
   Service,
@@ -16,7 +21,6 @@ import {
 } from './types';
 
 import { Vault } from '../vault';
-import { randomBytes } from 'crypto';
 
 /**
  * BakoProvider class extends the Provider (FuelProvider) class to include additional
@@ -39,6 +43,7 @@ export class BakoProvider extends Provider {
     this.service = new Service({
       address: this.options.address,
       token: this.options.token,
+      serverApi: this.options.serverApi,
     });
   }
 
@@ -102,9 +107,13 @@ export class BakoProvider extends Provider {
    * @param vault The Vault instance containing necessary configuration.
    * @returns The created predicate.
    */
-  async savePredicate(vault: Vault) {
+  async savePredicate(
+    vault: Vault & {
+      name?: string;
+    },
+  ) {
     const payload: IPredicatePayload = {
-      name: vault.address.toB256(),
+      name: vault.name ?? vault.address.toB256(),
       predicateAddress: vault.address.toB256(),
       minSigners: vault.configurable.SIGNATURES_COUNT,
       addresses: vault.configurable.SIGNERS,
@@ -139,7 +148,7 @@ export class BakoProvider extends Provider {
     transaction: Pick<ICreateTransactionPayload, 'name' | 'predicateAddress'>,
   ) {
     const payload: ICreateTransactionPayload = {
-      name: transaction.name ?? `vault ${randomBytes(16).toString('hex')}`,
+      name: transaction.name ?? `vault ${randomUUID()}`,
       predicateAddress: transaction.predicateAddress,
       hash: request.getTransactionId(this.getChainId()).slice(2),
       txData: request,

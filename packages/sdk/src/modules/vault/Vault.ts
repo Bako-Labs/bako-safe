@@ -29,7 +29,7 @@ import {
 
 import { VaultConfigurable, VaultTransaction } from './types';
 
-import { ICreateTransactionPayload } from '../service';
+import { ICreateTransactionPayload, PredicateResponse } from '../service';
 
 import { BakoProvider } from '../provider';
 
@@ -237,9 +237,13 @@ export class Vault extends Predicate<[]> {
    * @returns {Promise<PredicateResponse>} The result of the save operation.
    * @throws {Error} Will throw an error if the provider is not a BakoProvider.
    */
-  async save() {
+  async save(
+    params: {
+      name?: string;
+    } = {},
+  ): Promise<PredicateResponse> {
     if (this.provider instanceof BakoProvider) {
-      return this.provider.savePredicate(this);
+      return this.provider.savePredicate({ ...this, ...params });
     }
 
     throw new Error('Use a VaultProvider to consume this method');
