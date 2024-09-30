@@ -218,9 +218,6 @@ export class Vault extends Predicate<[]> {
     });
 
     transactionRequest.maxFee = maxFee.add(predicateSuccessFeeDiff);
-
-    console.log('SDK', transactionRequest);
-
     await this.provider.estimateTxDependencies(transactionRequest);
     transactionRequest.witnesses = witnesses;
 
