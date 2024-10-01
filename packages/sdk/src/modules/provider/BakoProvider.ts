@@ -97,6 +97,7 @@ export class BakoProvider extends Provider {
       digest: options.challenge,
       encoder: options.encoder ?? TypeUser.FUEL,
       signature: options.token,
+      userAddress: options.address,
     });
     return BakoProvider.create(url, options);
   }
@@ -115,10 +116,7 @@ export class BakoProvider extends Provider {
     const payload: IPredicatePayload = {
       name: vault.name ?? vault.address.toB256(),
       predicateAddress: vault.address.toB256(),
-      minSigners: vault.configurable.SIGNATURES_COUNT,
-      addresses: vault.configurable.SIGNERS,
       configurable: JSON.stringify(vault.configurable),
-      provider: this.url,
     };
 
     const predicate = await this.service.createPredicate(payload);
