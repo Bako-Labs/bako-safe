@@ -7,6 +7,7 @@ import {
   Provider,
   Predicate,
   ZeroBytes32,
+  TransactionType,
   calculateGasFee,
   TransactionRequest,
   TransactionResponse,
@@ -192,7 +193,6 @@ export class Vault extends Predicate<[]> {
       () => FAKE_WITNESSES,
     );
     transactionRequest.witnesses.push(...fakeSignatures);
-
     const transactionCost = await this.getTransactionCost(transactionRequest);
     transactionRequest.maxFee = transactionCost.maxFee;
     transactionRequest = await this.fund(transactionRequest, transactionCost);
@@ -217,7 +217,13 @@ export class Vault extends Predicate<[]> {
       gasPrice,
     });
 
-    transactionRequest.maxFee = maxFee.add(predicateSuccessFeeDiff);
+    const maxFeeWithPredicateGas = maxFee.add(predicateSuccessFeeDiff);
+    transactionRequest.maxFee = maxFeeWithPredicateGas;
+
+    if (transactionRequest.type === TransactionType.Upgrade) {
+      transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);
+    }
+
     await this.provider.estimateTxDependencies(transactionRequest);
     transactionRequest.witnesses = witnesses;
 
