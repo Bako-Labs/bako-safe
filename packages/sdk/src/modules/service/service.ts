@@ -71,9 +71,10 @@ export class Service {
   async createPredicate(
     payload: IPredicatePayload,
   ): Promise<PredicateResponse> {
+    const { provider, ...rest } = payload;
     const {
       data: { predicateAddress, configurable },
-    } = await this.api.post('/predicate', payload);
+    } = await this.api.post('/predicate', rest);
 
     return {
       predicateAddress,

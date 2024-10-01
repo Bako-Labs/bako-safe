@@ -474,7 +474,7 @@ describe('[AUTH]', () => {
 
     expect(isTypeScript).toBeTruthy();
     expect(isStatusSuccess).toBeTruthy();
-  }, 10000);
+  });
 
   it('Should fail to send transaction before signing', async () => {
     const {

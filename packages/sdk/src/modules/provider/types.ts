@@ -4,7 +4,7 @@ export { ISelectWorkspaceResponse, IBakoSafeAuth, Workspace } from '../service';
 export type BakoProviderOptions = ProviderOptions & {
   token: string;
   address: string;
-  serverApi: string;
+  serverApi?: string;
 };
 
 export type BakoProviderAuthOptions = BakoProviderOptions & {

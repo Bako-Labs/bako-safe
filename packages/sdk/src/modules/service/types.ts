@@ -1,7 +1,7 @@
 import { Operation, TransactionRequest } from 'fuels';
 import { IBakoError } from '../../utils/errors/types';
 import { TypeUser } from '../provider';
-import { BAKO_SERVER_API } from 'src/constantes';
+import { BAKO_SERVER_API } from '../../constantes';
 
 export type ApiConfigurable = {
   address?: string;
@@ -92,6 +92,7 @@ export interface IPredicatePayload {
   predicateAddress: string;
   configurable: string;
   versionCode?: string;
+  provider: string;
 }
 
 export interface ISelectWorkspaceResponse extends Workspace {}
