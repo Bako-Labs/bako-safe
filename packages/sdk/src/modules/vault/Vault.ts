@@ -186,7 +186,7 @@ export class Vault extends Predicate<[]> {
     transactionRequest: T,
   ): Promise<T> {
     const predicateGasUsed = await this.maxGasUsed();
-    this.populateTransactionPredicateData;
+    this.populateTransactionPredicateData(transactionRequest);
 
     const witnesses = Array.from(transactionRequest.witnesses);
     const fakeSignatures = Array.from(
