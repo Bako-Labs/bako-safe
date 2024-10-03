@@ -186,6 +186,7 @@ export class Vault extends Predicate<[]> {
     transactionRequest: T,
   ): Promise<T> {
     const predicateGasUsed = await this.maxGasUsed();
+    this.populateTransactionPredicateData;
 
     const witnesses = Array.from(transactionRequest.witnesses);
     const fakeSignatures = Array.from(
@@ -218,7 +219,7 @@ export class Vault extends Predicate<[]> {
     });
 
     const maxFeeWithPredicateGas = maxFee.add(predicateSuccessFeeDiff);
-    transactionRequest.maxFee = maxFeeWithPredicateGas;
+    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(2);
 
     if (transactionRequest.type === TransactionType.Upgrade) {
       transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);
