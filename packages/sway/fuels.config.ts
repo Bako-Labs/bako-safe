@@ -8,4 +8,5 @@ export default createConfig({
   predicates: ['./src/predicate'],
   forcBuildFlags: ['--release'],
   output: '../sdk/src/sway',
+  privateKey: '0x001'
 });
