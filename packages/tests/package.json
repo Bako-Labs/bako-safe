@@ -21,7 +21,7 @@
     "@noble/curves": "^1.5.0",
     "axios": "^1.7.2",
     "bakosafe": "workspace:*",
-    "fuels": "0.94.6",
+    "fuels": "pr-3251",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
