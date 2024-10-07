@@ -1,6 +1,7 @@
 import { Operation, TransactionRequest } from 'fuels';
 import { IBakoError } from '../../utils/errors/types';
 import { TypeUser } from '../provider';
+import { BAKO_SERVER_API } from '../../constantes';
 
 export type ApiConfigurable = {
   address?: string;
@@ -16,6 +17,7 @@ export enum AuthRequestHeaders {
 export type AuthService = {
   token?: string;
   address?: string;
+  serverApi?: string;
 };
 
 export interface IAuthCreateResponse {
@@ -74,7 +76,8 @@ export interface ICreateTransactionPayload {
 export const defaultConfig: ApiConfigurable = {
   address: '',
   token: '',
-  serverUrl: 'http://localhost:3333/',
+  //todo: move this string to constants file
+  serverUrl: BAKO_SERVER_API,
 };
 
 export interface IBakoSafeAuth {
@@ -87,12 +90,9 @@ export interface IPredicatePayload {
   name: string;
   description?: string;
   predicateAddress: string;
-  minSigners: number;
-  addresses: string[];
   configurable: string;
-  provider: string;
-  chainId?: number;
   versionCode?: string;
+  provider: string;
 }
 
 export interface ISelectWorkspaceResponse extends Workspace {}
@@ -119,6 +119,7 @@ export type SignService = {
   signature: string;
   encoder: string;
   digest: string;
+  userAddress: string;
 };
 
 export enum TransactionStatus {

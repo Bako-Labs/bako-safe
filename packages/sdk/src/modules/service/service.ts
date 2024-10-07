@@ -33,8 +33,11 @@ export class Service {
    *  @param {string} address   - The address of the user.
    *  @param {string} token     - The token of the user.
    */
-  constructor({ address, token }: AuthService) {
-    this.api = axios.create(api.defaults);
+  constructor({ address, token, serverApi }: AuthService) {
+    this.api = axios.create({
+      ...api.defaults,
+      baseURL: serverApi ?? defaultConfig.serverUrl,
+    });
 
     if (address && token) {
       this.api.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS] = address;
@@ -68,9 +71,10 @@ export class Service {
   async createPredicate(
     payload: IPredicatePayload,
   ): Promise<PredicateResponse> {
+    const { provider, ...rest } = payload;
     const {
       data: { predicateAddress, configurable },
-    } = await this.api.post('/predicate', payload);
+    } = await this.api.post('/predicate', rest);
 
     return {
       predicateAddress,

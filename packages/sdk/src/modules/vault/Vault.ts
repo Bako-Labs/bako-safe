@@ -6,18 +6,14 @@ import {
   hexlify,
   Provider,
   Predicate,
-  InputType,
   ZeroBytes32,
-  calculateGasFee,
   TransactionType,
+  calculateGasFee,
   TransactionRequest,
   TransactionResponse,
   transactionRequestify,
   TransactionRequestLike,
-  CreateTransactionRequest,
   ScriptTransactionRequest,
-  UploadTransactionRequest,
-  UpgradeTransactionRequest,
 } from 'fuels';
 
 import {
@@ -29,7 +25,7 @@ import {
 
 import { VaultConfigurable, VaultTransaction } from './types';
 
-import { ICreateTransactionPayload } from '../service';
+import { ICreateTransactionPayload, PredicateResponse } from '../service';
 
 import { BakoProvider } from '../provider';
 
@@ -190,7 +186,14 @@ export class Vault extends Predicate<[]> {
     transactionRequest: T,
   ): Promise<T> {
     const predicateGasUsed = await this.maxGasUsed();
+    this.populateTransactionPredicateData(transactionRequest);
 
+    const witnesses = Array.from(transactionRequest.witnesses);
+    const fakeSignatures = Array.from(
+      { length: this.maxSigners },
+      () => FAKE_WITNESSES,
+    );
+    transactionRequest.witnesses.push(...fakeSignatures);
     const transactionCost = await this.getTransactionCost(transactionRequest);
     transactionRequest.maxFee = transactionCost.maxFee;
     transactionRequest = await this.fund(transactionRequest, transactionCost);
@@ -204,14 +207,6 @@ export class Vault extends Predicate<[]> {
       }
     });
 
-    const witnesses = Array.from(transactionRequest.witnesses);
-    const fakeSignatures = Array.from(
-      { length: this.maxSigners },
-      () => FAKE_WITNESSES,
-    );
-
-    transactionRequest.witnesses.push(...fakeSignatures);
-
     const { gasPriceFactor } = this.provider.getGasConfig();
     const { maxFee, gasPrice } = await this.provider.estimateTxGasAndFee({
       transactionRequest,
@@ -223,7 +218,12 @@ export class Vault extends Predicate<[]> {
       gasPrice,
     });
 
-    transactionRequest.maxFee = maxFee.add(predicateSuccessFeeDiff);
+    const maxFeeWithPredicateGas = maxFee.add(predicateSuccessFeeDiff);
+    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(2);
+
+    if (transactionRequest.type === TransactionType.Upgrade) {
+      transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);
+    }
 
     await this.provider.estimateTxDependencies(transactionRequest);
     transactionRequest.witnesses = witnesses;
@@ -237,9 +237,13 @@ export class Vault extends Predicate<[]> {
    * @returns {Promise<PredicateResponse>} The result of the save operation.
    * @throws {Error} Will throw an error if the provider is not a BakoProvider.
    */
-  async save() {
+  async save(
+    params: {
+      name?: string;
+    } = {},
+  ): Promise<PredicateResponse> {
     if (this.provider instanceof BakoProvider) {
-      return this.provider.savePredicate(this);
+      return this.provider.savePredicate({ ...this, ...params });
     }
 
     throw new Error('Use a VaultProvider to consume this method');
@@ -304,15 +308,7 @@ export class Vault extends Predicate<[]> {
         value.assetId,
       );
     });
-
-    tx.inputs?.forEach((input) => {
-      if (
-        input.type === InputType.Coin &&
-        hexlify(input.owner) === this.address.toB256()
-      ) {
-        input.predicate = arrayify(this.bytes);
-      }
-    });
+    this.populateTransactionPredicateData(tx);
 
     return this.BakoTransfer(tx, { name: params.name });
   }

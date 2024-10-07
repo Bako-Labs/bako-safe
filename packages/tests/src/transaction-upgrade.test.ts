@@ -7,7 +7,6 @@ import {
   Provider,
 } from 'fuels';
 import {
-  accounts,
   assets,
   PRIVILEGED_CONSENSUS_BYTECODE,
   GAS_COSTS_CONSENSUS_BYTECODE,

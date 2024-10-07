@@ -7,9 +7,9 @@ dotenv.config();
 const { PRIVATE_KEY: privateKey, PROVIDER_URL: providerUrl } = process.env;
 
 export default createConfig({
+  privateKey,
+  providerUrl,
   predicates: ['./src/predicate'],
   forcBuildFlags: ['--release'],
   output: '../sdk/src/sway',
-  privateKey,
-  providerUrl,
 });
