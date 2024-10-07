@@ -29,7 +29,7 @@ import { ICreateTransactionPayload, PredicateResponse } from '../service';
 
 import { BakoProvider } from '../provider';
 
-import { BakoPredicate } from '../../sway';
+import { BakoPredicateLoader } from '../../sway';
 
 /**
  * The `Vault` class is an extension of `Predicate` that manages transactions,
@@ -57,8 +57,8 @@ export class Vault extends Predicate<[]> {
   ) {
     const conf = Vault.makePredicate(configurable);
     super({
-      abi: BakoPredicate.abi,
-      bytecode: arrayify(BakoPredicate.bytecode),
+      abi: BakoPredicateLoader.abi,
+      bytecode: arrayify(BakoPredicateLoader.bytecode),
       provider: provider,
       configurableConstants: conf,
     });
