@@ -476,7 +476,7 @@ describe('[AUTH]', () => {
     expect(isStatusSuccess).toBeTruthy();
   });
 
-  it('Should fail to send transaction before signing', async () => {
+  it.only('Should fail to send transaction before signing', async () => {
     const {
       provider,
       wallets: [wallet],

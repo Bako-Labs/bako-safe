@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const { PROVIDER_URL: providerUrl, PRIVATE_KEY: privateKey } = process.env;
+const { PRIVATE_KEY: privateKey, PROVIDER_URL: providerUrl } = process.env;
 
 export default createConfig({
   privateKey,
