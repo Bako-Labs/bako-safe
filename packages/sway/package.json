@@ -19,6 +19,6 @@
     "elliptic": "^6.5.6"
   },
   "dependencies": {
-    "fuels": "pr-3251"
+    "fuels": "0.94.9"
   }
 }
