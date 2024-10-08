@@ -3,6 +3,7 @@ import {
   TransactionResponse,
   TransactionRequest,
   randomUUID,
+  transactionRequestify,
 } from 'fuels';
 
 import {
@@ -160,13 +161,12 @@ export class BakoProvider extends Provider {
    * Finds a transaction by its hash and processes it using a vault.
    *
    * @param hash The transaction hash to find.
-   * @param vault The vault instance to process the transaction.
    * @returns The processed transaction.
    */
-  async findTransaction(hash: string, vault: Vault) {
+  async findTransaction(hash: string) {
     const transaction = await this.service.findTransactionByHash(hash);
 
-    return vault.BakoTransfer(transaction.txData);
+    return transactionRequestify(transaction.txData);
   }
 
   /**

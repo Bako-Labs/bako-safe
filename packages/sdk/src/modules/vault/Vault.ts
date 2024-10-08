@@ -273,7 +273,12 @@ export class Vault extends Predicate<[]> {
    */
   async transactionFromHash(hash: string) {
     if (this.provider instanceof BakoProvider) {
-      return this.provider.findTransaction(hash, this);
+      const request = await this.provider.findTransaction(hash);
+
+      return {
+        tx: request,
+        hashTxId: request.getTransactionId(this.provider.getChainId()).slice(2),
+      };
     }
 
     throw new Error('Use a VaultProvider to consume this method');
