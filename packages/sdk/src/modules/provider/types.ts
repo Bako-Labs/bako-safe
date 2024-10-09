@@ -19,10 +19,11 @@ export enum TypeUser {
 }
 
 export type BakoProviderSetup = {
-  address: string;
   name?: string;
-  encoder?: TypeUser;
+  apiUrl?: string;
+  address: string;
   provider: string;
+  encoder?: TypeUser;
 };
 
 export type BakoProviderAuth = {

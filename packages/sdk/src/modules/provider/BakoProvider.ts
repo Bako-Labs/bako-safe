@@ -54,14 +54,17 @@ export class BakoProvider extends Provider {
    * @returns A challenge string for authentication.
    */
   static async setup(params: BakoProviderSetup) {
-    const { address, encoder, provider, name } = params;
+    const { address, encoder, provider, name, bakoServerUrl } = params;
 
-    const { code: challenge } = await Service.create({
-      name: name ?? `from sdk - ${address}`,
-      type: encoder ?? TypeUser.FUEL,
-      address: address,
-      provider,
-    });
+    const { code: challenge } = await Service.create(
+      {
+        name: name ?? `from sdk - ${address}`,
+        type: encoder ?? TypeUser.FUEL,
+        address: address,
+        provider,
+      },
+      bakoServerUrl,
+    );
 
     return challenge;
   }

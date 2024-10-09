@@ -166,10 +166,17 @@ export class Service {
    * @param {UserCreate} params                 - The user creation payload.
    * @returns {Promise<CreateSessionResponse>}  - The response containing the session code.
    */
-  static async create(params: UserCreate): Promise<CreateSessionResponse> {
+  static async create(
+    params: UserCreate,
+    apiUrl?: string,
+  ): Promise<CreateSessionResponse> {
+    const _axios = axios.create({
+      baseURL: apiUrl ?? defaultConfig.serverUrl,
+    });
+
     const {
       data: { code },
-    } = await api.post('/user', params);
+    } = await _axios.post('/user', params);
 
     return { code };
   }
