@@ -1,6 +1,5 @@
+import { accounts } from '../mocks';
 import { Wallet, Provider } from 'fuels';
-
-import { accounts, networks } from '../mocks';
 
 export const signin = async (
   tx_hash: string,

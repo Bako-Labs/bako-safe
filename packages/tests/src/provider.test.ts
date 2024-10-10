@@ -11,7 +11,9 @@ import {
   ICreateTransactionPayload,
   IPredicatePayload,
   ISignTransactionRequest,
+  // @ts-ignore
 } from 'bakosafe/src';
+import { deployPredicate } from './utils';
 
 jest.mock('../../sdk/src/modules/service', () => {
   const actualService = jest.requireActual('../../sdk/src/modules/service');
@@ -140,7 +142,17 @@ describe('[AUTH]', () => {
   let node: Awaited<ReturnType<typeof launchTestNode>>;
 
   beforeAll(async () => {
-    node = await launchTestNode();
+    node = await launchTestNode({
+      walletsConfig: {
+        assets: [{ value: assets['ETH'] }],
+        coinsPerAsset: 1,
+        amountPerCoin: 10_000_000_000,
+      },
+    });
+
+    // deploy a predicate
+    const [wallet] = node.wallets;
+    await deployPredicate(wallet);
   });
 
   afterAll(() => {
@@ -476,7 +488,7 @@ describe('[AUTH]', () => {
     expect(isStatusSuccess).toBeTruthy();
   });
 
-  it.only('Should fail to send transaction before signing', async () => {
+  it('Should fail to send transaction before signing', async () => {
     const {
       provider,
       wallets: [wallet],

@@ -15,7 +15,8 @@
     "debbug:build": "pnpm fuels build",
     "debbug:setup": "ts-node ./src/scripts/debbug-setup.ts && pnpm fuels build",
     "debbug:script": "ts-node ./src/scripts/debbug-script.ts",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand"
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --silent",
+    "test:file": "chmod +x ./src/scripts/run-test.sh && ./src/scripts/run-test.sh"
   },
   "dependencies": {
     "@noble/curves": "^1.5.0",

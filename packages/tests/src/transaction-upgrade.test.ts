@@ -14,7 +14,7 @@ import {
 import { randomBytes } from 'crypto';
 import { launchTestNode } from 'fuels/test-utils';
 import { bakoCoder, SignatureType, Vault } from 'bakosafe';
-import { subsectionFromBytecode } from './utils';
+import { deployPredicate, subsectionFromBytecode } from './utils';
 import { beforeAll } from '@jest/globals';
 
 const baseAssetId = assets['ETH'];
@@ -47,7 +47,7 @@ const setupTestNode = async (signers: WalletUnlocked[]) => {
     owner: predicateAddress,
     amount: 1000000000,
     asset_id: baseAssetId,
-    tx_id: hexlify(randomBytes(32)),
+    tx_id: hexlify(new Uint8Array(randomBytes(32))),
     output_index: 0,
     tx_pointer_block_height: 0,
     tx_pointer_tx_idx: 0,
@@ -69,6 +69,8 @@ const setupTestNode = async (signers: WalletUnlocked[]) => {
   });
   vault.provider = provider;
   signers.forEach((signer) => (signer.provider = provider));
+
+  await deployPredicate(wallets[0]);
 
   return {
     vault,

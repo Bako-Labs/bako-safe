@@ -3,3 +3,4 @@ export * from './signin';
 export * from './webauthn';
 export * from './bytecode';
 export * from './sendCoins';
+export * from './predicateDeploy';

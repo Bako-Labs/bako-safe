@@ -1,4 +1,4 @@
-import { WebAuthn } from './utils';
+import { deployPredicate, WebAuthn } from './utils';
 
 import {
   BakoError,
@@ -26,9 +26,9 @@ describe('[Create]', () => {
   let node: Awaited<ReturnType<typeof launchTestNode>>;
 
   beforeAll(async () => {
+    // launch a test node
     node = await launchTestNode({
       walletsConfig: {
-        count: 3,
         assets: testAssets,
         coinsPerAsset: 1,
         amountPerCoin: 10_000_000_000,
@@ -88,6 +88,7 @@ describe('[Transactions]', () => {
   let node: Awaited<ReturnType<typeof launchTestNode>>;
 
   beforeAll(async () => {
+    // launch a test node
     node = await launchTestNode({
       walletsConfig: {
         assets: testAssets,
@@ -95,6 +96,10 @@ describe('[Transactions]', () => {
         amountPerCoin: 10_000_000_000,
       },
     });
+
+    // deploy a predicate
+    const [wallet] = node.wallets;
+    await deployPredicate(wallet);
   });
 
   afterAll(() => {
@@ -314,6 +319,7 @@ describe('[Send With]', () => {
   let node: Awaited<ReturnType<typeof launchTestNode>>;
 
   beforeAll(async () => {
+    // launch a test node
     node = await launchTestNode({
       walletsConfig: {
         assets: testAssets,
@@ -321,6 +327,10 @@ describe('[Send With]', () => {
         amountPerCoin: 10_000_000_000,
       },
     });
+
+    // deploy a predicate
+    const [wallet] = node.wallets;
+    await deployPredicate(wallet);
   });
 
   afterAll(() => {

@@ -29,6 +29,7 @@ For for information, check out the [Documentation page](https://doc-safe.bako.gl
 3. Build packages: `pnpm -w build`
 4. `cd packages/tests`
 5. Run the tests: `pnpm test`
+6. Or run only test file `pnpm test:file ${filename}`
 
 ## Run debug mode:
 
