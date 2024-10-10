@@ -17,7 +17,6 @@
     "dist"
   ],
   "scripts": {
-    "postinstall": "pnpm fuels build",
     "build": "tsup"
   },
   "license": "Apache-2.0",

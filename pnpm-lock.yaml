@@ -33,7 +33,19 @@ importers:
       '@types/mocha':
         specifier: ^10.0.1
         version: 10.0.1
+      '@types/node':
+        specifier: ^22.5.5
+        version: 22.5.5
     devDependencies:
+      '@types/node-fetch':
+        specifier: ^2.6.11
+        version: 2.6.11
+      '@types/web':
+        specifier: ^0.0.169
+        version: 0.0.169
+      dotenv:
+        specifier: ^16.4.1
+        version: 16.4.5
       turbo:
         specifier: ^2.1.2
         version: 2.1.2
@@ -1638,6 +1650,13 @@ packages:
     resolution: {integrity: sha512-/fvYntiO1GeICvqbQ3doGDIP97vWmvFt83GKguJ6prmQM2iXZfFcq6YE8KteFyRtX2/h5Hf91BYvPodJKFYv5Q==}
     dev: false
 
+  /@types/node-fetch@2.6.11:
+    resolution: {integrity: sha512-24xFj9R5+rfQJLRyM56qh+wnVSYhyXC2tkoBndtY0U+vubqNsYXGjufB2nn8Q6gt0LrARwL6UBtMCSVCwl4B1g==}
+    dependencies:
+      '@types/node': 16.18.104
+      form-data: 4.0.0
+    dev: true
+
   /@types/node@16.18.104:
     resolution: {integrity: sha512-OF3keVCbfPlkzxnnDBUZJn1RiCJzKeadjiW0xTEb0G1SUJ5gDVb3qnzZr2T4uIFvsbKJbXy1v2DN7e2zaEY7jQ==}
 
@@ -1645,7 +1664,6 @@ packages:
     resolution: {integrity: sha512-Xjs4y5UPO/CLdzpgR6GirZJx36yScjh73+2NlLlkFRSoQN8B0DpfXPdZGnvVmLRLOsqDpOfTNv7D9trgGhmOIA==}
     dependencies:
       undici-types: 6.19.8
-    dev: true
 
   /@types/ramda@0.30.0:
     resolution: {integrity: sha512-DQtfqUbSB18iM9NHbQ++kVUDuBWHMr6T2FpW1XTiksYRGjq4WnNPZLt712OEHEBJs7aMyJ68Mf2kGMOP1srVVw==}
@@ -1658,6 +1676,10 @@ packages:
 
   /@types/uuid@9.0.6:
     resolution: {integrity: sha512-BT2Krtx4xaO6iwzwMFUYvWBWkV2pr37zD68Vmp1CDV196MzczBRxuEpD6Pr395HAgebC/co7hOphs53r8V7jew==}
+    dev: true
+
+  /@types/web@0.0.169:
+    resolution: {integrity: sha512-oRSjHjC3f3/e/8b6jpPfjDnQxJR9s6ajeHJTaN6fnjg466wDO/inKStV52uplNraDg5MJ3sFTYLoBJIdR0w2sg==}
     dev: true
 
   /@types/yargs-parser@21.0.3:
@@ -4294,7 +4316,6 @@ packages:
 
   /undici-types@6.19.8:
     resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
-    dev: true
 
   /universalify@2.0.1:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
