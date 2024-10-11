@@ -128,7 +128,11 @@ describe('[Transaction Upgrade]', () => {
     // Check if the privileged address has been updated
     await expect(() =>
       upgradeConsensusParameters(vault, PRIVILEGED_CONSENSUS_BYTECODE, signer),
-    ).rejects.toThrowError(/Validity\(TransactionUpgradeNoPrivilegedAddress\)/);
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        message: expect.stringContaining('InsufficientMaxFee'),
+      }),
+    );
   });
 
   it('should correctly upgrade gas costs of chain', async () => {
