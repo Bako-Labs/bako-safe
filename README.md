@@ -18,9 +18,9 @@ For for information, check out the [Documentation page](https://doc-safe.bako.gl
 
 ## Requirements
 
-- fuel-core@0.35.0
-- forc@0.63.6
-- fuels-ts@0.94.6
+- fuel-core@0.38.0
+- forc@0.65.2
+- fuels-ts@0.95.0
 
 ## Tests
 
