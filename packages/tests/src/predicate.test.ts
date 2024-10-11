@@ -9,7 +9,7 @@ import {
 } from 'bakosafe';
 
 import { accounts, assets } from './mocks';
-import { bn, ReceiptType, WalletUnlocked } from 'fuels';
+import { Address, bn, ReceiptType, WalletUnlocked } from 'fuels';
 import { ExampleContract } from './types/sway';
 import { ExampleContractFactory } from './types/sway';
 import { launchTestNode } from 'fuels/test-utils';
@@ -34,6 +34,8 @@ describe('[Create]', () => {
         amountPerCoin: 10_000_000_000,
       },
     });
+
+    await deployPredicate(node.wallets[0]);
   });
 
   afterAll(() => {
@@ -57,6 +59,78 @@ describe('[Create]', () => {
     // get balance
     const balance = (await vault.getBalance()).formatUnits(18);
     expect(0.0).toBeLessThan(Number(balance));
+  });
+
+  it('Should fail to create a Vault instance with invalid signers', async () => {
+    const { provider } = node;
+
+    await expect(
+      async () =>
+        new Vault(provider, {
+          SIGNATURES_COUNT: 2,
+          SIGNERS: [
+            // ...wallets.map((w) => w.address.toB256()),
+            Address.fromRandom().toB256().slice(0, -10), // set an inválid address
+          ],
+        }),
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        message: expect.stringContaining('Invalid B256 Address'),
+      }),
+    );
+  });
+
+  it('Should fail create tx with invalid receipt address', async () => {
+    const { provider, wallets } = node;
+
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: wallets.map((w) => w.address.toB256()),
+    });
+
+    const [wallet] = wallets;
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    const { hashTxId, tx } = await vault.transaction({
+      assets: [
+        {
+          to: Address.fromRandom().toB256(),
+          amount: '0.1',
+          assetId: provider.getBaseAssetId(),
+        },
+      ],
+    });
+
+    const signature = await wallet.signMessage(hashTxId);
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature,
+      },
+    ]);
+
+    const res = await vault.send(tx);
+    await res.waitForResult();
+
+    await expect(
+      async () =>
+        await vault.transaction({
+          assets: [
+            {
+              to: `0x${hashTxId}`,
+              amount: '0.1',
+              assetId: provider.getBaseAssetId(),
+            },
+          ],
+        }),
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        message: expect.stringContaining('is not an Account'),
+      }),
+    );
   });
 
   it('Should reinstantiate the Vault successfully', async () => {

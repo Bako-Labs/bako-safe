@@ -295,6 +295,15 @@ export class Vault extends Predicate<[]> {
     hashTxId: string;
   }> {
     const { assets } = params;
+    await Promise.all(
+      assets.map(async (asset) => {
+        const addressType = await this.provider.getAddressType(asset.to);
+        if (addressType !== 'Account') {
+          throw new Error(`Address ${asset.to} is not an Account`);
+        }
+      }),
+    );
+
     const tx = new ScriptTransactionRequest();
 
     const outputs = Asset.assetsGroupByTo(assets);
