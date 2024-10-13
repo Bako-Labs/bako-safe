@@ -38,6 +38,6 @@
     "uuid": "^9.0.1"
   },
   "peerDependencies": {
-    "fuels": "0.96.0"
+    "fuels": "0.96.1"
   }
 }
