@@ -1,25 +1,41 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { recently } from '.';
+import { decompressBytecode } from 'fuels';
 
-export function loadPredicate(version: string = recently) {
-  console.log('[LOAD_PREDICATE]');
+export function getLatestPredicateVersion() {
+  // load versions
+  const versions = require('./versions.json');
 
-  const bakoPredicateLoaderPath = path.join(
-    __dirname,
-    version,
-    'BakoPredicateLoader.ts',
-  );
+  // get latest version by time
+  const keys = Object.keys(versions);
+  let maxTime = -Infinity;
+  keys.forEach((key) => {
+    const currentTime = versions[key].time;
+    if (currentTime > maxTime) {
+      maxTime = currentTime;
+    }
+  });
 
-  console.log('bakoPredicateLoaderPath', bakoPredicateLoaderPath);
+  // get latest version object
+  const key = keys.find((key) => versions[key].time === maxTime) ?? keys[0];
 
-  if (fs.existsSync(bakoPredicateLoaderPath)) {
-    const BakoPredicateLoader = require(bakoPredicateLoaderPath);
+  return {
+    bytecode: versions[key].bytecode,
+    abi: versions[key].abi,
+  };
+}
 
-    return BakoPredicateLoader;
+export function loadPredicate(version?: string) {
+  const versions = require('./versions.json');
+
+  if (!version) {
+    return getLatestPredicateVersion();
   }
 
-  throw new Error(
-    'Nenhum arquivo BakoPredicateLoader.ts encontrado nas pastas de hash.',
-  );
+  if (!versions[version]) {
+    throw new Error(`Version ${version} not found`);
+  }
+
+  return {
+    bytecode: versions[version].bytecode,
+    abi: versions[version].abi,
+  };
 }

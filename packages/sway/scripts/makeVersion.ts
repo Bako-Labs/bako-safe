@@ -1,59 +1,28 @@
 import fs from 'fs';
 import path from 'path';
 import { BakoPredicateLoader } from '../out';
-import { getPredicateRoot } from 'fuels';
+import { compressBytecode, getPredicateRoot, hexlify } from 'fuels';
 
 // data conf
-const PATH_ORIGIN = '../out/predicates';
-const PATH_DESTINY = '../../sdk/src/sway/predicates/';
-
-async function copyPredicate(origin: string, destiny: string) {
-  if (!fs.existsSync(destiny)) {
-    fs.mkdirSync(destiny, { recursive: true });
-  }
-
-  const files = fs.readdirSync(origin);
-  const tsFiles = files.filter((file: string) => file.endsWith('.ts'));
-  tsFiles.forEach((file: string) => {
-    const sourcePath = path.join(origin, file);
-    const destPath = path.join(destiny, file);
-
-    fs.copyFileSync(sourcePath, destPath);
-  });
-
-  console.log(`Arquivos copiados para ${destiny}`);
-}
+const PREDICATE_VERSION_PATH = '../../sdk/src/sway/predicates/versions.json';
 
 async function moveFiles() {
   const rootPredicate = getPredicateRoot(BakoPredicateLoader.bytecode);
 
   // paths
-  const dest_predicate = path.join(__dirname, PATH_DESTINY, rootPredicate);
-  const dest_path = path.join(__dirname, PATH_DESTINY);
-  const origin_path = path.join(__dirname, PATH_ORIGIN);
+  const jsonVersionPath = path.join(__dirname, PREDICATE_VERSION_PATH);
+  const content = fs.readFileSync(jsonVersionPath, 'utf-8');
+  const jsonData = JSON.parse(content);
 
-  if (fs.existsSync(dest_predicate)) {
-    return;
-  }
-  fs.mkdirSync(dest_predicate, { recursive: true });
+  // add new version
+  jsonData[rootPredicate] = {
+    time: new Date().getTime(),
+    bytecode: hexlify(BakoPredicateLoader.bytecode),
+    abi: BakoPredicateLoader.abi,
+  };
 
-  await copyPredicate(origin_path, dest_predicate);
-
-  const files: string[] = fs.readdirSync(dest_path);
-  const tsFiles: string[] = files.filter((file) => !file.endsWith('.ts'));
-
-  let exportStatements = '';
-
-  tsFiles.forEach((file) => {
-    console.log('[FOR_FILE]: ', file);
-    exportStatements += `export * from './${file}';\n`;
-  });
-
-  // add track to date
-  exportStatements += `\n\nexport const recently = "${rootPredicate}";\n`;
-  exportStatements += `export * from './predicateFinder';\n`;
-
-  fs.writeFileSync(path.join(dest_path, 'index.ts'), exportStatements);
+  // write in file
+  fs.writeFileSync(jsonVersionPath, JSON.stringify(jsonData, null, 2));
 }
 
 moveFiles();

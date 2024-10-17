@@ -42,7 +42,7 @@ describe('[Create]', () => {
     node.cleanup();
   });
 
-  it.only('Should successfully create a Vault instance', async () => {
+  it('Should successfully create a Vault instance', async () => {
     const { provider, wallets } = node;
 
     const [wallet] = wallets;
