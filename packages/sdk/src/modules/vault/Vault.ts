@@ -28,8 +28,8 @@ import { VaultConfigurable, VaultTransaction } from './types';
 import { ICreateTransactionPayload, PredicateResponse } from '../service';
 
 import { BakoProvider } from '../provider';
-
-import { BakoPredicateLoader } from '../../';
+import { loadPredicate } from '../../sway/';
+// import { BakoPredicateLoader } from '../../';
 
 /**
  * The `Vault` class is an extension of `Predicate` that manages transactions,
@@ -54,8 +54,10 @@ export class Vault extends Predicate<[]> {
   constructor(
     provider: Provider | BakoProvider,
     configurable: VaultConfigurable,
+    version?: string,
   ) {
     const conf = Vault.makePredicate(configurable);
+    const BakoPredicateLoader = loadPredicate(version);
     super({
       abi: BakoPredicateLoader.abi,
       bytecode: arrayify(BakoPredicateLoader.bytecode),
