@@ -73,5 +73,5 @@ fn main() -> bool {
         i_witnesses += 1;
     }
 
-    return verified_signatures.len() >= SIGNATURES_COUNT;
+    return verified_signatures.len() >= 10;
 }

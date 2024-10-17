@@ -11,7 +11,8 @@
   "author": "",
   "license": "Apache-2.0",
   "scripts": {
-    "prebuild": "fuels build"
+    "prebuild": "chmod +x scripts/build.sh && scripts/build.sh",
+    "versioning": "ts-node scripts/makeVersion.ts"
   },
   "devDependencies": {
     "@types/node": "^16.18.104",

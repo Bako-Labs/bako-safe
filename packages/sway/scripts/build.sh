@@ -9,3 +9,5 @@ pnpm fuels build
 # deploiement of the predicate
 pnpm fuels deploy
 
+# publish on sdk package
+pnpm versioning

@@ -97,7 +97,7 @@ const abi = {
   ]
 };
 
-const bytecode = decompressBytecode('H4sIAAAAAAAAA5NyMGAIcGQwkHIJYNjlycBg5MDSCOQrxALZQJoDyG9ScBVmCHIVYPFyYWCo+cyz8oVddx2vXEL/NlXd4AWNLstirhsY/tffE5To3ZXFAAZMBhB6FNAaODl6+4NoA0MjYxNTM3MLy8Sk5JTUNALaGAmZewYMGJggPGkBCC35AErfgNBiUNWiKyC0YAWEFvgBpVOgtA2E5l8AoXlkIDQnB4TmsAAAt84U34gCAAA=');
+const bytecode = decompressBytecode('H4sIAAAAAAAAA5NyMGAIcGQwkHIJYNjlycBg5MDSCOQrxALZQJoDyG9ScBVmCHIVYPFyYWAQPrbltqEVk1yj34Zlzlzb3+989vnaDrsffLd4GiWO/IwrZQADJgMIPQpoDZwcvf1BtIGhkbGJqZm5hWViUnJKahoBbYyEzD0DBgxMEJ60CISWfAKl70BoMRYILboGQgvWQGiBP1A6A0o7QGj+JRCaRwFCc/JAaA4bALEeImCIAgAA');
 
 export class BakoPredicateLoader extends Predicate<
   BakoPredicateLoaderInputs,

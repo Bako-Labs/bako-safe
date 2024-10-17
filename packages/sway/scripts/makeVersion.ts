@@ -32,21 +32,26 @@ async function moveFiles() {
   const dest_path = path.join(__dirname, PATH_DESTINY);
   const origin_path = path.join(__dirname, PATH_ORIGIN);
 
-  if (!fs.existsSync(dest_predicate)) {
-    fs.mkdirSync(dest_predicate, { recursive: true });
+  if (fs.existsSync(dest_predicate)) {
+    return;
   }
+  fs.mkdirSync(dest_predicate, { recursive: true });
 
   await copyPredicate(origin_path, dest_predicate);
 
   const files: string[] = fs.readdirSync(dest_path);
-  const tsFiles: string[] = files.filter((file) => file !== 'index.ts');
+  const tsFiles: string[] = files.filter((file) => !file.endsWith('.ts'));
 
   let exportStatements = '';
 
   tsFiles.forEach((file) => {
     console.log('[FOR_FILE]: ', file);
-    exportStatements += `export * from './${rootPredicate}';\n`;
+    exportStatements += `export * from './${file}';\n`;
   });
+
+  // add track to date
+  exportStatements += `\n\nexport const recently = "${rootPredicate}";\n`;
+  exportStatements += `export * from './predicateFinder';\n`;
 
   fs.writeFileSync(path.join(dest_path, 'index.ts'), exportStatements);
 }
