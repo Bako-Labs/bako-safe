@@ -32,6 +32,10 @@ async function extractCommentFromFile(
 async function moveFiles() {
   const rootPredicate = getPredicateRoot(BakoPredicateLoader.bytecode);
 
+  if (!rootPredicate) {
+    throw new Error('Could not find root predicate');
+  }
+
   // paths
   const toolchainPath = path.join(__dirname, PREDICATE_TOOLCHAIN_PATH);
   const jsonVersionPath = path.join(__dirname, PREDICATE_VERSION_PATH);
@@ -39,6 +43,14 @@ async function moveFiles() {
   const jsonData = JSON.parse(content);
 
   const toolchain = await extractCommentFromFile(toolchainPath);
+
+  // check if version already exists and toolchain is the same
+  if (
+    jsonData[rootPredicate] &&
+    jsonData[rootPredicate].toolchain.fuelsVersion === toolchain.fuelsVersion
+  ) {
+    return;
+  }
 
   // add new version
   jsonData[rootPredicate] = {
