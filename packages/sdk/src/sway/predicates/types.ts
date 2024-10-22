@@ -6,6 +6,12 @@ export interface Version {
   time: number;
 }
 
+export interface FuelToolChain {
+  fuelsVersion: string;
+  forcVersion: string;
+  fuelCoreVersion: string;
+}
+
 export interface VersionFile {
   [version: string]: Version;
 }
