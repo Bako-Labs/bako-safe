@@ -33,7 +33,7 @@ async function setNetworkDeployed() {
 
   fs.writeFileSync(jsonVersionPath, JSON.stringify(jsonData, null, 2));
 
-  console.log('✅ Network deployed set', network);
+  console.log('✅ Network deployed set', network, rootPredicate);
 }
 
 setNetworkDeployed();
