@@ -58,6 +58,7 @@ async function moveFiles() {
     bytecode: hexlify(BakoPredicateLoader.bytecode),
     abi: BakoPredicateLoader.abi,
     toolchain,
+    description: '',
   };
 
   // write in file
