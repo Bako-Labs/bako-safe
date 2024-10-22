@@ -29,7 +29,6 @@ import { ICreateTransactionPayload, PredicateResponse } from '../service';
 
 import { BakoProvider } from '../provider';
 import { loadPredicate } from '../../sway/';
-// import { BakoPredicateLoader } from '../../';
 
 /**
  * The `Vault` class is an extension of `Predicate` that manages transactions,
