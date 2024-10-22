@@ -1,8 +1,8 @@
 import { decompressBytecode } from 'fuels';
+import { versions } from './';
 
 export function getLatestPredicateVersion() {
   // load versions
-  const versions = require('./versions.json');
 
   // get latest version by time
   const keys = Object.keys(versions);
@@ -24,8 +24,6 @@ export function getLatestPredicateVersion() {
 }
 
 export function loadPredicate(version?: string) {
-  const versions = require('./versions.json');
-
   if (!version) {
     return getLatestPredicateVersion();
   }
