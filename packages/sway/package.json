@@ -11,8 +11,8 @@
   "author": "",
   "license": "Apache-2.0",
   "scripts": {
-    "prebuild": "chmod +x scripts/build.sh && scripts/build.sh",
-    "versioning": "ts-node scripts/makeVersion.ts"
+    "prebuild": "pnpm fuels build && ts-node scripts/makeVersion.ts",
+    "predicate:deploy": "chmod +x scripts/build.sh && scripts/build.sh"
   },
   "devDependencies": {
     "@types/node": "^16.18.104",

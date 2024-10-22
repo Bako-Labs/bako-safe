@@ -10,4 +10,4 @@ pnpm fuels build
 pnpm fuels deploy
 
 # publish on sdk package
-pnpm versioning
+ts-node scripts/setNetworkDeployed.ts

@@ -11,7 +11,9 @@ export interface Version {
   abi: JsonAbi;
   time: number;
   toolchain: FuelToolChain;
-  description?: string; // manually put in versions.json hourly
+  deployed: string[];
+  // manually put in versions.json hourly
+  description?: string;
 }
 
 export interface VersionFile {

@@ -1,35 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import { BakoPredicateLoader } from '../out';
-import { FuelToolChain } from '../../sdk/src/sway/predicates/types';
 import { getPredicateRoot, hexlify } from 'fuels';
+import { getFuelToolchain } from './getFuelToolchain';
 
 // data conf
-const PREDICATE_VERSION_PATH = '../../sdk/src/sway/predicates/versions.json';
+export const PREDICATE_VERSION_PATH =
+  '../../sdk/src/sway/predicates/versions.json';
 const PREDICATE_TOOLCHAIN_PATH = '../out/predicates/index.ts';
 
-async function extractCommentFromFile(
-  filePath: string,
-): Promise<FuelToolChain> {
-  const fileContent = fs.readFileSync(filePath, 'utf-8');
-
-  const versionInfoRegex =
-    /Fuels version:\s*([\d.]+)[\s\S]*?Forc version:\s*([\d.]+)[\s\S]*?Fuel-Core version:\s*([\d.]+)/;
-
-  const match = fileContent.match(versionInfoRegex);
-
-  if (match) {
-    return {
-      fuelsVersion: match[1],
-      forcVersion: match[2],
-      fuelCoreVersion: match[3],
-    };
-  }
-
-  throw new Error('Could not find version information');
-}
-
-async function moveFiles() {
+async function makeVersion() {
   const rootPredicate = getPredicateRoot(BakoPredicateLoader.bytecode);
 
   if (!rootPredicate) {
@@ -42,13 +22,10 @@ async function moveFiles() {
   const content = fs.readFileSync(jsonVersionPath, 'utf-8');
   const jsonData = JSON.parse(content);
 
-  const toolchain = await extractCommentFromFile(toolchainPath);
+  const toolchain = await getFuelToolchain(toolchainPath);
 
   // check if version already exists and toolchain is the same
-  if (
-    jsonData[rootPredicate] &&
-    jsonData[rootPredicate].toolchain.fuelsVersion === toolchain.fuelsVersion
-  ) {
+  if (jsonData[rootPredicate]) {
     return;
   }
 
@@ -59,10 +36,12 @@ async function moveFiles() {
     abi: BakoPredicateLoader.abi,
     toolchain,
     description: '',
+    deployed: [],
   };
 
   // write in file
   fs.writeFileSync(jsonVersionPath, JSON.stringify(jsonData, null, 2));
+  console.log('✅ [BUILD] Root predicate:', rootPredicate);
 }
 
-moveFiles();
+makeVersion();
