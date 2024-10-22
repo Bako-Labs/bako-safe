@@ -1,4 +1,4 @@
-import fs, { readFileSync } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import { BakoPredicateLoader } from '../out';
 import { FuelToolChain } from '../../sdk/src/sway/predicates/types';
