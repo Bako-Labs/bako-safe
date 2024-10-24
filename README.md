@@ -20,7 +20,7 @@ For for information, check out the [Documentation page](https://doc-safe.bako.gl
 
 - fuel-core@0.38.0
 - forc@0.65.2
-- fuels-ts@0.95.0
+- fuels-ts@0.96.1
 
 ## Tests
 
