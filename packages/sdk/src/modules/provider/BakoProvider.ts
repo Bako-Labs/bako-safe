@@ -119,6 +119,7 @@ export class BakoProvider extends Provider {
       predicateAddress: vault.address.toB256(),
       configurable: JSON.stringify(vault.configurable),
       provider: this.url,
+      version: vault.version,
     };
 
     const predicate = await this.service.createPredicate(payload);
