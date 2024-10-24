@@ -6,10 +6,18 @@ import {
   Vault,
   bakoCoder,
   SignatureType,
+  DEFAULT_PREDICATE_VERSION,
 } from 'bakosafe';
 
-import { accounts, assets } from './mocks';
-import { Address, bn, ReceiptType, WalletUnlocked } from 'fuels';
+import { accounts, assets, networks } from './mocks';
+import {
+  Address,
+  bn,
+  getRandomB256,
+  Provider,
+  ReceiptType,
+  WalletUnlocked,
+} from 'fuels';
 import { ExampleContract } from './types/sway';
 import { ExampleContractFactory } from './types/sway';
 import { launchTestNode } from 'fuels/test-utils';
@@ -155,6 +163,108 @@ describe('[Create]', () => {
     expect(vault.address.toB256()).toBe(vault2.address.toB256());
     expect(vault.configurable).toEqual(vault2.configurable);
     expect(await vault.getBalances()).toEqual(await vault2.getBalances());
+  });
+});
+
+describe('[Version]', () => {
+  let node: Awaited<ReturnType<typeof launchTestNode>>;
+
+  beforeAll(async () => {
+    // launch a test node
+    node = await launchTestNode({
+      walletsConfig: {
+        assets: testAssets,
+        coinsPerAsset: 1,
+        amountPerCoin: 10_000_000_000,
+      },
+    });
+
+    await deployPredicate(node.wallets[0]);
+  });
+
+  afterAll(() => {
+    node.cleanup();
+  });
+
+  it('Should create a vault with default version', async () => {
+    const { provider } = node;
+    const [wallet] = node.wallets;
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [wallet.address.toB256()],
+    });
+
+    const version = vault.version;
+    expect(version).toBe(DEFAULT_PREDICATE_VERSION);
+  });
+
+  it('Should create a vault with a specific version', async () => {
+    const provider = await Provider.create(networks['TESNET']);
+    const [wallet] = node.wallets;
+
+    const vault = new Vault(
+      provider,
+      {
+        SIGNATURES_COUNT: 1,
+        SIGNERS: [wallet.address.toB256()],
+      },
+      DEFAULT_PREDICATE_VERSION,
+    );
+
+    expect(vault.version).toBe(DEFAULT_PREDICATE_VERSION);
+  });
+
+  it('Should create a vault latest version and recover with param', async () => {
+    const provider = await Provider.create(networks['TESNET']);
+    const [wallet] = node.wallets;
+
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [wallet.address.toB256()],
+    });
+
+    const params = vault.configurable;
+    const vault2 = new Vault(provider, params, vault.version);
+
+    expect(vault2.version).toBe(vault.version);
+    expect(vault.address.toB256()).toBe(vault2.address.toB256());
+  });
+
+  it('Should create a vault with a specific version not deployed on this provider', async () => {
+    const { provider } = node;
+    const [wallet] = node.wallets;
+    expect(() => {
+      new Vault(
+        provider,
+        {
+          SIGNATURES_COUNT: 1,
+          SIGNERS: [wallet.address.toB256()],
+        },
+        DEFAULT_PREDICATE_VERSION,
+      );
+    }).toThrow({
+      name: 'Error',
+      message: `Version ${DEFAULT_PREDICATE_VERSION} not deployed on ${provider.url}`,
+    });
+  });
+
+  it('Should create a vault with a inválid version', async () => {
+    const { provider } = node;
+    const [wallet] = node.wallets;
+    const version = getRandomB256();
+    expect(() => {
+      new Vault(
+        provider,
+        {
+          SIGNATURES_COUNT: 1,
+          SIGNERS: [wallet.address.toB256()],
+        },
+        version,
+      );
+    }).toThrow({
+      name: 'Error',
+      message: `Version ${version} not found`,
+    });
   });
 });
 

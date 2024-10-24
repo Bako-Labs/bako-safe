@@ -91,7 +91,7 @@ export interface IPredicatePayload {
   description?: string;
   predicateAddress: string;
   configurable: string;
-  versionCode?: string;
+  version: string;
   provider: string;
 }
 
@@ -104,6 +104,7 @@ export type PredicateResponse = {
     SIGNERS: string[];
     HASH_PREDICATE: string;
   };
+  version: string;
 };
 
 export interface ISignTransaction {

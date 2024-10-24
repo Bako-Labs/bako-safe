@@ -28,8 +28,7 @@ import { VaultConfigurable, VaultTransaction } from './types';
 import { ICreateTransactionPayload, PredicateResponse } from '../service';
 
 import { BakoProvider } from '../provider';
-
-import { BakoPredicateLoader } from '../../';
+import { loadPredicate } from '../../sway/';
 
 /**
  * The `Vault` class is an extension of `Predicate` that manages transactions,
@@ -42,6 +41,7 @@ export class Vault extends Predicate<[]> {
   readonly bakoFee = bn(0);
   readonly maxSigners = 10;
   readonly configurable: VaultConfigurable;
+  readonly predicateVersion: string;
 
   __provider: Provider | BakoProvider;
 
@@ -54,8 +54,10 @@ export class Vault extends Predicate<[]> {
   constructor(
     provider: Provider | BakoProvider,
     configurable: VaultConfigurable,
+    version?: string,
   ) {
     const conf = Vault.makePredicate(configurable);
+    const BakoPredicateLoader = loadPredicate(provider.url, version);
     super({
       abi: BakoPredicateLoader.abi,
       bytecode: arrayify(BakoPredicateLoader.bytecode),
@@ -63,6 +65,7 @@ export class Vault extends Predicate<[]> {
       configurableConstants: conf,
     });
 
+    this.predicateVersion = BakoPredicateLoader.version;
     this.configurable = conf;
     this.__provider = provider;
   }
@@ -325,6 +328,15 @@ export class Vault extends Predicate<[]> {
     this.populateTransactionPredicateData(tx);
 
     return this.BakoTransfer(tx, { name: params.name });
+  }
+
+  /**
+   * Retrieves the current version of the predicate being used.
+   *
+   * @returns {string} The version of the predicate.
+   */
+  public get version(): string {
+    return this.predicateVersion;
   }
 
   public get provider(): Provider | BakoProvider {

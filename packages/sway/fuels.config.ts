@@ -11,5 +11,5 @@ export default createConfig({
   providerUrl,
   predicates: ['./src/predicate'],
   forcBuildFlags: ['--release'],
-  output: '../sdk/src/sway',
+  output: './out',
 });

@@ -73,12 +73,13 @@ export class Service {
   ): Promise<PredicateResponse> {
     const { provider, ...rest } = payload;
     const {
-      data: { predicateAddress, configurable },
+      data: { predicateAddress, configurable, version },
     } = await this.api.post('/predicate', rest);
 
     return {
       predicateAddress,
       configurable: JSON.parse(configurable),
+      version,
     };
   }
 
@@ -89,12 +90,13 @@ export class Service {
    */
   async findByAddress(_predicateAddress: string): Promise<PredicateResponse> {
     const {
-      data: { configurable, predicateAddress },
+      data: { configurable, predicateAddress, version },
     } = await this.api.get(`/predicate/by-address/${_predicateAddress}`);
 
     return {
       configurable: JSON.parse(configurable),
       predicateAddress,
+      version,
     };
   }
 
