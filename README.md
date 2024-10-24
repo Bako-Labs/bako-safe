@@ -26,10 +26,11 @@ For for information, check out the [Documentation page](https://doc-safe.bako.gl
 
 1. Install [Fuel Toolchain](https://docs.fuel.network/guides/installation/)
 2. Install dependencies with pnpm: `pnpm install`
-3. Build packages: `pnpm -w build`
-4. `cd packages/tests`
-5. Run the tests: `pnpm test`
-6. Or run only test file `pnpm test:file ${filename}`
+3. On `packages/sway` add your `.env` file as in `.env.example`
+4. Build packages: `pnpm -w build`
+5. `cd packages/tests`
+6. Run the tests: `pnpm test`
+7. Or run only test file `pnpm test:file ${filename}`
 
 ## Run debug mode:
 
