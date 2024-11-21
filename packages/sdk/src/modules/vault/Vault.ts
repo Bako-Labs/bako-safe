@@ -147,11 +147,15 @@ export class Vault extends Predicate<[]> {
   public async maxGasUsed(): Promise<BN> {
     const request = new ScriptTransactionRequest();
 
-    const vault = new Vault(this.provider, {
-      SIGNATURES_COUNT: this.maxSigners,
-      SIGNERS: Array.from({ length: this.maxSigners }, () => ZeroBytes32),
-      HASH_PREDICATE: ZeroBytes32,
-    });
+    const vault = new Vault(
+      this.provider,
+      {
+        SIGNATURES_COUNT: this.maxSigners,
+        SIGNERS: Array.from({ length: this.maxSigners }, () => ZeroBytes32),
+        HASH_PREDICATE: ZeroBytes32,
+      },
+      this.predicateVersion,
+    );
 
     request.addCoinInput({
       id: ZeroBytes32,
@@ -263,8 +267,10 @@ export class Vault extends Predicate<[]> {
     reference: string,
     provider: BakoProvider,
   ): Promise<Vault> {
-    const { configurable } = await provider.findPredicateByAddress(reference);
-    return new Vault(provider, configurable);
+    const { configurable, version } =
+      await provider.findPredicateByAddress(reference);
+
+    return new Vault(provider, configurable, version);
   }
 
   /**
