@@ -95,7 +95,7 @@ export class Vault extends Predicate<[]> {
    */
   async BakoTransfer(
     tx: TransactionRequestLike,
-    options?: Pick<ICreateTransactionPayload, 'name'>,
+    options?: Pick<ICreateTransactionPayload, 'name' | 'resolver' | 'handle'>,
   ): Promise<{
     tx: TransactionRequest;
     hashTxId: string;
@@ -106,6 +106,8 @@ export class Vault extends Predicate<[]> {
     if (this.provider instanceof BakoProvider) {
       await this.provider.saveTransaction(result, {
         name: options?.name,
+        resolver: options?.resolver,
+        handle: options?.handle,
         predicateAddress: this.address.toB256(),
       });
     }
@@ -333,7 +335,11 @@ export class Vault extends Predicate<[]> {
     });
     this.populateTransactionPredicateData(tx);
 
-    return this.BakoTransfer(tx, { name: params.name });
+    return this.BakoTransfer(tx, {
+      name: params.name,
+      handle: params.handle,
+      resolver: params.resolver,
+    });
   }
 
   /**

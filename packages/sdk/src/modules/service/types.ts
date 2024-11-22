@@ -68,6 +68,8 @@ export interface IConnectorSummary extends BaseSummary {
 export interface ICreateTransactionPayload {
   predicateAddress: string; // ADDRESS OF PREDICATE
   name?: string;
+  resolver?: string;
+  handle?: string;
   hash: string; // HASH OF TRANSACTION
   txData: TransactionRequest;
   status: TransactionStatus;
@@ -154,6 +156,8 @@ export interface ITransactionResume {
   requiredSigners: number;
   witnesses: IWitnesses[];
   status: TransactionStatus;
+  handle?: string;
+  resolver?: string;
   predicate: {
     id: string;
     address: string;

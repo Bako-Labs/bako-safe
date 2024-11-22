@@ -9,4 +9,6 @@ export type VaultConfigurable = {
 
 export type VaultTransaction = Pick<ICreateTransactionPayload, 'name'> & {
   assets: ITransferAsset[];
+  resolver?: string;
+  handle?: string;
 };

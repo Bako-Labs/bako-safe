@@ -146,10 +146,15 @@ export class BakoProvider extends Provider {
    */
   async saveTransaction(
     request: TransactionRequest,
-    transaction: Pick<ICreateTransactionPayload, 'name' | 'predicateAddress'>,
+    transaction: Pick<
+      ICreateTransactionPayload,
+      'name' | 'predicateAddress' | 'handle' | 'resolver'
+    >,
   ) {
     const payload: ICreateTransactionPayload = {
       name: transaction.name ?? `vault ${randomUUID()}`,
+      resolver: transaction.resolver,
+      handle: transaction.handle,
       predicateAddress: transaction.predicateAddress,
       hash: request.getTransactionId(this.getChainId()).slice(2),
       txData: request,
