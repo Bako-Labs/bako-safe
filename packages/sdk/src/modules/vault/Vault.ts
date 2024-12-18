@@ -51,18 +51,33 @@ export class Vault extends Predicate<[]> {
    * @param {Provider | BakoProvider} provider - The provider instance
    * @param {VaultConfigurable} configurable - The configuration for the vault, including signature requirements.
    */
+  constructor(provider: BakoProvider);
   constructor(
     provider: Provider | BakoProvider,
     configurable: VaultConfigurable,
     version?: string,
+  );
+  constructor(
+    provider: Provider | BakoProvider,
+    configurable?: VaultConfigurable,
+    version?: string,
   ) {
-    const conf = Vault.makePredicate(configurable);
+    let conf = configurable;
+
+    if ('cliAuth' in provider && provider.cliAuth) {
+      conf = provider.cliAuth.configurable;
+    }
+
+    if (!conf) {
+      throw new Error('Vault configurable is required');
+    }
+
     const BakoPredicateLoader = loadPredicate(provider.url, version);
     super({
       abi: BakoPredicateLoader.abi,
       bytecode: arrayify(BakoPredicateLoader.bytecode),
       provider: provider,
-      configurableConstants: conf,
+      configurableConstants: Vault.makePredicate(conf),
     });
 
     this.predicateVersion = BakoPredicateLoader.version;
@@ -114,6 +129,15 @@ export class Vault extends Predicate<[]> {
       tx: result,
       hashTxId: result.getTransactionId(this.provider.getChainId()).slice(2),
     };
+  }
+
+  async sendTransaction(transactionRequestLike: TransactionRequestLike) {
+    if ('address' in this.provider.options && this.provider.options.address) {
+      const { hashTxId } = await this.BakoTransfer(transactionRequestLike);
+      return new TransactionResponse(hashTxId, this.provider);
+    }
+
+    return super.sendTransaction(transactionRequestLike);
   }
 
   /**

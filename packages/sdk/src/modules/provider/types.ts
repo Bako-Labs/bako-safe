@@ -7,6 +7,10 @@ export type BakoProviderOptions = ProviderOptions & {
   serverApi?: string;
 };
 
+export type BakoCustomProviderOptions = ProviderOptions & {
+  apiToken: string;
+};
+
 export type BakoProviderAuthOptions = BakoProviderOptions & {
   challenge: string;
   encoder?: TypeUser;
