@@ -12,6 +12,7 @@ import {
   IPredicatePayload,
   ISignTransaction,
   TransactionStatus,
+  CLIAuth,
 } from '../service';
 
 import {
@@ -19,6 +20,7 @@ import {
   BakoProviderSetup,
   BakoProviderOptions,
   BakoProviderAuthOptions,
+  BakoCustomProviderOptions,
 } from './types';
 
 import { Vault } from '../vault';
@@ -31,6 +33,7 @@ import { Vault } from '../vault';
 export class BakoProvider extends Provider {
   public options: BakoProviderOptions;
   public service: Service;
+  public cliAuth?: CLIAuth;
 
   /**
    * Protected constructor to initialize BakoProvider.
@@ -76,9 +79,28 @@ export class BakoProvider extends Provider {
    */
   static async create(
     url: string,
-    options: BakoProviderOptions,
+    options: BakoProviderOptions | BakoCustomProviderOptions,
   ): Promise<BakoProvider> {
-    const provider = new BakoProvider(url, options);
+    if ('apiToken' in options && options.apiToken) {
+      const { apiToken, ...rest } = options;
+      const providerFuel = await Provider.create(url);
+      const cliAuth = await Service.cliAuth({
+        token: options.apiToken,
+        network: {
+          url: providerFuel.url,
+          chainId: providerFuel.getChainId(),
+        },
+      });
+      const provider = new BakoProvider(url, {
+        ...rest,
+        token: cliAuth.code,
+        address: cliAuth.address,
+      });
+      provider.cliAuth = cliAuth;
+      return provider;
+    }
+
+    const provider = new BakoProvider(url, options as BakoProviderOptions);
     await provider.fetchChainAndNodeInfo();
     return provider;
   }

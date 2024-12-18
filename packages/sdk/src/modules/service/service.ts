@@ -14,6 +14,8 @@ import {
   CreateSessionResponse,
   TransactionBakoResponse,
   UserAuthResponse,
+  CLIAuthPayload,
+  CLIAuth,
 } from './types';
 
 // keep here to sync with the other files
@@ -185,5 +187,11 @@ export class Service {
     const { data } = await api.post('/auth/sign-in', params);
 
     return !!data;
+  }
+
+  static async cliAuth(params: CLIAuthPayload): Promise<CLIAuth> {
+    const { data } = await api.post<CLIAuth>('/cli/auth', params);
+
+    return data;
   }
 }

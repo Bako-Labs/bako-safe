@@ -205,3 +205,24 @@ export interface Workspace {
   name: string;
   avatar: string;
 }
+
+export type CLIAuthPayload = {
+  token: string;
+  network: {
+    url: string;
+    chainId: number;
+  };
+};
+
+export type CLIAuth = {
+  code: string;
+  address: string;
+  configurable: {
+    SIGNATURES_COUNT: number;
+    SIGNERS: string[];
+    HASH_PREDICATE: string;
+  };
+  tokenConfig: {
+    transactionTitle: string;
+  };
+};
