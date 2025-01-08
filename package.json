@@ -1,5 +1,6 @@
 {
   "name": "bako-safe",
+  "private": true,
   "version": "0.0.50",
   "description": "A signature validation package built based on sway in the fuel network",
   "author": "Bako labs",
@@ -17,6 +18,7 @@
     "test": "turbo run test"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.27.11",
     "@types/node-fetch": "^2.6.11",
     "@types/web": "^0.0.169",
     "dotenv": "^16.4.1",
