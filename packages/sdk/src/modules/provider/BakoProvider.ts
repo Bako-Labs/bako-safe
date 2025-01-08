@@ -20,7 +20,7 @@ import {
   BakoProviderSetup,
   BakoProviderOptions,
   BakoProviderAuthOptions,
-  BakoCustomProviderOptions,
+  BakoProviderAPITokenOptions,
 } from './types';
 
 import { Vault } from '../vault';
@@ -79,7 +79,7 @@ export class BakoProvider extends Provider {
    */
   static async create(
     url: string,
-    options: BakoProviderOptions | BakoCustomProviderOptions,
+    options: BakoProviderOptions | BakoProviderAPITokenOptions,
   ): Promise<BakoProvider> {
     if ('apiToken' in options && options.apiToken) {
       const { apiToken, ...rest } = options;

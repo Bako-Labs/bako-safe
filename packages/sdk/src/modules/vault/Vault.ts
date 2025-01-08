@@ -131,6 +131,12 @@ export class Vault extends Predicate<[]> {
     };
   }
 
+  /**
+   * Sends a transaction with the vault's predicate data.
+   *
+   * @param {TransactionRequestLike} transactionRequestLike - The transaction request to send.
+   * @returns {Promise<TransactionResponse>} The response from the blockchain.
+   */
   async sendTransaction(transactionRequestLike: TransactionRequestLike) {
     if ('address' in this.provider.options && this.provider.options.address) {
       const { hashTxId } = await this.BakoTransfer(transactionRequestLike);

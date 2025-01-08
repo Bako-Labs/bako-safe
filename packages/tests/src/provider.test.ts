@@ -11,6 +11,7 @@ import {
   ICreateTransactionPayload,
   IPredicatePayload,
   ISignTransactionRequest,
+  Service
   // @ts-ignore
 } from 'bakosafe/src';
 import { deployPredicate } from './utils';
@@ -131,6 +132,13 @@ jest.mock('../../sdk/src/modules/service', () => {
       return;
     });
 
+  // @ts-ignore
+  mockService.cliAuth = jest
+    .fn()
+    .mockImplementation(async (_: ISignTransactionRequest) => {
+      return;
+    });
+
   return {
     Service: mockService,
     TypeUser: actualProvider.TypeUser,
@@ -208,6 +216,40 @@ describe('[AUTH]', () => {
     expect(vaultProvider.options.token).toBe(token);
     expect(tokens).toBeDefined();
     expect(tokens.length).toBeGreaterThan(0);
+  });
+
+  it('Should authenticate successfully by an API Token', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+    const address = wallet.address.toB256();
+    const fakeAPIToken = 'b522eabvfdg3cd9ddfd20e8';
+
+    const predicate = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [address],
+      HASH_PREDICATE: Address.fromRandom().toB256(),
+    });
+
+    const spyInstance = jest
+      .spyOn(Service, 'cliAuth')
+      .mockResolvedValue({
+        code: 'mocked_challenge',
+        address,
+        configurable: predicate.configurable,
+        tokenConfig: {
+          transactionTitle: 'Transaction',
+        },
+      });
+
+    const vaultProvider = await BakoProvider.create(provider.url, {
+      apiToken: fakeAPIToken,
+    });
+    const predicateProviderInstance = new Vault(vaultProvider);
+    expect(predicateProviderInstance.address.toB256()).toBe(predicate.address.toB256());
+
+    spyInstance.mockRestore();
   });
 
   it('Should retrieve all user workspaces successfully', async () => {
