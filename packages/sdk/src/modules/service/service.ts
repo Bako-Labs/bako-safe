@@ -15,7 +15,7 @@ import {
   TransactionBakoResponse,
   UserAuthResponse,
   CLIAuthPayload,
-  CLIAuth,
+  CLIAuth
 } from './types';
 
 // keep here to sync with the other files
@@ -189,6 +189,11 @@ export class Service {
     return !!data;
   }
 
+  /**
+   * Authenticate with a API Token
+   * @param {CLIAuthPayload} params - The CLI authentication payload.
+   * @returns {Promise<CLIAuth>}    - The response containing the CLI authentication details.
+   */
   static async cliAuth(params: CLIAuthPayload): Promise<CLIAuth> {
     const { data } = await api.post<CLIAuth>('/cli/auth', params);
 
