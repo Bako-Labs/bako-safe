@@ -1,5 +1,6 @@
 {
   "name": "@bako-safe/sway",
+  "private": true,
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
