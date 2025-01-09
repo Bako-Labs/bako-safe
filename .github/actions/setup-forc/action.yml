@@ -22,5 +22,5 @@ runs:
     - name: Install Fuel toolchain
       uses: FuelLabs/action-fuel-toolchain@v0.6.0
       with:
-        name: fuel-bridge
+        name: bako-safe-sdk
         components: ${{ inputs.forc-components }}
