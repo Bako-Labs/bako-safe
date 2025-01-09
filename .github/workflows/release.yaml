@@ -56,6 +56,6 @@ jobs:
         with:
           commit: 'chore(deploy): Release'
           title: 'chore(deploy): Release'
-          publish: pnpm changeset publish --filter=bakosafe
+          publish: pnpm ci:release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
