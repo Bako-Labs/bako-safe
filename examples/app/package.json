@@ -1,0 +1,21 @@
+{
+  "name": "vite-ts-minimal",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "bakosafe": "workspace:*",
+    "events": "^3.3.0",
+    "json-rpc-2.0": "^1.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.4"
+  }
+}

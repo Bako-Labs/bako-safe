@@ -1,5 +1,5 @@
-import type React from 'react';
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 interface MyContextValue {
   state: string;
@@ -12,6 +12,8 @@ interface MyContextProviderProps {
   children: ReactNode;
 }
 
+const queryClient = new QueryClient(); // Instância do Query Client
+
 export const MyContextProvider: React.FC<MyContextProviderProps> = ({
   children,
 }) => {
@@ -22,9 +24,11 @@ export const MyContextProvider: React.FC<MyContextProviderProps> = ({
   };
 
   return (
-    <MyContext.Provider value={{ state, updateState }}>
-      {children}
-    </MyContext.Provider>
+    <QueryClientProvider client={queryClient}>
+      <MyContext.Provider value={{ state, updateState }}>
+        {children}
+      </MyContext.Provider>
+    </QueryClientProvider>
   );
 };
 

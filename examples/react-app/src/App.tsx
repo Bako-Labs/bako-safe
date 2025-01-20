@@ -2,7 +2,7 @@ import { useState } from 'react';
 import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 import './App.css';
-import { createAccount, signChallange } from 'bakowallet';
+import { WebAuthn, useCreateAccount } from 'bakowallet';
 import { Address } from 'fuels';
 
 function App() {
@@ -14,26 +14,32 @@ function App() {
   }>();
   const name = `${new Date().getTime()}`;
 
-  const create = async () => {
-    const a = await createAccount(name, `${Address.fromRandom().toString()}`);
-    console.log(a);
-    const c = {
-      id: a.credential?.id ?? '',
-      publicKey: a.publicKeyHex,
-      address: a.address,
-    };
-    setAccount(c);
-  };
+  const { mutate, data } = useCreateAccount();
 
   const sign = async () => {
     if (!account) return;
-    const b = await signChallange(
+    const b = await WebAuthn.signChallenge(
       account.id,
       `${Address.fromRandom().toString()}`,
       account.publicKey,
     );
 
     setSignedMessage(b.signature);
+  };
+
+  const handleCreate = async () => {
+    mutate(
+      {
+        name: 'dnsaodnasdans12',
+        provider: 'https://testnet.fuel.network/v1/graphql',
+      },
+      {
+        onSuccess: ({ address }) => {
+          console.log(address);
+          setAccount(address);
+        },
+      },
+    );
   };
 
   return (
@@ -49,7 +55,7 @@ function App() {
       <h1>Vite + React</h1>
       <div className="card">
         {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
-        <button onClick={create}>create account</button>
+        <button onClick={handleCreate}>create account</button>
         {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
         <button onClick={sign}>sign random message</button>
       </div>
