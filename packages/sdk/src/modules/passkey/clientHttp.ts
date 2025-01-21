@@ -1,4 +1,3 @@
-import { Storage, StorageKey } from './storage';
 import { HTTP_URL } from './constants';
 
 export const client = (
@@ -12,8 +11,6 @@ export const client = (
   const headers: HeadersInit = {
     ...options.headers,
     'Content-Type': 'application/json',
-    SignerAddress: Storage.get(StorageKey.USER_ADDRESS),
-    Authorization: Storage.get(StorageKey.USER_TOKEN),
   };
 
   const fetchOptions: RequestInit = {
