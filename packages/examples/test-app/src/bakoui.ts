@@ -65,7 +65,7 @@ client.onMessage(async (message) => {
         client.sendMessage({
           type: SocketEvents.PASSKEY_SIGN_RESPONSE,
           data: {
-            signature: signature?.signature,
+            signature,
           },
           to: SocketUsernames.PASSKEY,
         });

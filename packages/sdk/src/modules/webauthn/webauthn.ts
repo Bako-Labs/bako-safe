@@ -117,6 +117,7 @@ export async function signChallange(
   challenge: string,
   publicKey: string,
 ) {
+  console.log('signChallange', id, challenge, publicKey);
   try {
     const authentication = await navigator.credentials.get({
       publicKey: {

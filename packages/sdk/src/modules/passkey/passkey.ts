@@ -5,20 +5,26 @@
 // 4. bako.safe publica na api um novo usuario, ao finalizar a api envia uma mensagem para a sdk com o resultado
 import { SocketClient } from './clientSocket';
 import { Popup } from './iframe';
-import { createUserRequest, TypeUser } from './services/createUser';
 import { SocketEvents, SocketUsernames, PopupActions } from './types';
 import { sessionId, requestId } from './utils';
 import { hardwareId } from './utils/hardwareId';
-import { Address } from 'fuels';
+import { Address, Provider } from 'fuels';
 import { addPasskey, listPasskeys } from './utils/passkeyId';
+import { Vault, VaultConfigurable } from '../vault';
 
 const ui_url = 'http://localhost:5173/bakoui.html';
 
 export class Passkey {
   client: SocketClient;
+  vault: Vault | null = null;
+  signer: Record<string, any> | null = null;
   activeAction: boolean = false;
+  provider: Provider;
 
-  constructor() {
+  // needs a provider
+  // needs a storage mechanism
+  constructor(provider: Provider) {
+    this.provider = provider;
     this.client = new SocketClient(
       SocketUsernames.PASSKEY,
       sessionId,
@@ -33,7 +39,6 @@ export class Passkey {
   // retorna a resposta para o dapp
   createAccount(username: string): Record<string, any> {
     const hasActiveAction = this.activeAction;
-    // const isValid = this.isValidUsername(username);
     const isValid = true;
 
     if (hasActiveAction || !isValid) {
@@ -82,27 +87,25 @@ export class Passkey {
           };
           const address = Address.fromB256(account.address).toString();
 
-          createUserRequest({
-            address,
-            webauthn,
-            type: TypeUser.FUEL,
-            provider: 'https://testnet.fuel.network/v1/graphql',
-          })
-            .then(({ code }) => {
-              addPasskey(webauthn.id, {
-                address,
-                ...webauthn,
-              });
+          const config: VaultConfigurable = {
+            SIGNATURES_COUNT: 1,
+            SIGNERS: [address],
+          };
 
-              resolve({
-                ...webauthn,
-                challange: code,
-                address,
-              });
-            })
-            .catch((error) => {
-              reject(error);
-            });
+          this.vault = new Vault(this.provider, config);
+          console.log('vault', this.vault.configurable);
+          addPasskey(webauthn.id, {
+            address,
+            conf: JSON.stringify(this.vault.configurable),
+            ...webauthn,
+          });
+
+          resolve({
+            ...webauthn,
+            challange: account.challange,
+            passkeyAddress: address,
+            vaultAddress: this.vault.address,
+          });
         }
       });
     });
@@ -163,16 +166,55 @@ export class Passkey {
         if (type === SocketEvents.PASSKEY_SIGN_RESPONSE) {
           this.activeAction = false;
           p.destroyPopup();
-          const { signature } = message.data;
-
-          resolve(signature);
+          console.log('message', message.data);
+          // @ts-ignore
+          resolve(message.data);
         }
       });
     });
   }
 
-  myPasskeys() {
-    console.log('myPasskeys', listPasskeys());
+  // verifica se o vault está conectado
+  isConnected() {
+    return !!this.vault && !!this.signer;
+  }
+
+  //recebe uma passkey já criada dentro do storage
+  // cria o vault com as infos relacionadas
+  connect(passkeyId: string): boolean {
+    const { id, passkey } = listPasskeys()?.find(
+      (p: any) => p.id === passkeyId,
+    );
+    const config: VaultConfigurable = JSON.parse(passkey?.conf || '{}');
+    // @ts-ignore
+    this.vault = new Vault(this.provider, config, config.signer);
+    this.signer = {
+      id,
+      config,
+      address: passkey?.address,
+      publickey: passkey?.publicKey,
+    };
+
+    return !!this.vault;
+  }
+
+  // desconecta o vault
+  disconnect() {
+    this.vault = null;
+  }
+
+  getFaucet() {
+    const fuelFaucet = 'https://faucet-testnet.fuel.network/';
+
+    if (this.provider.url === 'https://testnet.fuel.network/v1/graphql') {
+      const redirect = `${fuelFaucet}?address=${this.vault?.address.toB256()}&autoClose&redirectUrl=${
+        window.location.href
+      }`;
+      window.open(redirect);
+    }
+  }
+
+  static myPasskeys() {
     return listPasskeys();
   }
 }
