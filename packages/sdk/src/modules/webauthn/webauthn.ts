@@ -17,9 +17,7 @@ export function splitCLientData(
 ) {
   const clientDataArray = new Uint8Array(clientData);
   const challangeIndex = findIndex(clientDataArray, challangeBytesInASCII);
-  if (challangeIndex === -1) {
-    throw new Error('Challange not found!');
-  }
+
   return {
     prefix: hexlify(clientDataArray.slice(0, challangeIndex)),
     suffix: hexlify(
@@ -59,7 +57,7 @@ export async function createAccount(username: string, challenge: string) {
   });
 
   const response = (credential as any).response;
-
+  console.log('response', response);
   const publicKey = await parsePublicKey(response.getPublicKey());
   const publicKeyHex = hexlify(new Uint8Array(publicKey.slice(1)));
 
@@ -119,24 +117,31 @@ export async function signChallange(
   challenge: string,
   publicKey: string,
 ) {
-  const authentication = await navigator.credentials.get({
-    publicKey: {
-      challenge: fromBase64(challenge.slice(2)),
-      rpId: window.location.hostname,
-      allowCredentials: [
-        {
-          id: fromBase64(id),
-          type: 'public-key',
-          transports: ['hybrid', 'internal'],
-        },
-      ],
-      userVerification: 'required',
-      timeout: 60000,
-    },
-  });
-  return parseSignChallangeResponse(
-    publicKey,
-    challenge,
-    authentication as any,
-  );
+  try {
+    const authentication = await navigator.credentials.get({
+      publicKey: {
+        challenge: fromBase64(challenge),
+        rpId: window.location.hostname,
+        allowCredentials: [
+          {
+            id: fromBase64(id),
+            type: 'public-key',
+            transports: ['hybrid', 'internal'],
+          },
+        ],
+        userVerification: 'required',
+        timeout: 60000,
+      },
+    });
+
+    console.log('authentication', authentication, challenge, publicKey);
+
+    return parseSignChallangeResponse(
+      publicKey,
+      challenge,
+      authentication as any,
+    );
+  } catch (e) {
+    console.error(e);
+  }
 }

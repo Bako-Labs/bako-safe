@@ -77,6 +77,8 @@ export function getSignature(
   const recoveryBit = getRecoveryBit(publicKey, signatureCompact, digest);
   const sigatureCompactCopy = new Uint8Array(signatureCompact.slice());
 
+  console.log('signatureCompact', signatureCompact);
+
   return {
     signature: hexlify(EIP2090_encode(sigatureCompactCopy, recoveryBit)),
     digest: hexlify(digest),

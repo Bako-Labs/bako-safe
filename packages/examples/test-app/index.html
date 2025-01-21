@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + TS</title>
+  </head>
+  <style>
+    iframe {
+      border: 1px solid black !important;
+    }
+  </style>
+  <body>
+    <div id="app">
+      <h1>Main App</h1>
+      <h3>User: <span id="user-address">as</span></h3>
+      <h3>PK: <span id="user-pk">as</span></h3>
+      <h3>id: <span id="user-id">as</span></h3>
+      <h3>code: <span id="user-code">as</span></h3>
+      <button id="createAccount">Create passkey</button>
+      <button id="signMessage">Sign Message</button>
+
+      <h3>sign: <span id="user-signature">as</span></h3>
+      <br />
+      <br />
+
+      <h3>passkeys</h3>
+      <br />
+      <div id="passkeys"></div>
+    </div>
+    <script type="module" src="/src/app.ts"></script>
+  </body>
+</html>
