@@ -30,17 +30,19 @@ const send_tx = async () => {
   });
 
   const s = await p
-    .signMessage(hashTxId, p.signer?.id, p.signer?.publickey)
+    .signMessage(hashTxId, p.signer?.id)
     .then((signature: any) => {
       document.getElementById('user-signature')!.textContent = signature;
       document.getElementById('user-signature')!.hidden = false;
       return signature;
     });
 
+  console.log(s);
+
   tx.witnesses = bakoCoder.encode([
     {
       type: SignatureType.WebAuthn,
-      ...s.signature,
+      ...s,
     },
   ]);
 

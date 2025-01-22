@@ -1,191 +1,186 @@
-// criacao de conta:
-// 1. abre um frame com um botao de criar conta - TERMOS DE USO
-// 2. clica no botao -> abre uma popup que reendeniza bako.safe
-// 3. usuario preenche o nome e clica em criar conta
-// 4. bako.safe publica na api um novo usuario, ao finalizar a api envia uma mensagem para a sdk com o resultado
-import { SocketClient } from './clientSocket';
-import { Popup } from './iframe';
-import { SocketEvents, SocketUsernames, PopupActions } from './types';
-import { sessionId, requestId } from './utils'; // keep consumed of localstorage
-import { hardwareId } from './utils/hardwareId';
-import { Address, Provider } from 'fuels';
-import { Vault, VaultConfigurable } from '../vault';
+import { JSONRPCClient } from 'json-rpc-2.0';
+import { Provider } from 'fuels';
+import { Vault } from '../vault';
+import {
+  Account,
+  CreateAccountRequest,
+  JSONRpcMessageRequest,
+  PopupActions,
+  SignMessageRequest,
+} from './types';
 import { IStorage, StorageKeys, Storage } from './storage';
-import { makeUrlPopup } from './utils/makeUrlPopup';
+import { hardwareId, Popup, makeUrlPopup, MESSAGE_ALLOW_ORIGIN } from './utils';
 
 export class Passkey {
-  client: SocketClient;
+  /**
+   * Instance of the Vault, used for managing accounts and keys.
+   */
   vault: Vault | null = null;
-  signer: Record<string, any> | null = null;
-  activeAction: boolean = false;
 
+  /**
+   * Signer object containing account details.
+   */
+  signer: Record<string, any> | null = null;
+
+  /**
+   * Instance of the Popup for handling user interactions.
+   */
+  popup: Popup | null = null;
+
+  /**
+   * Provider instance for interacting with fuel network.
+   */
   provider: Provider;
+
+  /**
+   * Storage interface for managing persistent data.
+   */
   storage: IStorage;
 
-  // needs a provider
-  // needs a storage mechanism
+  /**
+   * JSON-RPC client for communication between SDK and the popup.
+   */
+  private client: JSONRPCClient;
+
+  /**
+   * Creates an instance of the Passkey class.
+   * @param {Provider} provider - Blockchain provider.
+   * @param {IStorage} [storage] - Optional storage interface for persistent data.
+   */
   constructor(provider: Provider, storage?: IStorage) {
     this.provider = provider;
-    this.storage = !storage ? new Storage() : storage;
+    this.storage = storage ?? new Storage();
 
-    this.client = new SocketClient(
-      SocketUsernames.PASSKEY,
-      sessionId,
-      requestId,
-    );
-  }
-
-  // abre o popup
-  // ao receber info de conexao da ui (popup) envia a mensagem de criar conta
-  // aguarda criacao de conta pela ui (popup)
-  // ao receber uma resposta, publica na api e adiciona o challange na resposta
-  // retorna a resposta para o dapp
-  createAccount(username: string): Record<string, any> {
-    const hasActiveAction = this.activeAction;
-    const isValid = true;
-
-    if (hasActiveAction || !isValid) {
-      return {};
-    }
-
-    this.activeAction = true;
-    const { popup, url } = makeUrlPopup(
-      PopupActions.CREATE,
-      sessionId,
-      requestId,
-    );
-
-    const p = new Popup(url, popup);
-
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        this.activeAction = false;
-        p.destroyPopup();
-        reject('Timeout');
-      }, 30000);
-
-      return this.client.onMessage(async ({ type, ...message }) => {
-        if (type === SocketEvents.PASSKEY_UI_CONNECTED) {
-          this.client.sendMessage({
-            type: SocketEvents.PASSKEY_CREATE_REQUEST,
-            data: {
-              username,
-            },
-            to: SocketUsernames.UI,
-          });
-        }
-
-        if (type === SocketEvents.PASSKEY_CREATE_RESPONSE) {
-          this.activeAction = false;
-          p.destroyPopup();
-          const { account, id } = message.data;
-          const webauthn = {
-            id,
-            hardware: hardwareId,
-            publicKey: account.publicKeyHex,
-            origin: window.location.origin,
-          };
-          const address = Address.fromB256(account.address).toString();
-
-          const config: VaultConfigurable = {
-            SIGNATURES_COUNT: 1,
-            SIGNERS: [address],
-          };
-
-          this.vault = new Vault(this.provider, config);
-
-          const newPasskeys = [
-            ...(await this.myPasskeys()),
-            {
-              id: webauthn.id,
-              passkey: {
-                address,
-                conf: JSON.stringify(this.vault.configurable),
-                ...webauthn,
-              },
-            },
-          ];
-
-          await this.storage.setItem([
-            [StorageKeys.PASSKEY, JSON.stringify(newPasskeys)],
-          ]);
-
-          resolve({
-            ...webauthn,
-            challange: account.challange,
-            passkeyAddress: address,
-            vaultAddress: this.vault.address,
-          });
-        }
-      });
+    const client = new JSONRPCClient((message) => {
+      this.popup?.sendMessage(message);
     });
+
+    window.addEventListener('message', (event) => {
+      const isValid = event.origin === MESSAGE_ALLOW_ORIGIN;
+      if (!isValid) return;
+      if (!event.data.jsonrpc) return;
+
+      client.receive(event.data);
+    });
+
+    this.client = client;
   }
 
-  // abre o popup
-  // ao receber info de conexao da ui (popup) envia a mensagem de solicitar assinatura
-  // aguarda assinatura pela ui (popup)
-  // retorna a resposta para o dapp
-  signMessage(
+  /**
+   * Creates a new account using the popup and stores it in the vault.
+   * @param {string} username - Username for the new account.
+   * @returns {Promise<Account>} - Predicate object for the created account.
+   * @throws {Error} - Throws an error if the popup times out.
+   */
+  async createAccount(username: string): Promise<Account> {
+    const { popup, url } = makeUrlPopup(PopupActions.CREATE);
+    this.popup = new Popup(url, popup);
+    setTimeout(() => {
+      this.popup?.destroyPopup();
+      throw new Error('Timeout waiting for popup to be ready');
+    }, 30000);
+
+    const { id, account }: CreateAccountRequest = await this.client.request(
+      JSONRpcMessageRequest.CREATE_ACCOUNT,
+      {
+        username,
+      },
+    );
+
+    const vault = new Vault(this.provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [account.address],
+    });
+
+    this.vault = vault;
+    this.signer = account;
+
+    const predicate = {
+      conf: {
+        ...this.vault.configurable,
+        version: this.vault.version,
+      },
+      predicateAddress: this.vault.address.toString(),
+      signerAddress: account.address,
+      hardware: hardwareId,
+      origin: account.origin,
+      publickKey: account.publicKey,
+      id,
+    };
+
+    const olders = await this.storage.getItem(StorageKeys.PASSKEY);
+    const passkeys = [
+      ...JSON.parse(olders || '[]'),
+      { id, passkey: predicate },
+    ];
+    this.storage.setItem([[StorageKeys.PASSKEY, JSON.stringify(passkeys)]]);
+
+    this.popup?.destroyPopup();
+
+    return predicate;
+  }
+
+  /**
+   * Signs a message using a specific passkey.
+   * @param {string} challenge - Challenge message to be signed.
+   * @param {string} passkeyId - Identifier of the passkey to use.
+   * @returns {Promise<SignMessageRequest>} - Signed message.
+   * @throws {Error} - Throws an error if the parameters are invalid.
+   */
+  async signMessage(
     challenge: string,
     passkeyId: string,
-    publicKey: string,
-  ): Promise<string> {
-    const hasActiveAction = this.activeAction;
-    const haschallenge = challenge.length > 0;
-    const hasPasskeyId = passkeyId.length > 0;
-
-    if (hasActiveAction || !haschallenge || !hasPasskeyId) {
-      throw new Error('Invalid parameters');
+  ): Promise<SignMessageRequest> {
+    if (!challenge || !passkeyId) {
+      return Promise.reject(new Error('Invalid parameters'));
     }
 
-    // get public key here by passkey id
+    const { popup, url } = makeUrlPopup(PopupActions.SIGN);
+    this.popup = new Popup(url, popup);
+    setTimeout(() => {
+      this.popup?.destroyPopup();
+      throw new Error('Timeout waiting for popup to be ready');
+    }, 30000);
 
-    this.activeAction = true;
-    const { popup, url } = makeUrlPopup(
-      PopupActions.SIGN,
-      sessionId,
-      requestId,
+    const s: SignMessageRequest = await this.client.request(
+      JSONRpcMessageRequest.SIGN_MESSAGE,
+      {
+        challenge,
+        passkeyId,
+        publicKey: this.signer,
+      },
     );
 
-    const p = new Popup(url, popup);
+    this.popup?.destroyPopup();
 
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        this.activeAction = false;
-        p.destroyPopup();
-        reject('Timeout');
-      }, 30000);
-
-      return this.client.onMessage(({ type, ...message }) => {
-        if (type === SocketEvents.PASSKEY_UI_CONNECTED) {
-          this.client.sendMessage({
-            type: SocketEvents.PASSKEY_SIGN_REQUEST,
-            data: {
-              challenge,
-              passkeyId,
-              publicKey,
-            },
-            to: SocketUsernames.UI,
-          });
-        }
-
-        if (type === SocketEvents.PASSKEY_SIGN_RESPONSE) {
-          this.activeAction = false;
-          p.destroyPopup();
-          // @ts-ignore
-          resolve(message.data);
-        }
-      });
-    });
+    return s;
   }
 
-  // verifica se o vault está conectado
+  /**
+   * Retrieves the list of passkeys associated with the current hardware ID.
+   * @returns {Promise<any[]>} - List of passkeys for the current hardware.
+   */
+  async myPasskeys() {
+    const passkeys = await this.storage.getItem(StorageKeys.PASSKEY);
+    const byHardware = JSON.parse(passkeys || '[]').filter(
+      (k: any) => k.passkey.hardware === hardwareId,
+    );
+    return byHardware;
+  }
+
+  /**
+   * Checks if the user is connected.
+   * @returns {boolean} - True if connected, otherwise false.
+   */
   isConnected() {
     return !!this.vault && !!this.signer;
   }
 
-  //recebe uma passkey já criada dentro do storage
-  // cria o vault com as infos relacionadas
+  /**
+   * Connects to a specific passkey by ID.
+   * @param {string} passkeyId - Identifier of the passkey to connect.
+   * @returns {Promise<boolean>} - True if connected successfully, otherwise false.
+   */
   async connect(passkeyId: string): Promise<boolean> {
     const passkeys = await this.myPasskeys();
 
@@ -195,12 +190,12 @@ export class Passkey {
     }
 
     const { id, passkey } = pk;
-    const config: VaultConfigurable = JSON.parse(passkey?.conf || '{}');
-    // @ts-ignore
-    this.vault = new Vault(this.provider, config, config.signer);
+    const { version, ...rest } = passkey.conf;
+
+    this.vault = new Vault(this.provider, rest, version);
     this.signer = {
       id,
-      config,
+      config: passkey.config,
       address: passkey?.address,
       publickey: passkey?.publicKey,
     };
@@ -208,11 +203,16 @@ export class Passkey {
     return !!this.vault;
   }
 
-  // desconecta o vault
+  /**
+   * Disconnects the current vault and signer.
+   */
   disconnect() {
     this.vault = null;
   }
 
+  /**
+   * Opens the Fuel testnet faucet for the current vault address.
+   */
   getFaucet() {
     const fuelFaucet = 'https://faucet-testnet.fuel.network/';
 
@@ -222,13 +222,5 @@ export class Passkey {
       }`;
       window.open(redirect);
     }
-  }
-
-  async myPasskeys() {
-    const passkeys = await this.storage.getItem(StorageKeys.PASSKEY);
-    const byHardware = JSON.parse(passkeys || '[]').filter(
-      (k: any) => k.passkey.hardware === hardwareId,
-    );
-    return byHardware;
   }
 }

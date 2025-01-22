@@ -1,57 +1,43 @@
-export interface IMessage {
-  sessionId: string;
-  to: SocketUsernames;
-  type: string;
-  data: { [key: string]: any };
-  request_id?: string;
-}
-
-export type ISendMessage = Pick<IMessage, 'to' | 'type' | 'data'>;
-
-export interface IConnectedSocketUser {
-  id: string;
-  sessionId: string;
-  username: string;
-  time: number;
-  request_id?: string;
+export enum JSONRpcMessageRequest {
+  CREATE_ACCOUNT = 'createAccount',
+  SIGN_MESSAGE = 'signMessage',
 }
 
 export enum PopupActions {
-  CREATE = 'create',
-  SIGN = 'sign',
+  CREATE = 'PASSKEY_UI_CREATE',
+  SIGN = 'PASSKEY_UI_SIGN',
 }
 
-export enum SocketEvents {
-  CONNECT = 'connection',
-  DEFAULT = 'message',
-  NOTIFICATION = 'notification',
+export type Account = {
+  conf: {
+    version: string;
+    SIGNATURES_COUNT: number;
+    SIGNERS: string[];
+    HASH_PREDICATE?: string;
+  };
+  predicateAddress: string;
+  signerAddress: string;
+  hardware: string;
+  origin: string;
+  publickKey: string;
+  id: string;
+};
 
-  NEW_NOTIFICATION = '[NEW_NOTIFICATION]',
-  TRANSACTION_UPDATE = '[TRANSACTION]',
-  VAULT_UPDATE = '[VAULT]',
+export type CreateAccountRequest = {
+  id: string;
+  account: {
+    address: string;
+    origin: string;
+    publicKey: string;
+  };
+};
 
-  PASSKEY_UI_CONNECTED = '[PASSKEY_UI_CONNECTED]',
-  PASSKEY_UI_DISCONNECTED = '[PASSKEY_UI_CONNECTED]',
-
-  PASSKEY_CREATE_REQUEST = '[PASSKEY_CREATE_REQUEST]',
-  PASSKEY_CREATE_RESPONSE = '[PASSKEY_CREATE_RESPONSE]',
-
-  PASSKEY_SIGN_REQUEST = '[PASSKEY_SIGN_REQUEST]',
-  PASSKEY_SIGN_RESPONSE = '[PASSKEY_SIGN_RESPONSE]',
-}
-
-export enum SocketUsernames {
-  PASSKEY = '[PASSKEY]',
-  UI = '[UI]',
-  API = '[API]',
-  CONNECTOR = '[CONNECTOR]',
-}
-
-export enum AuthNotifyType {
-  // update:
-  // add or update a session (timeout or wk)
-  // remove:
-  // remove a session (logout)
-  UPDATE = '[UPDATE]',
-  REMOVE = '[REMOVE]',
-}
+export type SignMessageRequest = {
+  authData: string;
+  prefix: string;
+  suffix: string;
+  signature: string;
+  digest: string;
+  sig_compact: Uint8Array;
+  dig_compact: Uint8Array;
+};

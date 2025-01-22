@@ -1,12 +1,10 @@
 import {
   bytesToHex,
   createAccount,
-  PopupActions,
   signChallange,
-  SocketClient,
-  SocketEvents,
-  SocketUsernames,
+  JSONRpcMessageRequest,
 } from 'bakosafe';
+import { JSONRPCServer } from 'json-rpc-2.0';
 
 const getUrlParams = (): Record<string, string> => {
   const params = new URLSearchParams(window.location.search);
@@ -19,59 +17,39 @@ const getUrlParams = (): Record<string, string> => {
   return result;
 };
 
-const client = new SocketClient(
-  SocketUsernames.UI,
-  getUrlParams().sessionId,
-  getUrlParams().requestId,
-);
+const server = new JSONRPCServer();
 
-client.sendMessage({
-  type: SocketEvents.PASSKEY_UI_CONNECTED,
-  data: {},
-  to: SocketUsernames.PASSKEY,
-});
-
-const action = getUrlParams().action;
-
-client.onMessage(async (message) => {
-  console.log('message', message);
-  if (
-    message.type === SocketEvents.PASSKEY_CREATE_REQUEST &&
-    action === PopupActions.CREATE
-  ) {
-    const account = await createAccount(
-      message.data.username,
-      bytesToHex(crypto.getRandomValues(new Uint8Array(32))),
-    );
-
-    client.sendMessage({
-      type: SocketEvents.PASSKEY_CREATE_RESPONSE,
-      data: {
-        account,
-        id: account.credential?.id,
-      },
-      to: SocketUsernames.PASSKEY,
+window.addEventListener('message', async (event) => {
+  const isValid = event.origin === getUrlParams().origin;
+  if (!isValid) return;
+  if (event.data.jsonrpc) {
+    await server.receive(event.data).then((response) => {
+      event.source?.postMessage(response, {
+        targetOrigin: event.origin,
+      });
     });
   }
-
-  if (
-    message.type === SocketEvents.PASSKEY_SIGN_REQUEST &&
-    action === PopupActions.SIGN
-  ) {
-    const { challenge, passkeyId, publicKey } = message.data;
-
-    signChallange(passkeyId, challenge, publicKey)
-      .then((signature) => {
-        client.sendMessage({
-          type: SocketEvents.PASSKEY_SIGN_RESPONSE,
-          data: {
-            signature,
-          },
-          to: SocketUsernames.PASSKEY,
-        });
-      })
-      .catch((error) => {
-        throw new Error(error);
-      });
-  }
 });
+
+server.addMethod(JSONRpcMessageRequest.CREATE_ACCOUNT, async ({ username }) => {
+  const account = await createAccount(
+    username,
+    bytesToHex(crypto.getRandomValues(new Uint8Array(32))),
+  );
+
+  return {
+    account: {
+      address: account.address,
+      publickKey: account.publicKeyHex,
+      origin: window.location.origin,
+    },
+    id: account.credential?.id,
+  };
+});
+
+server.addMethod(
+  JSONRpcMessageRequest.SIGN_MESSAGE,
+  async ({ challenge, passkeyId, publicKey }) => {
+    return await signChallange(passkeyId, challenge, publicKey);
+  },
+);

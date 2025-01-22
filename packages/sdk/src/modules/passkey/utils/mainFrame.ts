@@ -1,4 +1,4 @@
-import { WINDOW } from '../constants';
+import { WINDOW } from './constants';
 
 const frame_style = {
   position: 'fixed',

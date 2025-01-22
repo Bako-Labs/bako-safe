@@ -8,6 +8,8 @@ export const SOCKET_URL = 'http://localhost:3001';
 export const HTTP_URL = 'http://localhost:3333';
 export const POPUP_URL = 'http://localhost:5173/bakoui.html';
 
+export const MESSAGE_ALLOW_ORIGIN = 'http://localhost:5173';
+
 export const POPUP_CONFIG = {
   WIDTH: 500,
   HEIGHT: 600,

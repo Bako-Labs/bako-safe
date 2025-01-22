@@ -9,10 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@trpc/client": "^10.45.2",
+    "@trpc/server": "^10.45.2",
     "bakosafe": "workspace:*",
     "events": "^3.3.0",
     "fuels": "0.96.1",
-    "json-rpc-2.0": "^1.7.0"
+    "json-rpc-2.0": "^1.7.0",
+    "superjson": "^2.2.2",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.24",
