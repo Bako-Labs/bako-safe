@@ -67,7 +67,7 @@ export class Popup {
 
     setTimeout(() => {
       if (!this.popup) return;
-      this.popup?.postMessage(message, this.popup.location.origin);
+      this.popup?.postMessage(message, this.url);
     }, 1000);
   }
 
@@ -77,8 +77,6 @@ export class Popup {
    */
   onMessage(callback: (event: MessageEvent) => void) {
     if (!this.popup) return;
-
-    console.log('Listening for messages from popup...');
 
     window.addEventListener('message', (event) => {
       if (event.source === this.popup) {

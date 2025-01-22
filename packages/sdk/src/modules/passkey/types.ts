@@ -19,7 +19,7 @@ export type Account = {
   signerAddress: string;
   hardware: string;
   origin: string;
-  publickKey: string;
+  publicKey: string;
   id: string;
 };
 

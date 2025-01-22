@@ -104,7 +104,7 @@ export class Passkey {
       signerAddress: account.address,
       hardware: hardwareId,
       origin: account.origin,
-      publickKey: account.publicKey,
+      publicKey: account.publicKey,
       id,
     };
 
