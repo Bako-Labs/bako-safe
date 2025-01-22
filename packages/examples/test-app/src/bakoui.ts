@@ -40,7 +40,7 @@ server.addMethod(JSONRpcMessageRequest.CREATE_ACCOUNT, async ({ username }) => {
   return {
     account: {
       address: account.address,
-      publickKey: account.publicKeyHex,
+      publicKey: account.publicKeyHex,
       origin: window.location.origin,
     },
     id: account.credential?.id,
