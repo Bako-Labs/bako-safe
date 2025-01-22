@@ -75,7 +75,7 @@ export class Passkey {
   async createAccount(username: string): Promise<Account> {
     const { popup, url } = makeUrlPopup(PopupActions.CREATE);
     this.popup = new Popup(url, popup);
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       this.popup?.destroyPopup();
       throw new Error('Timeout waiting for popup to be ready');
     }, 30000);
@@ -116,6 +116,7 @@ export class Passkey {
     this.storage.setItem([[StorageKeys.PASSKEY, JSON.stringify(passkeys)]]);
 
     this.popup?.destroyPopup();
+    clearTimeout(timeout);
 
     return predicate;
   }
@@ -131,13 +132,13 @@ export class Passkey {
     challenge: string,
     passkeyId: string,
   ): Promise<SignMessageRequest> {
-    if (!challenge || !passkeyId) {
+    if (!challenge || !passkeyId || !this.signer) {
       return Promise.reject(new Error('Invalid parameters'));
     }
 
     const { popup, url } = makeUrlPopup(PopupActions.SIGN);
     this.popup = new Popup(url, popup);
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       this.popup?.destroyPopup();
       throw new Error('Timeout waiting for popup to be ready');
     }, 30000);
@@ -147,11 +148,12 @@ export class Passkey {
       {
         challenge,
         passkeyId,
-        publicKey: this.signer,
+        publicKey: this.signer.publickey,
       },
     );
 
     this.popup?.destroyPopup();
+    clearTimeout(timeout);
 
     return s;
   }
@@ -196,8 +198,8 @@ export class Passkey {
     this.signer = {
       id,
       config: passkey.config,
-      address: passkey?.address,
-      publickey: passkey?.publicKey,
+      address: passkey.address,
+      publickey: passkey.publicKey,
     };
 
     return !!this.vault;
