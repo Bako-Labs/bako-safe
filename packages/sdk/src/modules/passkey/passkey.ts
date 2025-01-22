@@ -6,25 +6,28 @@
 import { SocketClient } from './clientSocket';
 import { Popup } from './iframe';
 import { SocketEvents, SocketUsernames, PopupActions } from './types';
-import { sessionId, requestId } from './utils';
+import { sessionId, requestId } from './utils'; // keep consumed of localstorage
 import { hardwareId } from './utils/hardwareId';
 import { Address, Provider } from 'fuels';
-import { addPasskey, listPasskeys } from './utils/passkeyId';
 import { Vault, VaultConfigurable } from '../vault';
-
-const ui_url = 'http://localhost:5173/bakoui.html';
+import { IStorage, StorageKeys, Storage } from './storage';
+import { makeUrlPopup } from './utils/makeUrlPopup';
 
 export class Passkey {
   client: SocketClient;
   vault: Vault | null = null;
   signer: Record<string, any> | null = null;
   activeAction: boolean = false;
+
   provider: Provider;
+  storage: IStorage;
 
   // needs a provider
   // needs a storage mechanism
-  constructor(provider: Provider) {
+  constructor(provider: Provider, storage?: IStorage) {
     this.provider = provider;
+    this.storage = !storage ? new Storage() : storage;
+
     this.client = new SocketClient(
       SocketUsernames.PASSKEY,
       sessionId,
@@ -46,16 +49,13 @@ export class Passkey {
     }
 
     this.activeAction = true;
-
-    const p = new Popup({
-      url: ui_url,
-      width: 500,
-      height: 500,
-      requestId,
+    const { popup, url } = makeUrlPopup(
+      PopupActions.CREATE,
       sessionId,
-      action: PopupActions.CREATE,
-    });
-    p.createPopup();
+      requestId,
+    );
+
+    const p = new Popup(url, popup);
 
     return new Promise((resolve, reject) => {
       setTimeout(() => {
@@ -64,7 +64,7 @@ export class Passkey {
         reject('Timeout');
       }, 30000);
 
-      return this.client.onMessage(({ type, ...message }) => {
+      return this.client.onMessage(async ({ type, ...message }) => {
         if (type === SocketEvents.PASSKEY_UI_CONNECTED) {
           this.client.sendMessage({
             type: SocketEvents.PASSKEY_CREATE_REQUEST,
@@ -93,12 +93,22 @@ export class Passkey {
           };
 
           this.vault = new Vault(this.provider, config);
-          console.log('vault', this.vault.configurable);
-          addPasskey(webauthn.id, {
-            address,
-            conf: JSON.stringify(this.vault.configurable),
-            ...webauthn,
-          });
+
+          const newPasskeys = [
+            ...(await this.myPasskeys()),
+            {
+              id: webauthn.id,
+              passkey: {
+                address,
+                conf: JSON.stringify(this.vault.configurable),
+                ...webauthn,
+              },
+            },
+          ];
+
+          await this.storage.setItem([
+            [StorageKeys.PASSKEY, JSON.stringify(newPasskeys)],
+          ]);
 
           resolve({
             ...webauthn,
@@ -131,16 +141,13 @@ export class Passkey {
     // get public key here by passkey id
 
     this.activeAction = true;
-
-    const p = new Popup({
-      url: ui_url,
-      width: 500,
-      height: 500,
-      requestId,
+    const { popup, url } = makeUrlPopup(
+      PopupActions.SIGN,
       sessionId,
-      action: PopupActions.SIGN,
-    });
-    p.createPopup();
+      requestId,
+    );
+
+    const p = new Popup(url, popup);
 
     return new Promise((resolve, reject) => {
       setTimeout(() => {
@@ -151,7 +158,6 @@ export class Passkey {
 
       return this.client.onMessage(({ type, ...message }) => {
         if (type === SocketEvents.PASSKEY_UI_CONNECTED) {
-          console.log('passkeyId', message);
           this.client.sendMessage({
             type: SocketEvents.PASSKEY_SIGN_REQUEST,
             data: {
@@ -166,7 +172,6 @@ export class Passkey {
         if (type === SocketEvents.PASSKEY_SIGN_RESPONSE) {
           this.activeAction = false;
           p.destroyPopup();
-          console.log('message', message.data);
           // @ts-ignore
           resolve(message.data);
         }
@@ -181,10 +186,15 @@ export class Passkey {
 
   //recebe uma passkey já criada dentro do storage
   // cria o vault com as infos relacionadas
-  connect(passkeyId: string): boolean {
-    const { id, passkey } = listPasskeys()?.find(
-      (p: any) => p.id === passkeyId,
-    );
+  async connect(passkeyId: string): Promise<boolean> {
+    const passkeys = await this.myPasskeys();
+
+    const pk = passkeys?.find((p: any) => p.id === passkeyId);
+    if (!pk) {
+      return false;
+    }
+
+    const { id, passkey } = pk;
     const config: VaultConfigurable = JSON.parse(passkey?.conf || '{}');
     // @ts-ignore
     this.vault = new Vault(this.provider, config, config.signer);
@@ -214,7 +224,11 @@ export class Passkey {
     }
   }
 
-  static myPasskeys() {
-    return listPasskeys();
+  async myPasskeys() {
+    const passkeys = await this.storage.getItem(StorageKeys.PASSKEY);
+    const byHardware = JSON.parse(passkeys || '[]').filter(
+      (k: any) => k.passkey.hardware === hardwareId,
+    );
+    return byHardware;
   }
 }

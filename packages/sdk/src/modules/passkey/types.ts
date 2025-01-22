@@ -55,5 +55,3 @@ export enum AuthNotifyType {
   UPDATE = '[UPDATE]',
   REMOVE = '[REMOVE]',
 }
-
-// force commit
