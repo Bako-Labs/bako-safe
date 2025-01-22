@@ -65,7 +65,7 @@ const send_tx = async () => {
   document.getElementById('tx-result')!.hidden = false;
 };
 
-const loadPk = () => {
+const loadPk = async () => {
   const passkeysContainer = document.getElementById('passkeys');
   if (passkeysContainer) {
     while (passkeysContainer.firstChild) {
@@ -73,44 +73,47 @@ const loadPk = () => {
     }
   }
 
-  const passkeys = Passkey.myPasskeys();
-  passkeys.forEach((p: any) => {
-    const option = document.createElement('p');
-    option.textContent = p.passkey.id;
-    option.id = p.passkey.id;
+  const pk = await _p;
+  pk.myPasskeys().then((passkeys: any) => {
+    console.log('pks', passkeys);
+    passkeys.forEach((p: any) => {
+      const option = document.createElement('p');
+      option.textContent = p.passkey.id;
+      option.id = p.passkey.id;
 
-    option.addEventListener('click', () => {
-      _p.then((pk) => {
-        pk.connect(p.passkey.id);
-      }).then(() => {
+      option.addEventListener('click', () => {
         _p.then((pk) => {
-          if (pk.isConnected()) {
-            pk.vault?.getBalance().then((balance: any) => {
-              document.getElementById('vault-address')!.textContent =
-                pk.vault?.address.toString() ?? '';
-              document.getElementById('vault-signer')!.textContent =
-                pk.signer?.address ?? '';
-              document.getElementById('vault-balance')!.textContent = balance
-                .format()
-                .toString();
-              document.getElementById('vault-network')!.textContent =
-                pk.provider.url;
-              document.getElementById('faucet')!.hidden = false;
+          pk.connect(p.passkey.id);
+        }).then(() => {
+          _p.then((pk) => {
+            if (pk.isConnected()) {
+              pk.vault?.getBalance().then((balance: any) => {
+                document.getElementById('vault-address')!.textContent =
+                  pk.vault?.address.toString() ?? '';
+                document.getElementById('vault-signer')!.textContent =
+                  pk.signer?.address ?? '';
+                document.getElementById('vault-balance')!.textContent = balance
+                  .format()
+                  .toString();
+                document.getElementById('vault-network')!.textContent =
+                  pk.provider.url;
+                document.getElementById('faucet')!.hidden = false;
 
-              document
-                .getElementById('faucet')
-                ?.addEventListener('click', () => {
-                  pk.getFaucet();
-                });
-            });
+                document
+                  .getElementById('faucet')
+                  ?.addEventListener('click', () => {
+                    pk.getFaucet();
+                  });
+              });
 
-            document.getElementById('vault-sendTransaction')!.hidden = false;
-          }
+              document.getElementById('vault-sendTransaction')!.hidden = false;
+            }
+          });
         });
       });
-    });
 
-    passkeysContainer?.appendChild(option);
+      passkeysContainer?.appendChild(option);
+    });
   });
 };
 
@@ -140,7 +143,8 @@ async function initialize() {
         });
 
         const pk = await _p;
-        pk.connect(account.id);
+        const as = await pk.connect(account.id);
+        console.log('as', as);
 
         if (pk.isConnected()) {
           pk.vault?.getBalance().then((balance: any) => {
