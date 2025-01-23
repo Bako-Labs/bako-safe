@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { bakoCoder, Passkey, SignatureType } from 'bakosafe';
+import { Passkey } from 'bakosafe';
 import { Provider } from 'fuels';
 import './App.css'; // Adicione este arquivo CSS
 
@@ -10,7 +10,6 @@ const App: React.FC = () => {
   const [userInfo, setUserInfo] = useState<any>(null);
   const [passkeys, setPasskeys] = useState<any[]>([]);
   const [vaultInfo, setVaultInfo] = useState<any>(null);
-  const [signature, setSignature] = useState<string>('');
 
   useEffect(() => {
     const initPasskey = async () => {
@@ -150,13 +149,6 @@ const App: React.FC = () => {
           </div>
         )}
       </section>
-      {signature && (
-        <section>
-          <h3>
-            Sign: <span>{signature}</span>
-          </h3>
-        </section>
-      )}
     </div>
   );
 };
