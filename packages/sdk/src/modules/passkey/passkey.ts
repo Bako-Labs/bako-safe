@@ -1,5 +1,5 @@
 import { JSONRPCClient } from 'json-rpc-2.0';
-import { Provider } from 'fuels';
+import { Address, Provider } from 'fuels';
 import { Vault } from '../vault';
 import {
   Account,
@@ -193,16 +193,18 @@ export class Passkey {
 
     const { id, passkey } = pk;
     const { version, ...rest } = passkey.conf;
+    const { signerAddress: address } = passkey;
 
     this.vault = new Vault(this.provider, rest, version);
+
     this.signer = {
       id,
-      config: passkey.config,
-      address: passkey.address,
+      config: passkey.conf,
+      address,
       publickey: passkey.publicKey,
     };
 
-    return !!this.vault;
+    return !!this.vault && !!this.signer;
   }
 
   /**

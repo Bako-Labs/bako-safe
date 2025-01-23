@@ -57,7 +57,6 @@ export async function createAccount(username: string, challenge: string) {
   });
 
   const response = (credential as any).response;
-  console.log('response', response);
   const publicKey = await parsePublicKey(response.getPublicKey());
   const publicKeyHex = hexlify(new Uint8Array(publicKey.slice(1)));
 
@@ -117,7 +116,6 @@ export async function signChallange(
   challenge: string,
   publicKey: string,
 ) {
-  console.log('signChallange', id, challenge, publicKey);
   try {
     const authentication = await navigator.credentials.get({
       publicKey: {
@@ -134,8 +132,6 @@ export async function signChallange(
         timeout: 60000,
       },
     });
-
-    console.log('authentication', authentication, challenge, publicKey);
 
     return parseSignChallangeResponse(
       publicKey,

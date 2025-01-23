@@ -145,6 +145,9 @@ async function initialize() {
         });
 
         const pk = await _p;
+
+        console.log(account);
+
         const as = await pk.connect(account.id);
         console.log('as', as);
 
