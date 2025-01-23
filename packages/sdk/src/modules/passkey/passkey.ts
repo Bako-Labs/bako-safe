@@ -1,6 +1,6 @@
 import { JSONRPCClient } from 'json-rpc-2.0';
-import { Address, Provider } from 'fuels';
-import { Vault } from '../vault';
+import { Provider, TransactionResult } from 'fuels';
+import { Vault, VaultTransaction } from '../vault';
 import {
   Account,
   CreateAccountRequest,
@@ -10,6 +10,7 @@ import {
 } from './types';
 import { IStorage, StorageKeys, Storage } from './storage';
 import { hardwareId, Popup, makeUrlPopup, MESSAGE_ALLOW_ORIGIN } from './utils';
+import { bakoCoder, SignatureType } from '../coders';
 
 export class Passkey {
   /**
@@ -128,10 +129,9 @@ export class Passkey {
    * @returns {Promise<SignMessageRequest>} - Signed message.
    * @throws {Error} - Throws an error if the parameters are invalid.
    */
-  async signMessage(
-    challenge: string,
-    passkeyId: string,
-  ): Promise<SignMessageRequest> {
+  async signMessage(challenge: string): Promise<SignMessageRequest> {
+    const passkeyId = this.signer?.id;
+
     if (!challenge || !passkeyId || !this.signer) {
       return Promise.reject(new Error('Invalid parameters'));
     }
@@ -156,6 +156,48 @@ export class Passkey {
     clearTimeout(timeout);
 
     return s;
+  }
+  /**
+   * Signs a transaction using the current vault and signer.
+   * @param {TransactionRequest} _tx - Transaction to be signed.
+   * @returns {Promise<T>} - Result of the signed transaction.
+   */
+  async sendTransaction(_tx: VaultTransaction): Promise<TransactionResult> {
+    if (!this.vault || !this.signer) {
+      return Promise.reject(new Error('Invalid parameters'));
+    }
+
+    const { popup, url } = makeUrlPopup(PopupActions.SIGN);
+    this.popup = new Popup(url, popup);
+    const timeout = setTimeout(() => {
+      this.popup?.destroyPopup();
+      throw new Error('Timeout waiting for popup to be ready');
+    }, 30000);
+
+    const { hashTxId, tx } = await this.vault.transaction(_tx);
+
+    const s: SignMessageRequest = await this.client.request(
+      JSONRpcMessageRequest.SIGN_MESSAGE,
+      {
+        challenge: hashTxId,
+        passkeyId: this.signer.id,
+        publicKey: this.signer.publickey,
+      },
+    );
+
+    clearTimeout(timeout);
+    this.popup?.destroyPopup();
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.WebAuthn,
+        ...s,
+      },
+    ]);
+
+    const r = await this.vault.send(tx);
+    const response = await r.waitForResult();
+    return response;
   }
 
   /**

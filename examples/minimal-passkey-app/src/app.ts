@@ -19,7 +19,8 @@ const send_tx = async () => {
   if (!p.isConnected()) return;
   if (!p.vault) return;
 
-  const { hashTxId, tx } = await p.vault?.transaction({
+  const tx = await p.sendTransaction({
+    name: 'sendTransaction-by-passkey-dapp',
     assets: [
       {
         assetId: p.vault.provider.getBaseAssetId(),
@@ -28,28 +29,6 @@ const send_tx = async () => {
       },
     ],
   });
-
-  const s = await p
-    .signMessage(hashTxId, p.signer?.id)
-    .then((signature: any) => {
-      document.getElementById('user-signature')!.textContent = signature;
-      document.getElementById('user-signature')!.hidden = false;
-      return signature;
-    });
-
-  console.log(s);
-
-  tx.witnesses = bakoCoder.encode([
-    {
-      type: SignatureType.WebAuthn,
-      ...s,
-    },
-  ]);
-
-  const result = await p.vault?.send(tx);
-  const response = await result?.waitForResult();
-
-  console.log('response', response);
 
   const balance = await p.vault?.getBalance();
   document.getElementById('vault-balance')!.textContent = balance
@@ -61,7 +40,7 @@ const send_tx = async () => {
     'check result on explorer';
 
   document.getElementById('tx-result')!.addEventListener('click', () => {
-    window.open(`${explorer}tx/${response.id}`);
+    window.open(`${explorer}tx/${tx.id}`);
   });
 
   document.getElementById('tx-result')!.hidden = false;

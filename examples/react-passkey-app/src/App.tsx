@@ -89,7 +89,8 @@ const App: React.FC = () => {
     if (!passkey || !passkey.isConnected() || !passkey.vault) return;
 
     try {
-      const { hashTxId, tx } = await passkey.vault.transaction({
+      const tx = await passkey.sendTransaction({
+        name: 'sendTransaction-by-passkey-dapp',
         assets: [
           {
             assetId: passkey.vault.provider.getBaseAssetId(),
@@ -98,25 +99,9 @@ const App: React.FC = () => {
           },
         ],
       });
-
-      const sig = await passkey.signMessage(hashTxId, passkey.signer?.id);
-      if (!sig) return;
-
-      const signature = bakoCoder.encode([
-        {
-          type: SignatureType.WebAuthn,
-          ...sig,
-        },
-      ]);
-
-      tx.witnesses = signature;
-
-      setSignature(signature[0]);
-      const result = await passkey.vault.send(tx);
-      const response = await result.waitForResult();
       await connectPasskey(passkey.signer?.id);
 
-      console.log('Transaction response:', response);
+      console.log('Transaction response:', tx);
     } catch (error) {
       console.error('Error sending transaction:', error);
     }
