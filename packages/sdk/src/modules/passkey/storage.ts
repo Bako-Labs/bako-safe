@@ -20,7 +20,7 @@ export enum StorageKeys {
   /**
    * Key for passkey storage.
    */
-  PASSKEY = `${STORAGE_PREFIX}passkey`,
+  PASSKEY = `${STORAGE_PREFIX}accounts`,
 
   /**
    * Key for the active session.

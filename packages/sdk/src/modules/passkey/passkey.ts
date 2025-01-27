@@ -5,6 +5,7 @@ import {
   Account,
   CreateAccountRequest,
   JSONRpcMessageRequest,
+  Passkeys,
   PopupActions,
   SignMessageRequest,
 } from './types';
@@ -106,6 +107,7 @@ export class Passkey {
       hardware: hardwareId,
       origin: account.origin,
       publicKey: account.publicKey,
+      identifier: username,
       id,
     };
 
@@ -202,11 +204,11 @@ export class Passkey {
 
   /**
    * Retrieves the list of passkeys associated with the current hardware ID.
-   * @returns {Promise<any[]>} - List of passkeys for the current hardware.
+   * @returns {Promise<Passkeys[]>} - List of passkeys for the current hardware.
    */
-  async myPasskeys() {
+  async myPasskeys(): Promise<Passkeys[]> {
     const passkeys = await this.storage.getItem(StorageKeys.PASSKEY);
-    const byHardware = JSON.parse(passkeys || '[]').filter(
+    const byHardware: Passkeys[] = JSON.parse(passkeys || '[]').filter(
       (k: any) => k.passkey.hardware === hardwareId,
     );
     return byHardware;

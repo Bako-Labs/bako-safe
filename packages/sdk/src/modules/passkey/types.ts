@@ -20,7 +20,13 @@ export type Account = {
   hardware: string;
   origin: string;
   publicKey: string;
+  identifier: string;
   id: string;
+};
+
+export type Passkeys = {
+  id: string;
+  passkey: Account;
 };
 
 export type CreateAccountRequest = {

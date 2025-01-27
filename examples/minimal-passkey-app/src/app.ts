@@ -1,4 +1,4 @@
-import { bakoCoder, Passkey, SignatureType } from 'bakosafe';
+import { Passkey } from 'bakosafe';
 import { Provider } from 'fuels';
 
 const provider_url = 'https://testnet.fuel.network/v1/graphql';
@@ -55,9 +55,9 @@ const loadPk = async () => {
   }
 
   const pk = await _p;
-  pk.myPasskeys().then((passkeys: any) => {
+  pk.myPasskeys().then((passkeys) => {
     console.log('pks', passkeys);
-    passkeys.forEach((p: any) => {
+    passkeys.forEach((p) => {
       const option = document.createElement('p');
       option.textContent = p.passkey.id;
       option.id = p.passkey.id;
