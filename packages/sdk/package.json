@@ -1,6 +1,6 @@
 {
   "name": "bakosafe",
-  "version": "0.1.6-betha-passkey",
+  "version": "0.1.7-betha-passkey",
   "author": "Bako Labs",
   "description": "A signature validation package built based on sway in the fuel network",
   "main": "dist/index.js",
@@ -35,6 +35,7 @@
   "dependencies": {
     "@noble/curves": "^1.5.0",
     "axios": "^1.5.1",
+    "events": "^3.3.0",
     "json-rpc-2.0": "^1.7.0",
     "socket.io-client": "4.7.5",
     "uuid": "^9.0.1"

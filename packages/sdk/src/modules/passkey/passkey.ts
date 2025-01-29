@@ -74,54 +74,66 @@ export class Passkey {
    * @returns {Promise<Account>} - Predicate object for the created account.
    * @throws {Error} - Throws an error if the popup times out.
    */
-  async createAccount(username: string): Promise<Account> {
-    const { popup, url } = makeUrlPopup(PopupActions.CREATE);
-    this.popup = new Popup(url, popup);
-    const timeout = setTimeout(() => {
-      this.popup?.destroyPopup();
-      throw new Error('Timeout waiting for popup to be ready');
-    }, 30000);
+  createAccount(username: string): Promise<Account> {
+    return new Promise<Account>(async (resolve, reject) => {
+      const { popup, url } = makeUrlPopup(PopupActions.CREATE);
+      this.popup = new Popup(url, popup);
 
-    const { id, account }: CreateAccountRequest = await this.client.request(
-      JSONRpcMessageRequest.CREATE_ACCOUNT,
-      {
-        username,
-      },
-    );
+      try {
+        this.popup?.once('timeout', () => {
+          reject(new Error('Timeout waiting for popup to be ready'));
+        });
 
-    const vault = new Vault(this.provider, {
-      SIGNATURES_COUNT: 1,
-      SIGNERS: [account.address],
+        this.popup?.once('close', () => {
+          reject(new Error('Popup was closed'));
+        });
+
+        const { id, account }: CreateAccountRequest = await this.client.request(
+          JSONRpcMessageRequest.CREATE_ACCOUNT,
+          {
+            username,
+          },
+        );
+
+        const vault = new Vault(this.provider, {
+          SIGNATURES_COUNT: 1,
+          SIGNERS: [account.address],
+        });
+
+        this.vault = vault;
+        this.signer = account;
+
+        const predicate = {
+          conf: {
+            ...this.vault.configurable,
+            version: this.vault.version,
+          },
+          predicateAddress: this.vault.address.toString(),
+          signerAddress: account.address,
+          hardware: hardwareId,
+          origin: account.origin,
+          publicKey: account.publicKey,
+          identifier: username,
+          id,
+        };
+
+        const olders = await this.storage.getItem(StorageKeys.PASSKEY);
+        const passkeys = [
+          ...JSON.parse(olders || '[]'),
+          { id, passkey: predicate },
+        ];
+
+        await this.storage.setItem([
+          [StorageKeys.PASSKEY, JSON.stringify(passkeys)],
+        ]);
+
+        resolve(predicate);
+      } catch (error) {
+        reject(error);
+      } finally {
+        this.popup?.destroyPopup();
+      }
     });
-
-    this.vault = vault;
-    this.signer = account;
-
-    const predicate = {
-      conf: {
-        ...this.vault.configurable,
-        version: this.vault.version,
-      },
-      predicateAddress: this.vault.address.toString(),
-      signerAddress: account.address,
-      hardware: hardwareId,
-      origin: account.origin,
-      publicKey: account.publicKey,
-      identifier: username,
-      id,
-    };
-
-    const olders = await this.storage.getItem(StorageKeys.PASSKEY);
-    const passkeys = [
-      ...JSON.parse(olders || '[]'),
-      { id, passkey: predicate },
-    ];
-    this.storage.setItem([[StorageKeys.PASSKEY, JSON.stringify(passkeys)]]);
-
-    this.popup?.destroyPopup();
-    clearTimeout(timeout);
-
-    return predicate;
   }
 
   /**
@@ -132,74 +144,95 @@ export class Passkey {
    * @throws {Error} - Throws an error if the parameters are invalid.
    */
   async signMessage(challenge: string): Promise<SignMessageRequest> {
-    const passkeyId = this.signer?.id;
+    return new Promise<SignMessageRequest>(async (resolve, reject) => {
+      const passkeyId = this.signer?.id;
 
-    if (!challenge || !passkeyId || !this.signer) {
-      return Promise.reject(new Error('Invalid parameters'));
-    }
+      if (!challenge || !passkeyId || !this.signer) {
+        return Promise.reject(new Error('Invalid parameters'));
+      }
 
-    const { popup, url } = makeUrlPopup(PopupActions.SIGN);
-    this.popup = new Popup(url, popup);
-    const timeout = setTimeout(() => {
-      this.popup?.destroyPopup();
-      throw new Error('Timeout waiting for popup to be ready');
-    }, 30000);
+      const { popup, url } = makeUrlPopup(PopupActions.SIGN);
+      this.popup = new Popup(url, popup);
 
-    const s: SignMessageRequest = await this.client.request(
-      JSONRpcMessageRequest.SIGN_MESSAGE,
-      {
-        challenge,
-        passkeyId,
-        publicKey: this.signer.publickey,
-      },
-    );
+      this.popup?.once('timeout', () => {
+        reject(new Error('Timeout waiting for popup to be ready'));
+      });
 
-    this.popup?.destroyPopup();
-    clearTimeout(timeout);
+      this.popup?.once('close', () => {
+        reject(new Error('Popup was closed'));
+      });
 
-    return s;
+      try {
+        const s: SignMessageRequest = await this.client.request(
+          JSONRpcMessageRequest.SIGN_MESSAGE,
+          {
+            challenge,
+            passkeyId,
+            publicKey: this.signer.publickey,
+          },
+        );
+
+        resolve(s);
+      } catch (error) {
+        reject(error);
+      } finally {
+        this.popup?.destroyPopup();
+      }
+    });
   }
+
   /**
    * Signs a transaction using the current vault and signer.
    * @param {TransactionRequest} _tx - Transaction to be signed.
    * @returns {Promise<T>} - Result of the signed transaction.
    */
   async sendTransaction(_tx: VaultTransaction): Promise<TransactionResult> {
-    if (!this.vault || !this.signer) {
-      return Promise.reject(new Error('Invalid parameters'));
-    }
+    return new Promise<TransactionResult>(async (resolve, reject) => {
+      if (!this.vault || !this.signer) {
+        return Promise.reject(new Error('Invalid parameters'));
+      }
 
-    const { popup, url } = makeUrlPopup(PopupActions.SIGN);
-    this.popup = new Popup(url, popup);
-    const timeout = setTimeout(() => {
-      this.popup?.destroyPopup();
-      throw new Error('Timeout waiting for popup to be ready');
-    }, 30000);
+      const { popup, url } = makeUrlPopup(PopupActions.SIGN);
+      this.popup = new Popup(url, popup);
 
-    const { hashTxId, tx } = await this.vault.transaction(_tx);
+      this.popup?.once('timeout', () => {
+        reject(new Error('Timeout waiting for popup to be ready'));
+      });
 
-    const s: SignMessageRequest = await this.client.request(
-      JSONRpcMessageRequest.SIGN_MESSAGE,
-      {
-        challenge: hashTxId,
-        passkeyId: this.signer.id,
-        publicKey: this.signer.publickey,
-      },
-    );
+      this.popup?.once('close', () => {
+        reject(new Error('Popup was closed'));
+      });
 
-    clearTimeout(timeout);
-    this.popup?.destroyPopup();
+      try {
+        const { hashTxId, tx } = await this.vault.transaction(_tx);
 
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.WebAuthn,
-        ...s,
-      },
-    ]);
+        const s: SignMessageRequest = await this.client.request(
+          JSONRpcMessageRequest.SIGN_MESSAGE,
+          {
+            challenge: hashTxId,
+            passkeyId: this.signer.id,
+            publicKey: this.signer.publickey,
+          },
+        );
 
-    const r = await this.vault.send(tx);
-    const response = await r.waitForResult();
-    return response;
+        this.popup?.destroyPopup();
+
+        tx.witnesses = bakoCoder.encode([
+          {
+            type: SignatureType.WebAuthn,
+            ...s,
+          },
+        ]);
+
+        const r = await this.vault.send(tx);
+        const response = await r.waitForResult();
+        resolve(response);
+      } catch (error) {
+        reject(error);
+      } finally {
+        this.popup?.destroyPopup();
+      }
+    });
   }
 
   /**

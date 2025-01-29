@@ -1,4 +1,6 @@
-export class Popup {
+import { EventEmitter } from 'events';
+
+export class Popup extends EventEmitter {
   private popup: Window | null = null;
   private url: string;
   private params: string;
@@ -9,9 +11,17 @@ export class Popup {
    * @param params - Configuration parameters for the popup (e.g., size, position).
    */
   constructor(url: string, params: string) {
+    super();
     this.url = url;
     this.params = params;
     this.openPopup();
+  }
+
+  /**
+   * Removes all event listeners.
+   */
+  private clearListeners() {
+    this.removeAllListeners();
   }
 
   /**
@@ -35,6 +45,22 @@ export class Popup {
       body.style.left = '50%';
       body.style.transform = 'translate(-50%, -50%)';
     };
+
+    const timeout = setTimeout(() => {
+      this.destroyPopup();
+      this.emit('timeout');
+      this.clearListeners();
+      clearTimeout(timeout);
+    }, 30000);
+
+    const timer = setInterval(() => {
+      if (this.popup?.closed) {
+        this.emit('close');
+        clearInterval(timer);
+        this.popup = null;
+        this.clearListeners();
+      }
+    }, 300);
   }
 
   /**
