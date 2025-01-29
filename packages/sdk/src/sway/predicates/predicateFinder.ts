@@ -37,10 +37,6 @@ export function loadPredicate(provider: string, version?: string) {
     throw new Error(`Version ${version} not found`);
   }
 
-  if (!versions[version].deployed.includes(provider)) {
-    throw new Error(`Version ${version} not deployed on ${provider}`);
-  }
-
   return {
     bytecode: versions[version].bytecode,
     abi: versions[version].abi,
