@@ -1,0 +1,26 @@
+{
+  "name": "vite-ts-minimal",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@trpc/client": "^10.45.2",
+    "@trpc/server": "^10.45.2",
+    "bakosafe": "0.1.4-betha-passkey",
+    "events": "^3.3.0",
+    "fuels": "0.96.1",
+    "json-rpc-2.0": "^1.7.0",
+    "superjson": "^2.2.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.4"
+  }
+}

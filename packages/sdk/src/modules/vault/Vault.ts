@@ -73,15 +73,20 @@ export class Vault extends Predicate<[]> {
     }
 
     const BakoPredicateLoader = loadPredicate(provider.url, version);
+    const config = Vault.makePredicate(conf);
     super({
       abi: BakoPredicateLoader.abi,
       bytecode: arrayify(BakoPredicateLoader.bytecode),
       provider: provider,
-      configurableConstants: Vault.makePredicate(conf),
+      configurableConstants: config,
     });
 
     this.predicateVersion = BakoPredicateLoader.version;
-    this.configurable = conf;
+    this.configurable = {
+      ...config,
+      // @ts-ignore
+      version: this.predicateVersion,
+    };
     this.__provider = provider;
   }
 

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + TS</title>
+  </head>
+  <style>
+    iframe {
+      border: 1px solid black !important;
+    }
+  </style>
+  <body>
+    <div id="app">
+      <h1>Main App</h1>
+      <div id="user-info">
+        <h3 hidden>User: <span id="user-address">as</span></h3>
+        <h3 hidden>PK: <span id="user-pk">as</span></h3>
+        <h3 hidden>id: <span id="user-id">as</span></h3>
+        <!-- <h3 hidden>code: <span id="user-code">as</span></h3> -->
+      </div>
+      <button id="createAccount">Create passkey</button>
+      <button id="signMessage">Sign Message</button>
+
+      <h3 hidden>sign: <span id="user-signature">as</span></h3>
+      <br />
+      <br />
+      <button id="faucet" hidden>Get Test Tokens</button>
+      <br />
+      <div style="display: flex; justify-content: center">
+        <div id="passkeys" style="border: 1px solid red; width: 100%">
+          <h3>passkeys</h3>
+        </div>
+        <div
+          id="vault-connected"
+          style="border: 1px solid red; width: 100%; max-width: 500"
+        >
+          <h3>Vault Connected</h3>
+          <h3>address: <span id="vault-address"></span></h3>
+          <h3>signer: <span id="vault-signer"></span></h3>
+          <h3>balance: <span id="vault-balance"></span></h3>
+          <h3>network: <span id="vault-network"></span></h3>
+
+          <button id="vault-sendTransaction" hidden>sent tx</button>
+          <button hidden id="tx-result"></button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/app.ts"></script>
+  </body>
+</html>
