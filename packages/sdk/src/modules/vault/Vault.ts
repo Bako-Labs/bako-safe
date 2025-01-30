@@ -262,7 +262,15 @@ export class Vault extends Predicate<[]> {
     });
 
     const maxFeeWithPredicateGas = maxFee.add(predicateSuccessFeeDiff);
-    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(1.7);
+
+    console.log('[FEE_TX]', {
+      calculated: maxFeeWithPredicateGas.toString(),
+      maxFee_older: transactionRequest.maxFee.toString(),
+      withMargin2: maxFeeWithPredicateGas.mul(1.7).toString(),
+      withMargin3: maxFeeWithPredicateGas.mul(3).toString(),
+    });
+
+    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(2);
 
     if (transactionRequest.type === TransactionType.Upgrade) {
       transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);
