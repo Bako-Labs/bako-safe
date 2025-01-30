@@ -228,6 +228,7 @@ export class Vault extends Predicate<[]> {
   public async prepareTransaction<T extends TransactionRequest>(
     transactionRequest: T,
   ): Promise<T> {
+    const originalMaxFee = transactionRequest.maxFee;
     const predicateGasUsed = await this.maxGasUsed();
     this.populateTransactionPredicateData(transactionRequest);
 
@@ -261,15 +262,12 @@ export class Vault extends Predicate<[]> {
       gasPrice,
     });
 
-    const maxFeeWithPredicateGas = maxFee.add(predicateSuccessFeeDiff);
+    let baseMaxFee = maxFee;
+    if (!originalMaxFee.eq(0) && originalMaxFee.sub(maxFee).gt(0)) {
+      baseMaxFee = originalMaxFee;
+    }
 
-    console.log('[FEE_TX]', {
-      calculated: maxFeeWithPredicateGas.toString(),
-      maxFee_older: transactionRequest.maxFee.toString(),
-      withMargin2: maxFeeWithPredicateGas.mul(1.7).toString(),
-      withMargin3: maxFeeWithPredicateGas.mul(3).toString(),
-    });
-
+    const maxFeeWithPredicateGas = baseMaxFee.add(predicateSuccessFeeDiff);
     transactionRequest.maxFee = maxFeeWithPredicateGas.mul(2);
 
     if (transactionRequest.type === TransactionType.Upgrade) {
