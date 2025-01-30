@@ -85,6 +85,7 @@ export class Vault extends Predicate<[]> {
     // @ts-ignore
     this.configurable = {
       ...config,
+      // @ts-ignore
       version: this.predicateVersion,
     };
     this.__provider = provider;
@@ -261,7 +262,7 @@ export class Vault extends Predicate<[]> {
     });
 
     const maxFeeWithPredicateGas = maxFee.add(predicateSuccessFeeDiff);
-    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(1.2);
+    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(1.7);
 
     if (transactionRequest.type === TransactionType.Upgrade) {
       transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);

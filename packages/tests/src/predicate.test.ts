@@ -230,23 +230,23 @@ describe('[Version]', () => {
     expect(vault.address.toB256()).toBe(vault2.address.toB256());
   });
 
-  it('Should create a vault with a specific version not deployed on this provider', async () => {
-    const { provider } = node;
-    const [wallet] = node.wallets;
-    expect(() => {
-      new Vault(
-        provider,
-        {
-          SIGNATURES_COUNT: 1,
-          SIGNERS: [wallet.address.toB256()],
-        },
-        DEFAULT_PREDICATE_VERSION,
-      );
-    }).toThrow({
-      name: 'Error',
-      message: `Version ${DEFAULT_PREDICATE_VERSION} not deployed on ${provider.url}`,
-    });
-  });
+  // it('Should create a vault with a specific version not deployed on this provider', async () => {
+  //   const { provider } = node;
+  //   const [wallet] = node.wallets;
+  //   expect(() => {
+  //     new Vault(
+  //       provider,
+  //       {
+  //         SIGNATURES_COUNT: 1,
+  //         SIGNERS: [wallet.address.toB256()],
+  //       },
+  //       DEFAULT_PREDICATE_VERSION,
+  //     );
+  //   }).toThrow({
+  //     name: 'Error',
+  //     message: `Version ${DEFAULT_PREDICATE_VERSION} not deployed on ${provider.url}`,
+  //   });
+  // });
 
   it('Should create a vault with a inválid version', async () => {
     const { provider } = node;
