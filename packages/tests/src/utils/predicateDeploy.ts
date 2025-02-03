@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { compressBytecode, ContractFactory, WalletUnlocked } from 'fuels';
+import { Predicate, WalletUnlocked } from 'fuels';
 import path from 'path';
 
 /**
@@ -22,14 +22,18 @@ const abiPath = path.resolve(
 export const deployPredicate = async (wallet: WalletUnlocked) => {
   const bytecode = new Uint8Array(readFileSync(bytecodePath));
   const abi = JSON.parse(readFileSync(abiPath, 'utf-8'));
-  const factory = new ContractFactory(bytecode, abi, wallet);
 
-  const { waitForResult } = await factory.deployAsBlobTxForScript();
+  const _predicate = new Predicate({
+    abi,
+    bytecode,
+    provider: wallet.provider,
+  });
 
-  const { configurableOffsetDiff, loaderBytecode } = await waitForResult();
+  const predicate = await _predicate.deploy(wallet);
 
-  return {
-    configurableOffsetDiff,
-    loaderBytecode: compressBytecode(loaderBytecode),
-  };
+  const p = await predicate.waitForResult().catch((e) => {
+    return null;
+  });
+
+  return !!p;
 };

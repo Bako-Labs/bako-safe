@@ -90,7 +90,7 @@ describe('[Create]', () => {
 
   it('Should fail create tx with invalid receipt address', async () => {
     const { provider, wallets } = node;
-
+    const baseAsset = await provider.getBaseAssetId();
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
       SIGNERS: wallets.map((w) => w.address.toB256()),
@@ -107,7 +107,7 @@ describe('[Create]', () => {
         {
           to: Address.fromRandom().toB256(),
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: baseAsset,
         },
       ],
     });
@@ -130,7 +130,7 @@ describe('[Create]', () => {
             {
               to: `0x${hashTxId}`,
               amount: '0.1',
-              assetId: provider.getBaseAssetId(),
+              assetId: baseAsset,
             },
           ],
         }),
@@ -199,7 +199,7 @@ describe('[Version]', () => {
   });
 
   it('Should create a vault with a specific version', async () => {
-    const provider = await Provider.create(networks['TESNET']);
+    const provider = new Provider(networks['TESNET']);
     const [wallet] = node.wallets;
 
     const vault = new Vault(
@@ -215,7 +215,7 @@ describe('[Version]', () => {
   });
 
   it('Should create a vault latest version and recover with param', async () => {
-    const provider = await Provider.create(networks['TESNET']);
+    const provider = new Provider(networks['TESNET']);
     const [wallet] = node.wallets;
 
     const vault = new Vault(provider, {
@@ -229,24 +229,6 @@ describe('[Version]', () => {
     expect(vault2.version).toBe(vault.version);
     expect(vault.address.toB256()).toBe(vault2.address.toB256());
   });
-
-  // it('Should create a vault with a specific version not deployed on this provider', async () => {
-  //   const { provider } = node;
-  //   const [wallet] = node.wallets;
-  //   expect(() => {
-  //     new Vault(
-  //       provider,
-  //       {
-  //         SIGNATURES_COUNT: 1,
-  //         SIGNERS: [wallet.address.toB256()],
-  //       },
-  //       DEFAULT_PREDICATE_VERSION,
-  //     );
-  //   }).toThrow({
-  //     name: 'Error',
-  //     message: `Version ${DEFAULT_PREDICATE_VERSION} not deployed on ${provider.url}`,
-  //   });
-  // });
 
   it('Should create a vault with a inválid version', async () => {
     const { provider } = node;
@@ -296,6 +278,7 @@ describe('[Transactions]', () => {
       wallets: [wallet],
     } = node;
     const address = wallet.address.toB256();
+    const baseAsset = await provider.getBaseAssetId();
 
     // create a vault
     const vault = new Vault(provider, {
@@ -313,7 +296,7 @@ describe('[Transactions]', () => {
         {
           to: address,
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: baseAsset,
         },
       ],
     });
@@ -341,6 +324,7 @@ describe('[Transactions]', () => {
       wallets: [genesisWallet],
     } = node;
     const receiverWallet = WalletUnlocked.generate({ provider });
+    const baseAsset = await provider.getBaseAssetId();
 
     // create a vault
     const vault = new Vault(provider, {
@@ -367,12 +351,12 @@ describe('[Transactions]', () => {
         },
         {
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: baseAsset,
           to: receiverWallet.address.toString(),
         },
         {
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: baseAsset,
           to: receiverWallet.address.toString(),
         },
       ],
@@ -392,9 +376,7 @@ describe('[Transactions]', () => {
     const { isStatusSuccess } = await result.waitForResult();
 
     const btcBalance = await receiverWallet.getBalance(assets['BTC']);
-    const ethBalance = await receiverWallet.getBalance(
-      provider.getBaseAssetId(),
-    );
+    const ethBalance = await receiverWallet.getBalance(baseAsset);
 
     expect(isStatusSuccess).toBeTruthy();
     expect(btcBalance).toEqual(bn.parseUnits('0.1'));
@@ -535,13 +517,14 @@ describe('[Send With]', () => {
     await wallet
       .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
       .then((r) => r.waitForResult());
+    const baseAsset = await provider.getBaseAssetId();
 
     const { tx, hashTxId } = await vault.transaction({
       name: 'Test',
       assets: [
         {
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: baseAsset,
           to: wallet.address.toB256(),
         },
       ],
@@ -567,6 +550,8 @@ describe('[Send With]', () => {
     } = node;
 
     const webAuthnCredential = WebAuthn.createCredentials();
+    const baseAsset = await provider.getBaseAssetId();
+
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
       SIGNERS: [webAuthnCredential.address, wallet.address.toB256()],
@@ -579,7 +564,7 @@ describe('[Send With]', () => {
       assets: [
         {
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: baseAsset,
           to: wallet.address.toB256(),
         },
       ],
@@ -607,10 +592,11 @@ describe('[Send With]', () => {
       provider,
       wallets: [wallet],
     } = node;
+    const baseAsset = await provider.getBaseAssetId();
 
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
-      SIGNERS: [accounts['USER_1'].address, accounts['USER_2'].address],
+      SIGNERS: [accounts['USER_1'].account, accounts['USER_2'].account],
     });
     await wallet
       .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
@@ -621,7 +607,7 @@ describe('[Send With]', () => {
       assets: [
         {
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: baseAsset,
           to: wallet.address.toB256(),
         },
       ],
@@ -646,6 +632,7 @@ describe('[Send With]', () => {
       wallets: [owner, signer],
     } = node;
 
+    const baseAsset = await provider.getBaseAssetId();
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
       SIGNERS: [owner.address.toB256(), signer.address.toB256()],
@@ -658,7 +645,7 @@ describe('[Send With]', () => {
       assets: [
         {
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: baseAsset,
           to: owner.address.toB256(),
         },
       ],
@@ -688,6 +675,7 @@ describe('[Send With]', () => {
       wallets: [owner, signer],
     } = node;
 
+    const baseAsset = await provider.getBaseAssetId();
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 2,
       SIGNERS: [owner.address.toB256(), signer.address.toB256()],
@@ -701,7 +689,7 @@ describe('[Send With]', () => {
       assets: [
         {
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: baseAsset,
           to: owner.address.toB256(),
         },
       ],
@@ -730,6 +718,7 @@ describe('[Send With]', () => {
       wallets: [wallet],
     } = node;
 
+    const baseAsset = await provider.getBaseAssetId();
     const webAuthnCredential = WebAuthn.createCredentials();
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
@@ -743,7 +732,7 @@ describe('[Send With]', () => {
       assets: [
         {
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: baseAsset,
           to: wallet.address.toB256(),
         },
       ],
@@ -768,6 +757,7 @@ describe('[Send With]', () => {
       provider,
       wallets: [owner, signer],
     } = node;
+    const baseAsset = await provider.getBaseAssetId();
 
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
@@ -781,7 +771,7 @@ describe('[Send With]', () => {
       assets: [
         {
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: baseAsset,
           to: owner.address.toB256(),
         },
       ],

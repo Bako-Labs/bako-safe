@@ -83,12 +83,13 @@ export class BakoProvider extends Provider {
   ): Promise<BakoProvider> {
     if ('apiToken' in options && options.apiToken) {
       const { apiToken, ...rest } = options;
-      const providerFuel = await Provider.create(url);
+      const providerFuel = new Provider(url);
+      const chainId = await providerFuel.getChainId();
       const cliAuth = await Service.cliAuth({
         token: options.apiToken,
         network: {
           url: providerFuel.url,
-          chainId: providerFuel.getChainId(),
+          chainId: chainId,
         },
       });
       const provider = new BakoProvider(url, {
@@ -170,10 +171,11 @@ export class BakoProvider extends Provider {
     request: TransactionRequest,
     transaction: Pick<ICreateTransactionPayload, 'name' | 'predicateAddress'>,
   ) {
+    const chainId = await this.getChainId();
     const payload: ICreateTransactionPayload = {
       name: transaction.name ?? `vault ${randomUUID()}`,
       predicateAddress: transaction.predicateAddress,
-      hash: request.getTransactionId(this.getChainId()).slice(2),
+      hash: request.getTransactionId(chainId).slice(2),
       txData: request,
       status: TransactionStatus.AWAIT_REQUIREMENTS,
     };
@@ -217,7 +219,7 @@ export class BakoProvider extends Provider {
    */
   async send(hash: string) {
     await this.service.sendTransaction(hash);
-
-    return new TransactionResponse(hash, this);
+    const chainId = await this.getChainId();
+    return new TransactionResponse(hash, this, chainId);
   }
 }
