@@ -77,13 +77,12 @@ describe('[Create]', () => {
         new Vault(provider, {
           SIGNATURES_COUNT: 2,
           SIGNERS: [
-            // ...wallets.map((w) => w.address.toB256()),
             Address.fromRandom().toB256().slice(0, -10), // set an inválid address
           ],
         }),
     ).rejects.toThrowError(
       expect.objectContaining({
-        message: expect.stringContaining('Invalid B256 Address'),
+        message: expect.stringContaining('Unknown address format'),
       }),
     );
   });
