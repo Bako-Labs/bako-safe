@@ -1,25 +1,26 @@
 import { bech32m } from 'bech32';
-import { Address, arrayify, hexlify } from 'fuels';
-import { Batch32Prefix, Batch32 } from './types';
+import { arrayify, hexlify } from 'fuels';
 
-export class PasskeyAddress {
-  constructor() {
-    // super();
-  }
+enum Bech32Prefix {
+  PASSKEY = 'passkey',
+}
 
+export type Bech32 = `${Bech32Prefix}.${string}`;
+
+export class AddressUtils {
   static isPasskey(value: string): boolean {
-    return value.startsWith(Batch32Prefix.PASSKEY);
+    return value.startsWith(Bech32Prefix.PASSKEY);
   }
 
   static toBech32 = (address: string) =>
-    <Batch32>(
+    <Bech32>(
       bech32m.encode(
-        Batch32Prefix.PASSKEY,
+        Bech32Prefix.PASSKEY,
         bech32m.toWords(arrayify(hexlify(address))),
       )
     );
 
-  static fromBech32 = (address: Batch32) => {
+  static fromBech32 = (address: Bech32) => {
     const { words } = bech32m.decode(address);
     const bytes = new Uint8Array(bech32m.fromWords(words));
     return hexlify(bytes);
