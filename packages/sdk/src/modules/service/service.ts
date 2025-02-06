@@ -15,7 +15,7 @@ import {
   TransactionBakoResponse,
   UserAuthResponse,
   CLIAuthPayload,
-  CLIAuth
+  CLIAuth,
 } from './types';
 
 // keep here to sync with the other files
@@ -190,12 +190,15 @@ export class Service {
   }
 
   /**
-   * Authenticate with a API Token
+   * Authenticate with an API Token
    * @param {CLIAuthPayload} params - The CLI authentication payload.
    * @returns {Promise<CLIAuth>}    - The response containing the CLI authentication details.
    */
   static async cliAuth(params: CLIAuthPayload): Promise<CLIAuth> {
-    const { data } = await api.post<CLIAuth>('/cli/auth', params);
+    const { serverApi = defaultConfig.serverUrl, ...payload } = params;
+
+    const api = axios.create({ baseURL: serverApi });
+    const { data } = await api.post<CLIAuth>('/cli/auth', payload);
 
     return data;
   }

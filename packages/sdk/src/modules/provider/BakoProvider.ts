@@ -85,11 +85,12 @@ export class BakoProvider extends Provider {
       const { apiToken, ...rest } = options;
       const providerFuel = await Provider.create(url);
       const cliAuth = await Service.cliAuth({
-        token: options.apiToken,
         network: {
           url: providerFuel.url,
           chainId: providerFuel.getChainId(),
         },
+        token: options.apiToken,
+        serverApi: options.serverApi,
       });
       const provider = new BakoProvider(url, {
         ...rest,
