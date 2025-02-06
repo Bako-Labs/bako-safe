@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.1.7
+
+### Patch Changes
+
+- 649629d: chore: add new transaction status
+
 ## 0.1.1
 
 ### Patch Changes
