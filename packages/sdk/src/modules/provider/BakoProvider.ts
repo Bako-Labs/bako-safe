@@ -135,6 +135,7 @@ export class BakoProvider extends Provider {
   async savePredicate(
     vault: Vault & {
       name?: string;
+      description?: string;
     },
   ) {
     const payload: IPredicatePayload = {
@@ -143,6 +144,7 @@ export class BakoProvider extends Provider {
       configurable: JSON.stringify(vault.configurable),
       provider: this.url,
       version: vault.predicateVersion,
+      description: vault.description,
     };
 
     const predicate = await this.service.createPredicate(payload);
