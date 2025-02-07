@@ -17,6 +17,16 @@ Currently, our predicate contract supports only two types of signatures:
 
 2. **WebAuthn Signatures**: We also support signatures made through WebAuthn, providing a secure and widely compatible method for authentication. More about WebAuthn can be found [here](https://webauthn.io/).
 
-## Build your contract
+## Build contract
 
 - `pnpm fuels build`
+
+## Deploy Predicate
+
+1. **Copy the environment variables file**  
+   Copy the example file:  
+   `cp .env.example .env`
+   Add your private key and network
+
+2. **Publish the bytecode**
+   `pnpm predicate:deploy`

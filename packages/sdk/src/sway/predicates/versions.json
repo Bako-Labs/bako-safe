@@ -222,6 +222,9 @@
       "fuelCoreVersion": "0.40.4"
     },
     "description": "",
-    "deployed": []
+    "deployed": [
+      "https://testnet.fuel.network/v1/graphql",
+      "https://mainnet.fuel.network/v1/graphql"
+    ]
   }
 }
