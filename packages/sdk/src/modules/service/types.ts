@@ -130,6 +130,7 @@ export enum TransactionStatus {
   SUCCESS = 'success', // -> SENDED
   DECLINED = 'declined', // -> DECLINED
   FAILED = 'failed', // -> FAILED
+  CANCELED = 'canceled', // -> Transaction CANCELED
 }
 
 export type TokenResponse = [string, number][];
@@ -191,6 +192,7 @@ export enum WitnessStatus {
   REJECTED = 'REJECTED',
   DONE = 'DONE',
   PENDING = 'PENDING',
+  CANCELED = 'CANCELED',
 }
 
 export interface IWitnesses {

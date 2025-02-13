@@ -233,6 +233,7 @@ export class Vault extends Predicate<[]> {
   public async prepareTransaction<T extends TransactionRequest>(
     transactionRequest: T,
   ): Promise<T> {
+    const originalMaxFee = transactionRequest.maxFee;
     const predicateGasUsed = await this.maxGasUsed();
     this.populateTransactionPredicateData(transactionRequest);
 
