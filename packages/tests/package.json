@@ -19,9 +19,12 @@
     "test:file": "chmod +x ./src/scripts/run-test.sh && ./src/scripts/run-test.sh"
   },
   "dependencies": {
+    "@ethereumjs/util": "9.0.3",
+    "@ethersproject/bytes": "5.7.0",
     "@noble/curves": "^1.5.0",
     "axios": "^1.7.2",
     "bakosafe": "workspace:*",
+    "ethers": "^6.13.5",
     "fuels": "0.99.0",
     "uuid": "^9.0.1"
   },

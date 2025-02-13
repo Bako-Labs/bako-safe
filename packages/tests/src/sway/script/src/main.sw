@@ -1,87 +1,101 @@
 script;
 
-use std::{b512::B512, tx::{GTF_WITNESS_DATA, tx_id, tx_witnesses_count}};
-
-use libraries::{
-    constants::{
-        BYTE_WITNESS_TYPE_FUEL,
-        BYTE_WITNESS_TYPE_WEBAUTHN,
-        EMPTY_SIGNERS,
-        INVALID_ADDRESS,
-        MAX_SIGNERS,
+use std::{
+    b512::B512,
+    bytes::Bytes,
+    constants::ZERO_B256,
+    tx::{
+        tx_id,
+        tx_witness_data,
     },
-    entities::{
-        SignatureType,
-        WebAuthnHeader,
-    },
-    recover_signature::{
-        fuel_verify,
-        webauthn_verify,
-    },
-    utilities::{
-        b256_to_ascii_bytes,
-    },
-    validations::{
-        check_duplicated_signers,
-        check_signer_exists,
-        verify_prefix,
-    },
-    webauthn_digest::{
-        get_webauthn_digest,
+    vm::evm::{
+        ecr::ec_recover_evm_address,
     },
 };
 
-struct PredicateConfig {
-    SIGNERS: [b256; 10],
-    SIGNATURES_COUNT: u64,
-    HASH_PREDICATE: b256,
+const ETHEREUM_PREFIX = 0x19457468657265756d205369676e6564204d6573736167653a0a3636;
+
+struct SignedData {
+    /// The id of the transaction to be signed.
+    transaction_id: b256,
+    /// EIP-191 personal sign prefix.
+    ethereum_prefix: b256,
+    /// Additional data used for reserving memory for hashing (hack).
+    #[allow(dead_code)]
+    empty: b256,
 }
 
-fn main(tx_id: b256, config: PredicateConfig) -> bool {
-    let SIGNERS = config.SIGNERS;
-    let SIGNATURES_COUNT = config.SIGNATURES_COUNT;
-    let HASH_PREDICATE = config.HASH_PREDICATE;
-    let mut i_witnesses = 0;
-    let mut verified_signatures: Vec<Address> = Vec::with_capacity(MAX_SIGNERS);
+// configurable {
+//     /// The Ethereum address that signed the transaction.
+//     SIGNER: b256 = ZERO_B256,
+// }
 
-    while i_witnesses < tx_witnesses_count() {
-        let mut witness_ptr = __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA);
-        if (verify_prefix(witness_ptr)) {
-            let tx_bytes = b256_to_ascii_bytes(tx_id);
-            witness_ptr = witness_ptr.add_uint_offset(4); // skip bako prefix
-            let signature = witness_ptr.read::<SignatureType>();
-            witness_ptr = witness_ptr.add_uint_offset(__size_of::<u64>()); // skip enum size
-            let pk: Address = match signature {
-                SignatureType::WebAuthn(signature_payload) => {
-                    let data_ptr = witness_ptr.add_uint_offset(__size_of::<WebAuthnHeader>());
-                    let private_key = webauthn_verify(
-                        get_webauthn_digest(signature_payload, data_ptr, tx_bytes),
-                        signature_payload,
-                    );
-                    private_key
-                },
-                SignatureType::Fuel(signature_fuel) => {
-                    // to prevent warning on build
-                    let _ = signature_fuel;
-                    // TODO: talk with Sway team to see why the value is not correctly parsed it looks to be skiping 24 bytes
-                    // this is why we need to use the pointer to read the B512 value, this problem dosen't happen on the webauth
-                    let signature = witness_ptr.read::<B512>();
-                    fuel_verify(signature, tx_bytes)
-                },
-                _ => INVALID_ADDRESS,
-            };
+fn main(witness_index: u64, SIGNER: b256) -> bool {
+    // log(witness_index);
+    
+    // Retrieve the Ethereum signature from the witness data in the Tx at the specified index.
+    let signature: B512 = tx_witness_data(witness_index).unwrap();
+    
+    // Hash the Fuel Tx (as the signed message) and attempt to recover the signer from the signature.
+    let result = ec_recover_evm_address(signature, personal_sign_hash(tx_id()));
 
-            let is_valid_signer = check_signer_exists(pk, SIGNERS);
-            check_duplicated_signers(is_valid_signer, verified_signatures);
+    // log
+    log(SIGNER);
+    log(personal_sign_hash(tx_id()));
+    log(signature);
+    log(SIGNER == result.unwrap().into());
+
+    // If the signers match then the predicate has validated the Tx.
+    if result.is_ok() {
+        if SIGNER == result.unwrap().into() {
+            return true;
         }
-
-        i_witnesses += 1;
     }
 
-    // redundant check, but it is necessary to avoid compiler errors
-    if (HASH_PREDICATE != HASH_PREDICATE) {
-        return false;
+    // Otherwise, an invalid signature has been passed and we invalidate the Tx.
+    false
+}
+
+/// Return the Keccak-256 hash of the transaction ID in the format of EIP-191.
+///
+/// # Arguments
+///
+/// * `transaction_id`: [b256] - Fuel Tx ID.
+fn personal_sign_hash(transaction_id: b256) -> b256 {
+    // Hack, allocate memory to reduce manual `asm` code.
+    let data = SignedData {
+        transaction_id,
+        ethereum_prefix: ETHEREUM_PREFIX,
+        empty: ZERO_B256,
+    };
+
+
+    // Pointer to the data we have signed external to Sway.
+    let data_ptr = asm(ptr: data.transaction_id) {
+        ptr
+    };
+
+    // The Ethereum prefix is 28 bytes (plus padding we exclude).
+    // The Tx ID is 32 bytes at the end of the prefix.
+    let len_to_hash = 28 + 32;
+
+    // Create a buffer in memory to overwrite with the result being the hash.
+    let mut buffer = b256::min();
+
+    // Copy the Tx ID to the end of the prefix and hash the exact len of the prefix and id (without
+    // the padding at the end because that would alter the hash).
+    asm(
+        hash: buffer,
+        tx_id: data_ptr,
+        end_of_prefix: data_ptr + len_to_hash,
+        prefix: data.ethereum_prefix,
+        id_len: 32,
+        hash_len: len_to_hash,
+    ) {
+        mcp end_of_prefix tx_id id_len;
+        k256 hash prefix hash_len;
     }
 
-    return verified_signatures.len() >= SIGNATURES_COUNT;
+    // The buffer contains the hash.
+    buffer
 }
