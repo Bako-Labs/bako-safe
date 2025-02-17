@@ -11,7 +11,7 @@ import {
   ICreateTransactionPayload,
   IPredicatePayload,
   ISignTransactionRequest,
-  Service
+  Service,
   // @ts-ignore
 } from 'bakosafe/src';
 import { deployPredicate } from './utils';
@@ -95,10 +95,7 @@ jest.mock('../../sdk/src/modules/service', () => {
         const predicateConfig = JSON.parse(configurable);
 
         if (tx.witnesses.length >= predicateConfig.SIGNATURES_COUNT) {
-          const vault = new Vault(
-            await Provider.create(provider),
-            predicateConfig,
-          );
+          const vault = new Vault(new Provider(provider), predicateConfig);
           await vault.send(tx);
         }
         return true;
@@ -111,9 +108,10 @@ jest.mock('../../sdk/src/modules/service', () => {
 
       if (tx.witnesses.length >= configurable.SIGNATURES_COUNT) {
         const vault = new Vault(
-          await Provider.create(provider),
+          new Provider(provider),
           JSON.parse(configurable),
         );
+
         await vault.send(tx.txData);
       }
       return true;
@@ -232,22 +230,22 @@ describe('[AUTH]', () => {
       HASH_PREDICATE: Address.fromRandom().toB256(),
     });
 
-    const spyInstance = jest
-      .spyOn(Service, 'cliAuth')
-      .mockResolvedValue({
-        code: 'mocked_challenge',
-        address,
-        configurable: predicate.configurable,
-        tokenConfig: {
-          transactionTitle: 'Transaction',
-        },
-      });
+    const spyInstance = jest.spyOn(Service, 'cliAuth').mockResolvedValue({
+      code: 'mocked_challenge',
+      address,
+      configurable: predicate.configurable,
+      tokenConfig: {
+        transactionTitle: 'Transaction',
+      },
+    });
 
     const vaultProvider = await BakoProvider.create(provider.url, {
       apiToken: fakeAPIToken,
     });
     const predicateProviderInstance = new Vault(vaultProvider);
-    expect(predicateProviderInstance.address.toB256()).toBe(predicate.address.toB256());
+    expect(predicateProviderInstance.address.toB256()).toBe(
+      predicate.address.toB256(),
+    );
 
     spyInstance.mockRestore();
   });
@@ -451,7 +449,7 @@ describe('[AUTH]', () => {
         {
           to: Address.fromRandom().toB256(),
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: await provider.getBaseAssetId(),
         },
       ],
     });
@@ -509,7 +507,7 @@ describe('[AUTH]', () => {
         {
           to: Address.fromRandom().toB256(),
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: await provider.getBaseAssetId(),
         },
       ],
     });
@@ -536,6 +534,7 @@ describe('[AUTH]', () => {
       wallets: [wallet],
     } = node;
     const address = wallet.address.toB256();
+    const baseAssetId = await provider.getBaseAssetId();
 
     const challenge = await BakoProvider.setup({
       address,
@@ -576,7 +575,7 @@ describe('[AUTH]', () => {
         {
           to: Address.fromRandom().toB256(),
           amount: '0.1',
-          assetId: provider.getBaseAssetId(),
+          assetId: baseAssetId,
         },
       ],
     });

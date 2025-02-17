@@ -82,7 +82,6 @@ export class Vault extends Predicate<[]> {
     });
 
     this.predicateVersion = BakoPredicateLoader.version;
-    // @ts-ignore
     this.configurable = {
       ...config,
       // @ts-ignore
@@ -131,9 +130,11 @@ export class Vault extends Predicate<[]> {
       });
     }
 
+    const chainId = await this.provider.getChainId();
+
     return {
       tx: result,
-      hashTxId: result.getTransactionId(this.provider.getChainId()).slice(2),
+      hashTxId: result.getTransactionId(chainId).slice(2),
     };
   }
 
@@ -146,7 +147,8 @@ export class Vault extends Predicate<[]> {
   async sendTransaction(transactionRequestLike: TransactionRequestLike) {
     if ('address' in this.provider.options && this.provider.options.address) {
       const { hashTxId } = await this.BakoTransfer(transactionRequestLike);
-      return new TransactionResponse(hashTxId, this.provider);
+      const chainId = await this.provider.getChainId();
+      return new TransactionResponse(hashTxId, this.provider, chainId);
     }
 
     return super.sendTransaction(transactionRequestLike);
@@ -160,19 +162,22 @@ export class Vault extends Predicate<[]> {
    */
   async send(tx: TransactionRequestLike): Promise<TransactionResponse> {
     const txRequest = transactionRequestify(tx);
-
+    const chainId = await this.provider.getChainId();
     if (this.provider instanceof BakoProvider) {
-      const txHash = txRequest.getTransactionId(this.provider.getChainId());
+      const txHash = txRequest.getTransactionId(chainId);
 
       return this.provider.send(txHash);
     }
 
     await this.provider.estimatePredicates(txRequest);
     const encodedTransaction = hexlify(txRequest.toTransactionBytes());
+
+    // const a = await this.provider.getBlobs([]);
+
     const {
       submit: { id: transactionId },
     } = await this.provider.operations.submit({ encodedTransaction });
-    return new TransactionResponse(transactionId, this.provider);
+    return new TransactionResponse(transactionId, this.provider, chainId);
   }
 
   /**
@@ -251,7 +256,7 @@ export class Vault extends Predicate<[]> {
       }
     });
 
-    const { gasPriceFactor } = this.provider.getGasConfig();
+    const { gasPriceFactor } = await this.provider.getGasConfig();
     const { maxFee, gasPrice } = await this.provider.estimateTxGasAndFee({
       transactionRequest,
     });
@@ -262,13 +267,9 @@ export class Vault extends Predicate<[]> {
       gasPrice,
     });
 
-    let baseMaxFee = maxFee;
-    if (!originalMaxFee.eq(0) && originalMaxFee.sub(maxFee).gt(0)) {
-      baseMaxFee = originalMaxFee;
-    }
+    const maxFeeWithPredicateGas = maxFee.add(predicateSuccessFeeDiff);
 
-    const maxFeeWithPredicateGas = baseMaxFee.add(predicateSuccessFeeDiff);
-    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(2);
+    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(12).div(10);
 
     if (transactionRequest.type === TransactionType.Upgrade) {
       transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);
@@ -326,10 +327,10 @@ export class Vault extends Predicate<[]> {
   async transactionFromHash(hash: string) {
     if (this.provider instanceof BakoProvider) {
       const request = await this.provider.findTransaction(hash);
-
+      const chainId = await this.provider.getChainId();
       return {
         tx: request,
-        hashTxId: request.getTransactionId(this.provider.getChainId()).slice(2),
+        hashTxId: request.getTransactionId(chainId).slice(2),
       };
     }
 
@@ -366,7 +367,9 @@ export class Vault extends Predicate<[]> {
       amount,
     }));
 
-    tx.addResources(await this.getResourcesToSpend(transactionCoins));
+    const add = await this.getResourcesToSpend(transactionCoins);
+
+    tx.addResources(add);
     Object.entries(outputs).map(([, value]) => {
       tx.addCoinOutput(
         Address.fromString(value.to),

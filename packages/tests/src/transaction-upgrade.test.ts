@@ -25,8 +25,8 @@ class FakeProvider extends Provider {
     return new FakeProvider(url, {});
   }
 
-  getChainId(): number {
-    return 1;
+  getChainId(): Promise<number> {
+    return Promise.resolve(1);
   }
 }
 
@@ -61,7 +61,7 @@ const setupTestNode = async (signers: WalletUnlocked[]) => {
     nodeOptions: {
       args: ['--poa-instant', 'false', '--poa-interval-period', '1ms'],
       loggingEnabled: false,
-      snapshotConfig,
+      // snapshotConfig,
     },
     walletsConfig: {
       count: 1,
@@ -143,7 +143,7 @@ describe('[Transaction Upgrade]', () => {
 
     const {
       consensusParameters: { gasCosts: gasCostsBefore },
-    } = provider.getChain();
+    } = await provider.getChain();
 
     // Upgrade gas costs of chain to free
     const { isStatusSuccess, isTypeUpgrade } = await upgradeConsensusParameters(
