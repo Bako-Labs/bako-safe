@@ -86,11 +86,12 @@ export class BakoProvider extends Provider {
       const providerFuel = new Provider(url);
       const chainId = await providerFuel.getChainId();
       const cliAuth = await Service.cliAuth({
-        token: options.apiToken,
         network: {
           url: providerFuel.url,
           chainId: chainId,
         },
+        token: options.apiToken,
+        serverApi: options.serverApi,
       });
       const provider = new BakoProvider(url, {
         ...rest,
@@ -135,6 +136,7 @@ export class BakoProvider extends Provider {
   async savePredicate(
     vault: Vault & {
       name?: string;
+      description?: string;
     },
   ) {
     const payload: IPredicatePayload = {
@@ -143,6 +145,7 @@ export class BakoProvider extends Provider {
       configurable: JSON.stringify(vault.configurable),
       provider: this.url,
       version: vault.predicateVersion,
+      description: vault.description,
     };
 
     const predicate = await this.service.createPredicate(payload);

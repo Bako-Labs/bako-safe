@@ -9,6 +9,7 @@ export type BakoProviderOptions = ProviderOptions & {
 
 export type BakoProviderAPITokenOptions = ProviderOptions & {
   apiToken: string;
+  serverApi?: string;
 };
 
 export type BakoProviderAuthOptions = BakoProviderOptions & {

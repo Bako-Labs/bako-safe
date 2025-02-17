@@ -214,6 +214,7 @@ export type CLIAuthPayload = {
     url: string;
     chainId: number;
   };
+  serverApi?: string;
 };
 
 export type CLIAuth = {
