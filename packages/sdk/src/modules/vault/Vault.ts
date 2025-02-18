@@ -290,6 +290,7 @@ export class Vault extends Predicate<[]> {
   async save(
     params: {
       name?: string;
+      description?: string;
     } = {},
   ): Promise<PredicateResponse> {
     if (this.provider instanceof BakoProvider) {
