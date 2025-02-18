@@ -16,7 +16,8 @@
   "scripts": {
     "build": "turbo run prebuild && turbo run build",
     "test": "turbo run test",
-    "ci:release": "turbo run build && pnpm changeset publish --filter=bakosafe"
+    "ci:release": "turbo run build && pnpm changeset publish --filter=bakosafe",
+    "toolchain:config": "chmod +x scripts/config-toolchain.sh && scripts/config-toolchain.sh"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.11",

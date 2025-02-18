@@ -6,7 +6,7 @@ export const signin = async (
   account: 'FULL' | 'USER_1' | 'USER_2' | 'USER_3' | 'USER_4' | 'USER_5',
   provider: string,
 ) => {
-  const fuelProvider = await Provider.create(provider);
+  const fuelProvider = new Provider(provider);
 
   const signer = Wallet.fromPrivateKey(
     accounts[account].privateKey,

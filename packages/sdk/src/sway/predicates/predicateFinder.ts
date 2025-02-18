@@ -1,6 +1,6 @@
 import { versions } from './';
 
-export const DEFAULT_PREDICATE_VERSION = `0x0ec304f98efc18964de98c63be50d2360572a155b16bcb0f3718c685c70a00aa`;
+export const DEFAULT_PREDICATE_VERSION = `0x6ca3bcd759b944b128e9007e2fa75bf700f28c39ce7b34fc241e2c57bf02bdff`;
 
 export function getLatestPredicateVersion(provider: string) {
   // get latest version by time

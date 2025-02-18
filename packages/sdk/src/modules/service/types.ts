@@ -220,6 +220,7 @@ export type CLIAuthPayload = {
 export type CLIAuth = {
   code: string;
   address: string;
+  version: string;
   configurable: {
     SIGNATURES_COUNT: number;
     SIGNERS: string[];

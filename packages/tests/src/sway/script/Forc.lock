@@ -1,6 +1,6 @@
 [[package]]
 name = "core"
-source = "path+from-root-F64B6E1A883A7E7B"
+source = "path+from-root-2E654A91A5A21ADE"
 
 [[package]]
 name = "debbug-script"
@@ -18,17 +18,17 @@ dependencies = ["std"]
 
 [[package]]
 name = "standards"
-source = "git+https://github.com/FuelLabs/sway-standards?tag=v0.5.0#348f7175df4c012b23c86cdb18aab79025ca1f18"
+source = "git+https://github.com/FuelLabs/sway-standards?tag=v0.6.0#65e09f95ea8b9476b171a66c8a47108f352fa32c"
 dependencies = ["std"]
 
 [[package]]
 name = "std"
-source = "git+https://github.com/fuellabs/sway?tag=v0.66.4#d7dd104dac4394aa7af56f05b720c975744db853"
+source = "git+https://github.com/fuellabs/sway?tag=v0.66.6#986aee2c1e34c9cd958c81e7fd6b84638b26619b"
 dependencies = ["core"]
 
 [[package]]
 name = "sway_libs"
-source = "git+https://github.com/FuelLabs/sway-libs?tag=v0.23.0#9987d8ae11b1d82d42524794829c216b607916c5"
+source = "git+https://github.com/FuelLabs/sway-libs?tag=v0.24.2#55d503c50281e775655e00282064e629f357dcfc"
 dependencies = [
     "standards",
     "std",
