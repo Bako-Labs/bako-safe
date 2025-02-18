@@ -1,5 +1,13 @@
 # bakosafe
 
+## 0.1.8
+
+### Patch Changes
+
+- d1332c5: fix(provider): use server url of provider options
+- 9c3b68c: chore(vault): add description property
+- 01aa59a: bump fuels-ts version to 0.99.0
+
 ## 0.1.7
 
 ### Patch Changes
