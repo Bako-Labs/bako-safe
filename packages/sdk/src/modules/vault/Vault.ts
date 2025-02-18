@@ -66,6 +66,7 @@ export class Vault extends Predicate<[]> {
 
     if ('cliAuth' in provider && provider.cliAuth) {
       conf = provider.cliAuth.configurable;
+      version = version ?? provider.cliAuth.version;
     }
 
     if (!conf) {
@@ -267,7 +268,12 @@ export class Vault extends Predicate<[]> {
       gasPrice,
     });
 
-    const maxFeeWithPredicateGas = maxFee.add(predicateSuccessFeeDiff);
+    let baseMaxFee = maxFee;
+    if (!originalMaxFee.eq(0) && originalMaxFee.cmp(maxFee) === 1) {
+      baseMaxFee = originalMaxFee;
+    }
+
+    const maxFeeWithPredicateGas = baseMaxFee.add(predicateSuccessFeeDiff);
     transactionRequest.maxFee = maxFeeWithPredicateGas.mul(12).div(10);
 
     if (transactionRequest.type === TransactionType.Upgrade) {
