@@ -6,4 +6,5 @@ name = "debbug-script"
 
 [dependencies]
 libraries = { path = "../../../../sway/src/libraries" }
-sway_libs = { git = "https://github.com/FuelLabs/sway-libs", tag = "v0.23.0" }
+sway_libs = { git = "https://github.com/FuelLabs/sway-libs", tag = "v0.24.2" }
+

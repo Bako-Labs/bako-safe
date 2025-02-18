@@ -3,3 +3,8 @@ authors = ["InfinityBase <contact@infinitybase.com>"]
 entry = "main.sw"
 license = "Apache-2.0"
 name = "example-contract"
+
+
+[dependencies]
+standards = { git = "https://github.com/FuelLabs/sway-standards" }
+sway_libs = { git = "https://github.com/FuelLabs/sway-libs", tag = "v0.24.2" }

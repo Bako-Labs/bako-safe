@@ -1,87 +1,147 @@
 script;
 
-use std::{b512::B512, tx::{GTF_WITNESS_DATA, tx_id, tx_witnesses_count}};
 
-use libraries::{
-    constants::{
-        BYTE_WITNESS_TYPE_FUEL,
-        BYTE_WITNESS_TYPE_WEBAUTHN,
-        EMPTY_SIGNERS,
-        INVALID_ADDRESS,
-        MAX_SIGNERS,
-    },
-    entities::{
-        SignatureType,
-        WebAuthnHeader,
-    },
-    recover_signature::{
-        fuel_verify,
-        webauthn_verify,
-    },
-    utilities::{
-        b256_to_ascii_bytes,
-    },
-    validations::{
-        check_duplicated_signers,
-        check_signer_exists,
-        verify_prefix,
-    },
-    webauthn_digest::{
-        get_webauthn_digest,
-    },
-};
+//----------------------------------------------------------------------------------------------------- ideia 2:
+// etapas:
+    // 1. pegue todo o bytecode da tx -- referencia em tx.sw do std, fn tx_witnesses_data
+        // 1.1. pege o tamanho da tx, use o constante GTF_TX_LENGTH -> Some(__gtf::<u64>(index GTF_WITNESS_DATA_LENGTH))
+        // 1.2. copie a tx inteira para uma nova variavel
+            // 1.2.1. leia como um ponteiro -> 
+    // 2. remova todos os inputs do tipo coin --- contract-call nao influencia aqui
+        // 2.1. pegue todo o pedaco antes
+        // 2.2. pegue todo o pedaco depois
+        // 2.3 concatene os dois
+        // 2.4 devolva
+    // 3. com o bytecode sem inputs
+        // 3.1 procure pelo input com asset_id equivalenda a AssetId::new(ContractId, predicate_address)
+        // 3.2 concatene novamente toda a info desse input ao fim do bytecode
 
-struct PredicateConfig {
-    SIGNERS: [b256; 10],
-    SIGNATURES_COUNT: u64,
-    HASH_PREDICATE: b256,
+
+// ts:utxo -> sw:sha256(tx_id as byte[32], output_index)
+
+
+// assina sobre o utxo do input especifico
+
+use std::tx::{GTF_TX_LENGTH, GTF_TYPE, GTF_POLICY_MAX_FEE, GTF_SCRIPT_INPUTS_COUNT};
+use std::b512::B512;
+use std::alloc::alloc_bytes;
+use std::hash::Hasher;
+
+
+pub struct Tx {
+    tx_id: b256,
 }
 
-fn main(tx_id: b256, config: PredicateConfig) -> bool {
-    let SIGNERS = config.SIGNERS;
-    let SIGNATURES_COUNT = config.SIGNATURES_COUNT;
-    let HASH_PREDICATE = config.HASH_PREDICATE;
-    let mut i_witnesses = 0;
-    let mut verified_signatures: Vec<Address> = Vec::with_capacity(MAX_SIGNERS);
+fn main() -> u32 {
 
-    while i_witnesses < tx_witnesses_count() {
-        let mut witness_ptr = __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA);
-        if (verify_prefix(witness_ptr)) {
-            let tx_bytes = b256_to_ascii_bytes(tx_id);
-            witness_ptr = witness_ptr.add_uint_offset(4); // skip bako prefix
-            let signature = witness_ptr.read::<SignatureType>();
-            witness_ptr = witness_ptr.add_uint_offset(__size_of::<u64>()); // skip enum size
-            let pk: Address = match signature {
-                SignatureType::WebAuthn(signature_payload) => {
-                    let data_ptr = witness_ptr.add_uint_offset(__size_of::<WebAuthnHeader>());
-                    let private_key = webauthn_verify(
-                        get_webauthn_digest(signature_payload, data_ptr, tx_bytes),
-                        signature_payload,
-                    );
-                    private_key
-                },
-                SignatureType::Fuel(signature_fuel) => {
-                    // to prevent warning on build
-                    let _ = signature_fuel;
-                    // TODO: talk with Sway team to see why the value is not correctly parsed it looks to be skiping 24 bytes
-                    // this is why we need to use the pointer to read the B512 value, this problem dosen't happen on the webauth
-                    let signature = witness_ptr.read::<B512>();
-                    fuel_verify(signature, tx_bytes)
-                },
-                _ => INVALID_ADDRESS,
-            };
+    // example sum
+    // let num: u32 = 5;
 
-            let is_valid_signer = check_signer_exists(pk, SIGNERS);
-            check_duplicated_signers(is_valid_signer, verified_signatures);
-        }
+    // asm(r1: num, r2) {
+    //     add r2 r1 one;
+    //     r2: u32
+    // }
 
-        i_witnesses += 1;
-    }
+    let mut base_asset = b256::zero();
+    
+    log(asm (base_asset) {
+        gm base_asset i6;
+        base_asset: b256
+    });
 
-    // redundant check, but it is necessary to avoid compiler errors
-    if (HASH_PREDICATE != HASH_PREDICATE) {
-        return false;
-    }
 
-    return verified_signatures.len() >= SIGNATURES_COUNT;
+
+    let tx_len = match Some(__gtf::<u64>(0, GTF_TX_LENGTH)) {
+        Some(len) => len,
+        _ => return 0,
+    };
+    let mut tx_start = alloc_bytes(8);
+    asm(tx_start) {
+        gm tx_start i5;
+    };
+
+
+    log(tx_start.read::<B512>());
+
+    return 12
+    
+
 }
+
+//------------------------------------------------------------------------------------------------------
+// ideia 1: -> 
+// problema: 
+//          qualquer pessoa pode drenar os valores de eth em fees
+//          qualquer pessoa pode inviabilizar o vault, gerando muitos utxos pequenos
+// 
+
+// quando uma criacao de tx é solicitada:
+
+// voce executa uma tx do predicate para ele mesmo, com os input coins fracionados
+// o objetivo é ter utxos certos para seguir com a proxima
+
+// adicione um witnesses nas 1as posicoes, para indicar que esta é apenas para splitar o utxo
+
+// caso o witnesses seja identificado, cai em uma lógica de verificacao:
+// 1. pega o address do predicate
+// 2. verifica se todos os outputs sao para o mesmo address
+
+// validacoes:
+
+// - enviar uma tx para voce mesmo, com apenas ETH:
+//https://app-testnet.fuel.network/tx/0x774c2225d5dbdd688393d7a7f2239635067084d49a1b8ae02e8c6fd4cdabb19c/advanced
+
+// - enviar uma tx para voce mesmo, com um token + ETH(fee):
+//https://app-testnet.fuel.network/tx/0x2f2a7fb374a1f3fdab83586d73ed3ad8bc18c732deece06162ee0085143880ac/advanced
+
+
+
+
+
+
+
+    // get all bytes from tx
+    // populate new_tx with all bytes from tx
+
+        // get tx length
+        // let tx_len = match Some(__gtf::<u64>(0, GTF_TX_LENGTH)) {
+        //     Some(len) => len,
+        //     None => return false,
+        // };
+
+
+        // let mut tx_start:u64 = 0;
+
+        // // get tx ptr
+        // asm (
+        //     tx_start: tx_start
+        // ) {
+        //     gm tx_start 0x00005;
+        // };
+
+
+
+
+        // let mut new_tx = alloc_bytes(tx_len);
+
+        // let ptr = 0x00005;
+
+
+        // const GM_TX_START = 0x00005;
+        // const GM_TX_END = 0x00005 + TX_LEN;
+        // // allocate new tx
+        // let new_tx = alloc_bytes(TX_LEN);
+
+        // // get 
+        // let tx_ptr = __gtf::<raw_ptr>(0, GM_TX_END);
+        // tx_ptr.copy_bytes_to(new_tx, TX_LEN);
+
+
+        // // 
+
+        // // get 1st 8 bytes
+        // let start_bytes = tx_ptr.read::<Tx>();
+
+        // log(start_bytes.tx_id);
+
+        
