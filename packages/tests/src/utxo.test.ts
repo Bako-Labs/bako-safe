@@ -12,6 +12,7 @@ import {
   bn,
   concat,
   getDecodedLogs,
+  hexlify,
   InputType,
   OutputType,
   ScriptTransactionRequest,
@@ -45,9 +46,7 @@ const testAssets = [
  *  - inputscount
  *  - outputscount
  *
- *
  *  - tx_script -> hash(bytecode)
- *
  *
  *  - inputs
  *  - outputs
@@ -129,13 +128,13 @@ const custom_tx_hash = (tx: TransactionRequest) => {
     new BigNumberCoder('u64').encode(tx.outputs.length),
   ]);
 
-  console.log('[TX_HEADER]', sha256(payload));
+  // console.log('[TX_HEADER]', sha256(payload));
 
   payload = concat([
     payload,
-    script,
-    format_output(tx.outputs),
-    format_input(tx.inputs),
+    script, // sha256
+    format_output(tx.outputs), // sha256
+    format_input(tx.inputs), // sha256
     // add utxo output
   ]);
 
@@ -186,12 +185,15 @@ describe('[Transactions]', () => {
     );
     const script = new DebbugScript(wallet);
 
-    console.log(
-      '[TX_CUSTOM_HASH]',
-      custom_tx_hash(await __tx.getTransactionRequest()),
-    );
+    // console.log(
+    //   '[TX_CUSTOM_HASH]',
+    //   custom_tx_hash(await __tx.getTransactionRequest()),
+    // );
 
-    console.log('[TX_HASH]', await __tx.getTransactionRequest());
+    console.log(
+      '[TX_SCRIPT_BYTECODE_HASH]',
+      hexlify((await __tx.getTransactionRequest()).script),
+    );
 
     const as = new ScriptTransactionRequest();
     as.script = script.bytes;
@@ -204,24 +206,38 @@ describe('[Transactions]', () => {
         amount: 0.5,
       },
     ]);
-
+    //0xc7b24839470d8982641778bb50422a067b7b3566136afaaab968a642ddc81a3a
+    //0xc7b24839470d8982641778bb50422a067b7b3566136afaaab968a642ddc81a3a;
     as.addResources(coins);
 
+    // console.log(
+    //   '[TX_HASH]',
+    //   (await (await wallet.sendTransaction(as)).waitForResult()).receipts,
+    // );
+
+    // const a = script.functions.main();
+    // const res = await (await a.call()).waitForResult();
+    const res = await (await wallet.sendTransaction(as)).waitForResult();
+
+    // const logs = getDecodedLogs(
+    //   res.transactionResult.receipts,
+    //   script.interface.jsonAbi,
+    // );
+
+    // console.log('[SCRIPT_LOGS]', logs);
     console.log(
-      '[TX_HASH]',
-      (await (await wallet.sendTransaction(as)).waitForResult()).receipts,
+      '[RECEIPTS]',
+      res.receipts.filter((r) => r.type === 6),
     );
-
-    const a = script.functions.main();
-    const res = await (await a.call()).waitForResult();
-
-    const logs = getDecodedLogs(
-      res.transactionResult.receipts,
-      script.interface.jsonAbi,
-    );
-
-    console.log('[SCRIPT_LOGS]', logs);
-    console.log('[TX_ID]', res.transactionId);
+    // faca um sha256 do script
+    // no sway -> recorte com o operador mcp
+    // no sway -> use o conteudo de mcp para fazer o hash
+    console.log('[TX_SCRIPT_HASH]', {
+      hash_script: sha256(hexlify(as.script)),
+      hash_scriptdata: sha256(hexlify(as.scriptData)),
+      hash_policy: sha256(as.maxFee.toBytes()),
+      hash: hexlify(as.toTransactionBytes()),
+    });
 
     const _tx = await __tx.call();
     const minted = await _tx.waitForResult();
