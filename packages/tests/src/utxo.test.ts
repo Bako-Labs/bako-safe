@@ -6,7 +6,23 @@ import {
 } from './types/sway/contracts';
 
 import { DebbugScript } from './types/sway/scripts';
-import { getDecodedLogs, transactionRequestify, ZeroBytes32 } from 'fuels';
+import {
+  arrayify,
+  BigNumberCoder,
+  bn,
+  concat,
+  getDecodedLogs,
+  InputType,
+  OutputType,
+  ScriptTransactionRequest,
+  sha256,
+  TransactionRequest,
+  transactionRequestify,
+  TransactionRequestInput,
+  TransactionRequestOutput,
+  TransactionType,
+  ZeroBytes32,
+} from 'fuels';
 
 const createTestAsset = (assetId: string) => ({ value: assetId });
 const testAssets = [
@@ -15,6 +31,116 @@ const testAssets = [
   createTestAsset(assets['UNI']),
   createTestAsset(assets['USDC']),
 ];
+
+// hash_structure
+
+/**
+ * // utxo
+ *   - asset_id -> predicate_id_atual, contract_id
+ *   - utxo -> tx_id, output_index
+ *
+ *
+ * // transaction
+ *  - tx_type
+ *  - inputscount
+ *  - outputscount
+ *
+ *
+ *  - tx_script -> hash(bytecode)
+ *
+ *
+ *  - inputs
+ *  - outputs
+ *  -
+ *
+ */
+
+const format_output = (outputs: TransactionRequestOutput[]) => {
+  let _payload = concat([]);
+
+  outputs.map((output) => {
+    switch (output.type) {
+      case OutputType.Coin:
+        _payload = concat([
+          new BigNumberCoder('u64').encode(output.type),
+          new BigNumberCoder('u64').encode(output.amount),
+          output.assetId,
+          output.to,
+        ]);
+        break;
+      case OutputType.Change:
+        _payload = concat([
+          new BigNumberCoder('u64').encode(output.type),
+          output.assetId,
+          output.to,
+        ]);
+        break;
+      case OutputType.Contract:
+        _payload = concat([
+          new BigNumberCoder('u64').encode(output.type),
+          new BigNumberCoder('u64').encode(output.inputIndex),
+        ]);
+        break;
+    }
+  });
+
+  return sha256(_payload);
+};
+
+const format_input = (inputs: TransactionRequestInput[]) => {
+  let _payload = concat([]);
+
+  inputs.map((input) => {
+    switch (input.type) {
+      case InputType.Coin:
+        _payload = concat([
+          new BigNumberCoder('u64').encode(input.type),
+          new BigNumberCoder('u64').encode(input.amount),
+          input.assetId,
+          input.owner,
+        ]);
+        break;
+      case InputType.Message:
+        _payload = concat([
+          new BigNumberCoder('u64').encode(input.type),
+          new BigNumberCoder('u64').encode(input.amount),
+          input.sender,
+          input.recipient,
+        ]);
+        break;
+      case InputType.Contract:
+        _payload = concat([
+          new BigNumberCoder('u64').encode(input.type),
+          input.contractId,
+        ]);
+        break;
+    }
+  });
+
+  return sha256(_payload);
+};
+
+const custom_tx_hash = (tx: TransactionRequest) => {
+  const script =
+    tx.type === TransactionType.Script ? sha256(tx.script) : ZeroBytes32;
+  let payload = concat([
+    new BigNumberCoder('u64').encode(tx.type),
+    new BigNumberCoder('u64').encode(tx.inputs.length),
+    new BigNumberCoder('u64').encode(tx.outputs.length),
+  ]);
+
+  console.log('[TX_HEADER]', sha256(payload));
+
+  payload = concat([
+    payload,
+    script,
+    format_output(tx.outputs),
+    format_input(tx.inputs),
+    // add utxo output
+  ]);
+
+  return sha256(payload);
+};
 
 describe('[Transactions]', () => {
   let node: Awaited<ReturnType<typeof launchTestNode>>;
@@ -46,12 +172,7 @@ describe('[Transactions]', () => {
     const { contractId, waitForResult } = await new ExampleContractFactory(
       wallet,
     ).deploy();
-
-    // console.log('[contract]: ', await wallet.getBalances());
-
     const tx = await waitForResult();
-
-    // console.log('[contract_deploy]: ', tx);
 
     const contract = new ExampleContract(contractId, wallet);
     const __tx = await contract.functions.mint(
@@ -63,52 +184,46 @@ describe('[Transactions]', () => {
       ZeroBytes32,
       100,
     );
-
     const script = new DebbugScript(wallet);
 
-    // console.log(script.interface);
+    console.log(
+      '[TX_CUSTOM_HASH]',
+      custom_tx_hash(await __tx.getTransactionRequest()),
+    );
 
-    const a = await script.functions.main().call();
-    const res = await a.waitForResult();
+    console.log('[TX_HASH]', await __tx.getTransactionRequest());
+
+    const as = new ScriptTransactionRequest();
+    as.script = script.bytes;
+    as.gasLimit = bn.parseUnits('0.001');
+    as.maxFee = bn.parseUnits('0.001');
+
+    const coins = await wallet.getResourcesToSpend([
+      {
+        assetId: assets['ETH'],
+        amount: 0.5,
+      },
+    ]);
+
+    as.addResources(coins);
+
+    console.log(
+      '[TX_HASH]',
+      (await (await wallet.sendTransaction(as)).waitForResult()).receipts,
+    );
+
+    const a = script.functions.main();
+    const res = await (await a.call()).waitForResult();
 
     const logs = getDecodedLogs(
       res.transactionResult.receipts,
       script.interface.jsonAbi,
     );
 
-    console.log(logs);
-
+    console.log('[SCRIPT_LOGS]', logs);
     console.log('[TX_ID]', res.transactionId);
 
-    // console.log('[contract_call]: ', callResult);
-
-    // console.log(
-    //   '-----[contract_mint]: ',
-    //   JSON.stringify(await __tx.getTransactionRequest()),
-    // );
-
     const _tx = await __tx.call();
-
     const minted = await _tx.waitForResult();
-
-    // console.log(
-    //   '-----[contract_mint]: ',
-    //   JSON.stringify(minted.transactionResult),
-    // );
-
-    // console.log('[contract_mint]: ', minted.transactionResult.mintedAssets);
-
-    // console.log(
-    //   '[contract_balances]: ',
-    //   minted.transactionResult.receipts.filter((l) => l.type === 6),
-    // );
-    // log é type 6
-
-    // call this contract
-    // const deployedContract = new ExampleContract(contractId, wallet);
-    // const contractRequest = await deployedContract.functions.seven().call();
-    // const callResponse = await contractRequest.waitForResult();
-
-    // console.log('[contract_call]: ', callResponse);
   });
 });
