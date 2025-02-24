@@ -234,6 +234,7 @@ export class Vault extends Predicate<[]> {
   public async prepareTransaction<T extends TransactionRequest>(
     transactionRequest: T,
   ): Promise<T> {
+    const baseAsset = await this.provider.getBaseAssetId();
     const originalMaxFee = transactionRequest.maxFee;
     const predicateGasUsed = await this.maxGasUsed();
     this.populateTransactionPredicateData(transactionRequest);
@@ -244,40 +245,62 @@ export class Vault extends Predicate<[]> {
       () => FAKE_WITNESSES,
     );
     transactionRequest.witnesses.push(...fakeSignatures);
-    const transactionCost = await this.getTransactionCost(transactionRequest);
-    transactionRequest.maxFee = transactionCost.maxFee;
-    transactionRequest = await this.fund(transactionRequest, transactionCost);
 
-    let totalGasUsed = bn(0);
-    transactionRequest.inputs.forEach((input) => {
-      if ('predicate' in input && input.predicate) {
-        input.witnessIndex = 0;
-        input.predicateGasUsed = undefined;
-        totalGasUsed = totalGasUsed.add(predicateGasUsed);
+    const fundAndEstimateMaxFee = async () => {
+      const transactionCost = await this.getTransactionCost(transactionRequest);
+      if (transactionRequest.maxFee.lt(transactionCost.maxFee)) {
+        transactionRequest.maxFee = transactionCost.maxFee;
       }
-    });
+      transactionRequest = await this.fund(transactionRequest, transactionCost);
 
-    const { gasPriceFactor } = await this.provider.getGasConfig();
-    const { maxFee, gasPrice } = await this.provider.estimateTxGasAndFee({
-      transactionRequest,
-    });
+      let totalGasUsed = bn(0);
+      transactionRequest.inputs.forEach((input) => {
+        if ('predicate' in input && input.predicate) {
+          input.witnessIndex = 0;
+          input.predicateGasUsed = undefined;
+          totalGasUsed = totalGasUsed.add(predicateGasUsed);
+        }
+      });
 
-    const predicateSuccessFeeDiff = calculateGasFee({
-      gas: totalGasUsed,
-      priceFactor: gasPriceFactor,
-      gasPrice,
-    });
+      const { gasPriceFactor } = await this.provider.getGasConfig();
+      const { maxFee, gasPrice } = await this.provider.estimateTxGasAndFee({
+        transactionRequest,
+      });
 
-    let baseMaxFee = maxFee;
-    if (!originalMaxFee.eq(0) && originalMaxFee.cmp(maxFee) === 1) {
-      baseMaxFee = originalMaxFee;
-    }
+      const predicateSuccessFeeDiff = calculateGasFee({
+        gas: totalGasUsed,
+        priceFactor: gasPriceFactor,
+        gasPrice,
+      });
 
-    const maxFeeWithPredicateGas = baseMaxFee.add(predicateSuccessFeeDiff);
-    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(12).div(10);
+      let baseMaxFee = maxFee;
+      if (!originalMaxFee.eq(0) && originalMaxFee.cmp(maxFee) === 1) {
+        baseMaxFee = originalMaxFee;
+      }
 
-    if (transactionRequest.type === TransactionType.Upgrade) {
-      transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);
+      const maxFeeWithPredicateGas = baseMaxFee.add(predicateSuccessFeeDiff);
+      transactionRequest.maxFee = maxFeeWithPredicateGas.mul(12).div(10);
+
+      if (transactionRequest.type === TransactionType.Upgrade) {
+        transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);
+      }
+    };
+
+    await fundAndEstimateMaxFee();
+
+    // Check if the maxFee is enough to cover the predicate gas
+    const totalBaseAssetOutputs = transactionRequest
+      .getCoinOutputs()
+      .filter((output) => output.assetId === baseAsset)
+      .reduce((acc, output) => acc.add(output.amount), bn(0));
+    const totalBaseAssetInputs = transactionRequest
+      .getCoinInputs()
+      .filter((output) => output.assetId === baseAsset)
+      .reduce((acc, output) => acc.add(output.amount), bn(0));
+    const totalOutputs = totalBaseAssetOutputs.add(transactionRequest.maxFee);
+
+    if (totalOutputs.gt(totalBaseAssetInputs)) {
+      await fundAndEstimateMaxFee();
     }
 
     await this.provider.estimateTxDependencies(transactionRequest);
