@@ -138,12 +138,33 @@ fn main() {
             while input_index < tx_script2._inputsCount {
                 let input_type = tx_ptr.add::<u8>(current_index).read::<Input>();
                 current_index = current_index + __size_of::<Input>();
+                // todo: move to const
+                let asset_id_ref = 0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07;
 
                 match input_type {
                     Input::Coin => {
                         // Skip InputCoin
                         let input_coin: InputCoin = tx_ptr.add::<u8>(current_index).read::<InputCoin>();
-                        log(input_coin._txID);
+                        // todo: add to globally var to be concat on the end bytecode
+                        if(input_coin._assetId == asset_id_ref){
+                            let utxo_len = __size_of::<(b256, u16)>();
+                            let utxo_ptr = alloc::<u8>(utxo_len);
+
+                            
+
+                            utxo_ptr.add::<u8>(0).write::<b256>(input_coin._txID);
+                            utxo_ptr.add::<u8>(__size_of::<b256>()).write::<u16>(input_coin._outputIndex);
+
+
+                            let mut utxo_sha256: b256 = b256::zero();
+
+                            asm(utxo_ptr: utxo_ptr, utxo_len: utxo_len, r1: utxo_sha256) {
+                                s256 r1 utxo_ptr utxo_len; 
+                            };
+
+                            // todo: set global var
+                            log(utxo_sha256);
+                        }
                         current_index = current_index + __size_of::<InputCoin>();
                         current_index = current_index + input_coin._predicateLength;
                         current_index = current_index + input_coin._predicateDataLength;
