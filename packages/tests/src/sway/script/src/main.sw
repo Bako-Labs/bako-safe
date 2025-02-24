@@ -8,47 +8,73 @@ use std::{
     auth::predicate_address,
     bytes::*,
     alloc::*,
-    b512::*,
 };
 
-
-struct TxScript {
-    tx_type: u8,
-    scriptGasLimit: u64,
-    receiptsRoot: b256,
-    scriptLength: u64,
-    scriptDataLength: u64,
-    policyTypes: u32,
-    inputsCount: u16,
-    outputsCount: u16,
-    witnessesCount: u16,
+pub struct TxScript {
+    _type: u8,
+    _scriptGasLimit: u64,
+    _receiptsRoot: b256,
+    _scriptLength: u64,
+    _scriptDataLength: u64,
+    _policyTypes: u32,
+    _inputsCount: u16,
+    _outputsCount: u16,
+    _witnessesCount: u16,
     // script
     // scriptData
     // policy
+    // inputs
+    // outputs
+    //todo: concat utxo
 }
 
-// enum Policy {
-//     0x00000008: PolicyMaxFee
-// }
+//     txID	byte[32]	Hash of transaction.
+// outputIndex	uint16	Index of transaction output.
+// owner	byte[32]	Owning address or predicate root.
+// amount	uint64	Amount of coins.
+// asset_id	byte[32]	Asset ID of the coins.
+// txPointer	
+// TXPointer
+// Points to the TX whose output is being spent.
+// witnessIndex	uint16	Index of witness that authorizes spending the coin.
+// predicateGasUsed	uint64	Gas used by predicate.
+// predicateLength	uint64	Length of predicate, in instructions.
+// predicateDataLength	uint64	Length of predicate input data, in bytes.
+// predicate	byte[]	Predicate bytecode.
+// predicateData	byte[]	Predicate input data (parameters).
 
-struct PolicyType {
-    policy_type: u8,
+pub struct InputCoin {
+    _txID: b256,
+    _outputIndex: u16,
+    _owner: b256,
+    _amount: u64,
+    _assetId: b256,
+    _txPointer: (u32, u16),
+    _witnessIndex: u16,
+    _predicateGasUsed: u64,
+    _predicateLength: u64,
+    _predicateDataLength: u64,
 }
 
-struct PolicyTip {
-    tip: u64,
+pub struct InputContract {
+    _txID: b256,
+    _outputIndex: u16,
+    _balanceRoot: b256,
+    _stateRoot: b256,
+    _txPointer: (u32, u16),
+    _contractID: b256,
 }
-struct PolicyWitnessLimit {
-    witness_limit: u64,
-}
-struct PolicyMaturity {
-    maturity: u32,
-}
-struct PolicyExpiration {
-    expiration: u32,
-}
-struct PolicyMaxFee {
-    max_fee: u64,
+
+pub struct InputMessage {
+    _sender: b256,
+    _recipient: b256,
+    _amount: u64,
+    _nonce: b256,
+    _witnessIndex: u16,
+    _predicateGasUsed: u64,
+    _dataLength: u64,
+    _predicateLength: u64,
+    _predicateDataLength: u64,
 }
 
 
@@ -62,66 +88,149 @@ fn get_tx_ptr() -> (raw_ptr, u64) {
 }
 
 
-// pegar o hash do script da tx tipo script
-// devolve o hash do script
-// precisa:
-    // tamanho do dado
-    // ponteiro para o dado
-    // offset para o inicio do dado
-
-// processo
-    // aloque memória para o script
-    // pegue o ponteiro do script e adicione um novo offset(inicio de leitura)
-    // copie os bytes do script para a memória alocada
-    // monte a hash a partir dos bytes do script e retorne
-fn bytecode2hash(len: u64, ptr: raw_ptr, offset: u64) -> b256 {
-    let mut ptr_bytes = alloc::<u8>(len);
-    let ptr_intent = ptr.add_uint_offset(offset);
-    ptr_intent.copy_bytes_to(ptr_bytes, len);
-
-    let mut hash = b256::zero();
-    asm(
-        ptr_bytes: ptr_bytes,
-        hash: hash,
-        size: len
-    ){
-        s256 hash ptr_bytes size;
-        hash: b256
-    }
-}
-
-
 fn main() {
     let (tx_ptr, tx_len) = get_tx_ptr();
-    let tx_ptr_copy = alloc::<u8>(tx_len);
-    tx_ptr.copy_bytes_to(tx_ptr_copy, tx_len);
+    let tx_new_ptr = alloc::<u8>(tx_len);
     
-    let tx_script: TxScript = tx_ptr_copy.read::<TxScript>();
+    let transaction_type = tx_type();
 
-    // script
-    let offset_script = __size_of::<TxScript>();
-    let hash_script = bytecode2hash(tx_script.scriptLength, tx_ptr_copy, offset_script);
-    log(hash_script);
-    // script data
-    let offset_script_data = __size_of::<TxScript>() + tx_script.scriptLength;
-    let hash_data = bytecode2hash(tx_script.scriptDataLength, tx_ptr_copy, offset_script_data);
-    log(hash_data);
+    // Copy tx bytes to new bytes
+    tx_ptr.copy_bytes_to(tx_new_ptr, __size_of::<TxScript>());
 
-    // policy
-    let offset_policy = __size_of::<TxScript>() + tx_script.scriptLength + tx_script.scriptDataLength;
-    let policy_type = tx_ptr_copy.add_uint_offset(offset_policy).read::<PolicyMaxFee>();
-    let hash_policy = bytecode2hash(__size_of::<PolicyMaxFee>(), tx_ptr_copy, offset_policy);
+    match transaction_type {
+        Transaction::Script => {
+            let tx_script2: TxScript = tx_new_ptr.read::<TxScript>();
+            let mut current_index: u64 = __size_of::<TxScript>() - __size_of::<(u16, u16, u16, u64)>();
+            
+            // Policy
+            tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(current_index), __size_of::<u64>());
+            current_index = current_index + __size_of::<u64>();
 
-    log(hash_policy);
-    log(tx_script.policyTypes);
-    log(policy_type.max_fee);
+            // TODO: this will change once we know how many inputs should be signed
+            // Zero out inputs count
+            tx_new_ptr.add::<u8>(current_index).write::<u16>(0);
+            current_index = current_index + __size_of::<(u16)>();
 
+            // Zero out outputs count
+            tx_new_ptr.add::<u8>(current_index).write::<u16>(1);
+            current_index = current_index + __size_of::<u16>();
 
-    // let offset_policy = __size_of::<TxScript>() + tx_script.scriptLength + tx_script.scriptDataLength;
+            // Zero out the witnesses count
+            tx_new_ptr.add::<u8>(current_index).write::<u16>(0);
+            current_index = current_index + __size_of::<u16>();
 
-    // let policy_type = tx_ptr_copy.add_uint_offset(offset_policy).read::<PolicyType>();
+            // Copy script
+            // tx_ptr copia byte para tx_new_ptr
+            tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(current_index),tx_script2._scriptLength);
+            current_index = current_index + tx_script2._scriptLength;
 
+            // Copy script data
+            tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(current_index), tx_script2._scriptDataLength);
+            current_index = current_index + tx_script2._scriptDataLength;
 
+            // Jump TX Policy
+            // todo: create a types for policy
+            tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(current_index), __size_of::<u64>());
+            current_index = current_index + __size_of::<u64>();
 
+            let mut new_ptr_current_index: u64 = current_index;
+            let mut input_index: u16 = 0;
+            while input_index < tx_script2._inputsCount {
+                let input_type = tx_ptr.add::<u8>(current_index).read::<Input>();
+                current_index = current_index + __size_of::<Input>();
 
+                match input_type {
+                    Input::Coin => {
+                        // Skip InputCoin
+                        let input_coin: InputCoin = tx_ptr.add::<u8>(current_index).read::<InputCoin>();
+                        log(input_coin._txID);
+                        current_index = current_index + __size_of::<InputCoin>();
+                        current_index = current_index + input_coin._predicateLength;
+                        current_index = current_index + input_coin._predicateDataLength;
+                    },
+                    Input::Contract => {
+                        // Skip InputContract
+                        current_index = current_index + __size_of::<InputContract>();
+                    },
+                    Input::Message => {
+                        // Skip InputContract
+                        let input_message: InputMessage = tx_ptr.add::<u8>(current_index).read::<InputMessage>();
+                        current_index = current_index + __size_of::<InputMessage>();
+                        current_index = current_index + input_message._dataLength;
+                        current_index = current_index + input_message._predicateLength;
+                        current_index = current_index + input_message._predicateDataLength;
+                    },
+                };
+                input_index += 1;
+            }
+
+            // outputs
+            let mut output_index: u16 = 0;
+            while output_index < tx_script2._outputsCount {
+                let output_type = tx_ptr.add::<u8>(current_index).read::<Output>();
+                tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(new_ptr_current_index), __size_of::<Output>());
+                current_index = current_index + __size_of::<Output>();
+                new_ptr_current_index = new_ptr_current_index + __size_of::<Output>();
+
+                match output_type {
+                    Output::Coin => {
+                        tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(new_ptr_current_index), __size_of::<(b256, u64, b256)>());
+                        current_index = current_index + __size_of::<(b256, u64, b256)>();
+                        new_ptr_current_index = new_ptr_current_index + __size_of::<(b256, u64, b256)>();
+                    },
+                    Output::Contract => {
+                        // Write witness index
+                        tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(new_ptr_current_index), __size_of::<u16>());
+                        // Zero Out balanceRoot and stateRoot so just skip
+                        current_index = current_index + __size_of::<(u16, b256, b256)>();
+                        new_ptr_current_index = new_ptr_current_index + __size_of::<(u16, b256, b256)>();
+                    },
+                    Output::Change => {
+                        // Write to address
+                        tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(new_ptr_current_index), __size_of::<b256>());
+                        current_index = current_index + __size_of::<b256>();
+                        new_ptr_current_index = new_ptr_current_index + __size_of::<b256>();
+                        // Zero Out amount
+                        current_index = current_index + __size_of::<u64>();
+                        new_ptr_current_index = new_ptr_current_index + __size_of::<u64>();
+                        // Write to assetId
+                        tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(new_ptr_current_index), __size_of::<b256>());
+                        current_index = current_index + __size_of::<b256>();
+                        new_ptr_current_index = new_ptr_current_index + __size_of::<b256>();
+                    },
+                    Output::Variable => {
+                        // Zero out all fields to, amout, assetId
+                        current_index = current_index + __size_of::<(b256, u64, b256)>();
+                        new_ptr_current_index = new_ptr_current_index + __size_of::<(b256, u64, b256)>();
+                    },
+                    Output::ContractCreated => {
+                        tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(new_ptr_current_index), __size_of::<(b256, b256)>());
+                        current_index = current_index + __size_of::<(b256, b256)>();
+                        new_ptr_current_index = new_ptr_current_index + __size_of::<(b256, b256)>();
+                    },
+                }
+                output_index += 1;
+            }
+            
+            log(raw_slice::from_parts::<u8>(tx_new_ptr, new_ptr_current_index));
+        },
+        _ => {
+            log(0);
+        }
+    }
+
+    // let tx_type = tx_ptr.read::<u8>();
+    // tx_ptr.copy_bytes_to(tx_new_ptr, tx_len);
+    
+    
+    
+    // let mut input_index = tx_script._outputsCount;
+    // while tx_script._outputsCount > 0 {
+    //     tx_script.
+    // }
+
+    // set witnessesCount to zero
+    // tx_new_ptr.add::<u8>(__size_of::<TxScript>() - __size_of::<u16>()).write::<u16>(0);
+
+    // log(raw_slice::from_parts::<u8>(tx_new_ptr, tx_len));
 }
