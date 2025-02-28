@@ -251,7 +251,10 @@ export class Vault extends Predicate<[]> {
       if (transactionRequest.maxFee.lt(transactionCost.maxFee)) {
         transactionRequest.maxFee = transactionCost.maxFee;
       }
-      if ('gasLimit' in transactionRequest) {
+      if (
+        'gasLimit' in transactionRequest &&
+        transactionRequest.gasLimit.lt(transactionCost.gasUsed)
+      ) {
         transactionRequest.gasLimit = transactionCost.gasUsed;
       }
       transactionRequest = await this.fund(transactionRequest, transactionCost);
