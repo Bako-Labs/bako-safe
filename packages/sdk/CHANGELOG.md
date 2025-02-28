@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.1.9
+
+### Patch Changes
+
+- 89d1cf6: fix(webauthn): add new authenticator transport
+
 ## 0.1.8
 
 ### Patch Changes
