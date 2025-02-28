@@ -3,20 +3,11 @@ import { assets } from './mocks';
 
 import { DebbugScript } from './types/sway/scripts';
 import {
-  BigNumberCoder,
   bn,
-  concat,
   getDecodedLogs,
   hexlify,
-  InputType,
-  OutputType,
   Provider,
-  sha256,
   TransactionRequest,
-  TransactionRequestInput,
-  TransactionRequestOutput,
-  TransactionType,
-  ZeroBytes32,
   type EstimateTxDependenciesParams,
   type EstimateTxDependenciesReturns,
 } from 'fuels';
@@ -74,8 +65,8 @@ describe('Special hash transaction', () => {
       console.log('-->> Log:', log);
       if (Array.isArray(log)) {
         const logHex = hexlify(Uint8Array.from(log));
-        console.log('-->> Log Hex:', logHex);
-        console.log('-->> Hash Before:', hash_before);
+        // console.log('-->> Log Hex:', logHex);
+        // console.log('-->> Hash Before:', hash_before);
 
         expect(logHex).toBe(hash_before);
         return;

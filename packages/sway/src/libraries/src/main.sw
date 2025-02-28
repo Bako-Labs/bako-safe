@@ -6,3 +6,4 @@ pub mod utilities;
 pub mod validations;
 pub mod webauthn_digest;
 pub mod recover_signature;
+pub mod tx_hash;

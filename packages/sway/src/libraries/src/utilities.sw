@@ -1,6 +1,8 @@
 library;
 
-use std::bytes::Bytes;
+use std::{bytes::Bytes, tx::*};
+    
+
 
 use ::constants::{
     ASCII_MAP,
@@ -33,4 +35,13 @@ pub fn hash_tx_id(value: Bytes) -> b256 {
     s256 r1 value size;
   };
   digest
+}
+
+pub fn get_tx_ptr() -> (raw_ptr, u64) {
+    let tx_ptr = asm(r1) {
+        gm r1 i5;
+        r1: raw_ptr
+    };
+    let tx_len = __gtf::<u64>(0, GTF_TX_LENGTH);
+    return (tx_ptr, tx_len);
 }
