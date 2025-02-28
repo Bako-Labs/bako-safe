@@ -127,7 +127,7 @@ export async function signChallange(
         {
           id: fromBase64(id),
           type: 'public-key',
-          transports: ['hybrid', 'internal'],
+          transports: ['hybrid', 'internal', 'nfc', 'usb', 'ble'],
         },
       ],
       userVerification: 'required',
