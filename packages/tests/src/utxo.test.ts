@@ -5,7 +5,6 @@ import { DebbugScript } from './types/sway/scripts';
 import {
   bn,
   getDecodedLogs,
-  hexlify,
   Provider,
   TransactionRequest,
   type EstimateTxDependenciesParams,
@@ -38,9 +37,13 @@ describe('Special hash transaction', () => {
         params?: EstimateTxDependenciesParams,
       ): Promise<EstimateTxDependenciesReturns> {
         const chainId = await this.getChainId();
-        const { hex, utxo } = hashTransaction(transactionRequest, chainId, '');
-        console.log('utxo: ', utxo);
-        hash_before = hex;
+        const { hex, utxo, hash } = hashTransaction(
+          transactionRequest,
+          chainId,
+          '',
+        );
+        hash_before = hash;
+        // @ts-ignore
         utxo_calc = utxo;
         return super.estimateTxDependencies(transactionRequest, params);
       }
@@ -54,23 +57,15 @@ describe('Special hash transaction', () => {
       maxFee: bn.parseUnits('1.0'),
     });
 
-    console.log('-->> tx_id:', await call.getTransactionId());
-    console.log('-->> tx_utxo:', utxo_calc);
-
     const { callResult } = await call.get();
 
     const logs = getDecodedLogs(callResult.receipts, DebbugScript.abi);
 
+    console.log('[TX_ID]: ', hash_before);
+
     for (const log of logs) {
       console.log('-->> Log:', log);
-      if (Array.isArray(log)) {
-        const logHex = hexlify(Uint8Array.from(log));
-        // console.log('-->> Log Hex:', logHex);
-        // console.log('-->> Hash Before:', hash_before);
-
-        expect(logHex).toBe(hash_before);
-        return;
-      }
+      expect(log).toBe(hash_before);
     }
 
     return;

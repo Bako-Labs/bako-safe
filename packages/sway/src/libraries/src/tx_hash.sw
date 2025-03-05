@@ -126,11 +126,7 @@ pub fn tx_hash(input_utxo: b256) {
             );
             current_index += __size_of::<u16>();
 
-            // witnesses count
-            // tx_ptr.add::<u8>(current_index).copy_bytes_to(
-            //     tx_new_ptr.add::<u8>(current_index),
-            //     __size_of::<u16>()
-            // );
+            // witnesses count -> only 0
             tx_new_ptr.add::<u8>(current_index).write::<u16>(0);
             current_index += __size_of::<u16>();
 
@@ -163,7 +159,6 @@ pub fn tx_hash(input_utxo: b256) {
                 let input_type = tx_ptr.add::<u8>(
                     current_index + inputs_iter_len
                 ).read::<Input>();
-                // current_index += __size_of::<Input>();
                 inputs_iter_len = __size_of::<Input>();
                 
                 match input_type {
@@ -208,110 +203,96 @@ pub fn tx_hash(input_utxo: b256) {
 
                 inputs_index += 1;
             }
-            let mut ptr_ref_new_tx: u64 = current_index;
-            current_index += inputs_iter_len;
             
+
+            // move tx pointer to the end of inputs
+            current_index += inputs_iter_len;
+
             // outputs
             let mut output_index: u16 = 0;
             while output_index < tx_script_lengths._outputsCount {
+                // read output type
                 let output_type = tx_ptr.add::<u8>(current_index).read::<Output>();
                 
-                tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(ptr_ref_new_tx), __size_of::<Output>());
+                // copy output type to new tx
+                tx_ptr.add::<u8>(current_index)
+                .copy_bytes_to(tx_new_ptr.add::<u8>(current_index - inputs_iter_len), __size_of::<Output>());
                 current_index = current_index + __size_of::<Output>();
-                ptr_ref_new_tx += __size_of::<Output>();
-
+                
+                let ptr_ref = current_index - inputs_iter_len;
                 match output_type {
                     Output::Coin => {
-                        tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(ptr_ref_new_tx), __size_of::<(b256, u64, b256)>());
-                        current_index = current_index + __size_of::<(b256, u64, b256)>();
-                        ptr_ref_new_tx += __size_of::<(b256, u64, b256)>();
+                        let size = __size_of::<OutputCoin>();
+                        
+                        tx_ptr.add::<u8>(current_index)
+                        .copy_bytes_to(tx_new_ptr.add::<u8>(ptr_ref), size);
+                        
+                        current_index = current_index + size;
                     },
                     Output::Contract => {
-                        // Write witness index
-                        tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(ptr_ref_new_tx), __size_of::<u16>());
-                        // Zero Out balanceRoot and stateRoot so just skip
-                        current_index = current_index + __size_of::<(u16, b256, b256)>();
-                        ptr_ref_new_tx += __size_of::<(u16, b256, b256)>();
+                        let size = __size_of::<OutputContract>();
+                        
+                        tx_ptr.add::<u8>(current_index)
+                        .copy_bytes_to(tx_new_ptr.add::<u8>(ptr_ref), size);
+                        
+                        current_index = current_index + size;
+                        
                     },
                     Output::Change => {
-                        // Write to address
-                        tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(ptr_ref_new_tx), __size_of::<b256>());
-                        current_index = current_index + __size_of::<b256>();
-                        ptr_ref_new_tx += __size_of::<b256>();
-                        // Zero Out amount
-                        current_index = current_index + __size_of::<u64>();
-                        ptr_ref_new_tx += __size_of::<u64>();
-                        // Write to assetId
-                        tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(ptr_ref_new_tx), __size_of::<b256>());
-                        current_index = current_index + __size_of::<b256>();
-                        ptr_ref_new_tx += __size_of::<b256>();
+                        let size = __size_of::<OutputChange>();
+                        
+                        tx_ptr.add::<u8>(current_index)
+                        .copy_bytes_to(tx_new_ptr.add::<u8>(ptr_ref), size);
+                        
+                        current_index = current_index + size;
+                        
+                        
                     },
                     Output::Variable => {
-                        // Zero out all fields to, amout, assetId
-                        current_index = current_index + __size_of::<(b256, u64, b256)>();
-                        ptr_ref_new_tx += __size_of::<(b256, u64, b256)>();
+                        let size = __size_of::<OutputVariable>();
+
+                        tx_ptr.add::<u8>(current_index)
+                        .copy_bytes_to(tx_new_ptr.add::<u8>(ptr_ref), size);
+
+                        current_index = current_index + size;
+                        
                     },
                     Output::ContractCreated => {
-                        tx_ptr.add::<u8>(current_index).copy_bytes_to(tx_new_ptr.add::<u8>(ptr_ref_new_tx), __size_of::<(b256, b256)>());
-                        current_index = current_index + __size_of::<(b256, b256)>();
-                        ptr_ref_new_tx += __size_of::<(b256, b256)>();
+                        let size = __size_of::<OutputContractCreated>();
+
+                        tx_ptr.add::<u8>(current_index)
+                        .copy_bytes_to(tx_new_ptr.add::<u8>(ptr_ref),size);
+
+                        current_index = current_index +size;
+                        
                     },
                 }
                 output_index += 1;
             }
 
-            //  skip witnesses
-            
+            let mut new_tx_len = current_index - inputs_iter_len;
 
             // utxo
             tx_new_ptr.add::<u8>(
-                ptr_ref_new_tx
+                new_tx_len
             ).write::<b256>(utxo_sha256);
-            current_index += __size_of::<b256>();
+            new_tx_len += __size_of::<b256>();
 
-            log(raw_slice::from_parts::<u8>(tx_new_ptr, current_index - inputs_iter_len));
-            // tx_new_ptr.add::<u8>(current_index).copy_bytes_to(
-            //     utxo_ptr,
-            //     __size_of::<Utxo>()
-            // );
+            let mut tx_hash = b256::zero();
+            asm(
+                value: tx_new_ptr,
+                size: new_tx_len,
+                r1: tx_hash
+            ) {
+                s256 r1 value size;
+            }
 
-            // // Hash the new transaction
-            // let mut tx_hash_sha256: b256 = b256::zero();
+            log(tx_hash);
 
-            // asm(new_tx_ptr: utxo_ptr, new_tx_len: current_index, r1: tx_hash_sha256) {
-            //     s256 r1 utxo_ptr new_tx_len;
-            // };
-
-            // return tx_hash_sha256;
-
-            // log(raw_slice::from_parts::<u8>(tx_new_ptr, current_index));
         },
         _ => {
             log(0);
         }
-    }
+    };
 
 }
-
-
-            //         Output::Contract => {
-            //             tx_ptr.add::<u8>(current_index).copy_bytes_to(
-            //                 tx_new_ptr.add::<u8>(current_index),
-            //                 __size_of::<OutputContract>()
-            //             );
-            //             current_index += __size_of::<OutputContract>();
-            //         },
-            //         Output::Change => {
-            //             tx_ptr.add::<u8>(current_index).copy_bytes_to(
-            //                 tx_new_ptr.add::<u8>(current_index),
-            //                 __size_of::<OutputChange>()
-            //             );
-            //             current_index += __size_of::<OutputChange>();
-            //         },
-            //         Output::Variable => {
-            //             tx_ptr.add::<u8>(current_index).copy_bytes_to(
-            //                 tx_new_ptr.add::<u8>(current_index),
-            //                 __size_of::<OutputVariable>()
-            //             );
-            //             current_index += __size_of::<OutputVariable>();
-            //         },
