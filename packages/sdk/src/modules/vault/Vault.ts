@@ -21,6 +21,7 @@ import {
   makeSigners,
   FAKE_WITNESSES,
   makeHashPredicate,
+  hashTransaction,
 } from '../../utils';
 
 import { VaultConfigurable, VaultTransaction } from './types';
@@ -130,11 +131,14 @@ export class Vault extends Predicate<[]> {
       });
     }
 
-    const chainId = await this.provider.getChainId();
+    const customHash = hashTransaction(
+      result,
+      await this.provider.getBaseAssetId(),
+    );
 
     return {
       tx: result,
-      hashTxId: result.getTransactionId(chainId).slice(2),
+      hashTxId: customHash.hash.slice(2),
     };
   }
 

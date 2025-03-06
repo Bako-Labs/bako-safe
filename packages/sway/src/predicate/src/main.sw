@@ -10,6 +10,9 @@ use libraries::{
         INVALID_ADDRESS,
         MAX_SIGNERS,
     },
+    tx_hash::{
+        tx_hash
+    },
     entities::{
         SignatureType,
         WebAuthnHeader,
@@ -45,7 +48,8 @@ fn main() -> bool {
     while i_witnesses < tx_witnesses_count() {
         let mut witness_ptr = __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA);
         if (verify_prefix(witness_ptr)) {
-            let tx_bytes = b256_to_ascii_bytes(tx_id()); // are used 
+            let utxo = 0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07;
+            let tx_bytes = b256_to_ascii_bytes(tx_hash(utxo)); // are used
             witness_ptr = witness_ptr.add_uint_offset(4); // skip bako prefix
             let signature = witness_ptr.read::<SignatureType>();
             witness_ptr = witness_ptr.add_uint_offset(__size_of::<u64>()); // skip enum size

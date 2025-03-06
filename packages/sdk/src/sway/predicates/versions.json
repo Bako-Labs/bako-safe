@@ -223,5 +223,153 @@
     },
     "description": "",
     "deployed": []
+  },
+  "0x6ca3bcd759b944b128e9007e2fa75bf700f28c39ce7b34fc241e2c57bf02bdff": {
+    "time": 1741265650332,
+    "bytecode": "0x1a403000504100301a445000ba49000032400481504100205d490000504100083240048220451300524510044a440000e0511328906bedd0a00336952260c7dd4d3177b2d0dc1c45dc99c9c52b36cc5b0000000000000168000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "abi": {
+      "programType": "predicate",
+      "specVersion": "1",
+      "encodingVersion": "1",
+      "concreteTypes": [
+        {
+          "type": "[b256; 10]",
+          "concreteTypeId": "048b86a7fa6d593a3b17384eeb42370b18126ce11ea29e4d60f7a6c2a507b88d",
+          "metadataTypeId": 0
+        },
+        {
+          "type": "b256",
+          "concreteTypeId": "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b"
+        },
+        {
+          "type": "bool",
+          "concreteTypeId": "b760f44fa5965c2474a3b471467a22c43185152129295af588b022ae50b50903"
+        },
+        {
+          "type": "u64",
+          "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0"
+        }
+      ],
+      "metadataTypes": [
+        {
+          "type": "[_; 10]",
+          "metadataTypeId": 0,
+          "components": [
+            {
+              "name": "__array_element",
+              "typeId": "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b"
+            }
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "inputs": [],
+          "name": "main",
+          "output": "b760f44fa5965c2474a3b471467a22c43185152129295af588b022ae50b50903",
+          "attributes": null
+        }
+      ],
+      "loggedTypes": [],
+      "messagesTypes": [],
+      "configurables": [
+        {
+          "name": "SIGNERS",
+          "concreteTypeId": "048b86a7fa6d593a3b17384eeb42370b18126ce11ea29e4d60f7a6c2a507b88d",
+          "offset": 128
+        },
+        {
+          "name": "SIGNATURES_COUNT",
+          "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0",
+          "offset": 120
+        },
+        {
+          "name": "HASH_PREDICATE",
+          "concreteTypeId": "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b",
+          "offset": 88
+        }
+      ]
+    },
+    "toolchain": {
+      "fuelsVersion": "0.99.0",
+      "forcVersion": "0.66.6",
+      "fuelCoreVersion": "0.40.4"
+    },
+    "description": "",
+    "deployed": []
+  },
+  "0x98b84abcbb38687c8bbe33ac4ce7744f1a605fb8dcee919e51266073aac0d0ae": {
+    "time": 1741269009589,
+    "bytecode": "0x1a403000504100301a445000ba49000032400481504100205d490000504100083240048220451300524510044a440000bfef3f3b01bc3f1fd66ccd4c0918aa8dc4ef8f25c3dd76dc3ff02895431ae52c0000000000000168000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "abi": {
+      "programType": "predicate",
+      "specVersion": "1",
+      "encodingVersion": "1",
+      "concreteTypes": [
+        {
+          "type": "[b256; 10]",
+          "concreteTypeId": "048b86a7fa6d593a3b17384eeb42370b18126ce11ea29e4d60f7a6c2a507b88d",
+          "metadataTypeId": 0
+        },
+        {
+          "type": "b256",
+          "concreteTypeId": "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b"
+        },
+        {
+          "type": "bool",
+          "concreteTypeId": "b760f44fa5965c2474a3b471467a22c43185152129295af588b022ae50b50903"
+        },
+        {
+          "type": "u64",
+          "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0"
+        }
+      ],
+      "metadataTypes": [
+        {
+          "type": "[_; 10]",
+          "metadataTypeId": 0,
+          "components": [
+            {
+              "name": "__array_element",
+              "typeId": "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b"
+            }
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "inputs": [],
+          "name": "main",
+          "output": "b760f44fa5965c2474a3b471467a22c43185152129295af588b022ae50b50903",
+          "attributes": null
+        }
+      ],
+      "loggedTypes": [],
+      "messagesTypes": [],
+      "configurables": [
+        {
+          "name": "SIGNERS",
+          "concreteTypeId": "048b86a7fa6d593a3b17384eeb42370b18126ce11ea29e4d60f7a6c2a507b88d",
+          "offset": 128
+        },
+        {
+          "name": "SIGNATURES_COUNT",
+          "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0",
+          "offset": 120
+        },
+        {
+          "name": "HASH_PREDICATE",
+          "concreteTypeId": "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b",
+          "offset": 88
+        }
+      ]
+    },
+    "toolchain": {
+      "fuelsVersion": "0.99.0",
+      "forcVersion": "0.66.6",
+      "fuelCoreVersion": "0.40.4"
+    },
+    "description": "",
+    "deployed": []
   }
 }

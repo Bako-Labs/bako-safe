@@ -92,7 +92,7 @@ pub struct OutputContractCreated {
     _stateRoot: b256,
 }
 
-pub fn tx_hash(input_utxo: b256) {
+pub fn tx_hash(input_utxo: b256) -> b256{
     let (tx_ptr, tx_len) = get_tx_ptr();
     let tx_new_ptr = alloc::<u8>(tx_len);
     let tx_type = tx_type();
@@ -102,7 +102,7 @@ pub fn tx_hash(input_utxo: b256) {
     // Copy first part
     tx_ptr.copy_bytes_to(tx_new_ptr, __size_of::<TxScriptHeader>());
 
-    match tx_type {
+    return match tx_type {
         Transaction::Script => {
             let tx_script_lengths = tx_new_ptr.read::<TxScriptHeader>();
             let mut current_index = __size_of::<TxScriptHeader>() - __size_of::<(u16, u16, u16, u64)>();
@@ -287,11 +287,10 @@ pub fn tx_hash(input_utxo: b256) {
                 s256 r1 value size;
             }
 
-            log(tx_hash);
-
+            return tx_hash;
         },
         _ => {
-            log(0);
+            return b256::zero();
         }
     };
 

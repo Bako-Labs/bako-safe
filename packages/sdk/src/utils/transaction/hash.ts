@@ -9,7 +9,7 @@ import {
   hexlify,
 } from 'fuels';
 
-import type { TransactionRequest } from 'fuels';
+import type { InputCoin, TransactionRequest } from 'fuels';
 
 export function hashTransaction(
   transactionRequest: TransactionRequest,
@@ -21,7 +21,7 @@ export function hashTransaction(
   let utxoIndex = 0;
 
   inputs_copy
-    .filter((input) => input.type === InputType.Coin)
+    .filter((input): input is InputCoin => input.type === InputType.Coin)
     .filter((input) => input.assetId === assetId)
     .map((input, index) => {
       utxo = sha256(concat([input.txID, uint64ToBytesBE(input.outputIndex)]));

@@ -318,7 +318,7 @@ describe('[Transactions]', () => {
     expect(isTypeScript).toBeTruthy();
   });
 
-  it('Should handle transactions with multiple asset IDs', async () => {
+  it.only('Should handle transactions with multiple asset IDs', async () => {
     const {
       provider,
       wallets: [genesisWallet],

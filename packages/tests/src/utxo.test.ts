@@ -10,15 +10,8 @@ import {
   type EstimateTxDependenciesParams,
   type EstimateTxDependenciesReturns,
 } from 'fuels';
-import { hashTransaction } from './utils/transactionHash';
+import { hashTransaction } from 'bakosafe';
 
-const createTestAsset = (assetId: string) => ({ value: assetId });
-const testAssets = [
-  createTestAsset(assets['BTC']),
-  createTestAsset(assets['DAI']),
-  createTestAsset(assets['UNI']),
-  createTestAsset(assets['USDC']),
-];
 describe('Special hash transaction', () => {
   test('Should transfer amount if provide the validator asset_id', async () => {
     const node = await launchTestNode();
@@ -36,11 +29,9 @@ describe('Special hash transaction', () => {
         transactionRequest: TransactionRequest,
         params?: EstimateTxDependenciesParams,
       ): Promise<EstimateTxDependenciesReturns> {
-        const chainId = await this.getChainId();
         const { hex, utxo, hash } = hashTransaction(
           transactionRequest,
-          chainId,
-          '',
+          await this.getBaseAssetId(),
         );
         hash_before = hash;
         // @ts-ignore
@@ -52,19 +43,23 @@ describe('Special hash transaction', () => {
     const scriptHash = new DebbugScript(wallet);
     wallet.connect(new CustomProvider(provider.url));
 
-    const call = await scriptHash.functions.main().txParams({
-      gasLimit: bn.parseUnits('100.0'),
-      maxFee: bn.parseUnits('1.0'),
-    });
+    const call = scriptHash.functions
+      .main(await wallet.signMessage(hash_before))
+      .txParams({
+        gasLimit: bn.parseUnits('100.0'),
+        maxFee: bn.parseUnits('1.0'),
+      });
 
     const { callResult } = await call.get();
 
     const logs = getDecodedLogs(callResult.receipts, DebbugScript.abi);
-
-    console.log('[TX_ID]: ', hash_before);
-
+    // console.log(callResult.receipts[callResult.receipts.length - 2]);
     for (const log of logs) {
-      console.log('-->> Log:', log);
+      console.log({
+        has: hash_before,
+        log,
+        add: wallet.address.b256Address,
+      });
       expect(log).toBe(hash_before);
     }
 
