@@ -278,6 +278,8 @@ pub fn tx_hash(input_utxo: b256) -> b256{
             ).write::<b256>(utxo_sha256);
             new_tx_len += __size_of::<b256>();
 
+            // log(raw_slice::from_parts::<u8>(tx_new_ptr, new_tx_len - inputs_iter_len));
+
             let mut tx_hash = b256::zero();
             asm(
                 value: tx_new_ptr,

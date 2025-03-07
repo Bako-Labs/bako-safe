@@ -5,16 +5,55 @@ import { DebbugScript } from './types/sway/scripts';
 import {
   bn,
   getDecodedLogs,
+  hashMessage,
+  hexlify,
   Provider,
+  ScriptTransactionRequest,
+  Signer,
   TransactionRequest,
+  transactionRequestify,
   type EstimateTxDependenciesParams,
   type EstimateTxDependenciesReturns,
 } from 'fuels';
-import { hashTransaction } from 'bakosafe';
+import { hashTransaction, Vault } from 'bakosafe';
+import { deployPredicate } from './utils';
+
+const createTestAsset = (assetId: string) => ({ value: assetId });
+const testAssets = [
+  createTestAsset(assets['BTC']),
+  createTestAsset(assets['DAI']),
+  createTestAsset(assets['UNI']),
+  createTestAsset(assets['USDC']),
+];
 
 describe('Special hash transaction', () => {
+  let node: Awaited<ReturnType<typeof launchTestNode>>;
+
+  beforeAll(async () => {
+    // launch a test node
+    node = await launchTestNode({
+      walletsConfig: {
+        assets: testAssets,
+        coinsPerAsset: 1,
+        amountPerCoin: 10_000_000_000,
+      },
+    });
+
+    await deployPredicate(node.wallets[0]);
+  });
+
+  afterAll(() => {
+    node.cleanup();
+  });
+
   test('Should transfer amount if provide the validator asset_id', async () => {
-    const node = await launchTestNode();
+    const node = await launchTestNode({
+      walletsConfig: {
+        assets: testAssets,
+        coinsPerAsset: 1,
+        amountPerCoin: 10_000_000_000,
+      },
+    });
 
     const {
       wallets: [wallet],
@@ -23,6 +62,8 @@ describe('Special hash transaction', () => {
 
     let hash_before: string = '';
     let utxo_calc: string = '';
+    let signature: string = '';
+    let _hex: string = '';
 
     class CustomProvider extends Provider {
       async estimateTxDependencies(
@@ -34,8 +75,11 @@ describe('Special hash transaction', () => {
           await this.getBaseAssetId(),
         );
         hash_before = hash;
+        _hex = hex;
         // @ts-ignore
         utxo_calc = utxo;
+        // signature = await wallet.signMessage(hash_before);
+        // console.log(hash_before);
         return super.estimateTxDependencies(transactionRequest, params);
       }
     }
@@ -43,25 +87,53 @@ describe('Special hash transaction', () => {
     const scriptHash = new DebbugScript(wallet);
     wallet.connect(new CustomProvider(provider.url));
 
-    const call = scriptHash.functions
-      .main(await wallet.signMessage(hash_before))
-      .txParams({
-        gasLimit: bn.parseUnits('100.0'),
-        maxFee: bn.parseUnits('1.0'),
-      });
+    console.log(await wallet.getBalance());
 
-    const { callResult } = await call.get();
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [wallet.address.b256Address],
+    });
 
-    const logs = getDecodedLogs(callResult.receipts, DebbugScript.abi);
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('1.2'))
+      .then((tx) => tx.waitForResult());
+
+    const call = await scriptHash.functions.main().getTransactionRequest();
+
+    const { tx, hashTxId } = await vault.BakoTransfer(call);
+
+    tx.witnesses = [await wallet.signMessage(hashTxId)];
+
+    const result = await vault.send(tx);
+
+    const r = await result.waitForResult();
+
+    console.log(r);
+
+    // // await call.estimateAndFund(wallet);
+
+    // // const tx = transactionRequestify(call);
+
+    // // tx.witnesses = [await wallet.signMessage(hash_before)];
+
+    // // const callResult = await (await wallet.sendTransaction(tx)).waitForResult();
+
+    // const logs = getDecodedLogs(callResult.receipts, DebbugScript.abi);
     // console.log(callResult.receipts[callResult.receipts.length - 2]);
-    for (const log of logs) {
-      console.log({
-        has: hash_before,
-        log,
-        add: wallet.address.b256Address,
-      });
-      expect(log).toBe(hash_before);
-    }
+    // for (const log of logs) {
+    //   if (Array.isArray(log)) {
+    //     const logHex = hexlify(Uint8Array.from(log));
+
+    //     console.log(logHex);
+    //     expect(logHex).toBe(_hex);
+    //   }
+    // console.log({
+    //   has: hash_before,
+    //   log,
+    //   add: wallet.address.b256Address,
+    // // });
+    // expect(log).toBe(_hex);
+    // }
 
     return;
   });

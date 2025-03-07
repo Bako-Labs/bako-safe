@@ -13,12 +13,13 @@ import { accounts, assets, networks } from './mocks';
 import {
   Address,
   bn,
+  getDecodedLogs,
   getRandomB256,
   Provider,
   ReceiptType,
   WalletUnlocked,
 } from 'fuels';
-import { ExampleContract } from './types/sway';
+import { DebbugScript, ExampleContract } from './types/sway';
 import { ExampleContractFactory } from './types/sway';
 import { launchTestNode } from 'fuels/test-utils';
 
@@ -272,6 +273,58 @@ describe('[Transactions]', () => {
     node.cleanup();
   });
 
+  it.only('Should tx with utxo', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+
+    const address = wallet.address.toB256();
+    const baseAsset = await provider.getBaseAssetId();
+
+    // create a vault
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [address],
+    });
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    // create a transaction
+    const scriptHash = new DebbugScript(wallet);
+    wallet.connect(provider);
+
+    const call = await scriptHash.functions.main().getTransactionRequest();
+
+    const { tx, hashTxId } = await vault.BakoTransfer(call);
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature: await wallet.signMessage(hashTxId),
+      },
+    ]);
+
+    // send
+    const result = await vault.send(tx);
+    const response = await result.waitForResult();
+    // console.log(response);
+
+    const logs = getDecodedLogs(response.receipts, DebbugScript.abi);
+
+    console.log(logs);
+    console.log({
+      signer: wallet.address.toB256(),
+      // id: tx.getTransactionId(await provider.getChainId()),
+      hashTxId,
+      sig: await wallet.signMessage(hashTxId),
+    });
+
+    expect(response).toHaveProperty('status', 'success');
+  });
+
   it('Should process a simple transaction', async () => {
     const {
       provider,
@@ -318,7 +371,7 @@ describe('[Transactions]', () => {
     expect(isTypeScript).toBeTruthy();
   });
 
-  it.only('Should handle transactions with multiple asset IDs', async () => {
+  it('Should handle transactions with multiple asset IDs', async () => {
     const {
       provider,
       wallets: [genesisWallet],
