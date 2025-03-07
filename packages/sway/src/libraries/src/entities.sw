@@ -7,6 +7,12 @@ use std::{
 pub enum SignatureType {
     WebAuthn: WebAuthnHeader,
     Fuel: FuelHeader,
+    UtxoRef: UtxoRef,
+    None: (),
+}
+
+pub enum UtxoRef {
+    UtxoRef: b256,
 }
 
 pub struct WebAuthnHeader {
