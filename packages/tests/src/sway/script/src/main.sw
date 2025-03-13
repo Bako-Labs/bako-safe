@@ -11,38 +11,20 @@ use libraries::{
         b256_to_ascii_bytes
     },
     tx_hash::*,
+    witnesses::*
 };
 
-fn main() -> b256{
-    let utxo = 0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07;
+fn main(required_signers: u64, signers: [b256; 10], utxo_ref: b256) -> bool {
+    let mut s: Vec<Address> = Vec::with_capacity(10);
+    let mut i = 0;
+    while i < 10 {
+        s.push(Address::from(signers[i]));
+        i += 1;
+    }
 
-    let tx_hash = tx_hash(utxo);
-    let tx_bytes = b256_to_ascii_bytes(tx_hash);
-
-
-    let mut digest = b256::zero();
-    asm(
-            value: tx_bytes.ptr(),
-            size: tx_bytes.len(),
-            r1: digest
-    ) {
-            s256 r1 value size;
-    };
-
-    let mut witness_ptr = __gtf::<raw_ptr>(0, GTF_WITNESS_DATA);
-    let witnesses = witness_ptr.read::<B512>();
+    let res = verify_witnesses(required_signers, s, utxo_ref);
+    log(res);
 
 
-    let rec: Address = ec_recover_address(witnesses, digest).unwrap_or(
-        Address::from(
-            b256::zero()
-        )
-    );
-
-    log(witnesses);
-    log(tx_hash);
-    log(digest);
-    log(rec.bits());
-
-    return digest;
+    res
 }

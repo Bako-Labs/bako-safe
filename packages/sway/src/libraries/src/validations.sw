@@ -93,3 +93,52 @@ pub fn verify_prefix(witness_ptr: raw_ptr) -> bool {
         r1: bool
     }
 }
+
+// remove duplicados e inválidos
+// valida se existe na lista de signers
+pub fn validate_signers(
+  signers: Vec<Address>,
+  signatories: Vec<Address>
+) -> u64 {
+  let mut i = 0;
+  let mut valid: Vec<Address> = Vec::with_capacity(MAX_SIGNERS);
+
+  while i < signers.len() {
+    let signer = signers.get(i).unwrap();
+
+    // verifica se é um endereço válido -> se não é igual ao endereço inválido
+    let mut is_valid = false;
+    let mut is_duplicated = false;
+
+    // verifica se é um endereço duplicado
+    let mut j = 0;
+    while j < valid.len() {
+      if valid.get(i).unwrap() == signer {
+        is_duplicated = true;
+        break;
+      }
+      j += 1;
+    }
+
+    // verifica se existe na lista de signatories
+    let mut k = 0;
+    while k < MAX_SIGNERS {
+      if (signer == Address::from(INVALID_ADDRESS)){
+        break;
+      }
+      if signatories.get(k).unwrap() == signer {
+        is_valid = true;
+        break;
+      }
+      k += 1;
+    }
+
+    if is_valid && !is_duplicated {
+      valid.push(signer);
+    }
+
+    i += 1;
+  }
+
+  valid.len()
+}

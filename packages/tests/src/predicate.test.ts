@@ -285,7 +285,7 @@ describe('[Transactions]', () => {
     // create a vault
     const vault = new Vault(provider, {
       SIGNATURES_COUNT: 1,
-      SIGNERS: [address],
+      SIGNERS: [address, Address.fromRandom().toB256()],
     });
 
     await wallet
@@ -296,7 +296,15 @@ describe('[Transactions]', () => {
     const scriptHash = new DebbugScript(wallet);
     wallet.connect(provider);
 
-    const call = await scriptHash.functions.main().getTransactionRequest();
+    // console.log(vault.configurable);
+
+    const call = await scriptHash.functions
+      .main(
+        vault.configurable.SIGNATURES_COUNT,
+        vault.configurable.SIGNERS as any,
+        baseAsset,
+      )
+      .getTransactionRequest();
 
     const { tx, hashTxId } = await vault.BakoTransfer(call);
 
@@ -305,8 +313,13 @@ describe('[Transactions]', () => {
         type: SignatureType.Fuel,
         signature: await wallet.signMessage(hashTxId),
       },
+      // {
+      //   type: SignatureType.UtxoRef,
+      //   utxo: baseAsset,
+      // },
     ]);
 
+    console.log(tx.witnesses);
     // send
     const result = await vault.send(tx);
     const response = await result.waitForResult();
@@ -315,12 +328,12 @@ describe('[Transactions]', () => {
     const logs = getDecodedLogs(response.receipts, DebbugScript.abi);
 
     console.log(logs);
-    console.log({
-      signer: wallet.address.toB256(),
-      // id: tx.getTransactionId(await provider.getChainId()),
-      hashTxId,
-      sig: await wallet.signMessage(hashTxId),
-    });
+    // console.log({
+    //   signer: wallet.address.toB256(),
+    //   // id: tx.getTransactionId(await provider.getChainId()),
+    //   hashTxId,
+    //   sig: await wallet.signMessage(hashTxId),
+    // });
 
     expect(response).toHaveProperty('status', 'success');
   });
@@ -355,6 +368,8 @@ describe('[Transactions]', () => {
     });
     const signature = await wallet.signMessage(hashTxId);
 
+    console.log('[tx]');
+
     // sign
     tx.witnesses = bakoCoder.encode([
       {
@@ -362,6 +377,8 @@ describe('[Transactions]', () => {
         signature: signature,
       },
     ]);
+    console.log('[witnesses]');
+    console.log(tx.witnesses);
 
     // send
     const { isStatusSuccess, isTypeScript } = await vault

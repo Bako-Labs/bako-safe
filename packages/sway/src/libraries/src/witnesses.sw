@@ -12,6 +12,7 @@ use ::{
     entities::*,
     utilities::*,
     tx_hash::*,
+    validations::*
 };
 
 pub const PREFIX_BAKO_SIG: [u8; 4] = [66, 65, 75, 79];
@@ -21,7 +22,6 @@ pub const MAX_SIGNERS: u64 = 10;
 pub enum SignatureType {
     WebAuthn: WebAuthnHeader,
     Fuel: FuelHeader,
-    UtxoRef: UtxoRef,
     None: (),
 }
 
@@ -76,6 +76,7 @@ pub fn get_witness(i: u64) -> (bool, SignatureType, raw_ptr) {
 
 
 // recupera as chaves que assinaram
+// no final, remove itens duplicados e inválidos
 pub fn recover_witnesses(tx_bytes: Bytes) -> Vec<Address> {
 
     let mut verified_signatures: Vec<Address> = Vec::with_capacity(MAX_SIGNERS);
@@ -103,9 +104,6 @@ pub fn recover_witnesses(tx_bytes: Bytes) -> Vec<Address> {
 
                 verified_signatures.push(p_key);
             },
-            SignatureType::UtxoRef => {
-                continue;
-            },
             SignatureType::None => {
                 continue;
             }
@@ -113,45 +111,53 @@ pub fn recover_witnesses(tx_bytes: Bytes) -> Vec<Address> {
         
         i_witnesses += 1;
     }
-
+ 
     verified_signatures
 }
 
 
-pub fn get_witness_utxo_ref() -> b256 {
-    let mut utxo_ref = b256::zero();
-    let mut w_len = tx_witnesses_count();
-    let mut i = 0;
 
-    while i < w_len {
-        let (from_bako, sig_type, ptr) = get_witness(i);
+// // identifica o UTXO entre as assinaturas -> prefixo de inputx
+// pub fn get_witness_utxo_ref() -> b256 {
+//     let mut utxo_ref = b256::zero();
+//     let mut w_len = tx_witnesses_count();
+//     let mut i = 0;
 
-        match sig_type {
-            SignatureType::UtxoRef(utxo) => {
-                utxo_ref = ptr.read::<b256>();
-                break;
-            },
-            _ => {
-                i += 1;
-            }
-        }
-    }
+//     while i < w_len {
+//         let (from_bako, sig_type, ptr) = get_witness(i);
 
-    utxo_ref
-}
+//         match sig_type {
+//             SignatureType::UtxoRef(utxo) => {
+//                 utxo_ref = ptr.read::<b256>();
+//                 break;
+//             },
+//             _ => {
+//                 i += 1;
+//             }
+//         }
+//     }
 
+//     utxo_ref
+// }
 
-// identifica o UTXO entre as assinaturas -> prefixo de inputx
+// encontra o utxo da tx
 // calcula o hash da tx
-
 // recebe um ponteiro e o tipo de assinatura
 // verifica se é uma assinatura webauthn
-pub fn verify_witnesses() {
-    let utxo = get_witness_utxo_ref();
+pub fn verify_witnesses(
+    required_signers: u64,
+    signatories: Vec<Address>,
+    utxo: b256,
+) -> bool {
     let tx_bytes = b256_to_ascii_bytes(tx_hash(utxo));
-    let mut signers = recover_witnesses(tx_bytes);
-
-    
+    let signers = recover_witnesses(tx_bytes);
 
 
+    log(utxo);
+
+    // verifica invalidos
+    // verifica se existe em signatories
+    let valid_signers:u64 = validate_signers(signers, signatories);
+
+    valid_signers >= required_signers
 }

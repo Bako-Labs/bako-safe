@@ -273,7 +273,7 @@ export class Vault extends Predicate<[]> {
 
     const maxFeeWithPredicateGas = maxFee.add(predicateSuccessFeeDiff);
 
-    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(12).div(10);
+    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(30).div(10);
 
     if (transactionRequest.type === TransactionType.Upgrade) {
       transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);
