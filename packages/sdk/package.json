@@ -36,7 +36,9 @@
   "dependencies": {
     "@noble/curves": "^1.5.0",
     "axios": "^1.5.1",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "@ethereumjs/util": "9.0.3",
+    "@ethersproject/bytes": "5.7.0"
   },
   "peerDependencies": {
     "fuels": ">=0.99.0"
