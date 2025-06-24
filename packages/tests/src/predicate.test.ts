@@ -8,6 +8,8 @@ import {
   SignatureType,
   DEFAULT_PREDICATE_VERSION,
 } from 'bakosafe';
+import { ethers } from 'ethers';
+import { stringToHex } from 'viem';
 
 import { accounts, assets, networks } from './mocks';
 import {
@@ -17,6 +19,7 @@ import {
   Provider,
   ReceiptType,
   WalletUnlocked,
+  arrayify,
 } from 'fuels';
 import { ExampleContract } from './types/sway';
 import { ExampleContractFactory } from './types/sway';
@@ -788,5 +791,49 @@ describe('[Send With]', () => {
       const error = BakoError.parse(e);
       expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
     });
+  });
+
+  it('Should process a valid Evm signer', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+
+    const evmWallet = ethers.Wallet.createRandom();
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [evmWallet.address],
+    });
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+    const baseAsset = await provider.getBaseAssetId();
+
+    const { tx, hashTxId } = await vault.transaction({
+      name: 'Test',
+      assets: [
+        {
+          amount: '0.1',
+          assetId: baseAsset,
+          to: wallet.address.toB256(),
+        },
+      ],
+    });
+
+    const signature = await evmWallet.signMessage(
+      arrayify(stringToHex(hashTxId)),
+    );
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Evm,
+        signature,
+      },
+    ]);
+
+    const result = await vault.send(tx);
+    const response = await result.waitForResult();
+
+    expect(response).toHaveProperty('status', 'success');
   });
 });
