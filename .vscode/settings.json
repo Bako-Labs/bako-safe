@@ -4,8 +4,5 @@
   "editor.formatOnSave": true,
   "editor.formatOnPaste": true,
   "editor.wordWrap": "on",
-  "git.ignoreLimitWarning": true,
-  "[sway]": {
-    "editor.defaultFormatter": "FuelLabs.sway-vscode-plugin"
-  }
+  "git.ignoreLimitWarning": true
 }

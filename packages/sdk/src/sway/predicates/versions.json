@@ -226,5 +226,82 @@
       "https://testnet.fuel.network/v1/graphql",
       "https://mainnet.fuel.network/v1/graphql"
     ]
+  },
+  "0xc6bd737328f2eea2c89b8f4624137eb5045a43885085ca264f706268eed3a679": {
+    "time": 1750799726192,
+    "bytecode": "0x1a403000504100301a445000ba49000032400481504100205d490000504100083240048220451300524510044a440000e75feb9474348f2988bc6307a17efc8b6b11f00717f60dda53b934dacd4128aa0000000000000168000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "abi": {
+      "programType": "predicate",
+      "specVersion": "1",
+      "encodingVersion": "1",
+      "concreteTypes": [
+        {
+          "type": "[b256; 10]",
+          "concreteTypeId": "048b86a7fa6d593a3b17384eeb42370b18126ce11ea29e4d60f7a6c2a507b88d",
+          "metadataTypeId": 0
+        },
+        {
+          "type": "b256",
+          "concreteTypeId": "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b"
+        },
+        {
+          "type": "bool",
+          "concreteTypeId": "b760f44fa5965c2474a3b471467a22c43185152129295af588b022ae50b50903"
+        },
+        {
+          "type": "u64",
+          "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0"
+        }
+      ],
+      "metadataTypes": [
+        {
+          "type": "[_; 10]",
+          "metadataTypeId": 0,
+          "components": [
+            {
+              "name": "__array_element",
+              "typeId": "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b"
+            }
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "inputs": [],
+          "name": "main",
+          "output": "b760f44fa5965c2474a3b471467a22c43185152129295af588b022ae50b50903",
+          "attributes": null
+        }
+      ],
+      "loggedTypes": [],
+      "messagesTypes": [],
+      "configurables": [
+        {
+          "name": "SIGNERS",
+          "concreteTypeId": "048b86a7fa6d593a3b17384eeb42370b18126ce11ea29e4d60f7a6c2a507b88d",
+          "offset": 128
+        },
+        {
+          "name": "SIGNATURES_COUNT",
+          "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0",
+          "offset": 120
+        },
+        {
+          "name": "HASH_PREDICATE",
+          "concreteTypeId": "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b",
+          "offset": 88
+        }
+      ]
+    },
+    "toolchain": {
+      "fuelsVersion": "0.99.0",
+      "forcVersion": "0.68.1",
+      "fuelCoreVersion": "0.43.1"
+    },
+    "description": "",
+    "deployed": [
+      "https://testnet.fuel.network/v1/graphql",
+      "https://mainnet.fuel.network/v1/graphql"
+    ]
   }
 }
