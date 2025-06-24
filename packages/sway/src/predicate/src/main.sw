@@ -13,8 +13,10 @@ use libraries::{
     entities::{
         SignatureType,
         WebAuthnHeader,
+        SignatureAddress,
     },
     recover_signature::{
+        evm_verify,
         fuel_verify,
         webauthn_verify,
     },
@@ -40,16 +42,17 @@ configurable {
 
 fn main() -> bool {
     let mut i_witnesses = 0;
-    let mut verified_signatures: Vec<Address> = Vec::with_capacity(MAX_SIGNERS);
+    let mut verified_signatures: Vec<SignatureAddress> = Vec::with_capacity(MAX_SIGNERS);
 
     while i_witnesses < tx_witnesses_count() {
         let mut witness_ptr = __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA);
         if (verify_prefix(witness_ptr)) {
-            let tx_bytes = b256_to_ascii_bytes(tx_id()); // are used 
+            let tx_id_b256 = tx_id();
+            let tx_bytes = b256_to_ascii_bytes(tx_id_b256); // are used 
             witness_ptr = witness_ptr.add_uint_offset(4); // skip bako prefix
             let signature = witness_ptr.read::<SignatureType>();
             witness_ptr = witness_ptr.add_uint_offset(__size_of::<u64>()); // skip enum size
-            let pk: Address = match signature {
+            let pk: SignatureAddress = match signature {
                 SignatureType::WebAuthn(signature_payload) => {
                     let data_ptr = witness_ptr.add_uint_offset(__size_of::<WebAuthnHeader>());
 
@@ -63,7 +66,12 @@ fn main() -> bool {
 
                     fuel_verify(signature, tx_bytes)
                 },
-                _ => INVALID_ADDRESS,
+                SignatureType::Evm(_) => {
+                    let signature = witness_ptr.read::<B512>();
+
+                    evm_verify(signature, tx_id_b256)
+                },
+                _ => SignatureAddress::FUEL(INVALID_ADDRESS),
             };
 
             let is_valid_signer = check_signer_exists(pk, SIGNERS);

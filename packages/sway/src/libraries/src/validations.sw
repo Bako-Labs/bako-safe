@@ -1,10 +1,19 @@
 library;
 
+use std::
+{
+  vm::evm::{
+    evm_address::EvmAddress,
+  }
+};
+
 use ::constants::{
   INVALID_ADDRESS,
   MAX_SIGNERS,
   PREFIX_BAKO_SIG,
 };
+
+use ::entities::SignatureAddress;
 
 
 /// Verify if the public_key is duplicated in the verified_signatures
@@ -20,12 +29,12 @@ use ::constants::{
 
 ///     - returns: void
 pub fn check_duplicated_signers(
-  public_key: Address,
-  ref mut verified_signatures: Vec::<Address>,
+  public_key: SignatureAddress,
+  ref mut verified_signatures: Vec::<SignatureAddress>,
 ) {
   let mut i = 0;
 
-  if INVALID_ADDRESS == public_key { //stop condition
+  if SignatureAddress::FUEL(INVALID_ADDRESS) == public_key { //stop condition
     return;
   }
 
@@ -37,6 +46,7 @@ pub fn check_duplicated_signers(
 
     i += 1;
   }
+
   verified_signatures.push(public_key);
 }
 
@@ -53,23 +63,29 @@ pub fn check_duplicated_signers(
 
 ///     - returns: the public_key if it exists in the signers list, INVALID_ADDRESS otherwise
 pub fn check_signer_exists(
-  public_key: Address,
+  public_key: SignatureAddress,
   signers: [b256; 10],
-) -> Address {
+) -> SignatureAddress {
   let mut i = 0;
 
   while i < MAX_SIGNERS {
-    if Address::from(signers[i]) == public_key {
-      return public_key;
-    }
-    if Address::from(signers[i]) == Address::zero() {
-      return INVALID_ADDRESS;
+    match public_key {
+      SignatureAddress::FUEL(address) => {
+        if Address::from(signers[i]) == address {
+          return public_key;
+        }
+      },
+      SignatureAddress::EVM(address) => {
+        if EvmAddress::from(signers[i]) == address {
+          return public_key;
+        }
+      },
     }
 
     i += 1;
   }
 
-  INVALID_ADDRESS
+  SignatureAddress::FUEL(INVALID_ADDRESS)
 }
 
 
