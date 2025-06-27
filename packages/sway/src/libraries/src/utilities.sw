@@ -31,7 +31,7 @@ pub fn hash_tx_id(value: Bytes) -> b256 {
 }
 pub fn personal_sign_hash(transaction_id: b256) -> b256 {
     // Hack, allocate memory to reduce manual `asm` code.
-    let transaction_id_utf8 = b256_to_ascii_bytes2(transaction_id);
+    let transaction_id_utf8 = b256_to_ascii_bytes_split(transaction_id);
     let data = SignedData {
         transaction_id: transaction_id_utf8,
         ethereum_prefix: ETHEREUM_PREFIX,
@@ -63,7 +63,7 @@ pub fn personal_sign_hash(transaction_id: b256) -> b256 {
     buffer
 }
 
-pub fn b256_to_ascii_bytes2(val: b256) -> (b256, b256) {
+pub fn b256_to_ascii_bytes_split(val: b256) -> (b256, b256) {
     let bytes = Bytes::from(val);
     let mut ascii_bytes = Bytes::with_capacity(64);
     let mut idx = 0;
