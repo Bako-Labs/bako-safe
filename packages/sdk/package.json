@@ -41,6 +41,6 @@
     "@ethersproject/bytes": "5.7.0"
   },
   "peerDependencies": {
-    "fuels": "0.101.1"
+    "fuels": "^0.101.0"
   }
 }
