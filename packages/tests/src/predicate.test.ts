@@ -836,4 +836,100 @@ describe('[Send With]', () => {
 
     expect(response).toHaveProperty('status', 'success');
   });
+
+  it('Should process evm, webauthn and fuel signatures', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+
+    const webAuthnCredential = WebAuthn.createCredentials();
+    const baseAsset = await provider.getBaseAssetId();
+    const evmWallet = ethers.Wallet.createRandom();
+
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 3,
+      SIGNERS: [
+        webAuthnCredential.address,
+        wallet.address.toB256(),
+        evmWallet.address,
+      ],
+    });
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    const { tx, hashTxId } = await vault.transaction({
+      assets: [
+        {
+          amount: '0.1',
+          assetId: baseAsset,
+          to: wallet.address.toB256(),
+        },
+      ],
+    });
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature: await wallet.signMessage(hashTxId),
+      },
+      {
+        type: SignatureType.WebAuthn,
+        ...(await WebAuthn.signChallenge(webAuthnCredential, hashTxId)),
+      },
+      {
+        type: SignatureType.Evm,
+        signature: await evmWallet.signMessage(arrayify(stringToHex(hashTxId))),
+      },
+    ]);
+
+    const result = await vault.send(tx);
+    const response = await result.waitForResult();
+
+    expect(response).toHaveProperty('status', 'success');
+  });
+
+  it('Should reject invalid evm signatures', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+
+    const baseAsset = await provider.getBaseAssetId();
+    const evmWallet = ethers.Wallet.createRandom();
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [evmWallet.address],
+    });
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    const { tx, hashTxId } = await vault.transaction({
+      assets: [
+        {
+          amount: '0.1',
+          assetId: baseAsset,
+          to: wallet.address.toB256(),
+        },
+      ],
+    });
+
+    const signature = await evmWallet.signMessage(
+      arrayify(stringToHex(hashTxId)),
+    );
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Evm,
+        signature: signature.slice(0, -3) + '123',
+      },
+    ]);
+
+    await vault.send(tx).catch((e) => {
+      const error = BakoError.parse(e);
+      expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
+    });
+  });
 });
