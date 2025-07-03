@@ -244,9 +244,16 @@ export class Vault extends Predicate<[]> {
       () => FAKE_WITNESSES,
     );
     transactionRequest.witnesses.push(...fakeSignatures);
-    const transactionCost = await this.getTransactionCost(transactionRequest);
-    transactionRequest.maxFee = transactionCost.maxFee;
-    transactionRequest = await this.fund(transactionRequest, transactionCost);
+
+    const quantities = transactionRequest
+      .getCoinOutputs()
+      .map((o) => ({ assetId: String(o.assetId), amount: bn(o.amount) }));
+    const { assembledRequest } = await this.provider.assembleTx({
+      request: transactionRequest,
+      feePayerAccount: this,
+      accountCoinQuantities: quantities,
+    });
+    transactionRequest = assembledRequest;
 
     let totalGasUsed = bn(0);
     transactionRequest.inputs.forEach((input) => {
@@ -365,16 +372,6 @@ export class Vault extends Predicate<[]> {
     const tx = new ScriptTransactionRequest();
 
     const outputs = Asset.assetsGroupByTo(assets);
-    const coins = Asset.assetsGroupById(assets);
-
-    const transactionCoins = Object.entries(coins).map(([assetId, amount]) => ({
-      assetId,
-      amount,
-    }));
-
-    const add = await this.getResourcesToSpend(transactionCoins);
-
-    tx.addResources(add);
     Object.entries(outputs).map(([, value]) => {
       tx.addCoinOutput(
         Address.fromString(value.to),
@@ -382,7 +379,6 @@ export class Vault extends Predicate<[]> {
         value.assetId,
       );
     });
-    this.populateTransactionPredicateData(tx);
 
     return this.BakoTransfer(tx, { name: params.name });
   }
