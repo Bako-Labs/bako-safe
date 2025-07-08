@@ -9,6 +9,7 @@ use libraries::{
         EMPTY_SIGNERS,
         INVALID_ADDRESS,
         MAX_SIGNERS,
+        PREFIX_BAKO_SIG_LEN,
     },
     entities::{
         SignatureType,
@@ -48,8 +49,8 @@ fn main() -> bool {
         let mut witness_ptr = __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA);
         if (verify_prefix(witness_ptr)) {
             let tx_id_b256 = tx_id();
-            let tx_bytes = b256_to_ascii_bytes(tx_id_b256); // are used 
-            witness_ptr = witness_ptr.add_uint_offset(4); // skip bako prefix
+            let tx_bytes = b256_to_ascii_bytes(tx_id_b256); // are used
+            witness_ptr = witness_ptr.add_uint_offset(PREFIX_BAKO_SIG_LEN); // skip bako prefix
             let signature = witness_ptr.read::<SignatureType>();
             witness_ptr = witness_ptr.add_uint_offset(__size_of::<u64>()); // skip enum size
             let pk: SignatureAddress = match signature {
