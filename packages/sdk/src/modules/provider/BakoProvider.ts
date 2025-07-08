@@ -60,7 +60,7 @@ export class BakoProvider extends Provider {
   static async setup(params: BakoProviderSetup) {
     const { address, encoder, provider, name } = params;
 
-    const { code: challenge } = await Service.create({
+    const { code: challenge } = await Service.create(params.serverApi, {
       name: name ?? `from sdk - ${address}`,
       type: encoder ?? TypeUser.FUEL,
       address: address,
@@ -118,7 +118,7 @@ export class BakoProvider extends Provider {
     url: string,
     options: BakoProviderAuthOptions,
   ): Promise<BakoProvider> {
-    await Service.sign({
+    await Service.sign(options.serverApi, {
       digest: options.challenge,
       encoder: options.encoder ?? TypeUser.FUEL,
       signature: options.token,
