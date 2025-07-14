@@ -24,10 +24,7 @@ use std::{
     },
 };
 use ::utilities::{b256_to_ascii_bytes, hash_tx_id, personal_sign_hash};
-use ::entities::{
-    WebAuthnHeader,
-    SignatureAddress,
-};
+use ::entities::{SignatureAddress, WebAuthnHeader};
 use ::webauthn_digest::get_webauthn_digest;
 use ::constants::INVALID_ADDRESS;
 
@@ -55,7 +52,7 @@ pub fn webauthn_verify(digest: b256, webauthn: WebAuthnHeader) -> SignatureAddre
 pub fn evm_verify(witnesses_data: B512, tx_bytes: b256) -> SignatureAddress {
     let signature = Signature::Secp256k1(Secp256k1::from(witnesses_data));
     let message = Message::from(personal_sign_hash(tx_bytes));
-    
+
     match signature.evm_address(message) {
         Ok(evm_address) => {
             SignatureAddress::EVM(evm_address)

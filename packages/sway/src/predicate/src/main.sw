@@ -11,9 +11,9 @@ use libraries::{
         MAX_SIGNERS,
     },
     entities::{
+        SignatureAddress,
         SignatureType,
         WebAuthnHeader,
-        SignatureAddress,
     },
     recover_signature::{
         evm_verify,
