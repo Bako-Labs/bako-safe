@@ -16,9 +16,9 @@ Within the packages folder, you will find the following subdirectories:
 
 ## Requirements
 
-- fuel-core@0.38.0
-- forc@0.65.2
-- fuels-ts@0.96.1
+- fuel-core@0.43.1
+- forc@0.68.1
+- fuels-ts@0.101.1
 
 ## Tests
 
