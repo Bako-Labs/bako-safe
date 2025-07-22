@@ -39,24 +39,24 @@ pub fn check_duplicated_signers(
 ///        - public_key: the public key to verify
 ///        - signers: the list of signers
 ///     - returns: the public_key if it exists in the signers list, INVALID_ADDRESS otherwise
-pub fn check_signer_exists(public_key: SignatureAddress, signers: [b256; 10]) -> SignatureAddress {
+pub fn check_signer_exists(public_key: SignatureAddress, signers: [b256; MAX_SIGNERS]) -> bool {
     let mut i = 0;
     while i < MAX_SIGNERS {
         match public_key {
             SignatureAddress::FUEL(address) => {
                 if Address::from(signers[i]) == address {
-                    return public_key;
+                    return true;
                 }
             },
             SignatureAddress::EVM(address) => {
                 if EvmAddress::from(signers[i]) == address {
-                    return public_key;
+                    return true;
                 }
             },
         }
         i += 1;
     }
-    SignatureAddress::FUEL(INVALID_ADDRESS)
+    false
 }
 
 /// Verify if the prefix is correct

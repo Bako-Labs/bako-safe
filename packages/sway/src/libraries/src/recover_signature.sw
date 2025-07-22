@@ -7,6 +7,7 @@ use std::{
         message::Message,
         public_key::PublicKey,
         secp256k1::Secp256k1,
+        secp256r1::Secp256r1,
         signature::Signature,
     },
     ecr::{
@@ -35,7 +36,9 @@ use ::constants::INVALID_ADDRESS;
 ///     - returns: the address of the signer
 pub fn fuel_verify(signature: B512, tx_bytes: Bytes) -> SignatureAddress {
     let tx_fuel = hash_tx_id(tx_bytes);
-    let address = ec_recover_address(signature, tx_fuel).unwrap_or(INVALID_ADDRESS);
+    let message = Message::from(tx_fuel);
+    let signature = Signature::Secp256k1(Secp256k1::from(signature));
+    let address = signature.address(message).unwrap_or(INVALID_ADDRESS);
     SignatureAddress::FUEL(address)
 }
 
@@ -45,7 +48,9 @@ pub fn fuel_verify(signature: B512, tx_bytes: Bytes) -> SignatureAddress {
 ///         - digest: the digest of the message
 ///     - returns: the address of the signer
 pub fn webauthn_verify(digest: b256, webauthn: WebAuthnHeader) -> SignatureAddress {
-    let address = ec_recover_address_r1(webauthn.signature, digest).unwrap_or(INVALID_ADDRESS);
+    let message = Message::from(digest);
+    let signature = Signature::Secp256r1(Secp256r1::from(webauthn.signature));
+    let address = signature.address(message).unwrap_or(INVALID_ADDRESS);
     SignatureAddress::FUEL(address)
 }
 

@@ -74,8 +74,9 @@ fn main() -> bool {
                 _ => SignatureAddress::FUEL(INVALID_ADDRESS),
             };
 
-            let is_valid_signer = check_signer_exists(pk, SIGNERS);
-            check_duplicated_signers(is_valid_signer, verified_signatures);
+            if (check_signer_exists(pk, SIGNERS)) {
+                check_duplicated_signers(pk, verified_signatures);
+            }
         }
 
         i_witnesses += 1;
