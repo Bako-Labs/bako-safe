@@ -1,9 +1,13 @@
 import { BytesLike, concat, hexlify, arrayify, BigNumberCoder } from 'fuels';
+import { splitSignature } from '@ethersproject/bytes';
+import { hexToBytes } from '@ethereumjs/util';
+
 import { BakoCoders } from './coder';
 
 export enum SignatureType {
   WebAuthn = 0,
   Fuel = 1,
+  Evm = 2,
 }
 
 export type WebAuthnInput = {
@@ -19,9 +23,14 @@ export type FuelInput = {
   signature: BytesLike;
 };
 
+export type EvmInput = {
+  type: SignatureType.Evm;
+  signature: BytesLike;
+};
+
 export const bakoCoder = new BakoCoders<
   SignatureType,
-  WebAuthnInput | FuelInput
+  WebAuthnInput | FuelInput | EvmInput
 >();
 
 bakoCoder.addCoder(SignatureType.WebAuthn, (data) => {
@@ -43,4 +52,8 @@ bakoCoder.addCoder(SignatureType.WebAuthn, (data) => {
 
 bakoCoder.addCoder(SignatureType.Fuel, (data) => {
   return hexlify(arrayify(data.signature));
+});
+
+bakoCoder.addCoder(SignatureType.Evm, (data) => {
+  return splitSignature(hexToBytes(hexlify(data.signature))).compact;
 });

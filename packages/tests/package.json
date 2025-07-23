@@ -22,11 +22,11 @@
     "@noble/curves": "^1.5.0",
     "axios": "^1.7.2",
     "bakosafe": "workspace:*",
-    "fuels": "0.99.0",
+    "fuels": "0.101.1",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@fuel-ts/merkle": "0.94.6",
+    "@fuel-ts/merkle": "0.101.1",
     "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.13",
     "@types/node": "^22.5.5",
@@ -36,7 +36,9 @@
     "jest-axios": "^0.2.1",
     "ts-jest": "29.1.1",
     "ts-node": "^10.9.2",
-    "typescript": "~5.4.5"
+    "typescript": "~5.4.5",
+    "ethers": "^6.14.3",
+    "viem": "^2.30.6"
   },
   "keywords": [],
   "author": "",

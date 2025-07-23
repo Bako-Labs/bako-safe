@@ -1,5 +1,6 @@
 import { bech32m } from 'bech32';
-import { arrayify, hexlify, Address, ZeroBytes32 } from 'fuels';
+import { arrayify, hexlify, Address, ZeroBytes32, bn } from 'fuels';
+import { isValidAddress } from '@ethereumjs/util';
 
 enum Bech32Prefix {
   PASSKEY = 'passkey',
@@ -32,4 +33,24 @@ export class AddressUtils {
     const bytes = new Uint8Array(bech32m.fromWords(words));
     return hexlify(bytes);
   };
+
+  static isEvm(address: string): boolean {
+    if (address.startsWith('0x000000000000000000000000')) {
+      address = AddressUtils.parseFuelAddressToEth(address);
+    }
+
+    try {
+      return isValidAddress(address);
+    } catch {
+      return false;
+    }
+  }
+
+  static parseFuelAddressToEth(address: string): string {
+    try {
+      return bn(address, 'hex').toHex(20) as `0x${string}`;
+    } catch {
+      return address;
+    }
+  }
 }
