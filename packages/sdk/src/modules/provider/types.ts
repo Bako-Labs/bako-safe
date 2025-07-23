@@ -5,6 +5,8 @@ export type BakoProviderOptions = ProviderOptions & {
   token: string;
   address: string;
   serverApi?: string;
+  userId?: string;
+  rootWallet?: string;
 };
 
 export type BakoProviderAPITokenOptions = ProviderOptions & {
@@ -21,6 +23,7 @@ export type BakoProviderAuthOptions = BakoProviderOptions & {
 export enum TypeUser {
   FUEL = 'FUEL',
   WEB_AUTHN = 'WEB_AUTHN',
+  EVM = 'EVM',
 }
 
 export type BakoProviderSetup = {

@@ -118,13 +118,17 @@ export class BakoProvider extends Provider {
     url: string,
     options: BakoProviderAuthOptions,
   ): Promise<BakoProvider> {
-    await Service.sign({
+    const { user, rootWallet } = await Service.sign({
       digest: options.challenge,
       encoder: options.encoder ?? TypeUser.FUEL,
       signature: options.token,
       userAddress: options.address,
     });
-    return BakoProvider.create(url, options);
+    return BakoProvider.create(url, {
+      ...options,
+      userId: user,
+      rootWallet,
+    });
   }
 
   /**
@@ -224,5 +228,26 @@ export class BakoProvider extends Provider {
     await this.service.sendTransaction(hash);
     const chainId = await this.getChainId();
     return new TransactionResponse(hash, this, chainId);
+  }
+
+  async connectDapp(sessionId: string) {
+    console.log('[CONNECT_AUTH_CODE]', sessionId);
+    return await this.service.createDapp({
+      sessionId,
+      userAddress: this.options.address,
+      vaultId: this.options.rootWallet ?? randomUUID(),
+      origin: window?.origin ?? 'not found',
+      request_id: randomUUID(),
+    });
+  }
+
+  async disconnect(sessionId: string) {
+    console.log('[DISCONNECT_AUTH_CODE]', sessionId);
+    return await this.service.disconnectDapp(sessionId);
+  }
+
+  async wallet() {
+    const info = await this.service.userWallet();
+    return new Vault(this, JSON.parse(info.configurable), info.version);
   }
 }
