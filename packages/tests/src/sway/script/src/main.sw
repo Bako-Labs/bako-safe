@@ -13,8 +13,10 @@ use libraries::{
     entities::{
         SignatureType,
         WebAuthnHeader,
+        SignatureAddress,
     },
     recover_signature::{
+        evm_verify,
         fuel_verify,
         webauthn_verify,
     },
@@ -37,50 +39,49 @@ struct PredicateConfig {
     HASH_PREDICATE: b256,
 }
 
-fn main(tx_id: b256, config: PredicateConfig) -> bool {
+fn main(tx_id_b256: b256, config: PredicateConfig) -> bool {
     let SIGNERS = config.SIGNERS;
     let SIGNATURES_COUNT = config.SIGNATURES_COUNT;
     let HASH_PREDICATE = config.HASH_PREDICATE;
+
     let mut i_witnesses = 0;
-    let mut verified_signatures: Vec<Address> = Vec::with_capacity(MAX_SIGNERS);
+    let mut verified_signatures: Vec<SignatureAddress> = Vec::with_capacity(MAX_SIGNERS);
 
     while i_witnesses < tx_witnesses_count() {
         let mut witness_ptr = __gtf::<raw_ptr>(i_witnesses, GTF_WITNESS_DATA);
         if (verify_prefix(witness_ptr)) {
-            let tx_bytes = b256_to_ascii_bytes(tx_id);
+            let tx_bytes = b256_to_ascii_bytes(tx_id_b256); // are used
             witness_ptr = witness_ptr.add_uint_offset(4); // skip bako prefix
             let signature = witness_ptr.read::<SignatureType>();
             witness_ptr = witness_ptr.add_uint_offset(__size_of::<u64>()); // skip enum size
-            let pk: Address = match signature {
+            let pk: SignatureAddress = match signature {
                 SignatureType::WebAuthn(signature_payload) => {
                     let data_ptr = witness_ptr.add_uint_offset(__size_of::<WebAuthnHeader>());
-                    let private_key = webauthn_verify(
+
+                    webauthn_verify(
                         get_webauthn_digest(signature_payload, data_ptr, tx_bytes),
                         signature_payload,
-                    );
-                    private_key
+                    )
                 },
-                SignatureType::Fuel(signature_fuel) => {
-                    // to prevent warning on build
-                    let _ = signature_fuel;
-                    // TODO: talk with Sway team to see why the value is not correctly parsed it looks to be skiping 24 bytes
-                    // this is why we need to use the pointer to read the B512 value, this problem dosen't happen on the webauth
+                SignatureType::Fuel(_) => {
                     let signature = witness_ptr.read::<B512>();
+
                     fuel_verify(signature, tx_bytes)
                 },
-                _ => INVALID_ADDRESS,
+                SignatureType::Evm(_) => {
+                    let signature = witness_ptr.read::<B512>();
+
+                    evm_verify(signature, tx_id_b256)
+                },
+                _ => SignatureAddress::FUEL(INVALID_ADDRESS),
             };
 
-            let is_valid_signer = check_signer_exists(pk, SIGNERS);
-            check_duplicated_signers(is_valid_signer, verified_signatures);
+            if (check_signer_exists(pk, SIGNERS)) {
+                check_duplicated_signers(pk, verified_signatures);
+            }
         }
 
         i_witnesses += 1;
-    }
-
-    // redundant check, but it is necessary to avoid compiler errors
-    if (HASH_PREDICATE != HASH_PREDICATE) {
-        return false;
     }
 
     return verified_signatures.len() >= SIGNATURES_COUNT;
