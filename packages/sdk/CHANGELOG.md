@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.2.0
+
+### Minor Changes
+
+- 462725d: feat: add evm signer and update to fuel 0.101.1
+
 ## 0.1.9
 
 ### Patch Changes
