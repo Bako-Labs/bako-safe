@@ -231,7 +231,6 @@ export class BakoProvider extends Provider {
   }
 
   async connectDapp(sessionId: string) {
-    console.log('[CONNECT_AUTH_CODE]', sessionId);
     return await this.service.createDapp({
       sessionId,
       userAddress: this.options.address,
@@ -242,7 +241,6 @@ export class BakoProvider extends Provider {
   }
 
   async disconnect(sessionId: string) {
-    console.log('[DISCONNECT_AUTH_CODE]', sessionId);
     return await this.service.disconnectDapp(sessionId);
   }
 

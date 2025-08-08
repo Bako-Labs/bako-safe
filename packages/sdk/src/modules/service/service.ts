@@ -17,8 +17,6 @@ import {
   CLIAuthPayload,
   CLIAuth,
   IDAPPCreateRequest,
-  IRecoverCodeCreateRequest,
-  IRecoverCodeResponse,
 } from './types';
 
 // keep here to sync with the other files
@@ -233,7 +231,6 @@ export class Service {
     rootWallet: string;
   }> {
     const { data } = await _api.post('/auth/sign-in', params);
-    console.log('PERSONAL_WALLET: ', data);
     return {
       user: data.user_id,
       rootWallet: data.rootWallet,

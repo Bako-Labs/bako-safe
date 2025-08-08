@@ -46,7 +46,7 @@ describe('[Create]', () => {
       },
     });
 
-    await deployPredicate(node.wallets[0]);
+    await deployPredicate(node.wallets[0], true);
   });
 
   afterAll(() => {
@@ -181,7 +181,7 @@ describe('[Version]', () => {
       },
     });
 
-    await deployPredicate(node.wallets[0]);
+    await deployPredicate(node.wallets[0], true);
   });
 
   afterAll(() => {
@@ -267,7 +267,7 @@ describe('[Transactions]', () => {
 
     // deploy a predicate
     const [wallet] = node.wallets;
-    await deployPredicate(wallet);
+    await deployPredicate(wallet, true);
   });
 
   afterAll(() => {
@@ -498,7 +498,7 @@ describe('[Send With]', () => {
 
     // deploy a predicate
     const [wallet] = node.wallets;
-    await deployPredicate(wallet);
+    await deployPredicate(wallet, true);
   });
 
   afterAll(() => {
@@ -931,5 +931,31 @@ describe('[Send With]', () => {
       const error = BakoError.parse(e);
       expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
     });
+  });
+
+  it.only('Shoud instantiate legacy predicate', async () => {
+    const { provider, wallets } = node;
+    const evmWallet = ethers.Wallet.createRandom();
+    const wallet = wallets[0];
+
+    const predicate = new Vault(provider, {
+      SIGNER: evmWallet.address,
+    });
+
+    await expect(async () => {
+      await new Vault(provider, {
+        SIGNER: wallet.address.toB256(),
+      });
+    }).rejects.toThrow(
+      'No compatible predicate version with this configurable found for wallet type fuel',
+    );
+
+    const predicate_bako_version = new Vault(provider, {
+      SIGNERS: [wallet.address.toB256()],
+      SIGNATURES_COUNT: 1,
+    });
+
+    expect(predicate).toBeInstanceOf(Vault);
+    expect(predicate_bako_version).toBeInstanceOf(Vault);
   });
 });

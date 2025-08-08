@@ -158,7 +158,7 @@ describe('[AUTH]', () => {
 
     // deploy a predicate
     const [wallet] = node.wallets;
-    await deployPredicate(wallet);
+    await deployPredicate(wallet, true);
   });
 
   afterAll(() => {
