@@ -1,40 +1,57 @@
+import { Wallet } from 'src/utils/vault/configurable';
 import { versions } from './';
 
 export const DEFAULT_PREDICATE_VERSION = `0x967aaa71b3db34acd8104ed1d7ff3900e67cff3d153a0ffa86d85957f579aa6a`;
 
-export function getLatestPredicateVersion(provider: string) {
+export function getLatestPredicateVersion(wallet: Wallet) {
   // get latest version by time
   const keys = Object.keys(versions);
   let maxTime = -Infinity;
+  let latestKey: string | undefined;
+
   keys.forEach((key) => {
     const currentTime = versions[key].time;
-    const idDeployedPredicate = versions[key].deployed.includes(provider);
     const isMoreRecent = currentTime > maxTime;
 
-    if (idDeployedPredicate && isMoreRecent) {
+    const isValidVersion =
+      isMoreRecent && versions[key].walletOrigin === wallet;
+
+    if (isValidVersion) {
       maxTime = currentTime;
+      latestKey = key;
     }
   });
 
-  // get latest version object
-  const key =
-    keys.find((key) => versions[key].time === maxTime) ??
-    DEFAULT_PREDICATE_VERSION;
+  if (!latestKey) {
+    throw new Error(
+      `No compatible predicate version with this configurable found for wallet type ${wallet}`,
+    );
+  }
 
   return {
-    bytecode: versions[key].bytecode,
-    abi: versions[key].abi,
-    version: key,
+    bytecode: versions[latestKey].bytecode,
+    abi: versions[latestKey].abi,
+    version: latestKey,
   };
 }
 
-export function loadPredicate(provider: string, version?: string) {
+export function loadPredicate(wallet: Wallet, version?: string) {
   if (!version) {
-    return getLatestPredicateVersion(provider);
+    return getLatestPredicateVersion(wallet);
   }
 
   if (!versions[version]) {
-    throw new Error(`Version ${version} not found`);
+    const message = !!wallet
+      ? `Predicate version ${version} not found. Available to your address ${wallet} type`
+      : `Version ${version} not found`;
+
+    throw new Error(message);
+  }
+
+  if (wallet && versions[version].walletOrigin !== wallet) {
+    throw new Error(
+      `Predicate version ${version} is not compatible with your address type ${wallet}`,
+    );
   }
 
   return {
