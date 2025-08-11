@@ -1,6 +1,8 @@
 import { Wallet } from 'src/utils/vault/configurable';
 import { versions } from './';
 
+export const DEFAULT_PREDICATE_VERSION = `0x967aaa71b3db34acd8104ed1d7ff3900e67cff3d153a0ffa86d85957f579aa6a`;
+
 export function getLatestPredicateVersion(wallet: Wallet) {
   const keys = Object.keys(versions);
   let maxTime = -Infinity;
