@@ -1,10 +1,7 @@
 import { Wallet } from 'src/utils/vault/configurable';
 import { versions } from './';
 
-export const DEFAULT_PREDICATE_VERSION = `0x967aaa71b3db34acd8104ed1d7ff3900e67cff3d153a0ffa86d85957f579aa6a`;
-
 export function getLatestPredicateVersion(wallet: Wallet) {
-  // get latest version by time
   const keys = Object.keys(versions);
   let maxTime = -Infinity;
   let latestKey: string | undefined;
@@ -59,4 +56,14 @@ export function loadPredicate(wallet: Wallet, version?: string) {
     abi: versions[version].abi,
     version,
   };
+}
+
+export function getCompatiblePredicateVersions(wallet: Wallet): string[] {
+  return Object.keys(versions).filter(
+    (key) => versions[key].walletOrigin === wallet,
+  );
+}
+
+export function getAllPredicateVersions(): string[] {
+  return Object.keys(versions);
 }

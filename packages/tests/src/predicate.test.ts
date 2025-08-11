@@ -7,6 +7,9 @@ import {
   bakoCoder,
   SignatureType,
   DEFAULT_PREDICATE_VERSION,
+  getCompatiblePredicateVersions,
+  WalletType,
+  getAllPredicateVersions,
 } from 'bakosafe';
 import { ethers } from 'ethers';
 import { stringToHex } from 'viem';
@@ -247,8 +250,50 @@ describe('[Version]', () => {
       );
     }).toThrow({
       name: 'Error',
-      message: `Version ${version} not found`,
+      message: `Predicate version ${version} not found. Available to your address ${WalletType.BAKO} type`,
     });
+  });
+
+  it('Shoud instantiate legacy predicate', async () => {
+    const { provider, wallets } = node;
+    const evmWallet = ethers.Wallet.createRandom();
+    const wallet = wallets[0];
+
+    const predicate = new Vault(provider, {
+      SIGNER: evmWallet.address,
+    });
+
+    await expect(async () => {
+      new Vault(provider, {
+        SIGNER: wallet.address.toB256(),
+      });
+    }).rejects.toThrow(
+      'No compatible predicate version with this configurable found for wallet type fuel',
+    );
+
+    const predicate_bako_version = new Vault(provider, {
+      SIGNERS: [wallet.address.toB256()],
+      SIGNATURES_COUNT: 1,
+    });
+
+    expect(predicate).toBeInstanceOf(Vault);
+    expect(predicate_bako_version).toBeInstanceOf(Vault);
+  });
+
+  it('Should get the compatible predicate version', async () => {
+    const versions = getAllPredicateVersions();
+
+    const compatible_evm = getCompatiblePredicateVersions(WalletType.EVM);
+    expect(compatible_evm.length).toBeGreaterThan(0);
+    expect(versions).toEqual(expect.arrayContaining(compatible_evm));
+
+    const compatible_svm = getCompatiblePredicateVersions(WalletType.EVM);
+    expect(compatible_svm.length).toBeGreaterThan(0);
+    expect(versions).toEqual(expect.arrayContaining(compatible_svm));
+
+    const compatible_bako = getCompatiblePredicateVersions(WalletType.EVM);
+    expect(compatible_bako.length).toBeGreaterThan(0);
+    expect(versions).toEqual(expect.arrayContaining(compatible_bako));
   });
 });
 
@@ -931,31 +976,5 @@ describe('[Send With]', () => {
       const error = BakoError.parse(e);
       expect(error.code).toBe(ErrorCodes.PREDICATE_VALIDATION_FAILED);
     });
-  });
-
-  it.only('Shoud instantiate legacy predicate', async () => {
-    const { provider, wallets } = node;
-    const evmWallet = ethers.Wallet.createRandom();
-    const wallet = wallets[0];
-
-    const predicate = new Vault(provider, {
-      SIGNER: evmWallet.address,
-    });
-
-    await expect(async () => {
-      await new Vault(provider, {
-        SIGNER: wallet.address.toB256(),
-      });
-    }).rejects.toThrow(
-      'No compatible predicate version with this configurable found for wallet type fuel',
-    );
-
-    const predicate_bako_version = new Vault(provider, {
-      SIGNERS: [wallet.address.toB256()],
-      SIGNATURES_COUNT: 1,
-    });
-
-    expect(predicate).toBeInstanceOf(Vault);
-    expect(predicate_bako_version).toBeInstanceOf(Vault);
   });
 });
