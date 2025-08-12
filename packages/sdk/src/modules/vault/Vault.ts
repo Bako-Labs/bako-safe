@@ -32,7 +32,7 @@ import {
 import { ICreateTransactionPayload, PredicateResponse } from '../service';
 
 import { BakoProvider } from '../provider';
-import { loadPredicate } from '../../sway/';
+import { loadPredicate, versions } from '../../sway/';
 import {
   isConnectorConfig,
   Wallet,
@@ -219,15 +219,19 @@ export class Vault extends Predicate<[]> {
   public async maxGasUsed(): Promise<BN> {
     const request = new ScriptTransactionRequest();
 
-    const vault = new Vault(
-      this.provider,
-      {
-        SIGNATURES_COUNT: this.maxSigners,
-        SIGNERS: Array.from({ length: this.maxSigners }, () => ZeroBytes32),
-        HASH_PREDICATE: ZeroBytes32,
-      },
-      this.predicateVersion,
-    );
+    const origin = versions[this.predicateVersion].walletOrigin;
+    const config =
+      origin === Wallet.BAKO
+        ? {
+            SIGNATURES_COUNT: this.maxSigners,
+            SIGNERS: Array.from({ length: this.maxSigners }, () => ZeroBytes32),
+            HASH_PREDICATE: ZeroBytes32,
+          }
+        : {
+            SIGNER: ZeroBytes32,
+          };
+
+    const vault = new Vault(this.provider, config, this.predicateVersion);
 
     request.addCoinInput({
       id: ZeroBytes32,
