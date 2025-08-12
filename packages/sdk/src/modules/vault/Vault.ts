@@ -37,7 +37,7 @@ import {
   isConnectorConfig,
   Wallet,
   walletOrigin,
-} from 'src/utils/vault/configurable';
+} from '../../utils/vault/configurable';
 
 /**
  * The `Vault` class is an extension of `Predicate` that manages transactions,

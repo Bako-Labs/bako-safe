@@ -10,6 +10,7 @@ import {
   getCompatiblePredicateVersions,
   WalletType,
   getAllPredicateVersions,
+  legacyConnectorVersion,
 } from 'bakosafe';
 import { ethers } from 'ethers';
 import { stringToHex } from 'viem';
@@ -294,6 +295,48 @@ describe('[Version]', () => {
     const compatible_bako = getCompatiblePredicateVersions(WalletType.EVM);
     expect(compatible_bako.length).toBeGreaterThan(0);
     expect(versions).toEqual(expect.arrayContaining(compatible_bako));
+  });
+
+  // send balance to vault with evm address(connector)
+  // get this version with legacyConnectorVersion
+  // instance Vault with this version
+  it.only('Should throw an error if no compatible predicate version is found', async () => {
+    const { provider, wallets } = node;
+    const wallet = wallets[0];
+    const evm_wallet = ethers.Wallet.createRandom();
+    const EVM_VERSION =
+      '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
+
+    const vault = new Vault(
+      provider,
+      {
+        SIGNER: new Address(evm_wallet.address).toB256(),
+      },
+      EVM_VERSION,
+    );
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    const versions = await legacyConnectorVersion(
+      new Address(evm_wallet.address).toB256(),
+      provider.url,
+    );
+
+    const aux_vault = new Vault(provider, {
+      SIGNER: new Address(evm_wallet.address).toB256(),
+    });
+
+    const balances = [
+      JSON.stringify((await vault.getBalances()).balances),
+      JSON.stringify((await aux_vault.getBalances()).balances),
+    ];
+
+    expect(balances[0]).toBe(balances[1]);
+    expect(versions.length).toBeGreaterThan(0);
+    expect(versions[0].version).toBe(EVM_VERSION);
+    expect(aux_vault.address.toB256()).toBe(vault.address.toB256());
   });
 });
 

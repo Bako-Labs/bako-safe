@@ -4,6 +4,8 @@ import {
   ConnectorConfigurableType,
 } from 'src/modules';
 
+import { AddressUtils } from '../address';
+
 export function isBakoConfig(
   config: VaultConfigurable,
 ): config is BakoConfigurableType {
@@ -20,12 +22,6 @@ export function isConnectorConfig(
   return 'SIGNER' in config && typeof config.SIGNER === 'string';
 }
 
-export function isEvmWallet(address: string) {
-  const EVM_ADDRESS_LEN = 42;
-
-  return address.length === EVM_ADDRESS_LEN && address.startsWith('0x');
-}
-
 export enum Wallet {
   EVM = 'evm',
   SVM = 'svm',
@@ -34,7 +30,7 @@ export enum Wallet {
 }
 
 export const walletOrigin = (address: string): Wallet => {
-  if (isEvmWallet(address)) {
+  if (AddressUtils.isEvm(address)) {
     return Wallet.EVM;
   }
   //   else if (isSvmWallet(address)) {
