@@ -7,8 +7,14 @@ import {
   bakoCoder,
   SignatureType,
   DEFAULT_PREDICATE_VERSION,
+  getCompatiblePredicateVersions,
+  WalletType,
+  getAllPredicateVersions,
+  legacyConnectorVersion,
 } from 'bakosafe';
 import { ethers } from 'ethers';
+import { hexToBytes } from '@ethereumjs/util';
+import { hexlify, splitSignature } from '@ethersproject/bytes';
 import { stringToHex } from 'viem';
 
 import { accounts, assets, networks } from './mocks';
@@ -46,7 +52,7 @@ describe('[Create]', () => {
       },
     });
 
-    await deployPredicate(node.wallets[0]);
+    await deployPredicate(node.wallets[0], true);
   });
 
   afterAll(() => {
@@ -181,7 +187,7 @@ describe('[Version]', () => {
       },
     });
 
-    await deployPredicate(node.wallets[0]);
+    await deployPredicate(node.wallets[0], true);
   });
 
   afterAll(() => {
@@ -247,8 +253,126 @@ describe('[Version]', () => {
       );
     }).toThrow({
       name: 'Error',
-      message: `Version ${version} not found`,
+      message: `Predicate version ${version} not found. Available to your address ${WalletType.BAKO} type`,
     });
+  });
+
+  it('Shoud instantiate legacy predicate', async () => {
+    const { provider, wallets } = node;
+    const evmWallet = ethers.Wallet.createRandom();
+    const wallet = wallets[0];
+
+    const predicate = new Vault(provider, {
+      SIGNER: evmWallet.address,
+    });
+
+    await expect(async () => {
+      new Vault(provider, {
+        SIGNER: wallet.address.toB256(),
+      });
+    }).rejects.toThrow(
+      'No compatible predicate version with this configurable found for wallet type fuel',
+    );
+
+    const predicate_bako_version = new Vault(provider, {
+      SIGNERS: [wallet.address.toB256()],
+      SIGNATURES_COUNT: 1,
+    });
+
+    expect(predicate).toBeInstanceOf(Vault);
+    expect(predicate_bako_version).toBeInstanceOf(Vault);
+  });
+
+  it('Should get the compatible predicate version', async () => {
+    const versions = getAllPredicateVersions();
+
+    const compatible_evm = getCompatiblePredicateVersions(WalletType.EVM);
+    expect(compatible_evm.length).toBeGreaterThan(0);
+    expect(versions).toEqual(expect.arrayContaining(compatible_evm));
+
+    const compatible_svm = getCompatiblePredicateVersions(WalletType.EVM);
+    expect(compatible_svm.length).toBeGreaterThan(0);
+    expect(versions).toEqual(expect.arrayContaining(compatible_svm));
+
+    const compatible_bako = getCompatiblePredicateVersions(WalletType.EVM);
+    expect(compatible_bako.length).toBeGreaterThan(0);
+    expect(versions).toEqual(expect.arrayContaining(compatible_bako));
+  });
+
+  // send balance to vault with evm address(connector)
+  // get this version with legacyConnectorVersion
+  // instance Vault with this version
+  it.only('Should throw an error if no compatible predicate version is found', async () => {
+    const { provider, wallets } = node;
+    const wallet = wallets[0];
+    const evm_wallet = ethers.Wallet.createRandom();
+    const EVM_VERSION =
+      '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
+    // const EVM_VERSION =
+    //   '0x3499b76bcb35d8bc68fb2fa74fbe1760461f64f0ac19890c0bacb69377ac19d2';
+    // const EVM_VERSION =
+    //   '0xbbae06500cd11e6c1d024ac587198cb30c504bf14ba16548f19e21fa9e8f5f95';
+    const baseAsset = await provider.getBaseAssetId();
+
+    const vault = new Vault(
+      provider,
+      {
+        SIGNER: new Address(evm_wallet.address).toB256(),
+      },
+      EVM_VERSION,
+    );
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    const versions = await legacyConnectorVersion(
+      evm_wallet.address,
+      provider.url,
+    );
+
+    const aux_vault = new Vault(
+      provider,
+      {
+        SIGNER: evm_wallet.address,
+      },
+      EVM_VERSION,
+    );
+
+    const balances = [
+      JSON.stringify((await vault.getBalances()).balances),
+      JSON.stringify((await aux_vault.getBalances()).balances),
+    ];
+
+    expect(balances[0]).toBe(balances[1]);
+    expect(versions.length).toBeGreaterThan(0);
+    expect(versions[0].version).toBe(EVM_VERSION);
+    expect(aux_vault.address.toB256()).toBe(vault.address.toB256());
+
+    const { tx, hashTxId } = await vault.transaction({
+      name: 'Test',
+      assets: [
+        {
+          to: wallet.address.toB256(),
+          amount: '0.1',
+          assetId: baseAsset,
+        },
+      ],
+    });
+
+    const txId = `0x${hashTxId}`;
+    const signature = await evm_wallet.signMessage(arrayify(txId));
+    const compactSignature = splitSignature(hexToBytes(signature)).compact;
+
+    tx.witnesses = [compactSignature, compactSignature];
+
+    console.log(tx.witnesses);
+    // send
+    const { isStatusSuccess, isTypeScript } = await vault
+      .send(tx)
+      .then((r) => r.waitForResult());
+    expect(isStatusSuccess).toBeTruthy();
+    expect(isTypeScript).toBeTruthy();
   });
 });
 
@@ -267,7 +391,7 @@ describe('[Transactions]', () => {
 
     // deploy a predicate
     const [wallet] = node.wallets;
-    await deployPredicate(wallet);
+    await deployPredicate(wallet, true);
   });
 
   afterAll(() => {
@@ -498,7 +622,7 @@ describe('[Send With]', () => {
 
     // deploy a predicate
     const [wallet] = node.wallets;
-    await deployPredicate(wallet);
+    await deployPredicate(wallet, true);
   });
 
   afterAll(() => {
