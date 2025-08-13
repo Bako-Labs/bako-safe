@@ -81,7 +81,10 @@ export class Vault extends Predicate<[]> {
     if (!conf) {
       throw new Error('Vault configurable is required');
     }
-    const { config, BakoPredicateLoader } = Vault.makePredicate(conf, version);
+    const { config, BakoPredicateLoader, data } = Vault.makePredicate(
+      conf,
+      version,
+    );
 
     super({
       abi: BakoPredicateLoader.abi,
@@ -89,6 +92,7 @@ export class Vault extends Predicate<[]> {
       provider: provider,
       //@ts-ignore
       configurableConstants: config,
+      data,
     });
 
     this.predicateVersion = BakoPredicateLoader.version;
@@ -112,6 +116,7 @@ export class Vault extends Predicate<[]> {
   ): {
     config: VaultConfigurable;
     BakoPredicateLoader: ReturnType<typeof loadPredicate>;
+    data?: any;
   } {
     if (isConnectorConfig(params)) {
       const walletType = walletOrigin(params.SIGNER);
@@ -120,6 +125,7 @@ export class Vault extends Predicate<[]> {
           SIGNER: makeSigners(params.SIGNER),
         },
         BakoPredicateLoader: loadPredicate(walletType, version),
+        data: [1],
       };
     }
 

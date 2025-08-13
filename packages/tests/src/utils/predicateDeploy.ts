@@ -26,6 +26,10 @@ export const deployPredicate = async (
   wallet: WalletUnlocked,
   testMode: boolean = false,
 ) => {
+  if (testMode) {
+    return deployAllPredicateVersions(wallet, wallet.provider.url);
+  }
+
   const bytecode = new Uint8Array(readFileSync(bytecodePath));
   const abi = JSON.parse(readFileSync(abiPath, 'utf-8'));
 
@@ -60,18 +64,11 @@ export const deployAllPredicateVersions = async (
     error?: string;
     alreadyDeployed: boolean;
   }> = [];
-
-  console.log(
-    `🚀 Starting deployment of all predicate versions to ${networkUrl}`,
-  );
-  console.log(`📊 Total versions to check: ${Object.keys(versions).length}`);
-
   for (const [version, versionData] of Object.entries(versions)) {
-    const typedVersionData = versionData as Version;
+    const typedVersionData = versionData;
     const isAlreadyDeployed = typedVersionData.deployed.includes(networkUrl);
 
     if (isAlreadyDeployed) {
-      console.log(`✅ Version ${version} already deployed on ${networkUrl}`);
       results.push({
         version,
         success: true,
@@ -80,16 +77,9 @@ export const deployAllPredicateVersions = async (
       continue;
     }
 
-    console.log(`🔄 Deploying version ${version}...`);
-
     try {
       // Convert hex bytecode to Uint8Array
-      const bytecode = new Uint8Array(
-        typedVersionData.bytecode
-          .slice(2)
-          .match(/.{1,2}/g)!
-          .map((byte: string) => parseInt(byte, 16)),
-      );
+      const bytecode = new Uint8Array(readFileSync(bytecodePath));
 
       const predicate = new Predicate({
         abi: typedVersionData.abi,
@@ -101,11 +91,6 @@ export const deployAllPredicateVersions = async (
       const result = await deployedPredicate.waitForResult();
 
       if (result) {
-        console.log(`✅ Successfully deployed version ${version}`);
-
-        // Update the versions.json file to mark this version as deployed
-        await updateVersionDeployedStatus(version, networkUrl);
-
         results.push({
           version,
           success: true,
@@ -128,51 +113,45 @@ export const deployAllPredicateVersions = async (
     }
   }
 
-  // Print summary
-  const successful = results.filter((r) => r.success).length;
-  const failed = results.filter((r) => !r.success).length;
-  const alreadyDeployed = results.filter((r) => r.alreadyDeployed).length;
-
-  console.log(`\n📈 Deployment Summary:`);
-  console.log(`✅ Successfully deployed: ${successful}`);
-  console.log(`❌ Failed deployments: ${failed}`);
-  console.log(`🔄 Already deployed: ${alreadyDeployed}`);
-  console.log(`📊 Total processed: ${results.length}`);
+  console.log(
+    results.filter((r) => r.success).length,
+    'predicates deployed successfully',
+  );
 
   return results;
 };
 
-/**
- * Update the versions.json file to mark a version as deployed on a specific network
- */
-async function updateVersionDeployedStatus(
-  version: string,
-  networkUrl: string,
-) {
-  try {
-    const versionsPath = path.resolve(
-      __dirname,
-      '../../../../packages/sdk/src/sway/predicates/versions.json',
-    );
+// /**
+//  * Update the versions.json file to mark a version as deployed on a specific network
+//  */
+// async function updateVersionDeployedStatus(
+//   version: string,
+//   networkUrl: string,
+// ) {
+//   try {
+//     const versionsPath = path.resolve(
+//       __dirname,
+//       '../../../../packages/sdk/src/sway/predicates/versions.json',
+//     );
 
-    const versionsContent = readFileSync(versionsPath, 'utf-8');
-    const versionsData = JSON.parse(versionsContent);
+//     const versionsContent = readFileSync(versionsPath, 'utf-8');
+//     const versionsData = JSON.parse(versionsContent);
 
-    if (
-      versionsData[version] &&
-      !versionsData[version].deployed.includes(networkUrl)
-    ) {
-      versionsData[version].deployed.push(networkUrl);
+//     if (
+//       versionsData[version] &&
+//       !versionsData[version].deployed.includes(networkUrl)
+//     ) {
+//       versionsData[version].deployed.push(networkUrl);
 
-      // Write back to file
-      const fs = await import('fs/promises');
-      await fs.writeFile(versionsPath, JSON.stringify(versionsData, null, 2));
+//       // Write back to file
+//       const fs = await import('fs/promises');
+//       await fs.writeFile(versionsPath, JSON.stringify(versionsData, null, 2));
 
-      console.log(
-        `📝 Updated versions.json - marked ${version} as deployed on ${networkUrl}`,
-      );
-    }
-  } catch (error) {
-    console.warn(`⚠️ Failed to update versions.json: ${error}`);
-  }
-}
+//       console.log(
+//         `📝 Updated versions.json - marked ${version} as deployed on ${networkUrl}`,
+//       );
+//     }
+//   } catch (error) {
+//     console.warn(`⚠️ Failed to update versions.json: ${error}`);
+//   }
+// }

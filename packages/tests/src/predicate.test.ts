@@ -13,6 +13,8 @@ import {
   legacyConnectorVersion,
 } from 'bakosafe';
 import { ethers } from 'ethers';
+import { hexToBytes } from '@ethereumjs/util';
+import { hexlify, splitSignature } from '@ethersproject/bytes';
 import { stringToHex } from 'viem';
 
 import { accounts, assets, networks } from './mocks';
@@ -306,6 +308,11 @@ describe('[Version]', () => {
     const evm_wallet = ethers.Wallet.createRandom();
     const EVM_VERSION =
       '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
+    // const EVM_VERSION =
+    //   '0x3499b76bcb35d8bc68fb2fa74fbe1760461f64f0ac19890c0bacb69377ac19d2';
+    // const EVM_VERSION =
+    //   '0xbbae06500cd11e6c1d024ac587198cb30c504bf14ba16548f19e21fa9e8f5f95';
+    const baseAsset = await provider.getBaseAssetId();
 
     const vault = new Vault(
       provider,
@@ -320,13 +327,17 @@ describe('[Version]', () => {
       .then((r) => r.waitForResult());
 
     const versions = await legacyConnectorVersion(
-      new Address(evm_wallet.address).toB256(),
+      evm_wallet.address,
       provider.url,
     );
 
-    const aux_vault = new Vault(provider, {
-      SIGNER: new Address(evm_wallet.address).toB256(),
-    });
+    const aux_vault = new Vault(
+      provider,
+      {
+        SIGNER: evm_wallet.address,
+      },
+      EVM_VERSION,
+    );
 
     const balances = [
       JSON.stringify((await vault.getBalances()).balances),
@@ -337,6 +348,31 @@ describe('[Version]', () => {
     expect(versions.length).toBeGreaterThan(0);
     expect(versions[0].version).toBe(EVM_VERSION);
     expect(aux_vault.address.toB256()).toBe(vault.address.toB256());
+
+    const { tx, hashTxId } = await vault.transaction({
+      name: 'Test',
+      assets: [
+        {
+          to: wallet.address.toB256(),
+          amount: '0.1',
+          assetId: baseAsset,
+        },
+      ],
+    });
+
+    const txId = `0x${hashTxId}`;
+    const signature = await evm_wallet.signMessage(arrayify(txId));
+    const compactSignature = splitSignature(hexToBytes(signature)).compact;
+
+    tx.witnesses = [compactSignature, compactSignature];
+
+    console.log(tx.witnesses);
+    // send
+    const { isStatusSuccess, isTypeScript } = await vault
+      .send(tx)
+      .then((r) => r.waitForResult());
+    expect(isStatusSuccess).toBeTruthy();
+    expect(isTypeScript).toBeTruthy();
   });
 });
 

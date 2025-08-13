@@ -421,5 +421,119 @@
       "https://testnet.fuel.network/v1/graphql",
       "https://mainnet.fuel.network/v1/graphql"
     ]
+  },
+  "0x3499b76bcb35d8bc68fb2fa74fbe1760461f64f0ac19890c0bacb69377ac19d2": {
+    "time": 1754426113843,
+    "bytecode": "0x1a403000504100301a445000ba49000032400481504100205d490000504100083240048220451300524510044a440000b9ddb67b25c0ba806bad23615cc4ec63c4fb9b0ad14c77d7e7947b831813d7b900000000000000a03031323334353637383961626364656619457468657265756d205369676e6564204d6573736167653a0a3634000000000000000000000000000000000000000000000000000000000000000000000000cccccccccccc00020000000000000e580000000000000e700000000000000e6800000000000009a400000000000007f00000000000000000000000000000000000000000000000000000000000000000",
+    "abi": {
+      "programType": "predicate",
+      "specVersion": "1",
+      "encodingVersion": "1",
+      "concreteTypes": [
+        {
+          "type": "b256",
+          "concreteTypeId": "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b"
+        },
+        {
+          "type": "bool",
+          "concreteTypeId": "b760f44fa5965c2474a3b471467a22c43185152129295af588b022ae50b50903"
+        },
+        {
+          "type": "u64",
+          "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0"
+        }
+      ],
+      "metadataTypes": [],
+      "functions": [
+        {
+          "inputs": [
+            {
+              "name": "witness_index",
+              "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0"
+            }
+          ],
+          "name": "main",
+          "output": "b760f44fa5965c2474a3b471467a22c43185152129295af588b022ae50b50903",
+          "attributes": null
+        }
+      ],
+      "loggedTypes": [],
+      "messagesTypes": [],
+      "configurables": [
+        {
+          "name": "SIGNER",
+          "concreteTypeId": "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b",
+          "offset": 216
+        }
+      ]
+    },
+    "toolchain": {
+      "fuelsVersion": "0.101.1",
+      "forcVersion": "0.68.1",
+      "fuelCoreVersion": "0.43.1"
+    },
+    "walletOrigin": "evm",
+    "description": "Enable EVM signature verification",
+    "deployed": [
+      "https://testnet.fuel.network/v1/graphql",
+      "https://mainnet.fuel.network/v1/graphql"
+    ]
+  },
+  "0xbbae06500cd11e6c1d024ac587198cb30c504bf14ba16548f19e21fa9e8f5f95": {
+    "time": 1754426113843,
+    "bytecode": "0x1a403000504100301a445000ba49000032400481504100205d490000504100083240048220451300524510044a440000c58d08df0d31dfaaadd57de9f04d89b7abc88b28a2f45f522cc5c1fd8da679780000000000000088000000000000000000000000000000000000000000000000000000000000000019457468657265756d205369676e6564204d6573736167653a0a3332000000000000000000000000000000000000000000000000000000000000000000000000cccccccccccc00020000000000000b5c0000000000000b740000000000000b6c0000000000000680",
+    "abi": {
+      "programType": "predicate",
+      "specVersion": "1",
+      "encodingVersion": "1",
+      "concreteTypes": [
+        {
+          "type": "b256",
+          "concreteTypeId": "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b"
+        },
+        {
+          "type": "bool",
+          "concreteTypeId": "b760f44fa5965c2474a3b471467a22c43185152129295af588b022ae50b50903"
+        },
+        {
+          "type": "u64",
+          "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0"
+        }
+      ],
+      "metadataTypes": [],
+      "functions": [
+        {
+          "inputs": [
+            {
+              "name": "witness_index",
+              "concreteTypeId": "1506e6f44c1d6291cdf46395a8e573276a4fa79e8ace3fc891e092ef32d1b0a0"
+            }
+          ],
+          "name": "main",
+          "output": "b760f44fa5965c2474a3b471467a22c43185152129295af588b022ae50b50903",
+          "attributes": null
+        }
+      ],
+      "loggedTypes": [],
+      "messagesTypes": [],
+      "configurables": [
+        {
+          "name": "SIGNER",
+          "concreteTypeId": "7c5ee1cecf5f8eacd1284feb5f0bf2bdea533a51e2f0c9aabe9236d335989f3b",
+          "offset": 88
+        }
+      ]
+    },
+    "toolchain": {
+      "fuelsVersion": "0.101.1",
+      "forcVersion": "0.68.1",
+      "fuelCoreVersion": "0.43.1"
+    },
+    "walletOrigin": "evm",
+    "description": "Enable EVM signature verification",
+    "deployed": [
+      "https://testnet.fuel.network/v1/graphql",
+      "https://mainnet.fuel.network/v1/graphql"
+    ]
   }
 }
