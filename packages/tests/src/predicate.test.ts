@@ -302,17 +302,27 @@ describe('[Version]', () => {
   // send balance to vault with evm address(connector)
   // get this version with legacyConnectorVersion
   // instance Vault with this version
-  it.only('Should throw an error if no compatible predicate version is found', async () => {
+  // ref:
+  //github.com/FuelLabs/fuels-ts/blob/e0e44221c489469e2bfa9467a138a04e4a4b906e/packages/account/src/utils/deployScriptOrPredicate.ts#L41
+  https: it.only('Should throw an error if no compatible predicate version is found', async () => {
     const { provider, wallets } = node;
     const wallet = wallets[0];
     const evm_wallet = ethers.Wallet.createRandom();
-    const EVM_VERSION =
-      '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
     // const EVM_VERSION =
-    //   '0x3499b76bcb35d8bc68fb2fa74fbe1760461f64f0ac19890c0bacb69377ac19d2';
+    //   '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938'; // -> working
+    const EVM_VERSION =
+      '0x3499b76bcb35d8bc68fb2fa74fbe1760461f64f0ac19890c0bacb69377ac19d2';
     // const EVM_VERSION =
     //   '0xbbae06500cd11e6c1d024ac587198cb30c504bf14ba16548f19e21fa9e8f5f95';
     const baseAsset = await provider.getBaseAssetId();
+
+    // const vault = new Vault(
+    //   provider,
+    //   {
+    //     SIGNER: new Address(evm_wallet.address).toB256(),
+    //   },
+    //   EVM_VERSION,
+    // );
 
     const vault = new Vault(
       provider,

@@ -416,7 +416,7 @@
       "fuelCoreVersion": "0.43.1"
     },
     "walletOrigin": "evm",
-    "description": "Enable EVM signature verification",
+    "description": "Moved of EVM signature verification from fuel connectors",
     "deployed": [
       "https://testnet.fuel.network/v1/graphql",
       "https://mainnet.fuel.network/v1/graphql"

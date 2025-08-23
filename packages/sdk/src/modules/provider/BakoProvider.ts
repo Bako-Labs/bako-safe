@@ -24,6 +24,7 @@ import {
 } from './types';
 
 import { Vault } from '../vault';
+import axios from 'axios';
 
 /**
  * BakoProvider class extends the Provider (FuelProvider) class to include additional
@@ -58,14 +59,19 @@ export class BakoProvider extends Provider {
    * @returns A challenge string for authentication.
    */
   static async setup(params: BakoProviderSetup) {
-    const { address, encoder, provider, name } = params;
+    const { address, encoder, provider, name, serverApi } = params;
 
-    const { code: challenge } = await Service.create({
-      name: name ?? `from sdk - ${address}`,
-      type: encoder ?? TypeUser.FUEL,
-      address: address,
-      provider,
-    });
+    const server = serverApi ? axios.create({ baseURL: serverApi }) : undefined;
+
+    const { code: challenge } = await Service.create(
+      {
+        name: name ?? `from sdk - ${address}`,
+        type: encoder ?? TypeUser.FUEL,
+        address: address,
+        provider,
+      },
+      server,
+    );
 
     return challenge;
   }
@@ -230,12 +236,12 @@ export class BakoProvider extends Provider {
     return new TransactionResponse(hash, this, chainId);
   }
 
-  async connectDapp(sessionId: string) {
+  async connectDapp(sessionId: string, origin?: string) {
     return await this.service.createDapp({
       sessionId,
       userAddress: this.options.address,
       vaultId: this.options.rootWallet ?? randomUUID(),
-      origin: window?.origin ?? 'not found',
+      origin: origin ?? `NOT FOUND`,
       request_id: randomUUID(),
     });
   }

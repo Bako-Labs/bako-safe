@@ -23,11 +23,7 @@ import {
   makeHashPredicate,
 } from '../../utils';
 
-import {
-  ConnectorConfigurableType,
-  VaultConfigurable,
-  VaultTransaction,
-} from './types';
+import { VaultConfigurable, VaultTransaction } from './types';
 
 import { ICreateTransactionPayload, PredicateResponse } from '../service';
 
@@ -125,7 +121,7 @@ export class Vault extends Predicate<[]> {
           SIGNER: makeSigners(params.SIGNER),
         },
         BakoPredicateLoader: loadPredicate(walletType, version),
-        data: [1],
+        data: [0],
       };
     }
 
@@ -366,6 +362,8 @@ export class Vault extends Predicate<[]> {
   ): Promise<Vault> {
     const { configurable, version } =
       await provider.findPredicateByAddress(reference);
+
+    console.log('configurable', configurable);
 
     return new Vault(provider, configurable, version);
   }

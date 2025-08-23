@@ -16,6 +16,11 @@ export type BakoConfigurableType = {
   HASH_PREDICATE?: string;
 };
 
+export type ConfigurableVault = {
+  type: ConfigVaultType;
+  data: BakoConfigurableType | ConnectorConfigurableType;
+};
+
 export interface ConnectorConfigurableType {
   SIGNER: string;
 }
