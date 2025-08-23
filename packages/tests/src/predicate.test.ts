@@ -11,6 +11,8 @@ import {
   WalletType,
   getAllPredicateVersions,
   legacyConnectorVersion,
+  BakoProvider,
+  TypeUser,
 } from 'bakosafe';
 import { ethers } from 'ethers';
 import { hexToBytes } from '@ethereumjs/util';
@@ -304,25 +306,16 @@ describe('[Version]', () => {
   // instance Vault with this version
   // ref:
   //github.com/FuelLabs/fuels-ts/blob/e0e44221c489469e2bfa9467a138a04e4a4b906e/packages/account/src/utils/deployScriptOrPredicate.ts#L41
-  https: it.only('Should throw an error if no compatible predicate version is found', async () => {
+
+  // notes:
+  // - somente a versao 0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938 funciona porque nela eu tenho meu predicate nao deploydo
+  it.only('Should throw an error if no compatible predicate version is found', async () => {
     const { provider, wallets } = node;
     const wallet = wallets[0];
     const evm_wallet = ethers.Wallet.createRandom();
-    // const EVM_VERSION =
-    //   '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938'; // -> working
     const EVM_VERSION =
-      '0x3499b76bcb35d8bc68fb2fa74fbe1760461f64f0ac19890c0bacb69377ac19d2';
-    // const EVM_VERSION =
-    //   '0xbbae06500cd11e6c1d024ac587198cb30c504bf14ba16548f19e21fa9e8f5f95';
+      '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938'; // -> working
     const baseAsset = await provider.getBaseAssetId();
-
-    // const vault = new Vault(
-    //   provider,
-    //   {
-    //     SIGNER: new Address(evm_wallet.address).toB256(),
-    //   },
-    //   EVM_VERSION,
-    // );
 
     const vault = new Vault(
       provider,
@@ -374,15 +367,150 @@ describe('[Version]', () => {
     const signature = await evm_wallet.signMessage(arrayify(txId));
     const compactSignature = splitSignature(hexToBytes(signature)).compact;
 
-    tx.witnesses = [compactSignature, compactSignature];
-
-    console.log(tx.witnesses);
+    tx.witnesses = [compactSignature];
     // send
     const { isStatusSuccess, isTypeScript } = await vault
       .send(tx)
       .then((r) => r.waitForResult());
     expect(isStatusSuccess).toBeTruthy();
     expect(isTypeScript).toBeTruthy();
+  });
+
+  it('Should connect a serverApi with dapp', async () => {
+    const BAKO_SERVER_URL = `http://localhost:3333`;
+    const { provider, wallets } = node;
+    const wallet = wallets[0];
+    const evm_wallet = ethers.Wallet.createRandom();
+    const evm_adddress = new Address(evm_wallet.address).toB256();
+    const sessionId = crypto.randomUUID();
+    const EVM_VERSION =
+      '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
+
+    const vault = new Vault(
+      provider,
+      {
+        SIGNER: new Address(evm_wallet.address).toB256(),
+      },
+      EVM_VERSION,
+    );
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    const code = await BakoProvider.setup({
+      provider: provider.url,
+      address: evm_adddress,
+      encoder: TypeUser.EVM,
+      serverApi: BAKO_SERVER_URL,
+    });
+
+    const signature = await evm_wallet.signMessage(code);
+    const compactSignature = splitSignature(hexToBytes(signature)).compact;
+
+    const bako_provider = await BakoProvider.authenticate(provider.url, {
+      address: evm_adddress,
+      challenge: code,
+      encoder: TypeUser.EVM,
+      token: compactSignature,
+      serverApi: BAKO_SERVER_URL,
+    });
+
+    await bako_provider.connectDapp(sessionId);
+
+    // provider with auth
+    const user_bako_provider = await bako_provider.wallet();
+    expect(user_bako_provider.address.toB256()).toBe(vault.address.toB256());
+
+    // only api request
+    const recoveredWallet = await bako_provider.service.userWallet();
+    expect(recoveredWallet.address).toBe(vault.address.toB256());
+
+    // provider with dapp connection
+    const bakoProvider = await BakoProvider.create(provider.url, {
+      address: evm_adddress,
+      token: `connector${sessionId}`,
+    });
+    const user = await bakoProvider.wallet();
+    expect(user.address.toB256()).toBe(vault.address.toB256());
+  });
+
+  it.only('Should connect a server with dapp and send tx', async () => {
+    const BAKO_SERVER_URL = `http://localhost:3333`;
+    const { provider, wallets } = node;
+    const wallet = wallets[0];
+    const evm_wallet = ethers.Wallet.createRandom();
+    const evm_adddress = new Address(evm_wallet.address).toB256();
+    const sessionId = crypto.randomUUID();
+    const EVM_VERSION =
+      '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
+    const baseAsset = await provider.getBaseAssetId();
+
+    const vault = new Vault(
+      provider,
+      {
+        SIGNER: new Address(evm_wallet.address).toB256(),
+      },
+      EVM_VERSION,
+    );
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.5'))
+      .then((r) => r.waitForResult());
+
+    const code = await BakoProvider.setup({
+      provider: provider.url,
+      address: evm_adddress,
+      encoder: TypeUser.EVM,
+      serverApi: BAKO_SERVER_URL,
+    });
+
+    const sig_code = await evm_wallet.signMessage(code);
+    const compact_sig_code = splitSignature(hexToBytes(sig_code)).compact;
+
+    const bako_provider = await BakoProvider.authenticate(provider.url, {
+      address: evm_adddress,
+      challenge: code,
+      encoder: TypeUser.EVM,
+      token: compact_sig_code,
+      serverApi: BAKO_SERVER_URL,
+    });
+    await bako_provider.connectDapp(sessionId);
+
+    // provider with dapp connection
+    const bakoProvider = await BakoProvider.create(provider.url, {
+      address: evm_adddress,
+      token: `connector${sessionId}`,
+    });
+    const user = await bakoProvider.wallet();
+    expect(user.address.toB256()).toBe(vault.address.toB256());
+
+    const { tx, hashTxId } = await user.transaction({
+      name: 'Test',
+      assets: [
+        {
+          to: wallet.address.toB256(),
+          amount: '0.01',
+          assetId: baseAsset,
+        },
+      ],
+    });
+
+    const hashMessage = `0x${hashTxId}`;
+    const signature = await evm_wallet.signMessage(arrayify(hashMessage));
+    const compactSignature = splitSignature(hexToBytes(signature)).compact;
+    tx.witnesses = [compactSignature];
+
+    // sign transaction in the server
+    await bakoProvider.signTransaction({
+      hash: hashTxId,
+      signature: compactSignature,
+    });
+
+    const result = await user.send(tx);
+    const response = await result.waitForResult();
+
+    expect(response).toHaveProperty('status', 'success');
   });
 });
 
