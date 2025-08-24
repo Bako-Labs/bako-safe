@@ -1,7 +1,8 @@
 import { bakoCoder, SignatureType } from 'bakosafe';
 import { WebAuthn } from './utils';
-import { Address, Wallet } from 'fuels';
+import { Address, Wallet, hexlify, arrayify, BigNumberCoder } from 'fuels';
 import { accounts } from './mocks';
+import { ethers } from 'ethers';
 
 describe('[BAKO CODERS]', () => {
   it('Should return null if coder is not found', () => {
@@ -16,7 +17,9 @@ describe('[BAKO CODERS]', () => {
   });
 
   it('Should Fuel encode a signature successfully', async () => {
-    const fuelBytes = '0000000000000001';
+    const typeBytes = hexlify(
+      new BigNumberCoder('u64').encode(SignatureType.Fuel),
+    ).slice(2); // "0000000000000001"
     const bakoPrefix = '0x42414b4f';
     const wallet = Wallet.fromPrivateKey(accounts['USER_1'].privateKey);
     const fuelSignature = await wallet.signMessage(
@@ -29,13 +32,15 @@ describe('[BAKO CODERS]', () => {
     });
 
     expect(encoded).toContain(bakoPrefix);
-    expect(encoded).toContain(fuelBytes);
+    expect(encoded).toContain(typeBytes);
     expect(encoded).toContain(fuelSignature.slice(2));
   });
 
   it('Should Webauthn encode a signature successfully', async () => {
     const webAuthnCredential = WebAuthn.createCredentials();
-    const webAuthnBytes = '0000000000000000';
+    const typeBytes = hexlify(
+      new BigNumberCoder('u64').encode(SignatureType.WebAuthn),
+    ).slice(2); // "0000000000000001"
     const bakoPrefix = '0x42414b4f';
     const sign = await WebAuthn.signChallenge(
       webAuthnCredential,
@@ -48,7 +53,48 @@ describe('[BAKO CODERS]', () => {
     });
 
     expect(encoded).toContain(bakoPrefix);
-    expect(encoded).toContain(webAuthnBytes);
+    expect(encoded).toContain(typeBytes);
     expect(encoded).toContain(sign.signature.slice(2));
+  });
+
+  it('Should EVM encode a signature successfully', async () => {
+    const wallet = Wallet.fromPrivateKey(accounts['USER_1'].privateKey);
+    const msg = Address.fromRandom().toB256();
+    const sig = await wallet.signMessage(msg);
+    const tampered = (sig.slice(0, -3) + '123') as `0x${string}`;
+
+    const expectedCompact = ethers.Signature.from(tampered).compactSerialized;
+
+    const encoded = bakoCoder.encode({
+      type: SignatureType.Evm,
+      signature: tampered,
+    });
+
+    const bakoPrefix = '0x42414b4f';
+    const typeBytes = hexlify(
+      new BigNumberCoder('u64').encode(SignatureType.Evm),
+    ).slice(2); // "0000000000000002"
+    expect(encoded).toContain(bakoPrefix);
+    expect(encoded).toContain(typeBytes);
+    expect(encoded).toContain(expectedCompact.slice(2));
+  });
+
+  it('Should encode RawNoPrefix without BAKO prefix or type bytes', () => {
+    const signature = '0x' + 'bb'.repeat(64);
+    const expected = hexlify(arrayify(signature));
+
+    const encoded = bakoCoder.encode({
+      type: SignatureType.RawNoPrefix,
+      signature,
+    });
+
+    const bakoPrefix = '0x42414b4f';
+    const typeBytes = hexlify(
+      new BigNumberCoder('u64').encode(SignatureType.RawNoPrefix),
+    ).slice(2); // "0000000000000009"
+
+    expect(encoded).toBe(expected);
+    expect(encoded).not.toContain(bakoPrefix);
+    expect(encoded).not.toContain(typeBytes);
   });
 });

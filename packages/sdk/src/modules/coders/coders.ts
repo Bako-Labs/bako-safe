@@ -8,6 +8,7 @@ export enum SignatureType {
   WebAuthn = 0,
   Fuel = 1,
   Evm = 2,
+  RawNoPrefix = 9,
 }
 
 export type WebAuthnInput = {
@@ -28,9 +29,14 @@ export type EvmInput = {
   signature: BytesLike;
 };
 
+export type RawNoPrefixInput = {
+  type: SignatureType.RawNoPrefix;
+  signature: BytesLike;
+};
+
 export const bakoCoder = new BakoCoders<
   SignatureType,
-  WebAuthnInput | FuelInput | EvmInput
+  WebAuthnInput | FuelInput | EvmInput | RawNoPrefixInput
 >();
 
 bakoCoder.addCoder(SignatureType.WebAuthn, (data) => {
@@ -55,5 +61,9 @@ bakoCoder.addCoder(SignatureType.Fuel, (data) => {
 });
 
 bakoCoder.addCoder(SignatureType.Evm, (data) => {
+  return splitSignature(hexToBytes(hexlify(data.signature))).compact;
+});
+
+bakoCoder.addCoder(SignatureType.RawNoPrefix, (data) => {
   return splitSignature(hexToBytes(hexlify(data.signature))).compact;
 });
