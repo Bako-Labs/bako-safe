@@ -309,7 +309,7 @@ describe('[Version]', () => {
 
   // notes:
   // - somente a versao 0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938 funciona porque nela eu tenho meu predicate nao deploydo
-  it.only('Should throw an error if no compatible predicate version is found', async () => {
+  it('Should throw an error if no compatible predicate version is found', async () => {
     const { provider, wallets } = node;
     const wallet = wallets[0];
     const evm_wallet = ethers.Wallet.createRandom();
@@ -363,10 +363,16 @@ describe('[Version]', () => {
       ],
     });
 
-    const txId = `0x${hashTxId}`;
-    const signature = await evm_wallet.signMessage(arrayify(txId));
-    const compactSignature = splitSignature(hexToBytes(signature)).compact;
+    const signature = await evm_wallet.signMessage(
+      Vault.getTxIdEncoded(`0x${hashTxId}`, EVM_VERSION),
+    );
 
+    const compactSignature = bakoCoder.encode({
+      type: SignatureType.RawNoPrefix,
+      signature: signature,
+    });
+
+    console.log(signature, compactSignature);
     tx.witnesses = [compactSignature];
     // send
     const { isStatusSuccess, isTypeScript } = await vault
@@ -435,7 +441,7 @@ describe('[Version]', () => {
     expect(user.address.toB256()).toBe(vault.address.toB256());
   });
 
-  it.only('Should connect a server with dapp and send tx', async () => {
+  it('Should connect a server with dapp and send tx', async () => {
     const BAKO_SERVER_URL = `http://localhost:3333`;
     const { provider, wallets } = node;
     const wallet = wallets[0];
@@ -496,9 +502,14 @@ describe('[Version]', () => {
       ],
     });
 
-    const hashMessage = `0x${hashTxId}`;
-    const signature = await evm_wallet.signMessage(arrayify(hashMessage));
-    const compactSignature = splitSignature(hexToBytes(signature)).compact;
+    const signature = await evm_wallet.signMessage(
+      Vault.getTxIdEncoded(hashTxId, EVM_VERSION),
+    );
+    const compactSignature = bakoCoder.encode({
+      type: SignatureType.RawNoPrefix,
+      signature: signature,
+    });
+
     tx.witnesses = [compactSignature];
 
     // sign transaction in the server
