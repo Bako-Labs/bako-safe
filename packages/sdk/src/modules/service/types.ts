@@ -230,3 +230,23 @@ export type CLIAuth = {
     transactionTitle: string;
   };
 };
+
+export interface IDAPPCreateRequest {
+  name?: string;
+  vaultId: string;
+  sessionId: string;
+  origin: string;
+  userAddress: string;
+  request_id: string;
+}
+
+export interface IRecoverCodeCreateRequest {
+  sessionId: string;
+  predicateAddress: string;
+}
+
+export interface IRecoverCodeResponse {
+  code: string;
+  validAt: string;
+  metadata: any;
+}

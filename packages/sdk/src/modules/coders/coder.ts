@@ -1,6 +1,7 @@
 import { BigNumberCoder, concat, hexlify } from 'fuels';
+import { SignatureType } from './coders';
 
-const PREFIX_BAKO_SIG = '0x42414b4f';
+export const PREFIX_BAKO_SIG = '0x42414b4f';
 
 /**
  * A type representing a BakoCoder, which includes a specific type and an
@@ -68,6 +69,10 @@ export class BakoCoders<ST extends number, STS extends { type: ST }> {
     if (!coder) {
       throw new Error('Encoder not found!');
     }
+    if (data.type === SignatureType.RawNoPrefix) {
+      return hexlify(coder.encode(data));
+    }
+
     return hexlify(
       concat([
         PREFIX_BAKO_SIG,

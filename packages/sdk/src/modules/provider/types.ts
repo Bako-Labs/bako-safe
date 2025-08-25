@@ -5,6 +5,8 @@ export type BakoProviderOptions = ProviderOptions & {
   token: string;
   address: string;
   serverApi?: string;
+  userId?: string;
+  rootWallet?: string;
 };
 
 export type BakoProviderAPITokenOptions = ProviderOptions & {
@@ -29,6 +31,7 @@ export type BakoProviderSetup = {
   name?: string;
   encoder?: TypeUser;
   provider: string;
+  serverApi?: string;
 };
 
 export type BakoProviderAuth = {
