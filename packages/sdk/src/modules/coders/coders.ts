@@ -11,6 +11,13 @@ export enum SignatureType {
   RawNoPrefix = 9,
 }
 
+export const SIGNATURE_TYPE_HEX = {
+  [SignatureType.WebAuthn]: '0000000000000000',
+  [SignatureType.Fuel]: '0000000000000001',
+  [SignatureType.Evm]: '0000000000000002',
+  [SignatureType.RawNoPrefix]: '0000000000000009',
+} as const;
+
 export type WebAuthnInput = {
   type: SignatureType.WebAuthn;
   signature: BytesLike;

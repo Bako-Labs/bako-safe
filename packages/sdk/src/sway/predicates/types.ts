@@ -1,6 +1,12 @@
 import { JsonAbi } from 'fuels';
 import { Wallet } from 'src/utils/vault/configurable';
 
+export enum PredicateDevelopedBy {
+  FuelLabs = 'Fuel Labs',
+  BakoLabs = 'Bako Labs',
+  Community = 'Community',
+}
+
 export interface FuelToolChain {
   fuelsVersion: string;
   forcVersion: string;
@@ -14,6 +20,7 @@ export interface Version {
   toolchain: FuelToolChain;
   deployed: string[];
   walletOrigin: string;
+  developedBy: string;
   // manually put in versions.json hourly
   description?: string;
   // used to indentify the wallet origin

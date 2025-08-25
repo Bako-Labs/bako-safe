@@ -1,7 +1,7 @@
 import { BigNumberCoder, concat, hexlify } from 'fuels';
 import { SignatureType } from './coders';
 
-const PREFIX_BAKO_SIG = '0x42414b4f';
+export const PREFIX_BAKO_SIG = '0x42414b4f';
 
 /**
  * A type representing a BakoCoder, which includes a specific type and an

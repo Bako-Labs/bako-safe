@@ -1,8 +1,7 @@
 import { Wallet, walletOrigin } from '../../utils/vault/configurable';
-import { versions } from './';
+import { Version, versions } from './';
 import { Vault } from '../../modules';
 import { Address, Provider } from 'fuels';
-import { WalletType } from 'src/utils';
 
 export const DEFAULT_PREDICATE_VERSION = `0x967aaa71b3db34acd8104ed1d7ff3900e67cff3d153a0ffa86d85957f579aa6a`;
 export const DEFAULT_PROVIDER_URL = `https://mainnet.fuel.network/v1/graphql`;
@@ -72,6 +71,20 @@ export function getCompatiblePredicateVersions(wallet: Wallet): string[] {
 
 export function getAllPredicateVersions(): string[] {
   return Object.keys(versions);
+}
+
+export function getAllVersionsDetails() {
+  const result: Record<
+    keyof typeof versions,
+    Omit<Version, 'abi' | 'bytecode'>
+  > = {} as any;
+
+  (Object.keys(versions) as Array<keyof typeof versions>).forEach((key) => {
+    const { bytecode, abi, ...rest } = versions[key];
+    result[key] = rest;
+  });
+
+  return result;
 }
 
 export type UsedPredicateVersions = {

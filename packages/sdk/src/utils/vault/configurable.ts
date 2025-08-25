@@ -22,10 +22,11 @@ export function isConnectorConfig(
   return 'SIGNER' in config && typeof config.SIGNER === 'string';
 }
 
+// is equal wallet origin of versions predicate file
 export enum Wallet {
   EVM = 'evm',
   SVM = 'svm',
-  FUEL = 'fuel',
+  FUEL = 'fuel', // can by fuel or webauthn
   BAKO = 'bako',
 }
 

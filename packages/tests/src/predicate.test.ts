@@ -13,10 +13,12 @@ import {
   legacyConnectorVersion,
   BakoProvider,
   TypeUser,
+  encodeSignature,
+  getTxIdEncoded,
 } from 'bakosafe';
 import { ethers } from 'ethers';
 import { hexToBytes } from '@ethereumjs/util';
-import { hexlify, splitSignature } from '@ethersproject/bytes';
+import { splitSignature } from '@ethersproject/bytes';
 import { stringToHex } from 'viem';
 
 import { accounts, assets, networks } from './mocks';
@@ -364,15 +366,15 @@ describe('[Version]', () => {
     });
 
     const signature = await evm_wallet.signMessage(
-      Vault.getTxIdEncoded(`0x${hashTxId}`, EVM_VERSION),
+      getTxIdEncoded(`0x${hashTxId}`, EVM_VERSION),
     );
 
-    const compactSignature = bakoCoder.encode({
-      type: SignatureType.RawNoPrefix,
-      signature: signature,
-    });
+    const compactSignature = encodeSignature(
+      evm_wallet.address,
+      signature,
+      EVM_VERSION,
+    );
 
-    console.log(signature, compactSignature);
     tx.witnesses = [compactSignature];
     // send
     const { isStatusSuccess, isTypeScript } = await vault
@@ -503,7 +505,7 @@ describe('[Version]', () => {
     });
 
     const signature = await evm_wallet.signMessage(
-      Vault.getTxIdEncoded(hashTxId, EVM_VERSION),
+      getTxIdEncoded(hashTxId, EVM_VERSION),
     );
     const compactSignature = bakoCoder.encode({
       type: SignatureType.RawNoPrefix,
@@ -639,12 +641,9 @@ describe('[Transactions]', () => {
 
     // sign
     const signature = await genesisWallet.signMessage(hashTxId);
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature,
-      },
-    ]);
+    tx.witnesses = [
+      encodeSignature(genesisWallet.address.toB256(), signature, vault.version),
+    ];
 
     // send
     const result = await vault.send(tx);
@@ -805,12 +804,13 @@ describe('[Send With]', () => {
       ],
     });
 
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.WebAuthn,
-        ...(await WebAuthn.signChallenge(webAuthnCredential, hashTxId)),
-      },
-    ]);
+    const signature = await WebAuthn.signChallenge(
+      webAuthnCredential,
+      hashTxId,
+    );
+    tx.witnesses = [
+      encodeSignature(webAuthnCredential.address, signature, vault.version),
+    ];
 
     const result = await vault.send(tx);
     const response = await result.waitForResult();

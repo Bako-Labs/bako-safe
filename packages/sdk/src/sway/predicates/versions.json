@@ -72,6 +72,7 @@
     },
     "description": "Oficial bakosafe predicate",
     "walletOrigin": "bako",
+    "developedBy": "Bako Labs",
     "deployed": [
       "https://testnet.fuel.network/v1/graphql",
       "https://mainnet.fuel.network/v1/graphql"
@@ -150,6 +151,7 @@
     },
     "description": "Not válid predicate, not deployed, not used",
     "walletOrigin": "bako",
+    "developedBy": "Bako Labs",
     "deployed": []
   },
   "0x6ca3bcd759b944b128e9007e2fa75bf700f28c39ce7b34fc241e2c57bf02bdff": {
@@ -225,6 +227,7 @@
     },
     "description": "",
     "walletOrigin": "bako",
+    "developedBy": "Bako Labs",
     "deployed": [
       "https://testnet.fuel.network/v1/graphql",
       "https://mainnet.fuel.network/v1/graphql"
@@ -303,6 +306,7 @@
     },
     "description": "Enable EVM signature verification",
     "walletOrigin": "bako",
+    "developedBy": "Bako Labs",
     "deployed": [
       "https://testnet.fuel.network/v1/graphql",
       "https://mainnet.fuel.network/v1/graphql"
@@ -359,6 +363,7 @@
       "fuelCoreVersion": "0.43.1"
     },
     "walletOrigin": "svm",
+    "developedBy": "Fuel Labs",
     "description": "Svm sinature",
     "deployed": [
       "https://testnet.fuel.network/v1/graphql",
@@ -416,6 +421,7 @@
       "fuelCoreVersion": "0.43.1"
     },
     "walletOrigin": "evm",
+    "developedBy": "Fuel Labs",
     "description": "Moved of EVM signature verification from fuel connectors",
     "deployed": [
       "https://testnet.fuel.network/v1/graphql",
@@ -473,6 +479,7 @@
       "fuelCoreVersion": "0.43.1"
     },
     "walletOrigin": "evm",
+    "developedBy": "Fuel Labs",
     "description": "Enable EVM signature verification",
     "deployed": [
       "https://testnet.fuel.network/v1/graphql",
@@ -530,6 +537,7 @@
       "fuelCoreVersion": "0.43.1"
     },
     "walletOrigin": "evm",
+    "developedBy": "Fuel Labs",
     "description": "Enable EVM signature verification",
     "deployed": [
       "https://testnet.fuel.network/v1/graphql",

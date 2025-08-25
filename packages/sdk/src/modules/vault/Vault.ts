@@ -427,17 +427,6 @@ export class Vault extends Predicate<[]> {
     return this.BakoTransfer(tx, { name: params.name });
   }
 
-  static getTxIdEncoded(txId: string, version: BytesVersion): Uint8Array;
-  static getTxIdEncoded(txId: string, version: string): string;
-  static getTxIdEncoded(txId: string, version: string): Uint8Array | string {
-    switch (version) {
-      case '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938':
-        return arrayify(txId.startsWith('0x') ? txId : `0x${txId}`);
-      default:
-        return txId.slice(2);
-    }
-  }
-
   /**
    * Retrieves the current version of the predicate being used.
    *
