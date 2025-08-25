@@ -25,6 +25,7 @@ import {
 
 import { Vault } from '../vault';
 import axios from 'axios';
+import { api as defaultApi } from '../service'; // seu axios padrão
 
 /**
  * BakoProvider class extends the Provider (FuelProvider) class to include additional
@@ -120,21 +121,22 @@ export class BakoProvider extends Provider {
    * @param options The same options for Provider, including the auth options.
    * @returns A Promise that resolves to a BakoProvider instance.
    */
-  static async authenticate(
-    url: string,
-    options: BakoProviderAuthOptions,
-  ): Promise<BakoProvider> {
-    const { user, rootWallet } = await Service.sign({
-      digest: options.challenge,
-      encoder: options.encoder ?? TypeUser.FUEL,
-      signature: options.token,
-      userAddress: options.address,
-    });
-    return BakoProvider.create(url, {
-      ...options,
-      userId: user,
-      rootWallet,
-    });
+  static async authenticate(url: string, options: BakoProviderAuthOptions) {
+    const api = options.serverApi
+      ? axios.create({ baseURL: options.serverApi })
+      : defaultApi;
+
+    const { user, rootWallet } = await Service.sign(
+      {
+        digest: options.challenge,
+        encoder: options.encoder ?? TypeUser.FUEL,
+        signature: options.token,
+        userAddress: options.address,
+      },
+      api,
+    );
+
+    return BakoProvider.create(url, { ...options, userId: user, rootWallet });
   }
 
   /**
