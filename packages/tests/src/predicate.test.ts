@@ -384,8 +384,11 @@ describe('[Version]', () => {
     expect(isTypeScript).toBeTruthy();
   });
 
-  it('Should connect a serverApi with dapp', async () => {
+  // needs local api to run
+  it.skip('Should connect a serverApi with dapp', async () => {
     const BAKO_SERVER_URL = `http://localhost:3333`;
+    // const BAKO_SERVER_URL = `https://stg-api.bako.global`;
+
     const { provider, wallets } = node;
     const wallet = wallets[0];
     const evm_wallet = ethers.Wallet.createRandom();
@@ -443,8 +446,10 @@ describe('[Version]', () => {
     expect(user.address.toB256()).toBe(vault.address.toB256());
   });
 
-  it('Should connect a server with dapp and send tx', async () => {
-    const BAKO_SERVER_URL = `http://localhost:3333`;
+  // needs local api to run
+  it.skip('Should connect a server with dapp and send tx', async () => {
+    // const BAKO_SERVER_URL = `http://localhost:3333`;
+    const BAKO_SERVER_URL = `https://stg-api.bako.global`;
     const { provider, wallets } = node;
     const wallet = wallets[0];
     const evm_wallet = ethers.Wallet.createRandom();
