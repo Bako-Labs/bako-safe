@@ -1,4 +1,5 @@
 import { arrayify } from 'fuels';
+import { stringToHex } from 'viem';
 
 /**
  * List of predicate versions that require byte array encoding for transaction IDs.
@@ -54,6 +55,8 @@ export function getTxIdEncoded(
     case BYTE_VERSION_SET.has(version):
       return arrayify(txId.startsWith('0x') ? txId : `0x${txId}`);
     default:
-      return txId.startsWith('0x') ? txId.slice(2) : txId;
+      return txId.startsWith('0x')
+        ? stringToHex(txId.slice(2))
+        : stringToHex(txId);
   }
 }
