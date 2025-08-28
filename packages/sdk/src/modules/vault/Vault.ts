@@ -250,7 +250,7 @@ export class Vault extends Predicate<[]> {
       .reduce<Record<string, BN>>((acc, o) => {
         const assetId = String(o.assetId);
         const amount = bn(o.amount);
-        acc[assetId] = assetId in acc ? acc[assetId].add(amount) : amount;
+        acc[assetId] = (acc[assetId] ?? bn(0)).add(amount);
         return acc;
       }, {});
     const accountCoinQuantities = Object.entries(quantities).map(
