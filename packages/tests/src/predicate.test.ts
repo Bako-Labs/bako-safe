@@ -8,7 +8,7 @@ import {
   SignatureType,
   DEFAULT_PREDICATE_VERSION,
   getCompatiblePredicateVersions,
-  WalletType,
+  Wallet as WalletType,
   getAllPredicateVersions,
   legacyConnectorVersion,
   BakoProvider,

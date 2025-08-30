@@ -16,8 +16,10 @@ import {
 } from 'bakosafe/src';
 import { deployPredicate } from './utils';
 
-jest.mock('../../sdk/src/modules/service', () => {
-  const actualService = jest.requireActual('../../sdk/src/modules/service');
+jest.mock('../../sdk/src/modules/provider/services', () => {
+  const actualService = jest.requireActual(
+    '../../sdk/src/modules/provider/services',
+  );
   const actualProvider = jest.requireActual('../../sdk/src/modules/provider');
 
   let predicates = new Map();
@@ -116,6 +118,15 @@ jest.mock('../../sdk/src/modules/service', () => {
       }
       return true;
     }),
+
+    userWallet: jest.fn().mockResolvedValue({
+      address: 'mocked_vault_address',
+      configurable: JSON.stringify({
+        SIGNATURES_COUNT: 1,
+        SIGNERS: ['mocked_signer_address'],
+      }),
+      version: 'mocked_version',
+    }),
   }));
 
   // @ts-ignore
@@ -127,14 +138,20 @@ jest.mock('../../sdk/src/modules/service', () => {
   mockService.sign = jest
     .fn()
     .mockImplementation(async (_: ISignTransactionRequest) => {
-      return;
+      return {
+        user: 'mocked_user_id',
+        rootWallet: 'mocked_root_wallet_id',
+      };
     });
 
   // @ts-ignore
   mockService.cliAuth = jest
     .fn()
     .mockImplementation(async (_: ISignTransactionRequest) => {
-      return;
+      return {
+        code: 'mocked_cli_auth_code',
+        address: 'mocked_cli_auth_address',
+      };
     });
 
   return {
