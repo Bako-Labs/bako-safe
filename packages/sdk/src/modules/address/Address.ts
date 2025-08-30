@@ -1,11 +1,7 @@
 import { bech32m } from 'bech32';
 import { arrayify, hexlify, Address, ZeroBytes32, bn } from 'fuels';
 import { isValidAddress } from '@ethereumjs/util';
-
-enum Bech32Prefix {
-  PASSKEY = 'passkey',
-}
-export type Bech32 = `${Bech32Prefix}.${string}`;
+import { Bech32Prefix, Bech32 } from './types';
 
 export class AddressUtils {
   static hex2string(add: string[]) {

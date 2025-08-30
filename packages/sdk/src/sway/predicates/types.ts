@@ -1,5 +1,5 @@
 import { JsonAbi } from 'fuels';
-import { Wallet } from 'src/utils/vault/configurable';
+import { Wallet } from '../../modules/vault/utils/configurable';
 
 export enum PredicateDevelopedBy {
   FuelLabs = 'Fuel Labs',

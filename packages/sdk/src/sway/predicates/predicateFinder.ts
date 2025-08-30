@@ -1,4 +1,4 @@
-import { Wallet, walletOrigin } from '../../utils/vault/configurable';
+import { Wallet, walletOrigin } from '../../modules/vault/utils/configurable';
 import { Version, versions } from './';
 import { Vault } from '../../modules';
 import { Address, Provider } from 'fuels';

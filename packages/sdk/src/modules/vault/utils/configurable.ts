@@ -4,7 +4,7 @@ import {
   ConnectorConfigurableType,
 } from 'src/modules';
 
-import { AddressUtils } from '../address';
+import { AddressUtils } from '../../address';
 
 export function isBakoConfig(
   config: VaultConfigurable,

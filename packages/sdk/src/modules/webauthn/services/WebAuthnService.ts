@@ -1,7 +1,7 @@
 import { arrayify, hash, hexlify, randomBytes } from 'fuels';
 
-import { findIndex, fromBase64, hexToASCII } from './bytes';
-import { getSignature, parsePublicKey, sha256 } from './crypto';
+import { findIndex, fromBase64, hexToASCII } from '../utils';
+import { getSignature, parsePublicKey, sha256 } from '../utils';
 
 interface AuthenticationChallangeResponse {
   response: {
@@ -30,6 +30,7 @@ export function splitCLientData(
 
 export async function createAccount(username: string, challenge: string) {
   const id = randomBytes(32);
+  // @ts-ignore
   const credential = await navigator.credentials.create({
     publicKey: {
       challenge: arrayify(challenge),

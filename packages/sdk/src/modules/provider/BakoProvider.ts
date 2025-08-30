@@ -13,7 +13,7 @@ import {
   ISignTransaction,
   TransactionStatus,
   CLIAuth,
-} from '../service';
+} from './services';
 
 import {
   TypeUser,
@@ -23,9 +23,15 @@ import {
   BakoProviderAPITokenOptions,
 } from './types';
 
+// Constantes inline para manter consistência com outros módulos
+const PROVIDER_DEFAULTS = {
+  DEFAULT_NAME_PREFIX: 'from sdk - ',
+  DEFAULT_ORIGIN: 'NOT FOUND',
+} as const;
+
 import { Vault } from '../vault';
 import axios from 'axios';
-import { api as defaultApi } from '../service'; // seu axios padrão
+import { api as defaultApi } from './services'; // seu axios padrão
 
 /**
  * BakoProvider class extends the Provider (FuelProvider) class to include additional
@@ -66,7 +72,7 @@ export class BakoProvider extends Provider {
 
     const { code: challenge } = await Service.create(
       {
-        name: name ?? `from sdk - ${address}`,
+        name: name ?? `${PROVIDER_DEFAULTS.DEFAULT_NAME_PREFIX}${address}`,
         type: encoder ?? TypeUser.FUEL,
         address: address,
         provider,
@@ -95,7 +101,7 @@ export class BakoProvider extends Provider {
       const cliAuth = await Service.cliAuth({
         network: {
           url: providerFuel.url,
-          chainId: chainId,
+          chainId: chainId.toString(),
         },
         token: options.apiToken,
         serverApi: options.serverApi,
@@ -243,7 +249,7 @@ export class BakoProvider extends Provider {
       sessionId,
       userAddress: this.options.address,
       vaultId: this.options.rootWallet ?? randomUUID(),
-      origin: origin ?? `NOT FOUND`,
+      origin: origin ?? PROVIDER_DEFAULTS.DEFAULT_ORIGIN,
       request_id: randomUUID(),
     });
   }

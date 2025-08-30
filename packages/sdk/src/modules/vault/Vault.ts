@@ -1,39 +1,22 @@
 import {
-  bn,
-  BN,
-  Address,
   arrayify,
   hexlify,
   Provider,
   Predicate,
-  ZeroBytes32,
-  TransactionType,
-  calculateGasFee,
   TransactionRequest,
   TransactionResponse,
   transactionRequestify,
   TransactionRequestLike,
-  ScriptTransactionRequest,
 } from 'fuels';
 
-import {
-  Asset,
-  makeSigners,
-  FAKE_WITNESSES,
-  makeHashPredicate,
-} from '../../utils';
-
 import { VaultConfigurable, VaultTransaction } from './types';
-
-import { ICreateTransactionPayload, PredicateResponse } from '../service';
-
-import { BakoProvider } from '../provider';
-import { loadPredicate, versions } from '../../sway/';
 import {
-  isConnectorConfig,
-  Wallet,
-  walletOrigin,
-} from '../../utils/vault/configurable';
+  ICreateTransactionPayload,
+  PredicateResponse,
+} from '../provider/services';
+import { BakoProvider } from '../provider';
+import { VaultConfigurationFactory } from './factory';
+import { VaultTransactionService, VaultAssetService } from './services';
 
 type Hex = `0x${string}`;
 type BytesVersion =
@@ -48,12 +31,14 @@ type OtherVersion = Exclude<`0x${string}`, BytesVersion>;
  * @extends Predicate
  */
 export class Vault extends Predicate<[]> {
-  readonly bakoFee = bn(0);
+  readonly bakoFee = 0;
   readonly maxSigners = 10;
   readonly configurable: VaultConfigurable;
   readonly predicateVersion: string;
 
-  __provider: Provider | BakoProvider;
+  private __provider: Provider | BakoProvider;
+  private transactionService: VaultTransactionService;
+  private assetService: VaultAssetService;
 
   /**
    * Constructs a new `Vault` instance.
@@ -72,75 +57,58 @@ export class Vault extends Predicate<[]> {
     configurable?: VaultConfigurable,
     version?: string,
   ) {
-    let conf = configurable;
-
-    if ('cliAuth' in provider && provider.cliAuth) {
-      conf = provider.cliAuth.configurable;
-      version = version ?? provider.cliAuth.version;
-    }
-
-    if (!conf) {
-      throw new Error('Vault configurable is required');
-    }
-    const { config, BakoPredicateLoader, data } = Vault.makePredicate(
-      conf,
+    // Resolve configuration from provider or parameters
+    const configuration = Vault.resolveConfiguration(
+      provider,
+      configurable,
       version,
     );
 
     super({
-      abi: BakoPredicateLoader.abi,
-      bytecode: arrayify(BakoPredicateLoader.bytecode),
+      abi: configuration.predicateLoader.abi,
+      bytecode: arrayify(configuration.predicateLoader.bytecode),
       provider: provider,
       //@ts-ignore
-      configurableConstants: config,
-      data,
+      configurableConstants: configuration.config,
+      data: configuration.data,
     });
 
-    this.predicateVersion = BakoPredicateLoader.version;
+    this.predicateVersion = configuration.version;
     this.configurable = {
-      ...config,
+      ...configuration.config,
       // @ts-ignore
       version: this.predicateVersion,
     };
     this.__provider = provider;
+
+    // Initialize services
+    this.transactionService = new VaultTransactionService(this);
+    this.assetService = new VaultAssetService(this);
   }
 
   /**
-   * Creates the configuration object for the predicate based on vault parameters.
-   *
-   * @param {VaultConfigurable} params - The signature requirements and predicate hash.
-   * @returns {VaultConfigurable} A formatted object to instantiate a new predicate.
+   * Resolves the configuration for vault creation
    */
-  private static makePredicate(
-    params: VaultConfigurable,
+  private static resolveConfiguration(
+    provider: Provider | BakoProvider,
+    configurable?: VaultConfigurable,
     version?: string,
-  ): {
-    config: VaultConfigurable;
-    BakoPredicateLoader: ReturnType<typeof loadPredicate>;
-    data?: any;
-  } {
-    if (isConnectorConfig(params)) {
-      const walletType = walletOrigin(params.SIGNER);
-      return {
-        config: {
-          SIGNER: makeSigners(params.SIGNER),
-        },
-        BakoPredicateLoader: loadPredicate(walletType, version),
-        data: [0],
-      };
+  ) {
+    // Try to get configuration from BakoProvider first
+    if ('cliAuth' in provider && provider.cliAuth) {
+      const config = VaultConfigurationFactory.createFromProvider(
+        provider as BakoProvider,
+        version,
+      );
+      if (config) return config;
     }
 
-    const { SIGNATURES_COUNT, SIGNERS, HASH_PREDICATE } = params;
+    // Use provided configuration
+    if (!configurable) {
+      throw new Error('Vault configurable is required');
+    }
 
-    const BakoPredicateLoader = loadPredicate(Wallet.BAKO, version);
-    return {
-      config: {
-        SIGNATURES_COUNT,
-        SIGNERS: makeSigners(SIGNERS),
-        HASH_PREDICATE: HASH_PREDICATE ?? makeHashPredicate(),
-      },
-      BakoPredicateLoader,
-    };
+    return VaultConfigurationFactory.createConfiguration(configurable, version);
   }
 
   /**
@@ -149,7 +117,6 @@ export class Vault extends Predicate<[]> {
    * @param {TransactionRequestLike} tx - The transaction request.
    * @param {ICreateTransactionPayload} options - Additional options for the transaction.
    * @returns {Promise<{ tx: TransactionRequest, hashTxId: string }>} The prepared transaction and its hash.
-   * @throws Will throw an error if the transaction type is not implemented.
    */
   async BakoTransfer(
     tx: TransactionRequestLike,
@@ -158,22 +125,7 @@ export class Vault extends Predicate<[]> {
     tx: TransactionRequest;
     hashTxId: string;
   }> {
-    let result: TransactionRequest = transactionRequestify(tx);
-    result = await this.prepareTransaction(result);
-
-    if (this.provider instanceof BakoProvider) {
-      await this.provider.saveTransaction(result, {
-        name: options?.name,
-        predicateAddress: this.address.toB256(),
-      });
-    }
-
-    const chainId = await this.provider.getChainId();
-
-    return {
-      tx: result,
-      hashTxId: result.getTransactionId(chainId).slice(2),
-    };
+    return this.transactionService.processBakoTransfer(tx, options);
   }
 
   /**
@@ -223,46 +175,8 @@ export class Vault extends Predicate<[]> {
    *
    * @returns {Promise<BN>} The maximum gas used in the predicate transaction.
    */
-  public async maxGasUsed(): Promise<BN> {
-    const request = new ScriptTransactionRequest();
-
-    const origin = versions[this.predicateVersion].walletOrigin;
-    const config =
-      origin === Wallet.BAKO
-        ? {
-            SIGNATURES_COUNT: this.maxSigners,
-            SIGNERS: Array.from({ length: this.maxSigners }, () => ZeroBytes32),
-            HASH_PREDICATE: ZeroBytes32,
-          }
-        : {
-            SIGNER: ZeroBytes32,
-          };
-
-    const vault = new Vault(this.provider, config, this.predicateVersion);
-
-    request.addCoinInput({
-      id: ZeroBytes32,
-      assetId: ZeroBytes32,
-      amount: bn(),
-      owner: vault.address,
-      blockCreated: bn(),
-      txCreatedIdx: bn(),
-    });
-
-    vault.populateTransactionPredicateData(request);
-    Array.from({ length: this.maxSigners }, () =>
-      request.addWitness(FAKE_WITNESSES),
-    );
-
-    const transactionCost = await vault.getTransactionCost(request);
-    await vault.fund(request, transactionCost);
-    await vault.provider.estimatePredicates(request);
-    const input = request.inputs[0];
-    if ('predicate' in input && input.predicate) {
-      return bn(input.predicateGasUsed);
-    }
-
-    return bn();
+  public async maxGasUsed() {
+    return this.transactionService['calculateMaxGasUsed']();
   }
 
   /**
@@ -275,64 +189,7 @@ export class Vault extends Predicate<[]> {
   public async prepareTransaction<T extends TransactionRequest>(
     transactionRequest: T,
   ): Promise<T> {
-    const originalMaxFee = transactionRequest.maxFee;
-    const predicateGasUsed = await this.maxGasUsed();
-    this.populateTransactionPredicateData(transactionRequest);
-
-    const witnesses = Array.from(transactionRequest.witnesses);
-    const fakeSignatures = Array.from(
-      { length: this.maxSigners },
-      () => FAKE_WITNESSES,
-    );
-    transactionRequest.witnesses.push(...fakeSignatures);
-
-    const quantities = transactionRequest
-      .getCoinOutputs()
-      .map((o) => ({ assetId: String(o.assetId), amount: bn(o.amount) }));
-    // @ts-ignore
-    const { assembledRequest } = await this.provider.assembleTx({
-      request: transactionRequest,
-      feePayerAccount: this,
-      accountCoinQuantities: quantities,
-    });
-    transactionRequest = assembledRequest;
-
-    let totalGasUsed = bn(0);
-    transactionRequest.inputs.forEach((input) => {
-      if ('predicate' in input && input.predicate) {
-        input.witnessIndex = 0;
-        input.predicateGasUsed = undefined;
-        totalGasUsed = totalGasUsed.add(predicateGasUsed);
-      }
-    });
-
-    const { gasPriceFactor } = await this.provider.getGasConfig();
-    const { maxFee, gasPrice } = await this.provider.estimateTxGasAndFee({
-      transactionRequest,
-    });
-
-    const predicateSuccessFeeDiff = calculateGasFee({
-      gas: totalGasUsed,
-      priceFactor: gasPriceFactor,
-      gasPrice,
-    });
-
-    let baseMaxFee = maxFee;
-    if (!originalMaxFee.eq(0) && originalMaxFee.cmp(maxFee) === 1) {
-      baseMaxFee = originalMaxFee;
-    }
-
-    const maxFeeWithPredicateGas = baseMaxFee.add(predicateSuccessFeeDiff);
-    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(12).div(10);
-
-    if (transactionRequest.type === TransactionType.Upgrade) {
-      transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);
-    }
-
-    await this.provider.estimateTxDependencies(transactionRequest);
-    transactionRequest.witnesses = witnesses;
-
-    return transactionRequest;
+    return this.transactionService.prepareTransaction(transactionRequest);
   }
 
   /**
@@ -368,9 +225,45 @@ export class Vault extends Predicate<[]> {
     const { configurable, version } =
       await provider.findPredicateByAddress(reference);
 
-    console.log('configurable', configurable);
-
     return new Vault(provider, configurable, version);
+  }
+
+  // Factory methods for convenience (delegates to VaultFactory)
+
+  /**
+   * Creates a Bako multi-signature vault
+   */
+  static createBakoVault(
+    provider: Provider | BakoProvider,
+    config: any,
+    version?: string,
+  ): Vault {
+    return new Vault(provider, config, version);
+  }
+
+  /**
+   * Creates a Connector vault for external wallet integration
+   */
+  static createConnectorVault(
+    provider: Provider | BakoProvider,
+    config: any,
+    version?: string,
+  ): Vault {
+    return new Vault(provider, config, version);
+  }
+
+  /**
+   * Creates a vault from BakoProvider authentication
+   */
+  static createFromProvider(provider: BakoProvider, version?: string): Vault {
+    if (!('cliAuth' in provider) || !provider.cliAuth) {
+      throw new Error('BakoProvider must have authentication configured');
+    }
+    return new Vault(
+      provider,
+      provider.cliAuth.configurable,
+      version ?? provider.cliAuth.version,
+    );
   }
 
   /**
@@ -396,35 +289,14 @@ export class Vault extends Predicate<[]> {
   /**
    * Creates a new transaction script using the vault resources.
    *
-   * @param {ITransferAsset[]} assets - The transaction assets to send.
+   * @param {VaultTransaction} params - The transaction parameters including assets and name.
    * @returns {Promise<{ tx: TransactionRequest, hashTxId: string }>} The prepared transaction and its hash.
    */
   async transaction(params: VaultTransaction): Promise<{
     tx: TransactionRequest;
     hashTxId: string;
   }> {
-    const { assets } = params;
-    await Promise.all(
-      assets.map(async (asset) => {
-        const addressType = await this.provider.getAddressType(asset.to);
-        if (addressType !== 'Account') {
-          throw new Error(`Address ${asset.to} is not an Account`);
-        }
-      }),
-    );
-
-    const tx = new ScriptTransactionRequest();
-
-    const outputs = Asset.assetsGroupByTo(assets);
-    Object.entries(outputs).map(([, value]) => {
-      tx.addCoinOutput(
-        Address.fromString(value.to),
-        value.amount,
-        value.assetId,
-      );
-    });
-
-    return this.BakoTransfer(tx, { name: params.name });
+    return this.assetService.createAssetTransaction(params);
   }
 
   /**

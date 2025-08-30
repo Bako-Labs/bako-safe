@@ -1,5 +1,5 @@
-import { ITransferAsset } from '../../utils';
-import { ICreateTransactionPayload } from '../service';
+import { ITransferAsset } from './assets';
+import { ICreateTransactionPayload } from '../provider/services';
 
 export type VaultTransaction = Pick<ICreateTransactionPayload, 'name'> & {
   assets: ITransferAsset[];

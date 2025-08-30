@@ -1,7 +1,7 @@
 import { Operation, TransactionRequest } from 'fuels';
-import { IBakoError } from '../../utils/errors/types';
-import { TypeUser } from '../provider';
-import { BAKO_SERVER_API } from '../../constantes';
+import { IBakoError } from '../../errors/types';
+import { TypeUser } from '../types';
+import { BAKO_SERVER_API } from '../../../constantes';
 
 export type ApiConfigurable = {
   address?: string;
@@ -99,26 +99,13 @@ export interface ISelectWorkspaceResponse extends Workspace {}
 
 export type PredicateResponse = {
   predicateAddress: string;
-  configurable: {
-    SIGNATURES_COUNT: number;
-    SIGNERS: string[];
-    HASH_PREDICATE: string;
-  };
+  configurable: any;
   version: string;
 };
 
-export interface ISignTransaction {
-  hash: string;
-  signature: string;
-  approve?: boolean;
-}
-
-export interface ISignTransactionRequest
-  extends Omit<ISignTransaction, 'vault'> {}
-
 export type SignService = {
   signature: string;
-  encoder: string;
+  encoder: TypeUser;
   digest: string;
   userAddress: string;
 };
@@ -212,7 +199,7 @@ export type CLIAuthPayload = {
   token: string;
   network: {
     url: string;
-    chainId: number;
+    chainId: string;
   };
   serverApi?: string;
 };
@@ -220,33 +207,23 @@ export type CLIAuthPayload = {
 export type CLIAuth = {
   code: string;
   address: string;
+  configurable: any; // Pode ser string ou objeto parseado
   version: string;
-  configurable: {
-    SIGNATURES_COUNT: number;
-    SIGNERS: string[];
-    HASH_PREDICATE: string;
-  };
-  tokenConfig: {
-    transactionTitle: string;
-  };
 };
 
-export interface IDAPPCreateRequest {
-  name?: string;
-  vaultId: string;
+export type IDAPPCreateRequest = {
   sessionId: string;
-  origin: string;
   userAddress: string;
+  vaultId: string;
+  origin: string;
   request_id: string;
+};
+
+export interface ISignTransaction {
+  hash: string;
+  signature: string;
+  approve?: boolean;
 }
 
-export interface IRecoverCodeCreateRequest {
-  sessionId: string;
-  predicateAddress: string;
-}
-
-export interface IRecoverCodeResponse {
-  code: string;
-  validAt: string;
-  metadata: any;
-}
+export interface ISignTransactionRequest
+  extends Omit<ISignTransaction, 'vault'> {}
