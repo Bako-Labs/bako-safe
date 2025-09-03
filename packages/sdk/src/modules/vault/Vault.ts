@@ -18,10 +18,6 @@ import { BakoProvider } from '../provider';
 import { VaultConfigurationFactory } from './factory';
 import { VaultTransactionService, VaultAssetService } from './services';
 
-type Hex = `0x${string}`;
-  '0xfdac03f6c17c264faf6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
-type OtherVersion = Exclude<`0x${string}`, BytesVersion>;
-
 /**
  * The `Vault` class is an extension of `Predicate` that manages transactions,
  * sending operations, and includes additional functionality specific to

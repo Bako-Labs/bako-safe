@@ -32,7 +32,11 @@ export async function sha256(
   let arrayBuffer: ArrayBuffer;
   if (buffer instanceof Uint8Array) {
     // Create a new ArrayBuffer from the Uint8Array to avoid type issues
-    arrayBuffer = buffer.slice().buffer;
+    // Use buffer.buffer.slice to preserve all bytes correctly
+    arrayBuffer = buffer.buffer.slice(
+      buffer.byteOffset,
+      buffer.byteOffset + buffer.byteLength,
+    ) as ArrayBuffer;
   } else {
     arrayBuffer = buffer;
   }
@@ -53,7 +57,11 @@ export async function sha256(
  */
 export async function parsePublicKey(publicKey: Uint8Array) {
   // Convert Uint8Array to ArrayBuffer for crypto.subtle.importKey
-  const publicKeyBuffer = publicKey.slice().buffer;
+  // Use buffer.buffer.slice to preserve all bytes correctly
+  const publicKeyBuffer = publicKey.buffer.slice(
+    publicKey.byteOffset,
+    publicKey.byteOffset + publicKey.byteLength,
+  ) as ArrayBuffer;
   const cryptoKey = await crypto.subtle.importKey(
     'spki',
     publicKeyBuffer,
