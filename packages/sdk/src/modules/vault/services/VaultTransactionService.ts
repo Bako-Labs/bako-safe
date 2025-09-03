@@ -44,6 +44,7 @@ export class VaultTransactionService {
       .map((o) => ({ assetId: String(o.assetId), amount: bn(o.amount) }));
 
     // @ts-ignore
+    // Type mismatch due to incomplete provider typings; assembleTx is known to return an object with { assembledRequest } at runtime.
     const { assembledRequest } = await this.vault.provider.assembleTx({
       request: transactionRequest,
       feePayerAccount: this.vault,
