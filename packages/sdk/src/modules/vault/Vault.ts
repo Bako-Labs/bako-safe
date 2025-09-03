@@ -19,8 +19,7 @@ import { VaultConfigurationFactory } from './factory';
 import { VaultTransactionService, VaultAssetService } from './services';
 
 type Hex = `0x${string}`;
-type BytesVersion =
-  '0xfdca03f6c17c264faf6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
+  '0xfdac03f6c17c264faf6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
 type OtherVersion = Exclude<`0x${string}`, BytesVersion>;
 
 /**
