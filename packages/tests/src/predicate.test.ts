@@ -298,7 +298,7 @@ describe('[Version]', () => {
     expect(compatible_svm.length).toBeGreaterThan(0);
     expect(versions).toEqual(expect.arrayContaining(compatible_svm));
 
-    const compatible_bako = getCompatiblePredicateVersions(WalletType.EVM);
+    const compatible_bako = getCompatiblePredicateVersions(WalletType.BAKO);
     expect(compatible_bako.length).toBeGreaterThan(0);
     expect(versions).toEqual(expect.arrayContaining(compatible_bako));
   });
