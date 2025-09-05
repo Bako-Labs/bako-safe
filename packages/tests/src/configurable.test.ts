@@ -1,14 +1,9 @@
-import {
-  Vault,
-  VaultFactory,
-  ConfigVaultType,
-  versions,
-  Wallet as WalletType,
-} from 'bakosafe';
+import { Vault, ConfigVaultType, AddressUtils } from 'bakosafe';
 import { Address, Provider, ZeroBytes32 } from 'fuels';
 import { launchTestNode } from 'fuels/test-utils';
 import { accounts } from './mocks';
 import { ethers } from 'ethers';
+import { WebAuthn } from './utils/webauthn';
 
 const EXAMPLE_PREDICATE_VERSIONS = {
   FUEL_EVM:
@@ -91,7 +86,7 @@ describe('[Configurable Functions]', () => {
   });
 
   describe('[COMPATIBLE_CONFIGURABLE]', () => {
-    it('should throw error for incompatible connector version', () => {
+    it('should throw error for incompatible fuel wallet fuel_wallet:evm_connector_version', () => {
       const connectorConfig = {
         SIGNER: address,
       };
@@ -107,7 +102,7 @@ describe('[Configurable Functions]', () => {
       );
     });
 
-    it('should throw error for incompatible BakoConfig version', () => {
+    it('should throw error for incompatible BakoConfig bako_config:evm_version', () => {
       const bakoConfig = {
         SIGNATURES_COUNT: 1,
         SIGNERS: [address],
@@ -120,7 +115,7 @@ describe('[Configurable Functions]', () => {
       );
     });
 
-    it('should throw error for incompatible BakoConfig version', () => {
+    it('should throw error for incompatible BakoConfig version evm_walllet:older_bako_version (without sup evm wallets)', () => {
       const wallet = ethers.Wallet.createRandom();
       const evmAddress = wallet.address;
       const bakoConfig = {
@@ -139,7 +134,22 @@ describe('[Configurable Functions]', () => {
       );
     });
 
-    // todo: test all combinations of config and versions
+    it('should create vault for compatible version webauthn_wallet:evm_connector_version', () => {
+      const webauthn_wallet = WebAuthn.createCredentials();
+      const connectorConfig = {
+        SIGNER: AddressUtils.toPasskey(webauthn_wallet.address),
+      };
+
+      expect(() => {
+        new Vault(
+          provider,
+          connectorConfig,
+          EXAMPLE_PREDICATE_VERSIONS.FUEL_EVM,
+        );
+      }).toThrow(
+        `Predicate version "${EXAMPLE_PREDICATE_VERSIONS.FUEL_EVM}" is not compatible with wallet type "webauthn".`,
+      );
+    });
   });
 
   // describe('VaultFactory.createVaultWithParsedConfig', () => {

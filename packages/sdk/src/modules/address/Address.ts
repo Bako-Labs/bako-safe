@@ -16,7 +16,23 @@ export class AddressUtils {
     return value.startsWith(Bech32Prefix.PASSKEY);
   }
 
+  /**
+   * @deprecated Use toPasskey instead
+   */
   static toBech32 = (address: string) =>
+    <Bech32>(
+      bech32m.encode(
+        Bech32Prefix.PASSKEY,
+        bech32m.toWords(arrayify(hexlify(address))),
+      )
+    );
+
+  /**
+   * Converts a hex address to Bech32 passkey format
+   * @param address - The hex address to convert
+   * @returns The Bech32 passkey address
+   */
+  static toPasskey = (address: string) =>
     <Bech32>(
       bech32m.encode(
         Bech32Prefix.PASSKEY,

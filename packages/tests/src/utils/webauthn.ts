@@ -107,7 +107,10 @@ export class WebAuthn {
     // On this case we ignore the authenticatorData field and just generate random data
     const authenticatorData = options
       ? arrayify(options.authenticatorData)
-      : (() => { const buf = randomBytes(64); return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength); })();
+      : (() => {
+          const buf = randomBytes(64);
+          return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+        })();
     // Convert the dataJSON to a byte array
     const clientDataJSON = new TextEncoder().encode(JSON.stringify(dataJSON));
     // Hash data in the same order webauthn does before signing

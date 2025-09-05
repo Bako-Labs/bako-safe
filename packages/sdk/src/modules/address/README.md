@@ -34,6 +34,12 @@ Checks if an address is a passkey address by verifying if it starts with the pas
 
 ### toBech32(address: string): Bech32
 
+**@deprecated** Use `toPasskey` instead.
+
+Converts a hex address to Bech32 passkey format.
+
+### toPasskey(address: string): Bech32
+
 Converts a hex address to Bech32 passkey format.
 
 ### fromBech32(address: Bech32): string
