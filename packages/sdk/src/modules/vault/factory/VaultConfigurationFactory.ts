@@ -8,6 +8,7 @@ import {
 import { makeSigners, makeHashPredicate } from '../utils';
 import { isConnectorConfig, walletOrigin, Wallet } from '../utils/configurable';
 import { loadPredicate } from '../../../sway';
+import { CompatibilityService } from '../services';
 
 /**
  * Configuration result for vault creation
@@ -31,7 +32,7 @@ export class VaultConfigurationFactory {
     version?: string,
   ): VaultConfiguration {
     const { SIGNATURES_COUNT, SIGNERS, HASH_PREDICATE } = params;
-    const predicateLoader = loadPredicate(Wallet.BAKO, version);
+    const predicateLoader = loadPredicate(Wallet.FUEL, version);
 
     return {
       config: {
@@ -71,6 +72,11 @@ export class VaultConfigurationFactory {
     params: VaultConfigurable,
     version?: string,
   ): VaultConfiguration {
+    // Validate compatibility before creating configuration
+    if (version) {
+      CompatibilityService.isCompatibleWith(params, version);
+    }
+
     if (isConnectorConfig(params)) {
       return this.createConnectorConfiguration(params, version);
     }

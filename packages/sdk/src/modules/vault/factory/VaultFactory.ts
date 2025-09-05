@@ -5,7 +5,11 @@ import {
   VaultConfigurable,
   BakoConfigurableType,
   ConnectorConfigurableType,
+  VaultConfig,
 } from '../types';
+import { parseConfig } from '../utils';
+import { CompatibilityService } from '../services';
+import { versions } from '../../../sway';
 import { VaultConfigurationFactory } from './VaultConfigurationFactory';
 
 /**
@@ -93,5 +97,83 @@ export class VaultFactory {
     version?: string,
   ): Vault {
     return new Vault(provider, config, version);
+  }
+
+  /**
+   * Creates a vault with parsed configuration and type validation
+   *
+   * @param provider - The provider instance
+   * @param config - Vault configuration (string or object)
+   * @param version - Optional predicate version
+   * @returns A new Vault instance with parsed config
+   */
+  static createVaultWithParsedConfig(
+    provider: Provider | BakoProvider,
+    config: VaultConfigurable | string,
+    version?: string,
+  ): Vault {
+    const parsedConfig = parseConfig(config as VaultConfigurable);
+    return new Vault(provider, parsedConfig, version);
+  }
+
+  /**
+   * Creates a vault only if the configuration is compatible with the specified version
+   *
+   * @param provider - The provider instance
+   * @param config - Vault configuration
+   * @param version - Required predicate version
+   * @returns A new Vault instance if compatible
+   * @throws Error if configuration is not compatible with the version
+   */
+  static createCompatibleVault(
+    provider: Provider | BakoProvider,
+    config: VaultConfigurable,
+    version: string,
+  ): Vault {
+    if (!CompatibilityService.isCompatibleWith(config, version)) {
+      throw new Error(
+        `Configuration is not compatible with version ${version}`,
+      );
+    }
+    return new Vault(provider, config, version);
+  }
+
+  /**
+   * Validates if a configuration is compatible with a specific version
+   *
+   * @param config - Vault configuration to validate
+   * @param version - Version to check compatibility against
+   * @returns True if compatible, false otherwise
+   */
+  static isConfigurationCompatible(
+    config: VaultConfigurable,
+    version: string,
+  ): boolean {
+    return CompatibilityService.isCompatibleWith(config, version);
+  }
+
+  /**
+   * Parses a configuration and returns the typed result
+   *
+   * @param config - Vault configuration (string or object)
+   * @returns Parsed configuration with type information
+   */
+  static parseConfiguration(config: VaultConfigurable | string): VaultConfig {
+    return parseConfig(config as VaultConfigurable);
+  }
+
+  /**
+   * Checks if a configuration is compatible with a specific version.
+   *
+   * @param version - The predicate version to check compatibility with
+   * @param config - The vault configuration to validate
+   * @returns True if the configuration is compatible with the version
+   * @throws Error if the version is not found or configuration is invalid
+   */
+  static isCompatibleWith(
+    version: string,
+    config: VaultConfigurable | string,
+  ): boolean {
+    return CompatibilityService.isCompatibleWith(config, version);
   }
 }

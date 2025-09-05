@@ -6,8 +6,8 @@ export type VaultTransaction = Pick<ICreateTransactionPayload, 'name'> & {
 };
 
 export enum ConfigVaultType {
-  BAKO = 1,
-  CONNECTOR = 2,
+  BAKO = 0,
+  CONNECTOR = 1,
 }
 
 export type BakoConfigurableType = {
@@ -16,15 +16,27 @@ export type BakoConfigurableType = {
   HASH_PREDICATE?: string;
 };
 
+export interface ConnectorConfigurableType {
+  SIGNER: string;
+}
+
+// Novos tipos com enum type
+export type BakoConfig = {
+  type: ConfigVaultType.BAKO;
+} & BakoConfigurableType;
+
+export type ConnectorConfig = {
+  type: ConfigVaultType.CONNECTOR;
+} & ConnectorConfigurableType;
+
 export type ConfigurableVault = {
   type: ConfigVaultType;
   data: BakoConfigurableType | ConnectorConfigurableType;
 };
 
-export interface ConnectorConfigurableType {
-  SIGNER: string;
-}
-
 export type VaultConfigurable =
   | BakoConfigurableType
   | ConnectorConfigurableType;
+
+// Union type para os novos tipos com enum
+export type VaultConfig = BakoConfig | ConnectorConfig;

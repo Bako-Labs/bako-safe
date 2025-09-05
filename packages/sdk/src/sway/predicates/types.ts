@@ -19,7 +19,7 @@ export interface Version {
   time: number;
   toolchain: FuelToolChain;
   deployed: string[];
-  walletOrigin: string;
+  walletOrigin: string[];
   developedBy: string;
   // manually put in versions.json hourly
   description?: string;

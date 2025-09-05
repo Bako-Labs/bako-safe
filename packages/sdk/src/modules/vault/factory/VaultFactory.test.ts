@@ -19,7 +19,7 @@ jest.mock('../../../utils', () => ({
 jest.mock('../../../utils/vault/configurable', () => ({
   isConnectorConfig: jest.fn((config) => 'SIGNER' in config),
   walletOrigin: jest.fn(() => 'fuel'),
-  Wallet: { BAKO: 'bako', FUEL: 'fuel' },
+  Wallet: { FUEL: 'fuel', EVM: 'evm', SVM: 'svm', WEBAUTHN: 'webauthn' },
 }));
 
 describe('VaultFactory', () => {

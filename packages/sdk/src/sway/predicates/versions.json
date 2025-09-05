@@ -70,8 +70,8 @@
       "forcVersion": "0.65.2",
       "fuelCoreVersion": "0.38.0"
     },
-    "description": "Oficial bakosafe predicate",
-    "walletOrigin": "bako",
+    "description": "Oficial bakosafe predicate - supports both BAKO and Fuel wallets",
+    "walletOrigin": ["fuel", "webauthn"],
     "developedBy": "Bako Labs",
     "deployed": [
       "https://testnet.fuel.network/v1/graphql",
@@ -150,7 +150,7 @@
       "fuelCoreVersion": "0.38.0"
     },
     "description": "Not válid predicate, not deployed, not used",
-    "walletOrigin": "bako",
+    "walletOrigin": ["fuel", "webauthn"],
     "developedBy": "Bako Labs",
     "deployed": []
   },
@@ -226,7 +226,7 @@
       "fuelCoreVersion": "0.40.4"
     },
     "description": "",
-    "walletOrigin": "bako",
+    "walletOrigin": ["fuel", "webauthn"],
     "developedBy": "Bako Labs",
     "deployed": [
       "https://testnet.fuel.network/v1/graphql",
@@ -305,7 +305,7 @@
       "fuelCoreVersion": "0.43.1"
     },
     "description": "Enable EVM signature verification",
-    "walletOrigin": "bako",
+    "walletOrigin": ["fuel", "webauthn", "evm"],
     "developedBy": "Bako Labs",
     "deployed": [
       "https://testnet.fuel.network/v1/graphql",
@@ -362,7 +362,7 @@
       "forcVersion": "0.68.1",
       "fuelCoreVersion": "0.43.1"
     },
-    "walletOrigin": "svm",
+    "walletOrigin": ["svm"],
     "developedBy": "Fuel Labs",
     "description": "Svm sinature",
     "deployed": [
@@ -420,7 +420,7 @@
       "forcVersion": "0.68.1",
       "fuelCoreVersion": "0.43.1"
     },
-    "walletOrigin": "evm",
+    "walletOrigin": ["evm"],
     "developedBy": "Fuel Labs",
     "description": "Moved of EVM signature verification from fuel connectors",
     "deployed": [
@@ -478,7 +478,7 @@
       "forcVersion": "0.68.1",
       "fuelCoreVersion": "0.43.1"
     },
-    "walletOrigin": "evm",
+    "walletOrigin": ["evm"],
     "developedBy": "Fuel Labs",
     "description": "Enable EVM signature verification",
     "deployed": [
@@ -536,7 +536,7 @@
       "forcVersion": "0.68.1",
       "fuelCoreVersion": "0.43.1"
     },
-    "walletOrigin": "evm",
+    "walletOrigin": ["evm"],
     "developedBy": "Fuel Labs",
     "description": "Enable EVM signature verification",
     "deployed": [

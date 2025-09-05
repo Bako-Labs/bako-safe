@@ -9,14 +9,19 @@ import {
   TransactionRequestLike,
 } from 'fuels';
 
-import { VaultConfigurable, VaultTransaction } from './types';
+import { VaultConfigurable, VaultTransaction, VaultConfig } from './types';
 import {
   ICreateTransactionPayload,
   PredicateResponse,
 } from '../provider/services';
 import { BakoProvider } from '../provider';
 import { VaultConfigurationFactory } from './factory';
-import { VaultTransactionService, VaultAssetService } from './services';
+import {
+  VaultTransactionService,
+  VaultAssetService,
+  CompatibilityService,
+} from './services';
+import { parseConfig } from './utils';
 
 /**
  * The `Vault` class is an extension of `Predicate` that manages transactions,
@@ -301,6 +306,29 @@ export class Vault extends Predicate<[]> {
    */
   public get version(): string {
     return this.predicateVersion;
+  }
+
+  /**
+   * Gets the parsed configuration with type information.
+   *
+   * @returns {VaultConfig} The parsed configuration with type enum.
+   */
+  public getConfigurable(): VaultConfig {
+    return parseConfig(this.configurable);
+  }
+
+  /**
+   * Checks if a vault configuration is compatible with a specific version.
+   *
+   * @param config - The vault configuration to check
+   * @param version - The predicate version to check compatibility with
+   * @returns True if the configuration is compatible with the version
+   */
+  public static compatible(
+    config: VaultConfigurable | string,
+    version: string,
+  ): boolean {
+    return CompatibilityService.isCompatibleSafe(config, version);
   }
 
   public get provider(): Provider | BakoProvider {

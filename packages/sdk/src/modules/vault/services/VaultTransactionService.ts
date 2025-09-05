@@ -126,9 +126,9 @@ export class VaultTransactionService {
     const { versions } = await import('../../../sway');
     const { Wallet } = await import('../utils/configurable');
 
-    const origin = versions[this.vault.predicateVersion].walletOrigin;
+    const origin = versions[this.vault.predicateVersion].walletOrigin[0]; // Use first supported wallet type
     const config =
-      origin === Wallet.BAKO
+      origin === Wallet.FUEL
         ? {
             SIGNATURES_COUNT: this.vault.maxSigners,
             SIGNERS: Array.from(

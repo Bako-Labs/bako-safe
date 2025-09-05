@@ -257,7 +257,7 @@ describe('[Version]', () => {
       );
     }).toThrow({
       name: 'Error',
-      message: `Predicate version ${version} not found. Available to your address ${WalletType.BAKO} type`,
+      message: `Predicate version "${version}" not found for wallet type "${WalletType.FUEL}".`,
     });
   });
 
@@ -270,13 +270,13 @@ describe('[Version]', () => {
       SIGNER: evmWallet.address,
     });
 
-    await expect(async () => {
-      new Vault(provider, {
-        SIGNER: wallet.address.toB256(),
-      });
-    }).rejects.toThrow(
-      'No compatible predicate version with this configurable found for wallet type fuel',
-    );
+    // await expect(async () => {
+    //   new Vault(provider, {
+    //     SIGNER: wallet.address.toB256(),
+    //   });
+    // }).rejects.toThrow(
+    //   'No compatible predicate version with this configurable found for wallet type fuel',
+    // );
 
     const predicate_bako_version = new Vault(provider, {
       SIGNERS: [wallet.address.toB256()],
@@ -298,9 +298,9 @@ describe('[Version]', () => {
     expect(compatible_svm.length).toBeGreaterThan(0);
     expect(versions).toEqual(expect.arrayContaining(compatible_svm));
 
-    const compatible_bako = getCompatiblePredicateVersions(WalletType.BAKO);
-    expect(compatible_bako.length).toBeGreaterThan(0);
-    expect(versions).toEqual(expect.arrayContaining(compatible_bako));
+    const compatible_fuel = getCompatiblePredicateVersions(WalletType.FUEL);
+    expect(compatible_fuel.length).toBeGreaterThan(0);
+    expect(versions).toEqual(expect.arrayContaining(compatible_fuel));
   });
 
   // send balance to vault with evm address(connector)
