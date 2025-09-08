@@ -226,7 +226,7 @@ describe('[SIGNATURE ENCODER]', () => {
       encodeSignature(wallet.address.toB256(), format),
     );
 
-    // Todos devem conter a mesma assinatura original
+    // All should contain the same original signature
     encoded.forEach((encodedSig) => {
       expect(encodedSig).toContain(originalSignature.slice(2));
     });
