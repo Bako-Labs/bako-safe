@@ -68,8 +68,7 @@ export class Vault extends Predicate<[]> {
       abi: configuration.predicateLoader.abi,
       bytecode: arrayify(configuration.predicateLoader.bytecode),
       provider: provider,
-      //@ts-ignore
-      configurableConstants: configuration.config,
+      configurableConstants: configuration.config as Record<string, unknown>,
       data: configuration.data,
     });
 
