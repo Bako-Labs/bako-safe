@@ -75,12 +75,11 @@ export class SignatureService {
     predicateVersion: string,
   ): Classified {
     const versions = getAllVersionsDetails();
+    const availableVersions = Object.keys(versions).join(', ');
     const current = versions[predicateVersion];
     if (!current) {
       throw new Error(
-        `Predicate version ${predicateVersion} not found. Available versions: ${Object.keys(
-          versions,
-        ).join(', ')}`,
+        `Predicate version ${predicateVersion} not found. Available versions: ${availableVersions}`,
       );
     }
 
