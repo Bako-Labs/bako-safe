@@ -38,7 +38,7 @@ export class CoderConfigurationFactory {
       const authDataBytes = arrayify(data.authData);
       return hexlify(
         concat([
-          signatureBytes, // get Uint8Array of bn
+          signatureBytes,
           new BigNumberCoder('u64').encode(prefixBytes.length), // prefix size
           new BigNumberCoder('u64').encode(suffixBytes.length), // suffix size
           new BigNumberCoder('u64').encode(authDataBytes.length), // authdata size
