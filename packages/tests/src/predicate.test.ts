@@ -310,7 +310,7 @@ describe('[Version]', () => {
   //github.com/FuelLabs/fuels-ts/blob/e0e44221c489469e2bfa9467a138a04e4a4b906e/packages/account/src/utils/deployScriptOrPredicate.ts#L41
 
   // notes:
-  // - somente a versao 0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938 funciona porque nela eu tenho meu predicate nao deploydo
+  // - Only the version 0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938 works because in it I have my predicate not deployed
   it('Should throw an error if no compatible predicate version is found', async () => {
     const { provider, wallets } = node;
     const wallet = wallets[0];
