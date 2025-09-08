@@ -289,11 +289,12 @@ export class Vault extends Predicate<[]> {
     }
 
     const maxFeeWithPredicateGas = baseMaxFee.add(predicateSuccessFeeDiff);
-    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(12).div(10);
 
-    if (transactionRequest.type === TransactionType.Upgrade) {
-      transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);
-    }
+    // multiplier -> 2.5x for regular transactions and 5x for upgrade transactions
+    const multiplier =
+      transactionRequest.type === TransactionType.Upgrade ? 50 : 25;
+
+    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(multiplier).div(10);
 
     await this.provider.estimateTxDependencies(transactionRequest);
     transactionRequest.witnesses = witnesses;
