@@ -1,34 +1,34 @@
 import {
-  bn,
-  BN,
   Address,
   arrayify,
-  hexlify,
-  Provider,
-  Predicate,
-  ZeroBytes32,
-  TransactionType,
+  bn,
+  BN,
   calculateGasFee,
+  hexlify,
+  Predicate,
+  Provider,
+  ScriptTransactionRequest,
   TransactionRequest,
-  TransactionResponse,
   transactionRequestify,
   TransactionRequestLike,
-  ScriptTransactionRequest,
+  TransactionResponse,
+  TransactionType,
+  ZeroBytes32,
 } from 'fuels';
 
 import {
   Asset,
-  makeSigners,
   FAKE_WITNESSES,
   makeHashPredicate,
+  makeSigners,
 } from '../../utils';
 
 import { VaultConfigurable, VaultTransaction } from './types';
 
 import { ICreateTransactionPayload, PredicateResponse } from '../service';
 
-import { BakoProvider } from '../provider';
 import { loadPredicate } from '../../sway/';
+import { BakoProvider } from '../provider';
 
 /**
  * The `Vault` class is an extension of `Predicate` that manages transactions,
@@ -247,11 +247,19 @@ export class Vault extends Predicate<[]> {
 
     const quantities = transactionRequest
       .getCoinOutputs()
-      .map((o) => ({ assetId: String(o.assetId), amount: bn(o.amount) }));
+      .reduce<Record<string, BN>>((acc, o) => {
+        const assetId = String(o.assetId);
+        const amount = bn(o.amount);
+        acc[assetId] = (acc[assetId] ?? bn(0)).add(amount);
+        return acc;
+      }, {});
+    const accountCoinQuantities = Object.entries(quantities).map(
+      ([assetId, amount]) => ({ assetId, amount }),
+    );
     const { assembledRequest } = await this.provider.assembleTx({
       request: transactionRequest,
       feePayerAccount: this,
-      accountCoinQuantities: quantities,
+      accountCoinQuantities,
     });
     transactionRequest = assembledRequest;
 
@@ -281,11 +289,12 @@ export class Vault extends Predicate<[]> {
     }
 
     const maxFeeWithPredicateGas = baseMaxFee.add(predicateSuccessFeeDiff);
-    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(12).div(10);
 
-    if (transactionRequest.type === TransactionType.Upgrade) {
-      transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);
-    }
+    // multiplier -> 2.5x for regular transactions and 5x for upgrade transactions
+    const multiplier =
+      transactionRequest.type === TransactionType.Upgrade ? 50 : 25;
+
+    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(multiplier).div(10);
 
     await this.provider.estimateTxDependencies(transactionRequest);
     transactionRequest.witnesses = witnesses;
