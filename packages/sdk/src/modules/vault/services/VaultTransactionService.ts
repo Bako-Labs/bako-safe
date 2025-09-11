@@ -1,25 +1,24 @@
 import {
+  type BN,
   bn,
-  BN,
-  ZeroBytes32,
-  TransactionType,
   calculateGasFee,
-  TransactionRequest,
-  TransactionRequestLike,
   ScriptTransactionRequest,
+  type TransactionRequest,
+  type TransactionRequestLike,
+  TransactionType,
   transactionRequestify,
-} from 'fuels';
-
-import { FAKE_WITNESSES } from '../utils/fakeWitness';
-import { Vault } from '../Vault';
-import { BakoProvider } from '../../provider';
-import { ICreateTransactionPayload } from '../../provider/services';
+  ZeroBytes32,
+} from "fuels";
+import { BakoProvider } from "../../provider";
+import type { ICreateTransactionPayload } from "../../provider/services";
+import { FAKE_WITNESSES } from "../utils/fakeWitness";
+import { Vault } from "../Vault";
 
 /**
  * Service responsible for transaction preparation and gas estimation
  */
 export class VaultTransactionService {
-  constructor(private vault: Vault) {}
+  constructor(private vault: Vault) { }
 
   /**
    * Prepares a transaction for the vault by including the fee configuration and predicate data.
@@ -45,16 +44,16 @@ export class VaultTransactionService {
 
     // Define the expected return type for assembleTx
     type AssembleTxResult = { assembledRequest: T };
-    const { assembledRequest } = await this.vault.provider.assembleTx({
+    const { assembledRequest } = (await this.vault.provider.assembleTx({
       request: transactionRequest,
       feePayerAccount: this.vault,
       accountCoinQuantities: quantities,
-    }) as AssembleTxResult;
+    })) as AssembleTxResult;
     transactionRequest = assembledRequest;
 
     let totalGasUsed = bn(0);
     transactionRequest.inputs.forEach((input) => {
-      if ('predicate' in input && input.predicate) {
+      if ("predicate" in input && input.predicate) {
         input.witnessIndex = 0;
         input.predicateGasUsed = undefined;
         totalGasUsed = totalGasUsed.add(predicateGasUsed);
@@ -78,7 +77,9 @@ export class VaultTransactionService {
     }
 
     const maxFeeWithPredicateGas = baseMaxFee.add(predicateSuccessFeeDiff);
-    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(12).div(10);
+    const multiplier =
+      transactionRequest.type === TransactionType.Upgrade ? 50 : 25;
+    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(multiplier).div(10);
 
     if (transactionRequest.type === TransactionType.Upgrade) {
       transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);
@@ -95,7 +96,7 @@ export class VaultTransactionService {
    */
   async processBakoTransfer(
     tx: TransactionRequestLike,
-    options?: Pick<ICreateTransactionPayload, 'name'>,
+    options?: Pick<ICreateTransactionPayload, "name">,
   ): Promise<{
     tx: TransactionRequest;
     hashTxId: string;
@@ -123,23 +124,23 @@ export class VaultTransactionService {
    */
   private async calculateMaxGasUsed(): Promise<BN> {
     const request = new ScriptTransactionRequest();
-    const { versions } = await import('../../../sway');
-    const { Wallet } = await import('../utils/configurable');
+    const { versions } = await import("../../../sway");
+    const { Wallet } = await import("../utils/configurable");
 
     const origin = versions[this.vault.predicateVersion].walletOrigin[0]; // Use first supported wallet type
     const config =
       origin === Wallet.FUEL
         ? {
-            SIGNATURES_COUNT: this.vault.maxSigners,
-            SIGNERS: Array.from(
-              { length: this.vault.maxSigners },
-              () => ZeroBytes32,
-            ),
-            HASH_PREDICATE: ZeroBytes32,
-          }
+          SIGNATURES_COUNT: this.vault.maxSigners,
+          SIGNERS: Array.from(
+            { length: this.vault.maxSigners },
+            () => ZeroBytes32,
+          ),
+          HASH_PREDICATE: ZeroBytes32,
+        }
         : {
-            SIGNER: ZeroBytes32,
-          };
+          SIGNER: ZeroBytes32,
+        };
 
     const vault = new Vault(
       this.vault.provider,
@@ -165,7 +166,7 @@ export class VaultTransactionService {
     await vault.fund(request, transactionCost);
     await vault.provider.estimatePredicates(request);
     const input = request.inputs[0];
-    if ('predicate' in input && input.predicate) {
+    if ("predicate" in input && input.predicate) {
       return bn(input.predicateGasUsed);
     }
 
