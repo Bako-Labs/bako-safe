@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.2.1
+
+### Patch Changes
+
+- 0dcd4db: fix(vault): increase max fee from 1.2x to 2.5x
+
 ## 0.2.0
 
 ### Minor Changes
