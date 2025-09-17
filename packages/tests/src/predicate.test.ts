@@ -20,6 +20,7 @@ import {
   ReceiptType,
   WalletUnlocked,
   arrayify,
+  ZeroBytes32,
 } from 'fuels';
 import { ExampleContract } from './types/sway';
 import { ExampleContractFactory } from './types/sway';
@@ -882,6 +883,49 @@ describe('[Send With]', () => {
         type: SignatureType.Evm,
         signature: await evmWallet.signMessage(arrayify(stringToHex(hashTxId))),
       },
+    ]);
+
+    const result = await vault.send(tx);
+    const response = await result.waitForResult();
+
+    expect(response).toHaveProperty('status', 'success');
+  });
+
+  it('Should process unordered signers', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+
+    const baseAsset = await provider.getBaseAssetId();
+
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [
+        ZeroBytes32,
+        ZeroBytes32,
+        wallet.address.toB256(),
+      ],
+    });
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    const { tx, hashTxId } = await vault.transaction({
+      assets: [
+        {
+          amount: '0.1',
+          assetId: baseAsset,
+          to: wallet.address.toB256(),
+        },
+      ],
+    });
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature: await wallet.signMessage(hashTxId),
+      }
     ]);
 
     const result = await vault.send(tx);

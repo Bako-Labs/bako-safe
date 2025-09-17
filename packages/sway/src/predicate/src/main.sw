@@ -23,6 +23,7 @@ use libraries::{
     },
     utilities::{
         b256_to_ascii_bytes,
+        clear_zero_signers,
     },
     validations::{
         check_duplicated_signers,
@@ -42,6 +43,8 @@ configurable {
 }
 
 fn main() -> bool {
+    let signers = clear_zero_signers(SIGNERS);
+
     let mut i_witnesses = 0;
     let mut verified_signatures: Vec<SignatureAddress> = Vec::with_capacity(MAX_SIGNERS);
 
