@@ -22,6 +22,7 @@ pub fn write_bytes(target_ptr: raw_ptr, src_ptr: raw_ptr, size: u64) {
         mcp target_ptr src_ptr size;
     };
 }
+
 pub fn hash_tx_id(value: Bytes) -> b256 {
     let mut digest = b256::zero();
     asm(value: value.ptr(), size: value.len(), r1: digest) {
@@ -29,6 +30,7 @@ pub fn hash_tx_id(value: Bytes) -> b256 {
     };
     digest
 }
+
 pub fn personal_sign_hash(transaction_id: b256) -> b256 {
     // Hack, allocate memory to reduce manual `asm` code.
     let transaction_id_utf8 = b256_to_ascii_bytes_split(transaction_id);

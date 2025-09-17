@@ -1,29 +1,24 @@
 library;
 
-use std::{
-    b512::B512,
-    vm::evm::{
-        evm_address::EvmAddress,
-    },
-    ops::{
-        PartialEq
-    },
-};
+use std::{b512::B512, ops::PartialEq, vm::evm::evm_address::EvmAddress};
 
 pub enum SignatureType {
     WebAuthn: WebAuthnHeader,
     Fuel: FuelHeader,
     Evm: EvmHeader,
 }
+
 pub struct WebAuthnHeader {
     pub signature: B512,
     pub prefix_size: u64,
     pub suffix_size: u64,
     pub message_data_size: u64,
 }
+
 pub struct FuelHeader {
     pub signature: B512,
 }
+
 pub struct EvmHeader {
     pub signature: B512,
 }

@@ -1,32 +1,16 @@
-
 library;
-
-use std::{
-  b512::B512,
-  bytes::Bytes,
-  hash::*,
-  alloc::alloc,
-};
-
-use ::entities::{
-  WebAuthnHeader,
-};
-
-use ::utilities::{
-  write_bytes,
-};
+use std::{alloc::alloc, b512::B512, bytes::Bytes, hash::*};
+use ::entities::WebAuthnHeader;
+use ::utilities::write_bytes;
 
 /// Get the WebAuthn digest
-
 ///     - params:
 ///         - webauthn: the WebAuthn struct
 ///         - ptr_data: the pointer to the signature
 ///         - tx_id_bytes: the transaction id
-
 ///     - process:
 ///         - recreate the message signed by webauthn.io
 ///         [https://webauthn.io/]
-
 ///     - returns: the digest(message)
 pub fn get_webauthn_digest(
     webauthn: WebAuthnHeader,
@@ -50,7 +34,6 @@ pub fn get_webauthn_digest(
     write_bytes(ptr_bytes_tx, tx_id_bytes.ptr(), tx_id_size);
     write_bytes(ptr_bytes_suffix, ptr_data_suffix, webauthn.suffix_size);
     write_bytes(ptr_bytes_msg, ptr_data_msg, webauthn.message_data_size);
-
     let mut digest = b256::zero();
     asm(
         ptr_bytes: ptr_bytes,
