@@ -27,7 +27,7 @@ export const DEFAULT_ASSET_ID = {
  * - Others use a single signer.
  */
 type Configurable =
-  | { SIGNERS: string[]; SIGNATURES_COUNT: number }
+  | { SIGNERS: string[]; SIGNATURES_COUNT: number; HASH_PREDICATE: string }
   | { SIGNER: string };
 
 /** Narrow Result helper for Promise.allSettled */
@@ -126,9 +126,8 @@ export function loadPredicate(
 
   const v = versions[version];
   if (!v) {
-    const msg = `Predicate version "${version}" not found${
-      wallet ? ` for wallet type "${wallet}"` : ''
-    }.`;
+    const msg = `Predicate version "${version}" not found${wallet ? ` for wallet type "${wallet}"` : ''
+      }.`;
     throw new Error(msg);
   }
 
@@ -206,6 +205,9 @@ export type UsedPredicateVersions = {
  *
  * @param wallet Wallet address (bech32 or b256 convertible).
  * @param providerUrl Fuel provider URL. Defaults to {@link DEFAULT_PROVIDER_URL}.
+ * @param HASH_PREDICATE Optional hash predicate value for deterministic predicate address generation.
+ *                      Defaults to {@link DEFAULT_ASSET_ID.assetId}. When provided, ensures consistent
+ *                      predicate addresses across multiple calls with the same configuration.
  * @returns Array of used predicate version descriptors, sorted by `details.versionTime` desc.
  * @throws Error if there are no compatible versions for the derived wallet type.
  *
@@ -213,9 +215,11 @@ export type UsedPredicateVersions = {
  * const list = await legacyConnectorVersion('0xabc123...');
  * console.log(list[0].version, list[0].predicateAddress);
  */
+
 export async function legacyConnectorVersion(
   wallet: string,
   providerUrl: string = DEFAULT_PROVIDER_URL,
+  HASH_PREDICATE: string = DEFAULT_ASSET_ID.assetId,
 ): Promise<UsedPredicateVersions[]> {
   const type = walletOrigin(wallet);
 
@@ -238,7 +242,7 @@ export async function legacyConnectorVersion(
       const cfg: Configurable = versions[version].walletOrigin.includes(
         Wallet.FUEL,
       )
-        ? { SIGNERS: [signer], SIGNATURES_COUNT: 1 }
+        ? { SIGNERS: [signer], SIGNATURES_COUNT: 1, HASH_PREDICATE }
         : { SIGNER: signer };
 
       const vault = new Vault(provider, cfg, version);

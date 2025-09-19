@@ -384,6 +384,89 @@ describe('[Version]', () => {
     expect(isTypeScript).toBeTruthy();
   });
 
+  it('Should throw an error if no compatible predicate version is found - using legacyConnectorVersion with HASH_PREDICATE', async () => {
+    const { provider, wallets } = node;
+    const wallet = wallets[0];
+    const evm_wallet = ethers.Wallet.createRandom();
+    const EVM_VERSION =
+      '0x967aaa71b3db34acd8104ed1d7ff3900e67cff3d153a0ffa86d85957f579aa6a'; // -> newsest version used in the connector
+    const fixed_hash_predicate = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"; // -> we need to use a fixed hash predicate to get the same predicate address/balance in both vaults
+    const baseAsset = await provider.getBaseAssetId();
+
+    const vault = new Vault(
+      provider,
+      {
+        SIGNERS: [evm_wallet.address],
+        SIGNATURES_COUNT: 1,
+        HASH_PREDICATE: fixed_hash_predicate,
+      },
+      EVM_VERSION,
+    );
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('1'))
+      .then((r) => r.waitForResult());
+
+    const versions = await legacyConnectorVersion(
+      evm_wallet.address,
+      provider.url,
+      fixed_hash_predicate,
+    );
+
+    const aux_vault = new Vault(
+      provider,
+      {
+        SIGNERS: [evm_wallet.address],
+        SIGNATURES_COUNT: 1,
+        HASH_PREDICATE: fixed_hash_predicate,
+      },
+      EVM_VERSION,
+    );
+
+    const balances = [
+      JSON.stringify((await vault.getBalances()).balances),
+      JSON.stringify((await aux_vault.getBalances()).balances),
+    ];
+
+    const selectedVersion = versions.find((v) => v.predicateAddress === vault.address.toB256())
+
+    expect(balances[0]).toBe(balances[1]);
+    expect(versions.length).toBeGreaterThan(0);
+    expect(versions.some(v => v.version === EVM_VERSION)).toBe(true);
+    expect(aux_vault.address.toB256()).toBe(vault.address.toB256());
+    expect(versions.some((v) => v.predicateAddress === vault.address.toB256())).toBe(true);
+    expect(selectedVersion).toBeDefined();
+
+    const { tx, hashTxId } = await vault.transaction({
+      name: 'Test',
+      assets: [
+        {
+          to: wallet.address.toB256(),
+          amount: '0.01',
+          assetId: baseAsset,
+        },
+      ],
+    });
+
+    const signature = await evm_wallet.signMessage(
+      getTxIdEncoded(`0x${hashTxId}`, EVM_VERSION),
+    );
+
+    const compactSignature = encodeSignature(
+      evm_wallet.address,
+      signature,
+      EVM_VERSION,
+    );
+
+    tx.witnesses = [compactSignature];
+    // send
+    const { isStatusSuccess, isTypeScript } = await vault
+      .send(tx)
+      .then((r) => r.waitForResult());
+    expect(isStatusSuccess).toBeTruthy();
+    expect(isTypeScript).toBeTruthy();
+  });
+
   // needs local api to run
   it.skip('Should connect a serverApi with dapp', async () => {
     const BAKO_SERVER_URL = `http://localhost:3333`;
