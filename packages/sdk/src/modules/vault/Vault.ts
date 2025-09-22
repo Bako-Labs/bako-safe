@@ -245,21 +245,9 @@ export class Vault extends Predicate<[]> {
     );
     transactionRequest.witnesses.push(...fakeSignatures);
 
-    const quantities = transactionRequest
-      .getCoinOutputs()
-      .reduce<Record<string, BN>>((acc, o) => {
-        const assetId = String(o.assetId);
-        const amount = bn(o.amount);
-        acc[assetId] = (acc[assetId] ?? bn(0)).add(amount);
-        return acc;
-      }, {});
-    const accountCoinQuantities = Object.entries(quantities).map(
-      ([assetId, amount]) => ({ assetId, amount }),
-    );
     const { assembledRequest } = await this.provider.assembleTx({
       request: transactionRequest,
       feePayerAccount: this,
-      accountCoinQuantities,
     });
     transactionRequest = assembledRequest;
 
@@ -277,6 +265,9 @@ export class Vault extends Predicate<[]> {
       transactionRequest,
     });
 
+    const serializedTxCount = bn(transactionRequest.toTransactionBytes().length);
+    totalGasUsed = totalGasUsed.add(serializedTxCount.mul(64));
+
     const predicateSuccessFeeDiff = calculateGasFee({
       gas: totalGasUsed,
       priceFactor: gasPriceFactor,
@@ -290,9 +281,9 @@ export class Vault extends Predicate<[]> {
 
     const maxFeeWithPredicateGas = baseMaxFee.add(predicateSuccessFeeDiff);
 
-    // multiplier -> 2.5x for regular transactions and 5x for upgrade transactions
+    // multiplier -> 2x for regular transactions and 5x for upgrade transactions
     const multiplier =
-      transactionRequest.type === TransactionType.Upgrade ? 50 : 25;
+      transactionRequest.type === TransactionType.Upgrade ? 50 : 14;
 
     transactionRequest.maxFee = maxFeeWithPredicateGas.mul(multiplier).div(10);
 
@@ -381,6 +372,16 @@ export class Vault extends Predicate<[]> {
     const tx = new ScriptTransactionRequest();
 
     const outputs = Asset.assetsGroupByTo(assets);
+    const coins = Asset.assetsGroupById(assets);
+
+    const transactionCoins = Object.entries(coins).map(([assetId, amount]) => ({
+      assetId,
+      amount,
+    }));
+
+    const add = await this.getResourcesToSpend(transactionCoins);
+
+    tx.addResources(add);
     Object.entries(outputs).map(([, value]) => {
       tx.addCoinOutput(
         Address.fromString(value.to),
@@ -388,6 +389,7 @@ export class Vault extends Predicate<[]> {
         value.assetId,
       );
     });
+    this.populateTransactionPredicateData(tx);
 
     return this.BakoTransfer(tx, { name: params.name });
   }
