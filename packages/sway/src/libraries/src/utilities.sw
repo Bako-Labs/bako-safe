@@ -2,7 +2,7 @@ library;
 
 use std::bytes::Bytes;
 use ::entities::SignedData;
-use ::constants::{ASCII_MAP, ETHEREUM_PREFIX};
+use ::constants::{ASCII_MAP, ETHEREUM_PREFIX, MAX_SIGNERS};
 
 pub fn b256_to_ascii_bytes(val: b256) -> Bytes {
     let bytes = Bytes::from(val);
@@ -78,4 +78,20 @@ pub fn b256_to_ascii_bytes_split(val: b256) -> (b256, b256) {
     asm(ptr: ascii_bytes.ptr()) {
         ptr: (b256, b256)
     }
+}
+
+pub fn clear_zero_signers(signers: [b256; 10]) -> Vec<b256> {
+    let mut i = 0;
+    let mut result: Vec<b256> = Vec::with_capacity(MAX_SIGNERS);
+
+    while i < MAX_SIGNERS {
+        let signer = signers[i];
+        if signer != b256::zero() {
+            result.push(signer);
+        }
+
+        i += 1;
+    }
+
+    result
 }

@@ -187,7 +187,7 @@ export class Vault extends Predicate<[]> {
    * @returns {Promise<BN>} The maximum gas used in the predicate transaction.
    */
   public async maxGasUsed(): Promise<BN> {
-    const request = new ScriptTransactionRequest();
+    let request = new ScriptTransactionRequest();
 
     const vault = new Vault(
       this.provider,
@@ -208,7 +208,7 @@ export class Vault extends Predicate<[]> {
       txCreatedIdx: bn(),
     });
 
-    vault.populateTransactionPredicateData(request);
+    request = vault.populateTransactionPredicateData(request);
     Array.from({ length: this.maxSigners }, () =>
       request.addWitness(FAKE_WITNESSES),
     );
@@ -236,7 +236,7 @@ export class Vault extends Predicate<[]> {
   ): Promise<T> {
     const originalMaxFee = transactionRequest.maxFee;
     const predicateGasUsed = await this.maxGasUsed();
-    this.populateTransactionPredicateData(transactionRequest);
+    transactionRequest = this.populateTransactionPredicateData(transactionRequest);
 
     const witnesses = Array.from(transactionRequest.witnesses);
     const fakeSignatures = Array.from(

@@ -167,23 +167,31 @@ export class Service {
 
   /**
    * Creates a new user session.
+   * @param {string} serverApi - The server API URL.
    * @param {UserCreate} params                 - The user creation payload.
    * @returns {Promise<CreateSessionResponse>}  - The response containing the session code.
    */
-  static async create(params: UserCreate): Promise<CreateSessionResponse> {
-    const {
-      data: { code },
-    } = await api.post('/user', params);
+  static async create(
+    serverApi = defaultConfig.serverUrl,
+    params: UserCreate,
+  ): Promise<CreateSessionResponse> {
+    const api = axios.create({ baseURL: serverApi });
+    const { data } = await api.post('/user', params);
 
-    return { code };
+    return data;
   }
 
   /**
    * Signs in a user.
+   * @param  {string} serverApi - The server API URL
    * @param {SignService} params - The sign-in payload.
    * @returns {Promise<boolean>} - Whether the sign-in was successful.
    */
-  static async sign(params: SignService): Promise<boolean> {
+  static async sign(
+    serverApi = defaultConfig.serverUrl,
+    params: SignService,
+  ): Promise<boolean> {
+    const api = axios.create({ baseURL: serverApi });
     const { data } = await api.post('/auth/sign-in', params);
 
     return !!data;

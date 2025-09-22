@@ -29,6 +29,7 @@ export type BakoProviderSetup = {
   name?: string;
   encoder?: TypeUser;
   provider: string;
+  serverApi: string;
 };
 
 export type BakoProviderAuth = {
