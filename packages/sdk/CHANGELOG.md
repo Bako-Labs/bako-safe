@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.2.3
+
+### Patch Changes
+
+- 17ced0c: fix(tx): increase total gas used based on tx bytes size
+
 ## 0.2.2
 
 ### Patch Changes
