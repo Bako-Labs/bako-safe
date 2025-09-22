@@ -1,4 +1,4 @@
-import { Coder } from '../Coder';
+import { Coder } from '../coder';
 import { SignatureType, SignatureInput } from '../types';
 import { CoderConfigurationFactory } from './CoderConfigurationFactory';
 

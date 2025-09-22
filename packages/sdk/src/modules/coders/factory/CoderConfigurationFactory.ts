@@ -2,7 +2,7 @@ import { BytesLike, concat, hexlify, arrayify, BigNumberCoder } from 'fuels';
 import { splitSignature } from '@ethersproject/bytes';
 import { hexToBytes } from '@ethereumjs/util';
 
-import { Coder } from '../Coder';
+import { Coder } from '../coder';
 import {
   SignatureType,
   SignatureInput,

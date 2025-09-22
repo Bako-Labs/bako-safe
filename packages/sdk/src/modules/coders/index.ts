@@ -15,7 +15,7 @@
  * @module coders
  */
 
-export * from './Coder';
+export * from './coder';
 export * from './types';
 export * from './factory';
 export * from './services';
