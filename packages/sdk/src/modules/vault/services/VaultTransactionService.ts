@@ -38,16 +38,12 @@ export class VaultTransactionService {
     );
     transactionRequest.witnesses.push(...fakeSignatures);
 
-    const quantities = transactionRequest
-      .getCoinOutputs()
-      .map((o) => ({ assetId: String(o.assetId), amount: bn(o.amount) }));
 
     // Define the expected return type for assembleTx
     type AssembleTxResult = { assembledRequest: T };
     const { assembledRequest } = (await this.vault.provider.assembleTx({
       request: transactionRequest,
       feePayerAccount: this.vault,
-      accountCoinQuantities: quantities,
     })) as AssembleTxResult;
     transactionRequest = assembledRequest;
 
