@@ -202,6 +202,16 @@ export class Service {
     return status === 200;
   }
 
+  public async changeAccount(
+    sessionId: string,
+    vault: string,
+  ): Promise<boolean> {
+    const { status } = await this.api.put(
+      `${this.api.defaults.baseURL}/connections/${sessionId}/${vault}`,
+    );
+    return status === 200;
+  }
+
   /**
    * Creates a new user session.
    * @param {UserCreate} params                 - The user creation payload.
@@ -251,4 +261,3 @@ export class Service {
     return data;
   }
 }
-

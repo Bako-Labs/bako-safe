@@ -120,13 +120,23 @@ jest.mock('../../sdk/src/modules/provider/services', () => {
     }),
 
     userWallet: jest.fn().mockResolvedValue({
-      address: 'mocked_vault_address',
+      address:
+        '0x1234567890123456789012345678901234567890123456789012345678901234',
       configurable: JSON.stringify({
         SIGNATURES_COUNT: 1,
-        SIGNERS: ['mocked_signer_address'],
+        SIGNERS: [
+          '0x1234567890123456789012345678901234567890123456789012345678901234',
+        ],
       }),
-      version: 'mocked_version',
+      version:
+        '0x0ec304f98efc18964de98c63be50d2360572a155b16bcb0f3718c685c70a00aa',
     }),
+
+    createDapp: jest.fn().mockResolvedValue('connection-created-successfully'),
+
+    changeAccount: jest.fn().mockResolvedValue(true),
+
+    disconnectDapp: jest.fn().mockResolvedValue(true),
   }));
 
   // @ts-ignore
@@ -611,5 +621,89 @@ describe('[AUTH]', () => {
     const res = await response.wait();
 
     expect(res).toBeDefined();
+  });
+});
+
+describe('[DAPP CONNECTION]', () => {
+  let node: Awaited<ReturnType<typeof launchTestNode>>;
+  let bakoProvider: BakoProvider;
+
+  beforeAll(async () => {
+    node = await launchTestNode({
+      walletsConfig: {
+        assets: [{ value: assets['ETH'] }],
+        coinsPerAsset: 1,
+        amountPerCoin: 10_000_000_000,
+      },
+    });
+
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+
+    const expectedAuth = {
+      address: wallet.address.toB256(),
+      token: getRandomB256(),
+    };
+
+    bakoProvider = await BakoProvider.create(provider.url, {
+      address: expectedAuth.address,
+      token: expectedAuth.token,
+    });
+  });
+
+  afterAll(() => {
+    node.cleanup();
+  });
+
+  it('Should connect a dapp successfully', async () => {
+    const sessionId = 'test-session-123';
+    const origin = 'https://example.com';
+
+    const result = await bakoProvider.connectDapp(sessionId, origin);
+
+    expect(result).toBeDefined();
+    expect(result).toBe('connection-created-successfully');
+  });
+
+  it('Should connect a dapp with default origin when not provided', async () => {
+    const sessionId = 'test-session-456';
+
+    const result = await bakoProvider.connectDapp(sessionId);
+
+    expect(result).toBeDefined();
+    expect(result).toBe('connection-created-successfully');
+  });
+
+  it('Should change account successfully', async () => {
+    const sessionId = 'test-session-789';
+    const vaultId = 'test-vault-123';
+
+    const result = await bakoProvider.changeAccount(sessionId, vaultId);
+
+    expect(result).toBeDefined();
+    expect(result).toBe(true);
+  });
+
+  it('Should disconnect dapp successfully', async () => {
+    const sessionId = 'test-session-disconnect';
+
+    const result = await bakoProvider.disconnect(sessionId);
+
+    expect(result).toBeDefined();
+    expect(result).toBe(true);
+  });
+
+  it('Should retrieve wallet information successfully', async () => {
+    const wallet = await bakoProvider.wallet();
+
+    expect(wallet).toBeDefined();
+    expect(wallet.address).toBeDefined();
+    expect(wallet.configurable).toBeDefined();
+    expect(wallet.configurable.SIGNATURES_COUNT).toBe(1);
+    expect(wallet.configurable.SIGNERS).toContain(
+      '0x1234567890123456789012345678901234567890123456789012345678901234',
+    );
   });
 });

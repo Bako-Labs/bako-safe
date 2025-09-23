@@ -254,6 +254,10 @@ export class BakoProvider extends Provider {
     });
   }
 
+  async changeAccount(sessionId: string, vault: string) {
+    return await this.service.changeAccount(sessionId, vault);
+  }
+
   async disconnect(sessionId: string) {
     return await this.service.disconnectDapp(sessionId);
   }
