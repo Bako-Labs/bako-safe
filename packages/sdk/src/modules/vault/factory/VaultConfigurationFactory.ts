@@ -60,7 +60,8 @@ export class VaultConfigurationFactory {
         SIGNER: makeSigners(params.SIGNER),
       },
       predicateLoader,
-      data: [] as [],
+      // @ts-ignore
+      data: [0],
       version: predicateLoader.version,
     };
   }
