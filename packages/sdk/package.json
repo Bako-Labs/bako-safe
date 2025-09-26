@@ -22,23 +22,25 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@types/elliptic": "^6.4.14",
+    "@types/lodash.partition": "^4.6.9",
     "@types/node": "^16.18.11",
     "@types/ramda": "^0.30.0",
     "@types/uuid": "^9.0.6",
+    "bech32": "^2.0.0",
     "dotenv": "^16.4.1",
     "fuels": "0.101.3",
     "patch-package": "8.0.0",
     "prettier": "3.0.3",
-    "bech32": "^2.0.0",
     "tsup": "^7.2.0",
     "typescript": "~5.4.5"
   },
   "dependencies": {
+    "@ethereumjs/util": "9.0.3",
+    "@ethersproject/bytes": "5.7.0",
     "@noble/curves": "^1.5.0",
     "axios": "^1.5.1",
-    "uuid": "^9.0.1",
-    "@ethereumjs/util": "9.0.3",
-    "@ethersproject/bytes": "5.7.0"
+    "lodash.partition": "^4.6.0",
+    "uuid": "^9.0.1"
   },
   "peerDependencies": {
     "fuels": "^0.101.0"
