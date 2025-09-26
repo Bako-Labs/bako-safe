@@ -4,6 +4,7 @@ import {
   bn,
   BN,
   calculateGasFee,
+  GetAddressTypeResponse,
   hexlify,
   Predicate,
   Provider,
@@ -16,19 +17,19 @@ import {
   ZeroBytes32,
 } from 'fuels';
 
+import { loadPredicate } from '../../sway/';
 import {
+  assembleTransferToContractScript,
   Asset,
   FAKE_WITNESSES,
   makeHashPredicate,
   makeSigners,
 } from '../../utils';
-
-import { VaultConfigurable, VaultTransaction } from './types';
-
+import { BakoProvider } from '../provider';
 import { ICreateTransactionPayload, PredicateResponse } from '../service';
 
-import { loadPredicate } from '../../sway/';
-import { BakoProvider } from '../provider';
+import partition from 'lodash.partition';
+import { VaultConfigurable, VaultTransaction } from './types';
 
 /**
  * The `Vault` class is an extension of `Predicate` that manages transactions,
@@ -42,6 +43,10 @@ export class Vault extends Predicate<[]> {
   readonly maxSigners = 10;
   readonly configurable: VaultConfigurable;
   readonly predicateVersion: string;
+  readonly allowedRecipients: GetAddressTypeResponse[] = [
+    'Account',
+    'Contract',
+  ];
 
   __provider: Provider | BakoProvider;
 
@@ -265,7 +270,9 @@ export class Vault extends Predicate<[]> {
       transactionRequest,
     });
 
-    const serializedTxCount = bn(transactionRequest.toTransactionBytes().length);
+    const serializedTxCount = bn(
+      transactionRequest.toTransactionBytes().length,
+    );
     totalGasUsed = totalGasUsed.add(serializedTxCount.mul(64));
 
     const predicateSuccessFeeDiff = calculateGasFee({
@@ -360,18 +367,30 @@ export class Vault extends Predicate<[]> {
     hashTxId: string;
   }> {
     const { assets } = params;
-    await Promise.all(
+    const assetsWithAddressType = await Promise.all(
       assets.map(async (asset) => {
         const addressType = await this.provider.getAddressType(asset.to);
-        if (addressType !== 'Account') {
-          throw new Error(`Address ${asset.to} is not an Account`);
+        if (!this.allowedRecipients.includes(addressType)) {
+          throw new Error(
+            `Address ${
+              asset.to
+            } is not allowed. Allowed types: ${this.allowedRecipients.join(
+              ', ',
+            )}`,
+          );
         }
+        return { ...asset, addressType };
       }),
     );
 
     const tx = new ScriptTransactionRequest();
 
-    const outputs = Asset.assetsGroupByTo(assets);
+    const [contractOutputs, otherOutputs] = partition(
+      assetsWithAddressType,
+      (asset) => asset.addressType === 'Contract',
+    );
+
+    const outputs = Asset.assetsGroupByTo(otherOutputs);
     const coins = Asset.assetsGroupById(assets);
 
     const transactionCoins = Object.entries(coins).map(([assetId, amount]) => ({
@@ -389,6 +408,21 @@ export class Vault extends Predicate<[]> {
         value.assetId,
       );
     });
+
+    if (contractOutputs.length > 0) {
+      const { script, scriptData } = await assembleTransferToContractScript(
+        contractOutputs.map((output) => ({
+          amount: bn.parseUnits(output.amount),
+          assetId: output.assetId,
+          contractId: output.to,
+        })),
+      );
+
+      tx.script = script;
+      // @ts-ignore - add custom scriptData
+      tx.scriptData = scriptData;
+    }
+
     this.populateTransactionPredicateData(tx);
 
     return this.BakoTransfer(tx, { name: params.name });
