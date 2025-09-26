@@ -1,6 +1,6 @@
 {
   "name": "bakosafe",
-  "version": "0.2.0-beta.6",
+  "version": "0.2.0-beta.8",
   "author": "Bako Labs",
   "description": "A signature validation package built based on sway in the fuel network",
   "main": "dist/index.js",
