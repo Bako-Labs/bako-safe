@@ -1,6 +1,8 @@
 import { arrayify } from 'fuels';
 import { stringToHex } from 'viem';
 import { BYTE_VERSION_LIST, BytesVersion } from '../types';
+import { getTxIdEncoded } from '..';
+import { ENCODING_VERSIONS } from '../utils/versionsByEncode';
 
 /**
  * Service class for encoding operations related to transaction IDs and general encoding tasks.
@@ -12,6 +14,7 @@ export class EncodingService {
   private static readonly BYTE_VERSION_SET = new Set<string>(
     BYTE_VERSION_LIST as readonly string[],
   );
+
 
   /**
    * Encodes a transaction ID based on the predicate version requirements.
@@ -25,6 +28,43 @@ export class EncodingService {
           ? stringToHex(txId.slice(2))
           : stringToHex(txId);
     }
+  }
+
+  /**
+   * Encodes a transaction ID for BakoSafe predicates
+   */
+  private static readonly bakosafeEncode = (txId: string, version: string) => {
+    return this.encodeTxId(txId, version) as string;
+  };
+
+  /**
+   * Encodes a transaction ID for Connector predicates
+   */
+  private static readonly connectorEncode = (txId: string) => {
+    return txId.startsWith('0x') ? txId : `0x${txId}`;
+  };
+
+  /**
+ * Determines the encoding function for a given version
+ */
+  static determineEncodingFunction(version: string): (txId: string) => string {
+    if (ENCODING_VERSIONS.with0xPrefix.includes(version)) {
+      return this.connectorEncode;
+    }
+
+    if (ENCODING_VERSIONS.without0xPrefix.includes(version)) {
+      return (txId: string) => this.bakosafeEncode(txId, version);
+    }
+
+    throw new Error(`Unsupported version: ${version}`);
+  }
+
+  /**
+   * Encodes transaction ID based on version
+   */
+  static encodedMessage(txId: string, version: string): string {
+    const encoded = this.determineEncodingFunction(version)(txId);
+    return encoded;
   }
 
   /**

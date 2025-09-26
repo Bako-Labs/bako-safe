@@ -31,6 +31,7 @@ import { BakoProvider } from '../provider';
 import { CompatibilityService, VaultAssetService, VaultTransactionService } from './services';
 import { VaultConfigurationFactory } from './factory';
 import { Asset } from './assets';
+import { EncodingService } from '../coders';
 
 /**
  * The `Vault` class is an extension of `Predicate` that manages transactions,
@@ -132,8 +133,15 @@ export class Vault extends Predicate<[]> {
   ): Promise<{
     tx: TransactionRequest;
     hashTxId: string;
+    encodedTxId: string;
   }> {
-    return this.transactionService.processBakoTransfer(tx, options);
+    const result = await this.transactionService.processBakoTransfer(tx, options);
+    const encodedTxId = EncodingService.encodedMessage(result.hashTxId, this.predicateVersion);
+
+    return {
+      ...result,
+      encodedTxId
+    };
   }
 
   /**
