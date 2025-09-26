@@ -65,7 +65,7 @@ export class CompatibilityService {
         const bakoConfig = parsedConfig as any; // Type assertion for BAKO config
         if (bakoConfig.SIGNERS && Array.isArray(bakoConfig.SIGNERS)) {
           for (const signer of bakoConfig.SIGNERS.filter(
-            (s: string) => s != ZeroBytes32,
+            (s: string) => s !== ZeroBytes32,
           )) {
             const walletType = walletOrigin(signer);
             if (!versionDetails.walletOrigin.includes(walletType)) {
