@@ -9,6 +9,8 @@ import { WebAuthn } from './utils';
 import { Address, Wallet, hexlify, arrayify, BigNumberCoder } from 'fuels';
 import { accounts } from './mocks';
 import { ethers } from 'ethers';
+import { EncodingService } from '../../sdk/src/modules/coders/services/EncodingService';
+import { ENCODING_VERSIONS } from '../../sdk/src/modules/coders/utils/versionsByEncode';
 
 const LEGACY_FUEL_PREDICATE_VERSION =
   '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
@@ -284,5 +286,24 @@ describe('[SIGNATURE ENCODER]', () => {
 
     // Mas devem ser diferentes por causa das assinaturas diferentes
     expect(new Set(encoded)).toHaveProperty('size', 3);
+  });
+});
+
+describe('[ENCODING SERVICE - PREFIX 0x BEHAVIOR]', () => {
+  const testTxId = '0x1234567890abcdef1234567890abcdef12345678';
+  it('Should use connectorEncode function for with0xPrefix versions', () => {
+    ENCODING_VERSIONS.with0xPrefix.forEach((version) => {
+      const result = EncodingService.encodedMessage(testTxId, version);
+      const expectedResult = EncodingService.connectorEncode(testTxId);
+      expect(result).toBe(expectedResult);
+    });
+  });
+
+  it('Should use bakosafeEncode function for without0xPrefix versions', () => {
+    ENCODING_VERSIONS.without0xPrefix.forEach((version) => {
+      const result = EncodingService.encodedMessage(testTxId, version);
+      const expectedResult = EncodingService.bakosafeEncode(testTxId, version);
+      expect(result).toBe(expectedResult);
+    });
   });
 });

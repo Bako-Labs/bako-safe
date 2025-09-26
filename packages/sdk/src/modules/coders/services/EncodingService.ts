@@ -33,14 +33,14 @@ export class EncodingService {
   /**
    * Encodes a transaction ID for BakoSafe predicates
    */
-  private static readonly bakosafeEncode = (txId: string, version: string) => {
+  static bakosafeEncode = (txId: string, version: string) => {
     return this.encodeTxId(txId, version) as string;
   };
 
   /**
    * Encodes a transaction ID for Connector predicates
    */
-  private static readonly connectorEncode = (txId: string) => {
+  static connectorEncode = (txId: string) => {
     return txId.startsWith('0x') ? txId : `0x${txId}`;
   };
 
