@@ -1,6 +1,7 @@
-import { VaultConfigurable, ConfigVaultType } from '../types';
+import { ZeroBytes32 } from 'fuels';
+import { ConfigVaultType, VaultConfigurable } from '../types';
 import { parseConfig } from '../utils';
-import { Wallet, walletOrigin } from '../utils/configurable';
+import { walletOrigin } from '../utils/configurable';
 
 /**
  * Service responsible for vault configuration compatibility validation
@@ -63,7 +64,9 @@ export class CompatibilityService {
         // Para configuração BAKO, verificar se todos os endereços são compatíveis
         const bakoConfig = parsedConfig as any; // Type assertion for BAKO config
         if (bakoConfig.SIGNERS && Array.isArray(bakoConfig.SIGNERS)) {
-          for (const signer of bakoConfig.SIGNERS) {
+          for (const signer of bakoConfig.SIGNERS.filter(
+            (s: string) => s !== ZeroBytes32,
+          )) {
             const walletType = walletOrigin(signer);
             if (!versionDetails.walletOrigin.includes(walletType)) {
               throw new Error(
