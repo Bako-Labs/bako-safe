@@ -33,6 +33,10 @@ export const formatTransferToContractScriptData = (
   }, new Uint8Array());
 };
 
+/**
+ * TODO: Import this function from the fuels package once the new release is available.
+ * https://github.com/FuelLabs/fuels-ts/pull/3936
+ */
 export const assembleTransferToContractScript = async (
   transferParams: Array<AssembleTransferToContractParams>,
 ) => {
