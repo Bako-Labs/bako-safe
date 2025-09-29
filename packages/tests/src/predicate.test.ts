@@ -604,7 +604,7 @@ describe('[Transactions]', () => {
     });
 
     const fuelSignature = await wallet.signMessage(hashTxId);
-    const evnSignature = await evmWallet.signMessage(
+    const evmSignature = await evmWallet.signMessage(
       arrayify(stringToHex(hashTxId)),
     );
 
@@ -615,7 +615,7 @@ describe('[Transactions]', () => {
       },
       {
         type: SignatureType.Evm,
-        signature: evnSignature,
+        signature: evmSignature,
       },
     ]);
 
