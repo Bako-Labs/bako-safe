@@ -21,8 +21,7 @@ export const formatTransferToContractScriptData = (
   transferParams: Array<AssembleTransferToContractParams>,
 ) => {
   const numberCoder = new BigNumberCoder('u64');
-  // @ts-ignore create a custom script data --- IGNORE ---
-  return transferParams.reduce((acc, transferParam) => {
+  return transferParams.reduce<Uint8Array>((acc, transferParam) => {
     const { assetId, amount, contractId } = transferParam;
     const encoded = numberCoder.encode(amount);
     const scriptData = concat([
