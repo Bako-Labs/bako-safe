@@ -1,4 +1,4 @@
-import { VaultConfig, Wallet } from 'bakosafe';
+import { VaultConfig, Version, Wallet } from 'bakosafe';
 import { ZeroBytes32 } from 'fuels';
 import { CompatibilityService } from '../../sdk/src/modules/vault/services/CompatibilityService';
 import { ConfigVaultType } from '../../sdk/src/modules/vault/types';
@@ -26,7 +26,10 @@ const mockWalletOrigin = walletOrigin as jest.MockedFunction<
   typeof walletOrigin
 >;
 const mockGetAllVersionsDetails = jest.requireMock('../../sdk/src/sway')
-  .getAllVersionsDetails as jest.MockedFunction<() => Record<string, any>>;
+  .getAllVersionsDetails as jest.MockedFunction<
+  () => Record<string, Partial<Version>>
+>;
+
 const walletFuel = WalletEnum.FUEL;
 const walletEvm = WalletEnum.EVM;
 
