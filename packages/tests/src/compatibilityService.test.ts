@@ -1,4 +1,4 @@
-import { VaultConfig } from 'bakosafe';
+import { VaultConfig, Wallet } from 'bakosafe';
 import { ZeroBytes32 } from 'fuels';
 import { CompatibilityService } from '../../sdk/src/modules/vault/services/CompatibilityService';
 import { ConfigVaultType } from '../../sdk/src/modules/vault/types';
@@ -14,14 +14,7 @@ jest.mock('../../sdk/src/modules/vault/utils', () => ({
 
 jest.mock('../../sdk/src/modules/vault/utils/configurable', () => ({
   walletOrigin: jest.fn(),
-  Wallet: {
-    FUEL: 'fuel',
-    EVM: 'evm',
-    SVM: 'svm',
-    WEBAUTHN: 'webauthn',
-    BAKO: 'bako',
-    CONNECTOR: 'connector',
-  } as const,
+  Wallet,
 }));
 
 jest.mock('../../sdk/src/sway', () => ({
