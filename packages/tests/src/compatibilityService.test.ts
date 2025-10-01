@@ -194,7 +194,7 @@ describe('CompatibilityService', () => {
       mockParseConfig.mockReturnValue({
         type: ConfigVaultType.CONNECTOR,
         SIGNER: '0xabc',
-      } as any);
+      } satisfies VaultConfig);
 
       mockGetAllVersionsDetails.mockReturnValue({});
       mockWalletOrigin.mockReturnValue(walletFuel);
@@ -210,7 +210,7 @@ describe('CompatibilityService', () => {
       mockParseConfig.mockReturnValue({
         type: ConfigVaultType.CONNECTOR,
         SIGNER: '0x123',
-      } as any);
+      } satisfies VaultConfig);
 
       mockGetAllVersionsDetails.mockReturnValue({
         [version]: { walletOrigin: ['fuel', 'evm'] },
