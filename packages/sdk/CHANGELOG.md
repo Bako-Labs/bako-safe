@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.3.0
+
+### Minor Changes
+
+- 90a6c0c: add smart contract transfer support to vault
+
 ## 0.2.3
 
 ### Patch Changes
