@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "keyofStringsOnly": true,
     "ignoreDeprecations": "5.0",
     "allowSyntheticDefaultImports": true,
     "downlevelIteration": true,
@@ -20,18 +19,17 @@
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
-    "suppressImplicitAnyIndexErrors": true,
     "target": "es2020",
     "outDir": "./dist",
     "baseUrl": ".",
-    "rootDir": "./"
+    "rootDir": "./src"
   },
   "ts-node": {
     "compilerOptions": {
       "module": "commonjs"
     }
   },
-  "include": ["**/*.ts", "../sway/fuels.config.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": [
     "**/*.test.ts",
     "**/dist",

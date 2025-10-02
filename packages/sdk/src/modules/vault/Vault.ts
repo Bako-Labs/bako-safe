@@ -21,32 +21,25 @@ import { VaultConfigurable, VaultTransaction, VaultConfig } from './types';
 import {
   FAKE_WITNESSES,
   parseConfig,
+  assembleTransferToContractScript,
 } from './utils';
 
+import {
+  ICreateTransactionPayload,
+  PredicateResponse,
+} from '../provider/services';
 
-
-import { ICreateTransactionPayload, PredicateResponse } from '../provider/services';
-
-import { loadPredicate } from '../../sway/';
 import { BakoProvider } from '../provider';
-import { CompatibilityService, VaultAssetService, VaultTransactionService } from './services';
+import {
+  CompatibilityService,
+  VaultAssetService,
+  VaultTransactionService,
+} from './services';
 import { VaultConfigurationFactory } from './factory';
 import { Asset } from './assets';
 import { EncodingService } from '../coders';
-import { loadPredicate } from '../../sway/';
-import {
-  assembleTransferToContractScript,
-  Asset,
-  FAKE_WITNESSES,
-  makeHashPredicate,
-  makeSigners,
-} from '../../utils';
-import { BakoProvider } from '../provider';
-import { ICreateTransactionPayload, PredicateResponse } from '../service';
 
 import partition from 'lodash.partition';
-import { VaultConfigurable, VaultTransaction } from './types';
-
 
 /**
  * The `Vault` class is an extension of `Predicate` that manages transactions,
@@ -154,12 +147,18 @@ export class Vault extends Predicate<[]> {
     hashTxId: string;
     encodedTxId: string;
   }> {
-    const result = await this.transactionService.processBakoTransfer(tx, options);
-    const encodedTxId = EncodingService.encodedMessage(result.hashTxId, this.predicateVersion);
+    const result = await this.transactionService.processBakoTransfer(
+      tx,
+      options,
+    );
+    const encodedTxId = EncodingService.encodedMessage(
+      result.hashTxId,
+      this.predicateVersion,
+    );
 
     return {
       ...result,
-      encodedTxId
+      encodedTxId,
     };
   }
 
@@ -410,7 +409,7 @@ export class Vault extends Predicate<[]> {
 
     const [contractOutputs, otherOutputs] = partition(
       assetsWithAddressType,
-      (asset) => asset.addressType === 'Contract',
+      (asset: any) => asset.addressType === 'Contract',
     );
 
     const outputs = Asset.assetsGroupByTo(otherOutputs);
@@ -434,7 +433,7 @@ export class Vault extends Predicate<[]> {
 
     if (contractOutputs.length > 0) {
       const { script, scriptData } = await assembleTransferToContractScript(
-        contractOutputs.map((output) => ({
+        contractOutputs.map((output: any) => ({
           amount: bn.parseUnits(output.amount),
           assetId: output.assetId,
           contractId: output.to,

@@ -38,18 +38,13 @@
     "@ethereumjs/util": "9.0.3",
     "@ethersproject/bytes": "5.7.0",
     "@noble/curves": "^1.5.0",
-<<<<<<< HEAD
     "@noble/secp256k1": "^2.3.0",
-    "axios": "^1.5.1",
     "build": "^0.1.4",
     "pnpm": "^10.13.1",
-    "uuid": "^9.0.1",
-    "viem": "^2.30.6"
-=======
+    "viem": "^2.30.6",
     "axios": "^1.5.1",
     "lodash.partition": "^4.6.0",
     "uuid": "^9.0.1"
->>>>>>> d17ced32585d53bce2fec7ce88cccb4f0feb470b
   },
   "peerDependencies": {
     "fuels": "^0.101.0"
