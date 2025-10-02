@@ -1,29 +1,28 @@
 import { deployPredicate, WebAuthn } from './utils';
 
 import {
-  BakoError,
-  ErrorCodes,
-  Vault,
   bakoCoder,
-  SignatureType,
+  BakoError,
   DEFAULT_PREDICATE_VERSION,
+  ErrorCodes,
+  SignatureType,
+  Vault,
 } from 'bakosafe';
 import { ethers } from 'ethers';
 import { stringToHex } from 'viem';
 
-import { accounts, assets, networks } from './mocks';
 import {
   Address,
+  arrayify,
   bn,
   getRandomB256,
   Provider,
   ReceiptType,
   WalletUnlocked,
-  arrayify,
 } from 'fuels';
-import { ExampleContract } from './types/sway';
-import { ExampleContractFactory } from './types/sway';
 import { launchTestNode } from 'fuels/test-utils';
+import { accounts, assets, networks } from './mocks';
+import { ExampleContract, ExampleContractFactory } from './types/sway';
 
 const createTestAsset = (assetId: string) => ({ value: assetId });
 const testAssets = [
@@ -136,11 +135,7 @@ describe('[Create]', () => {
             },
           ],
         }),
-    ).rejects.toThrowError(
-      expect.objectContaining({
-        message: expect.stringContaining('is not an Account'),
-      }),
-    );
+    ).rejects.toThrow(/Allowed types: Account, Contract/);
   });
 
   it('Should reinstantiate the Vault successfully', async () => {
@@ -480,6 +475,168 @@ describe('[Transactions]', () => {
 
     // expect
     expect(callResponse.value.toHex()).toEqual('0x7');
+  });
+
+  it('should process simple transaction to contract', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+    const address = wallet.address.toB256();
+    const baseAsset = await provider.getBaseAssetId();
+    const evmWallet = ethers.Wallet.createRandom();
+
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 2,
+      SIGNERS: [address, evmWallet.address],
+    });
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.5'))
+      .then((r) => r.waitForResult());
+
+    const contractDeployed = await ExampleContractFactory.deploy(wallet);
+    const { contract } = await contractDeployed.waitForResult();
+
+    const contractBalance = await contract.getBalance(baseAsset);
+    expect(contractBalance.isZero()).toBeTruthy();
+
+    const amountToSend = bn.parseUnits('0.1');
+
+    const { hashTxId, tx } = await vault.transaction({
+      name: 'Tx for contract',
+      assets: [
+        {
+          to: contract.id.toString(),
+          assetId: baseAsset,
+          amount: amountToSend.format(),
+        },
+      ],
+    });
+
+    const fuelSignature = await wallet.signMessage(hashTxId);
+    const evmSignature = await evmWallet.signMessage(
+      arrayify(stringToHex(hashTxId)),
+    );
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature: fuelSignature,
+      },
+      {
+        type: SignatureType.Evm,
+        signature: evmSignature,
+      },
+    ]);
+
+    const { isStatusSuccess, isTypeScript } = await vault
+      .send(tx)
+      .then((r) => r.waitForResult());
+
+    const finalContractBalance = await contract.getBalance(baseAsset);
+
+    expect(isStatusSuccess).toBeTruthy();
+    expect(isTypeScript).toBeTruthy();
+    expect(finalContractBalance.eq(amountToSend)).toBeTruthy();
+  });
+
+  it('should process a transaction to contract and address', async () => {
+    const {
+      provider,
+      wallets: [wallet, receipt],
+    } = node;
+    const address = wallet.address.toB256();
+    const baseAsset = await provider.getBaseAssetId();
+    const evmWallet = ethers.Wallet.createRandom();
+    const receiptAddress = receipt.address.toB256();
+
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 2,
+      SIGNERS: [address, evmWallet.address],
+    });
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.6'))
+      .then((r) => r.waitForResult());
+
+    const [contractDeployed, contractDeployed2] = await Promise.all([
+      ExampleContractFactory.deploy(wallet),
+      ExampleContractFactory.deploy(receipt),
+    ]);
+
+    const [{ contract }, { contract: contract2 }] = await Promise.all([
+      contractDeployed.waitForResult(),
+      contractDeployed2.waitForResult(),
+    ]);
+
+    const [receiptInitialBalance, contractBalance, contract2Balance] =
+      await Promise.all([
+        receipt.getBalance(baseAsset),
+        contract.getBalance(baseAsset),
+        contract2.getBalance(baseAsset),
+      ]);
+
+    expect(contractBalance.isZero()).toBeTruthy();
+    expect(contract2Balance.isZero()).toBeTruthy();
+
+    const amountToSend = bn.parseUnits('0.1');
+
+    const { hashTxId, tx } = await vault.transaction({
+      name: 'Tx for contract',
+      assets: [
+        {
+          to: contract.id.toString(),
+          assetId: baseAsset,
+          amount: amountToSend.format(),
+        },
+        {
+          to: receiptAddress,
+          assetId: baseAsset,
+          amount: amountToSend.format(),
+        },
+        {
+          to: contract2.id.toString(),
+          assetId: baseAsset,
+          amount: amountToSend.format(),
+        },
+      ],
+    });
+
+    const fuelSignature = await wallet.signMessage(hashTxId);
+    const evmSignature = await evmWallet.signMessage(
+      arrayify(stringToHex(hashTxId)),
+    );
+
+    tx.witnesses = bakoCoder.encode([
+      {
+        type: SignatureType.Fuel,
+        signature: fuelSignature,
+      },
+      {
+        type: SignatureType.Evm,
+        signature: evmSignature,
+      },
+    ]);
+
+    const { isStatusSuccess, isTypeScript } = await vault
+      .send(tx)
+      .then((r) => r.waitForResult());
+
+    const [finalContractBalance, finalContract2Balance, receiptBalance] =
+      await Promise.all([
+        contract.getBalance(baseAsset),
+        contract2.getBalance(baseAsset),
+        receipt.getBalance(baseAsset),
+      ]);
+
+    expect(isStatusSuccess).toBeTruthy();
+    expect(isTypeScript).toBeTruthy();
+    expect(finalContractBalance.eq(amountToSend)).toBeTruthy();
+    expect(
+      receiptBalance.eq(receiptInitialBalance.add(amountToSend)),
+    ).toBeTruthy();
+    expect(finalContract2Balance.eq(amountToSend)).toBeTruthy();
   });
 });
 

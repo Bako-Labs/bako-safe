@@ -60,7 +60,10 @@ importers:
         version: 1.5.0
       axios:
         specifier: '>=1.7.4'
-        version: 1.11.0
+        version: 1.12.2
+      lodash.partition:
+        specifier: ^4.6.0
+        version: 4.6.0
       uuid:
         specifier: ^9.0.1
         version: 9.0.1
@@ -68,6 +71,9 @@ importers:
       '@types/elliptic':
         specifier: ^6.4.14
         version: 6.4.14
+      '@types/lodash.partition':
+        specifier: ^4.6.9
+        version: 4.6.9
       '@types/node':
         specifier: ^16.18.11
         version: 16.18.104
@@ -131,7 +137,7 @@ importers:
         version: 1.5.0
       axios:
         specifier: '>=1.7.4'
-        version: 1.11.0
+        version: 1.12.2
       bakosafe:
         specifier: workspace:*
         version: link:../sdk
@@ -1313,6 +1319,12 @@ packages:
   '@types/jest@29.5.13':
     resolution: {integrity: sha512-wd+MVEZCHt23V0/L642O5APvspWply/rGY5BcW4SUETo2UzPU3Z26qr8jC2qxpimI2jjx9h7+2cj2FwIr01bXg==}
 
+  '@types/lodash.partition@4.6.9':
+    resolution: {integrity: sha512-ANgnHyTw/C07oHr/8/jzoc1BlZZFRafAyDvc04Z8qR1IvWZpAGB8aHPUkd0UCgJWOauqoCsILhvPLXKsTc4rXQ==}
+
+  '@types/lodash@4.17.20':
+    resolution: {integrity: sha512-H3MHACvFUEiujabxhaI/ImO6gUrd8oOurg7LQtS7mbwIXA/cUqWrvBsaeJ23aZEPk1TAYkurjfMbSELfoCXlGA==}
+
   '@types/mocha@10.0.1':
     resolution: {integrity: sha512-/fvYntiO1GeICvqbQ3doGDIP97vWmvFt83GKguJ6prmQM2iXZfFcq6YE8KteFyRtX2/h5Hf91BYvPodJKFYv5Q==}
 
@@ -1466,8 +1478,8 @@ packages:
     resolution: {integrity: sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==}
     engines: {node: '>= 4.0.0'}
 
-  axios@1.11.0:
-    resolution: {integrity: sha512-1Lx3WLFQWm3ooKDYZD1eXmoGO9fxYQjrycfHFC8P0sCfQVXyROp0p9PFWBehewBOdCwHc+f/b8I0fMto5eSfwA==}
+  axios@1.12.2:
+    resolution: {integrity: sha512-vMJzPewAlRyOgxV2dU0Cuz2O8zzzx9VYtbJOaBgXFeLc4IV/Eg50n4LowmehOOR61S8ZMpc2K5Sa7g6A4jfkUw==}
 
   babel-jest@29.7.0:
     resolution: {integrity: sha512-BrvGY3xZSwEcCzKvKsCi2GgHqDqsYkOP4/by5xCgIwGXQxIEh+8ew3gmrE1y7XRR6LHZIj6yLYnUi/mm2KXKBg==}
@@ -2353,6 +2365,9 @@ packages:
 
   lodash.memoize@4.1.2:
     resolution: {integrity: sha512-t7j+NzmgnQzTAYXcsHYLgimltOV1MXHtlOWf6GjL9Kj8GK5FInw5JotxvbOs+IvV1/Dzo04/fCGfLVs7aXb4Ag==}
+
+  lodash.partition@4.6.0:
+    resolution: {integrity: sha512-35L3dSF3Q6V1w5j6V3NhNlQjzsRDC/pYKCTdYTmwqSib+Q8ponkAmt/PwEOq3EmI38DSCl+SkIVwLd+uSlVdrg==}
 
   lodash.sortby@4.7.0:
     resolution: {integrity: sha512-HDWXG8isMntAyRF5vZ7xKuEvOhT4AhlRt/3czTSjvGUxjYCBVRQY48ViDHyfYz9VIoBkW4TMGQNapx+l3RUwdA==}
@@ -4647,6 +4662,12 @@ snapshots:
       expect: 29.7.0
       pretty-format: 29.7.0
 
+  '@types/lodash.partition@4.6.9':
+    dependencies:
+      '@types/lodash': 4.17.20
+
+  '@types/lodash@4.17.20': {}
+
   '@types/mocha@10.0.1': {}
 
   '@types/node-fetch@2.6.11':
@@ -4791,7 +4812,7 @@ snapshots:
 
   at-least-node@1.0.0: {}
 
-  axios@1.11.0:
+  axios@1.12.2:
     dependencies:
       follow-redirects: 1.15.11
       form-data: 4.0.4
@@ -5652,7 +5673,7 @@ snapshots:
 
   jest-axios@0.2.1:
     dependencies:
-      axios: 1.11.0
+      axios: 1.12.2
       lodash: 4.17.21
     transitivePeerDependencies:
       - debug
@@ -6053,6 +6074,8 @@ snapshots:
   lodash.camelcase@4.3.0: {}
 
   lodash.memoize@4.1.2: {}
+
+  lodash.partition@4.6.0: {}
 
   lodash.sortby@4.7.0: {}
 
