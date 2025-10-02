@@ -16,6 +16,7 @@ import {
   UserAuthResponse,
   CLIAuthPayload,
   CLIAuth,
+  IDAPPCreateRequest,
 } from './types';
 
 // keep here to sync with the other files
@@ -165,15 +166,64 @@ export class Service {
     return !!data;
   }
 
+  public async userWallet(): Promise<{
+    address: string;
+    configurable: string;
+    version: string;
+  }> {
+    const { data } = await this.api.get('/user/wallet');
+    return data;
+  }
+
+  public setCredentials({
+    address,
+    token,
+    serverApi = defaultConfig.serverUrl,
+  }: AuthService): void {
+    this.api.defaults.baseURL = serverApi;
+    if (address && token) {
+      this.api.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS] = address;
+      this.api.defaults.headers[AuthRequestHeaders.AUTHORIZATION] = token;
+      return;
+    }
+    delete this.api.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS];
+    delete this.api.defaults.headers[AuthRequestHeaders.AUTHORIZATION];
+  }
+
+  public async createDapp(dapp: IDAPPCreateRequest): Promise<string> {
+    const { data } = await this.api.post('/connections', dapp);
+    return data;
+  }
+
+  public async disconnectDapp(sessionId: string): Promise<boolean> {
+    const { status } = await this.api.delete(`/connections/${sessionId}`);
+    this.setCredentials({});
+
+    return status === 200;
+  }
+
+  public async changeAccount(
+    sessionId: string,
+    vault: string,
+  ): Promise<boolean> {
+    const { status } = await this.api.put(
+      `${this.api.defaults.baseURL}/connections/${sessionId}/${vault}`,
+    );
+    return status === 200;
+  }
+
   /**
    * Creates a new user session.
    * @param {UserCreate} params                 - The user creation payload.
    * @returns {Promise<CreateSessionResponse>}  - The response containing the session code.
    */
-  static async create(params: UserCreate): Promise<CreateSessionResponse> {
+  static async create(
+    params: UserCreate,
+    _api: AxiosInstance = api,
+  ): Promise<CreateSessionResponse> {
     const {
       data: { code },
-    } = await api.post('/user', params);
+    } = await _api.post('/user', params);
 
     return { code };
   }
@@ -183,10 +233,18 @@ export class Service {
    * @param {SignService} params - The sign-in payload.
    * @returns {Promise<boolean>} - Whether the sign-in was successful.
    */
-  static async sign(params: SignService): Promise<boolean> {
-    const { data } = await api.post('/auth/sign-in', params);
-
-    return !!data;
+  static async sign(
+    params: SignService,
+    _api: AxiosInstance = api,
+  ): Promise<{
+    user: string;
+    rootWallet: string;
+  }> {
+    const { data } = await _api.post('/auth/sign-in', params);
+    return {
+      user: data.user_id,
+      rootWallet: data.rootWallet,
+    };
   }
 
   /**

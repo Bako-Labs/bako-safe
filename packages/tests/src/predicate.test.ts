@@ -4,11 +4,21 @@ import {
   bakoCoder,
   BakoError,
   DEFAULT_PREDICATE_VERSION,
+  getCompatiblePredicateVersions,
+  Wallet as WalletType,
+  getAllPredicateVersions,
+  legacyConnectorVersion,
+  BakoProvider,
+  TypeUser,
+  encodeSignature,
+  getTxIdEncoded,
   ErrorCodes,
   SignatureType,
   Vault,
 } from 'bakosafe';
 import { ethers } from 'ethers';
+import { hexToBytes } from '@ethereumjs/util';
+import { splitSignature } from '@ethersproject/bytes';
 import { stringToHex } from 'viem';
 
 import {
@@ -45,7 +55,7 @@ describe('[Create]', () => {
       },
     });
 
-    await deployPredicate(node.wallets[0]);
+    await deployPredicate(node.wallets[0], true);
   });
 
   afterAll(() => {
@@ -176,7 +186,7 @@ describe('[Version]', () => {
       },
     });
 
-    await deployPredicate(node.wallets[0]);
+    await deployPredicate(node.wallets[0], true);
   });
 
   afterAll(() => {
@@ -242,8 +252,366 @@ describe('[Version]', () => {
       );
     }).toThrow({
       name: 'Error',
-      message: `Version ${version} not found`,
+      message: `Predicate version "${version}" not found for wallet type "${WalletType.FUEL}".`,
     });
+  });
+
+  it('Shoud instantiate legacy predicate', async () => {
+    const { provider, wallets } = node;
+    const evmWallet = ethers.Wallet.createRandom();
+    const wallet = wallets[0];
+
+    const predicate = new Vault(provider, {
+      SIGNER: evmWallet.address,
+    });
+
+    // await expect(async () => {
+    //   new Vault(provider, {
+    //     SIGNER: wallet.address.toB256(),
+    //   });
+    // }).rejects.toThrow(
+    //   'No compatible predicate version with this configurable found for wallet type fuel',
+    // );
+
+    const predicate_bako_version = new Vault(provider, {
+      SIGNERS: [wallet.address.toB256()],
+      SIGNATURES_COUNT: 1,
+    });
+
+    expect(predicate).toBeInstanceOf(Vault);
+    expect(predicate_bako_version).toBeInstanceOf(Vault);
+  });
+
+  it('Should get the compatible predicate version', async () => {
+    const versions = getAllPredicateVersions();
+
+    const compatible_evm = getCompatiblePredicateVersions(WalletType.EVM);
+    expect(compatible_evm.length).toBeGreaterThan(0);
+    expect(versions).toEqual(expect.arrayContaining(compatible_evm));
+
+    const compatible_svm = getCompatiblePredicateVersions(WalletType.EVM);
+    expect(compatible_svm.length).toBeGreaterThan(0);
+    expect(versions).toEqual(expect.arrayContaining(compatible_svm));
+
+    const compatible_fuel = getCompatiblePredicateVersions(WalletType.FUEL);
+    expect(compatible_fuel.length).toBeGreaterThan(0);
+    expect(versions).toEqual(expect.arrayContaining(compatible_fuel));
+  });
+
+  // send balance to vault with evm address(connector)
+  // get this version with legacyConnectorVersion
+  // instance Vault with this version
+  // ref:
+  //github.com/FuelLabs/fuels-ts/blob/e0e44221c489469e2bfa9467a138a04e4a4b906e/packages/account/src/utils/deployScriptOrPredicate.ts#L41
+
+  // notes:
+  // - Only the version 0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938 works because in it I have my predicate not deployed
+  it('Should throw an error if no compatible predicate version is found', async () => {
+    const { provider, wallets } = node;
+    const wallet = wallets[0];
+    const evm_wallet = ethers.Wallet.createRandom();
+    const EVM_VERSION =
+      '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938'; // -> working
+    const baseAsset = await provider.getBaseAssetId();
+
+    const vault = new Vault(
+      provider,
+      {
+        SIGNER: new Address(evm_wallet.address).toB256(),
+      },
+      EVM_VERSION,
+    );
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    const versions = await legacyConnectorVersion(
+      evm_wallet.address,
+      provider.url,
+    );
+
+    const aux_vault = new Vault(
+      provider,
+      {
+        SIGNER: evm_wallet.address,
+      },
+      EVM_VERSION,
+    );
+
+    const balances = [
+      JSON.stringify((await vault.getBalances()).balances),
+      JSON.stringify((await aux_vault.getBalances()).balances),
+    ];
+
+    expect(balances[0]).toBe(balances[1]);
+    expect(versions.length).toBeGreaterThan(0);
+    expect(versions[0].version).toBe(EVM_VERSION);
+    expect(aux_vault.address.toB256()).toBe(vault.address.toB256());
+
+    const { tx, hashTxId } = await vault.transaction({
+      name: 'Test',
+      assets: [
+        {
+          to: wallet.address.toB256(),
+          amount: '0.1',
+          assetId: baseAsset,
+        },
+      ],
+    });
+
+    const signature = await evm_wallet.signMessage(
+      getTxIdEncoded(`0x${hashTxId}`, EVM_VERSION),
+    );
+
+    const compactSignature = encodeSignature(
+      evm_wallet.address,
+      signature,
+      EVM_VERSION,
+    );
+
+    tx.witnesses = [compactSignature];
+    // send
+    const { isStatusSuccess, isTypeScript } = await vault
+      .send(tx)
+      .then((r) => r.waitForResult());
+    expect(isStatusSuccess).toBeTruthy();
+    expect(isTypeScript).toBeTruthy();
+  });
+
+  it('Should throw an error if no compatible predicate version is found - using legacyConnectorVersion with HASH_PREDICATE', async () => {
+    const { provider, wallets } = node;
+    const wallet = wallets[0];
+    const evm_wallet = ethers.Wallet.createRandom();
+    const EVM_VERSION =
+      '0x967aaa71b3db34acd8104ed1d7ff3900e67cff3d153a0ffa86d85957f579aa6a'; // -> newsest version used in the connector
+    const fixed_hash_predicate =
+      '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'; // -> we need to use a fixed hash predicate to get the same predicate address/balance in both vaults
+    const baseAsset = await provider.getBaseAssetId();
+
+    const vault = new Vault(
+      provider,
+      {
+        SIGNERS: [evm_wallet.address],
+        SIGNATURES_COUNT: 1,
+        HASH_PREDICATE: fixed_hash_predicate,
+      },
+      EVM_VERSION,
+    );
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('1'))
+      .then((r) => r.waitForResult());
+
+    const versions = await legacyConnectorVersion(
+      evm_wallet.address,
+      provider.url,
+      fixed_hash_predicate,
+    );
+
+    const aux_vault = new Vault(
+      provider,
+      {
+        SIGNERS: [evm_wallet.address],
+        SIGNATURES_COUNT: 1,
+        HASH_PREDICATE: fixed_hash_predicate,
+      },
+      EVM_VERSION,
+    );
+
+    const balances = [
+      JSON.stringify((await vault.getBalances()).balances),
+      JSON.stringify((await aux_vault.getBalances()).balances),
+    ];
+
+    const selectedVersion = versions.find(
+      (v) => v.predicateAddress === vault.address.toB256(),
+    );
+
+    expect(balances[0]).toBe(balances[1]);
+    expect(versions.length).toBeGreaterThan(0);
+    expect(versions.some((v) => v.version === EVM_VERSION)).toBe(true);
+    expect(aux_vault.address.toB256()).toBe(vault.address.toB256());
+    expect(
+      versions.some((v) => v.predicateAddress === vault.address.toB256()),
+    ).toBe(true);
+    expect(selectedVersion).toBeDefined();
+
+    const { tx, hashTxId } = await vault.transaction({
+      name: 'Test',
+      assets: [
+        {
+          to: wallet.address.toB256(),
+          amount: '0.01',
+          assetId: baseAsset,
+        },
+      ],
+    });
+
+    const signature = await evm_wallet.signMessage(
+      getTxIdEncoded(`0x${hashTxId}`, EVM_VERSION),
+    );
+
+    const compactSignature = encodeSignature(
+      evm_wallet.address,
+      signature,
+      EVM_VERSION,
+    );
+
+    tx.witnesses = [compactSignature];
+    // send
+    const { isStatusSuccess, isTypeScript } = await vault
+      .send(tx)
+      .then((r) => r.waitForResult());
+    expect(isStatusSuccess).toBeTruthy();
+    expect(isTypeScript).toBeTruthy();
+  });
+
+  // needs local api to run
+  it.skip('Should connect a serverApi with dapp', async () => {
+    const BAKO_SERVER_URL = `http://localhost:3333`;
+    // const BAKO_SERVER_URL = `https://stg-api.bako.global`;
+
+    const { provider, wallets } = node;
+    const wallet = wallets[0];
+    const evm_wallet = ethers.Wallet.createRandom();
+    const evm_adddress = new Address(evm_wallet.address).toB256();
+    const sessionId = crypto.randomUUID();
+    const EVM_VERSION =
+      '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
+
+    const vault = new Vault(
+      provider,
+      {
+        SIGNER: new Address(evm_wallet.address).toB256(),
+      },
+      EVM_VERSION,
+    );
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    const code = await BakoProvider.setup({
+      provider: provider.url,
+      address: evm_adddress,
+      encoder: TypeUser.EVM,
+      serverApi: BAKO_SERVER_URL,
+    });
+
+    const signature = await evm_wallet.signMessage(code);
+    const compactSignature = splitSignature(hexToBytes(signature)).compact;
+
+    const bako_provider = await BakoProvider.authenticate(provider.url, {
+      address: evm_adddress,
+      challenge: code,
+      encoder: TypeUser.EVM,
+      token: compactSignature,
+      serverApi: BAKO_SERVER_URL,
+    });
+
+    await bako_provider.connectDapp(sessionId);
+
+    // provider with auth
+    const user_bako_provider = await bako_provider.wallet();
+    expect(user_bako_provider.address.toB256()).toBe(vault.address.toB256());
+
+    // only api request
+    const recoveredWallet = await bako_provider.service.userWallet();
+    expect(recoveredWallet.address).toBe(vault.address.toB256());
+
+    // provider with dapp connection
+    const bakoProvider = await BakoProvider.create(provider.url, {
+      address: evm_adddress,
+      token: `connector${sessionId}`,
+    });
+    const user = await bakoProvider.wallet();
+    expect(user.address.toB256()).toBe(vault.address.toB256());
+  });
+
+  // needs local api to run
+  it.skip('Should connect a server with dapp and send tx', async () => {
+    // const BAKO_SERVER_URL = `http://localhost:3333`;
+    const BAKO_SERVER_URL = `https://stg-api.bako.global`;
+    const { provider, wallets } = node;
+    const wallet = wallets[0];
+    const evm_wallet = ethers.Wallet.createRandom();
+    const evm_adddress = new Address(evm_wallet.address).toB256();
+    const sessionId = crypto.randomUUID();
+    const EVM_VERSION =
+      '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
+    const baseAsset = await provider.getBaseAssetId();
+
+    const vault = new Vault(
+      provider,
+      {
+        SIGNER: new Address(evm_wallet.address).toB256(),
+      },
+      EVM_VERSION,
+    );
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.5'))
+      .then((r) => r.waitForResult());
+
+    const code = await BakoProvider.setup({
+      provider: provider.url,
+      address: evm_adddress,
+      encoder: TypeUser.EVM,
+      serverApi: BAKO_SERVER_URL,
+    });
+
+    const sig_code = await evm_wallet.signMessage(code);
+    const compact_sig_code = splitSignature(hexToBytes(sig_code)).compact;
+
+    const bako_provider = await BakoProvider.authenticate(provider.url, {
+      address: evm_adddress,
+      challenge: code,
+      encoder: TypeUser.EVM,
+      token: compact_sig_code,
+      serverApi: BAKO_SERVER_URL,
+    });
+    await bako_provider.connectDapp(sessionId);
+
+    // provider with dapp connection
+    const bakoProvider = await BakoProvider.create(provider.url, {
+      address: evm_adddress,
+      token: `connector${sessionId}`,
+    });
+    const user = await bakoProvider.wallet();
+    expect(user.address.toB256()).toBe(vault.address.toB256());
+
+    const { tx, hashTxId } = await user.transaction({
+      name: 'Test',
+      assets: [
+        {
+          to: wallet.address.toB256(),
+          amount: '0.01',
+          assetId: baseAsset,
+        },
+      ],
+    });
+
+    const signature = await evm_wallet.signMessage(
+      getTxIdEncoded(hashTxId, EVM_VERSION),
+    );
+    const compactSignature = bakoCoder.encode({
+      type: SignatureType.RawNoPrefix,
+      signature: signature,
+    });
+
+    tx.witnesses = [compactSignature];
+
+    // sign transaction in the server
+    await bakoProvider.signTransaction({
+      hash: hashTxId,
+      signature: compactSignature,
+    });
+
+    const result = await user.send(tx);
+    const response = await result.waitForResult();
+
+    expect(response).toHaveProperty('status', 'success');
   });
 });
 
@@ -262,7 +630,7 @@ describe('[Transactions]', () => {
 
     // deploy a predicate
     const [wallet] = node.wallets;
-    await deployPredicate(wallet);
+    await deployPredicate(wallet, true);
   });
 
   afterAll(() => {
@@ -361,12 +729,9 @@ describe('[Transactions]', () => {
 
     // sign
     const signature = await genesisWallet.signMessage(hashTxId);
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature,
-      },
-    ]);
+    tx.witnesses = [
+      encodeSignature(genesisWallet.address.toB256(), signature, vault.version),
+    ];
 
     // send
     const result = await vault.send(tx);
@@ -655,7 +1020,7 @@ describe('[Send With]', () => {
 
     // deploy a predicate
     const [wallet] = node.wallets;
-    await deployPredicate(wallet);
+    await deployPredicate(wallet, true);
   });
 
   afterAll(() => {
@@ -689,12 +1054,13 @@ describe('[Send With]', () => {
       ],
     });
 
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.WebAuthn,
-        ...(await WebAuthn.signChallenge(webAuthnCredential, hashTxId)),
-      },
-    ]);
+    const signature = await WebAuthn.signChallenge(
+      webAuthnCredential,
+      hashTxId,
+    );
+    tx.witnesses = [
+      encodeSignature(webAuthnCredential.address, signature, vault.version),
+    ];
 
     const result = await vault.send(tx);
     const response = await result.waitForResult();

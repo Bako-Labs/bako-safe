@@ -13,7 +13,7 @@ import {
   ISignTransaction,
   TransactionStatus,
   CLIAuth,
-} from '../service';
+} from './services';
 
 import {
   TypeUser,
@@ -23,7 +23,15 @@ import {
   BakoProviderAPITokenOptions,
 } from './types';
 
+// Constantes inline para manter consistência com outros módulos
+const PROVIDER_DEFAULTS = {
+  DEFAULT_NAME_PREFIX: 'from sdk - ',
+  DEFAULT_ORIGIN: 'NOT FOUND',
+} as const;
+
 import { Vault } from '../vault';
+import axios from 'axios';
+import { api as defaultApi } from './services'; // seu axios padrão
 
 /**
  * BakoProvider class extends the Provider (FuelProvider) class to include additional
@@ -52,20 +60,25 @@ export class BakoProvider extends Provider {
   }
 
   /**
-   * Sets up a BakoProvider by generating a challenge for authentication.
-   *
-   * @param params Setup parameters including address, encoder, and provider.
-   * @returns A challenge string for authentication.
-   */
+  * Sets up a BakoProvider by generating a challenge for authentication.
+  *
+  * @param params Setup parameters including address, encoder, and provider.
+  * @returns A challenge string for authentication.
+  */
   static async setup(params: BakoProviderSetup) {
-    const { address, encoder, provider, name } = params;
+    const { address, encoder, provider, name, serverApi } = params;
 
-    const { code: challenge } = await Service.create({
-      name: name ?? `from sdk - ${address}`,
-      type: encoder ?? TypeUser.FUEL,
-      address: address,
-      provider,
-    });
+    const server = serverApi ? axios.create({ baseURL: serverApi }) : undefined;
+
+    const { code: challenge } = await Service.create(
+      {
+        name: name ?? `${address}`,
+        type: encoder ?? TypeUser.FUEL,
+        address: address,
+        provider,
+      },
+      server,
+    );
 
     return challenge;
   }
@@ -88,7 +101,7 @@ export class BakoProvider extends Provider {
       const cliAuth = await Service.cliAuth({
         network: {
           url: providerFuel.url,
-          chainId: chainId,
+          chainId: chainId.toString(),
         },
         token: options.apiToken,
         serverApi: options.serverApi,
@@ -114,17 +127,22 @@ export class BakoProvider extends Provider {
    * @param options The same options for Provider, including the auth options.
    * @returns A Promise that resolves to a BakoProvider instance.
    */
-  static async authenticate(
-    url: string,
-    options: BakoProviderAuthOptions,
-  ): Promise<BakoProvider> {
-    await Service.sign({
-      digest: options.challenge,
-      encoder: options.encoder ?? TypeUser.FUEL,
-      signature: options.token,
-      userAddress: options.address,
-    });
-    return BakoProvider.create(url, options);
+  static async authenticate(url: string, options: BakoProviderAuthOptions) {
+    const api = options.serverApi
+      ? axios.create({ baseURL: options.serverApi })
+      : defaultApi;
+
+    const { user, rootWallet } = await Service.sign(
+      {
+        digest: options.challenge,
+        encoder: options.encoder ?? TypeUser.FUEL,
+        signature: options.token,
+        userAddress: options.address,
+      },
+      api,
+    );
+
+    return BakoProvider.create(url, { ...options, userId: user, rootWallet });
   }
 
   /**
@@ -224,5 +242,28 @@ export class BakoProvider extends Provider {
     await this.service.sendTransaction(hash);
     const chainId = await this.getChainId();
     return new TransactionResponse(hash, this, chainId);
+  }
+
+  async connectDapp(sessionId: string, origin?: string) {
+    return await this.service.createDapp({
+      sessionId,
+      userAddress: this.options.address,
+      vaultId: this.options.rootWallet ?? randomUUID(),
+      origin: origin ?? PROVIDER_DEFAULTS.DEFAULT_ORIGIN,
+      request_id: randomUUID(),
+    });
+  }
+
+  async changeAccount(sessionId: string, vault: string) {
+    return await this.service.changeAccount(sessionId, vault);
+  }
+
+  async disconnect(sessionId: string) {
+    return await this.service.disconnectDapp(sessionId);
+  }
+
+  async wallet() {
+    const info = await this.service.userWallet();
+    return new Vault(this, JSON.parse(info.configurable), info.version);
   }
 }

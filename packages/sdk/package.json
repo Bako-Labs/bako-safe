@@ -1,6 +1,6 @@
 {
   "name": "bakosafe",
-  "version": "0.3.0-beta.1",
+  "version": "0.2.0",
   "author": "Bako Labs",
   "description": "A signature validation package built based on sway in the fuel network",
   "main": "dist/index.js",
@@ -38,6 +38,10 @@
     "@ethereumjs/util": "9.0.3",
     "@ethersproject/bytes": "5.7.0",
     "@noble/curves": "^1.5.0",
+    "@noble/secp256k1": "^2.3.0",
+    "build": "^0.1.4",
+    "pnpm": "^10.13.1",
+    "viem": "^2.30.6",
     "axios": "^1.5.1",
     "lodash.partition": "^4.6.0",
     "uuid": "^9.0.1"
