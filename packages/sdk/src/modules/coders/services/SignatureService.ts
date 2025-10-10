@@ -17,7 +17,7 @@ import { CoderFactory } from '../factory';
 /**
  * Flexible signature type that accepts BytesLike data, signature objects, or WebAuthn inputs.
  */
-type SigLoose = BytesLike | { signature: BytesLike } | WebAuthnInput;
+export type SigLoose = BytesLike | { signature: BytesLike } | WebAuthnInput;
 
 /**
  * Classification result for different signature types with their corresponding data.

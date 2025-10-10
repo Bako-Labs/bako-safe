@@ -9,12 +9,13 @@ coders/
 ├── Coder.ts                       # Main encoding class
 ├── types.ts                       # Type definitions
 ├── factory/                       # Factory pattern implementations
-│   ├── CoderFactory.ts           # Creates configured instances
+│   ├── CoderFactory.ts            # Creates configured instances (internal)
 │   └── index.ts
 ├── services/                      # Encoding services
-│   ├── SignatureService.ts       # Signature encoding logic
-│   ├── EncodingService.ts        # Transaction ID encoding
+│   ├── SignatureService.ts        # Signature encoding logic
+│   ├── EncodingService.ts         # Transaction ID encoding
 │   └── index.ts
+├── CoderUtils.ts                  # Centralizes common encoding operations
 ├── index.ts                       # Main exports
 └── README.md                      # This file
 ```

@@ -17,8 +17,8 @@
 
 export * from './coder';
 export * from './types';
-export * from './factory';
 export * from './services';
+export { CoderUtils } from './CoderUtils';
 
 // Backward compatibility - deprecated exports
 import { CoderFactory } from './factory';
@@ -34,7 +34,7 @@ import { SignatureService, EncodingService } from './services';
 export const bakoCoder = CoderFactory.createFullCoder();
 
 /**
- * @deprecated Use SignatureService.encode() instead
+ * @deprecated Use CoderUtils.encodeSignature() instead
  *
  * This export is maintained for backward compatibility but should not
  * be used in new code. Use the SignatureService class directly for
@@ -43,7 +43,7 @@ export const bakoCoder = CoderFactory.createFullCoder();
 export const encodeSignature = SignatureService.encode;
 
 /**
- * @deprecated Use EncodingService.encodeTxId() instead
+ * @deprecated Use CoderUtils.encodeTxId() instead
  *
  * This export is maintained for backward compatibility but should not
  * be used in new code. Use the EncodingService class directly for
