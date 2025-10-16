@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.5.0
+
+### Minor Changes
+
+- 3e53876: feat(coders): add comprehensive encoding utilities and vault signature support
+
 ## 0.3.0
 
 ### Minor Changes
