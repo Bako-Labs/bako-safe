@@ -25,7 +25,7 @@ import { CoderFactory } from './factory';
 import { SignatureService, EncodingService } from './services';
 
 /**
- * @deprecated Use CoderFactory.createFullCoder() instead
+ * @deprecated Use CoderUtils.encodeSignature() instead
  *
  * This export is maintained for backward compatibility but should not
  * be used in new code. Use the factory pattern instead for better
