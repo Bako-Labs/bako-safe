@@ -838,13 +838,13 @@ describe('[Transactions]', () => {
     const { tx, hashTxId } = await vault.BakoTransfer(transactionRequest);
 
     const signature = await wallet.signMessage(hashTxId);
-    const signatures = CoderUtils.encodeSignature(
+    const encodedSignature = CoderUtils.encodeSignature(
       wallet.address.toB256(),
       signature,
     );
     // keep the first signature position
     // because the first signature is the contract creation bytecode
-    tx.witnesses?.push(...signatures);
+    tx.witnesses?.push(encodedSignature);
 
     // send
     const result = await vault.send(tx);
