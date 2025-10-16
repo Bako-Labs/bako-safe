@@ -607,6 +607,33 @@ describe('[Version]', () => {
 
     expect(response).toHaveProperty('status', 'success');
   });
+
+  it('Should generate an encoded txId without the 0x prefix when using the default version', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+    const evmWallet = ethers.Wallet.createRandom();
+
+    const vault = new Vault(
+      provider,
+      {
+        SIGNATURES_COUNT: 1,
+        SIGNERS: [evmWallet.address],
+      },
+      DEFAULT_PREDICATE_VERSION,
+    );
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    const contract = new ExampleContractFactory(vault);
+    const { transactionRequest } = contract.createTransactionRequest();
+    const { encodedTxId } = await vault.BakoTransfer(transactionRequest);
+
+    expect(encodedTxId.startsWith('0x')).toBe(false);
+  });
 });
 
 describe('[Transactions]', () => {

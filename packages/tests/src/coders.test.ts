@@ -308,6 +308,23 @@ describe('[SIGNATURE ENCODER]', () => {
 
 describe('[ENCODING SERVICE - PREFIX 0x BEHAVIOR]', () => {
   const testTxId = '0x1234567890abcdef1234567890abcdef12345678';
+
+  it('Should encode txId WITH 0x prefix for modern version', () => {
+    ENCODING_VERSIONS.with0xPrefix.forEach((version) => {
+      const encoded = EncodingService.encodedMessage(testTxId, version);
+
+      expect(encoded.startsWith('0x')).toBe(true);
+    });
+  });
+
+  it('Should encode txId WITHOUT 0x prefix for legacy version', () => {
+    ENCODING_VERSIONS.without0xPrefix.forEach((version) => {
+      const encoded = EncodingService.encodedMessage(testTxId, version);
+
+      expect(encoded.startsWith('0x')).toBe(false);
+    });
+  });
+
   it('Should use connectorEncode function for with0xPrefix versions', () => {
     ENCODING_VERSIONS.with0xPrefix.forEach((version) => {
       const result = EncodingService.encodedMessage(testTxId, version);
@@ -319,7 +336,7 @@ describe('[ENCODING SERVICE - PREFIX 0x BEHAVIOR]', () => {
   it('Should use bakosafeEncode function for without0xPrefix versions', () => {
     ENCODING_VERSIONS.without0xPrefix.forEach((version) => {
       const result = EncodingService.encodedMessage(testTxId, version);
-      const expectedResult = EncodingService.bakosafeEncode(testTxId, version);
+      const expectedResult = EncodingService.bakosafeEncode(testTxId);
       expect(result).toBe(expectedResult);
     });
   });
