@@ -5,8 +5,8 @@ import { assets } from './mocks';
 
 import {
   BakoProvider,
+  CoderUtils,
   Vault,
-  bakoCoder,
   SignatureType,
   ICreateTransactionPayload,
   IPredicatePayload,
@@ -542,10 +542,7 @@ describe('[AUTH]', () => {
     const signature = await wallet.signMessage(hashTxId);
     await vaultProvider.signTransaction({
       hash: `0x${hashTxId}`,
-      signature: bakoCoder.encode({
-        type: SignatureType.Fuel,
-        signature,
-      }),
+      signature: CoderUtils.encodeSignature(address, signature),
     });
 
     response = await predicate.send(tx);
@@ -612,10 +609,7 @@ describe('[AUTH]', () => {
     const signature = await wallet.signMessage(hashTxId);
     await vaultProviderClient1.signTransaction({
       hash: `0x${hashTxId}`,
-      signature: bakoCoder.encode({
-        type: SignatureType.Fuel,
-        signature,
-      }),
+      signature: CoderUtils.encodeSignature(address, signature),
     });
 
     const res = await response.wait();

@@ -37,7 +37,7 @@ import {
 } from './services';
 import { VaultConfigurationFactory } from './factory';
 import { Asset } from './assets';
-import { EncodingService } from '../coders';
+import { EncodingService, SignatureService, type SigLoose } from '../coders';
 
 import partition from 'lodash.partition';
 
@@ -304,6 +304,17 @@ export class Vault extends Predicate<[]> {
   }
 
   /**
+   * Encodes a signature according to the vault version.
+   *
+   * @param walletAddress - Address of the signer who produced the signature.
+   * @param signature - The raw or structured signature.
+   * @returns Encoded signature string compatible with the vault version.
+   */
+  public encodeSignature(walletAddress: string, signature: SigLoose) {
+    return SignatureService.encode(walletAddress, signature, this.version);
+  }
+
+  /**
    * Recovers a `Vault` instance from a predicate address.
    *
    * @param {string} reference - The address of the predicate to recover.
@@ -387,6 +398,7 @@ export class Vault extends Predicate<[]> {
   async transaction(params: VaultTransaction): Promise<{
     tx: TransactionRequest;
     hashTxId: string;
+    encodedTxId: string;
   }> {
     const { assets } = params;
     const assetsWithAddressType = await Promise.all(

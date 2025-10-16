@@ -1,12 +1,12 @@
 import {
-  bakoCoder,
   SignatureType,
-  encodeSignature,
   SIGNATURE_TYPE_HEX,
   PREFIX_BAKO_SIG,
+  CoderUtils,
+  bakoCoder,
 } from 'bakosafe';
 import { WebAuthn } from './utils';
-import { Address, Wallet, hexlify, arrayify, BigNumberCoder } from 'fuels';
+import { Address, Wallet, hexlify, arrayify } from 'fuels';
 import { accounts } from './mocks';
 import { ethers } from 'ethers';
 import { EncodingService } from '../../sdk/src/modules/coders/services/EncodingService';
@@ -23,8 +23,8 @@ describe('[BAKO CODERS]', () => {
 
   it('Should throw an error if encoding with a non-existent coder', () => {
     expect(() =>
-      bakoCoder.encode({ type: SignatureType.Fuel, signature: '0xsignature' }),
-    ).toThrowError('invalid data: 0xsignature');
+      CoderUtils.encodeSignature(Address.fromRandom().toB256(), '0xsignature'),
+    ).toThrow('invalid data: 0xsignature');
   });
 
   it('Should Fuel encode a signature successfully', async () => {
@@ -33,10 +33,10 @@ describe('[BAKO CODERS]', () => {
       Address.fromRandom().toB256(),
     );
 
-    const encoded = bakoCoder.encode({
-      type: SignatureType.Fuel,
-      signature: fuelSignature,
-    });
+    const encoded = CoderUtils.encodeSignature(
+      wallet.address.toB256(),
+      fuelSignature,
+    );
 
     expect(encoded).toContain(PREFIX_BAKO_SIG);
     expect(encoded).toContain(SIGNATURE_TYPE_HEX[SignatureType.Fuel]);
@@ -50,10 +50,10 @@ describe('[BAKO CODERS]', () => {
       Address.fromRandom().toB256().slice(2),
     );
 
-    const encoded = bakoCoder.encode({
-      type: SignatureType.WebAuthn,
-      ...sign,
-    });
+    const encoded = CoderUtils.encodeSignature(
+      webAuthnCredential.address,
+      sign,
+    );
 
     expect(encoded).toContain(PREFIX_BAKO_SIG);
     expect(encoded).toContain(SIGNATURE_TYPE_HEX[SignatureType.WebAuthn]);
@@ -61,17 +61,15 @@ describe('[BAKO CODERS]', () => {
   });
 
   it('Should EVM encode a signature successfully', async () => {
-    const wallet = Wallet.fromPrivateKey(accounts['USER_1'].privateKey);
+    const evmWallet = ethers.Wallet.createRandom();
+    const evmAddress = new Address(evmWallet.address).toB256();
     const msg = Address.fromRandom().toB256();
-    const sig = await wallet.signMessage(msg);
+    const sig = await evmWallet.signMessage(msg);
     const tampered = (sig.slice(0, -3) + '123') as `0x${string}`;
 
     const expectedCompact = ethers.Signature.from(tampered).compactSerialized;
 
-    const encoded = bakoCoder.encode({
-      type: SignatureType.Evm,
-      signature: tampered,
-    });
+    const encoded = CoderUtils.encodeSignature(evmAddress, tampered);
 
     expect(encoded).toContain(PREFIX_BAKO_SIG);
     expect(encoded).toContain(SIGNATURE_TYPE_HEX[SignatureType.Evm]);
@@ -79,13 +77,16 @@ describe('[BAKO CODERS]', () => {
   });
 
   it('Should encode RawNoPrefix without BAKO prefix or type bytes', () => {
+    const address = Address.fromRandom().toB256();
     const signature = '0x' + 'bb'.repeat(64);
     const expected = hexlify(arrayify(signature));
+    const predicateVersion = ENCODING_VERSIONS.with0xPrefix[0]; // Version by Fuel Labs
 
-    const encoded = bakoCoder.encode({
-      type: SignatureType.RawNoPrefix,
+    const encoded = CoderUtils.encodeSignature(
+      address,
       signature,
-    });
+      predicateVersion,
+    );
 
     expect(encoded).toBe(expected);
     expect(encoded).not.toContain(PREFIX_BAKO_SIG);
@@ -101,7 +102,10 @@ describe('[SIGNATURE ENCODER]', () => {
     const message = Address.fromRandom().toB256();
     const signature = await wallet.signMessage(message);
 
-    const encoded = encodeSignature(wallet.address.toB256(), signature);
+    const encoded = CoderUtils.encodeSignature(
+      wallet.address.toB256(),
+      signature,
+    );
 
     expect(encoded).toContain(PREFIX_BAKO_SIG);
     expect(encoded).toContain(SIGNATURE_TYPE_HEX[SignatureType.Fuel]);
@@ -116,7 +120,7 @@ describe('[SIGNATURE ENCODER]', () => {
     const evmAddress =
       '0x000000000000000000000000742d35Cc6335C0532FDD5d9dA5Ac5Cd6C3f776a';
 
-    const encoded = encodeSignature(evmAddress, signature);
+    const encoded = CoderUtils.encodeSignature(evmAddress, signature);
 
     expect(encoded).toContain(PREFIX_BAKO_SIG);
     expect(encoded).toContain(SIGNATURE_TYPE_HEX[SignatureType.Evm]);
@@ -130,7 +134,7 @@ describe('[SIGNATURE ENCODER]', () => {
     const fuelVersion =
       '0x0ec304f98efc18964de98c63be50d2360572a155b16bcb0f3718c685c70a00aa';
 
-    const encoded = encodeSignature(
+    const encoded = CoderUtils.encodeSignature(
       wallet.address.toB256(),
       signature,
       fuelVersion,
@@ -147,7 +151,10 @@ describe('[SIGNATURE ENCODER]', () => {
     const signature = await wallet.signMessage(message);
     const signatureObj = { signature };
 
-    const encoded = encodeSignature(wallet.address.toB256(), signatureObj);
+    const encoded = CoderUtils.encodeSignature(
+      wallet.address.toB256(),
+      signatureObj,
+    );
 
     expect(encoded).toContain(PREFIX_BAKO_SIG);
     expect(encoded).toContain(SIGNATURE_TYPE_HEX[SignatureType.Fuel]); // wallet Fuel
@@ -160,7 +167,10 @@ describe('[SIGNATURE ENCODER]', () => {
     const signature = await wallet.signMessage(message);
     const signatureBytes = arrayify(signature);
 
-    const encoded = encodeSignature(wallet.address.toB256(), signatureBytes);
+    const encoded = CoderUtils.encodeSignature(
+      wallet.address.toB256(),
+      signatureBytes,
+    );
 
     expect(encoded).toContain(PREFIX_BAKO_SIG);
     expect(encoded).toContain(SIGNATURE_TYPE_HEX[SignatureType.Fuel]); // wallet Fuel
@@ -175,7 +185,10 @@ describe('[SIGNATURE ENCODER]', () => {
       challenge,
     );
 
-    const encoded = encodeSignature(webAuthnCredential.address, signResult);
+    const encoded = CoderUtils.encodeSignature(
+      webAuthnCredential.address,
+      signResult,
+    );
 
     expect(encoded).toContain(PREFIX_BAKO_SIG);
     expect(encoded).toContain(SIGNATURE_TYPE_HEX[SignatureType.WebAuthn]);
@@ -192,7 +205,11 @@ describe('[SIGNATURE ENCODER]', () => {
     const invalidVersion = '0xinvalid';
 
     expect(() => {
-      encodeSignature(wallet.address.toB256(), signature, invalidVersion);
+      CoderUtils.encodeSignature(
+        wallet.address.toB256(),
+        signature,
+        invalidVersion,
+      );
     }).toThrow(`Predicate version ${invalidVersion} not found`);
   });
 
@@ -201,7 +218,7 @@ describe('[SIGNATURE ENCODER]', () => {
     const message = Address.fromRandom().toB256();
     const signature = await wallet.signMessage(message);
 
-    const encoded = encodeSignature(
+    const encoded = CoderUtils.encodeSignature(
       wallet.address.toB256(),
       signature,
       LEGACY_FUEL_PREDICATE_VERSION,
@@ -225,7 +242,7 @@ describe('[SIGNATURE ENCODER]', () => {
     ];
 
     const encoded = formats.map((format) =>
-      encodeSignature(wallet.address.toB256(), format),
+      CoderUtils.encodeSignature(wallet.address.toB256(), format),
     );
 
     // All should contain the same original signature
@@ -247,11 +264,11 @@ describe('[SIGNATURE ENCODER]', () => {
     const evmAddress =
       '0x000000000000000000000000742d35Cc6335C0532FDD5d9dA5Ac5Cd6C3f776a';
 
-    const encodedFuel = encodeSignature(
+    const encodedFuel = CoderUtils.encodeSignature(
       fuelWallet1.address.toB256(),
       signature1,
     );
-    const encodedEvm = encodeSignature(evmAddress, signature2);
+    const encodedEvm = CoderUtils.encodeSignature(evmAddress, signature2);
 
     // Ambos devem ter prefixo BAKO mas tipos diferentes
     expect(encodedFuel).toContain(PREFIX_BAKO_SIG);
@@ -275,7 +292,7 @@ describe('[SIGNATURE ENCODER]', () => {
     );
 
     const encoded = signatures.map((sig) =>
-      encodeSignature(wallet.address.toB256(), sig),
+      CoderUtils.encodeSignature(wallet.address.toB256(), sig),
     );
 
     // Todas devem ter o mesmo prefixo e tipo
@@ -291,6 +308,23 @@ describe('[SIGNATURE ENCODER]', () => {
 
 describe('[ENCODING SERVICE - PREFIX 0x BEHAVIOR]', () => {
   const testTxId = '0x1234567890abcdef1234567890abcdef12345678';
+
+  it('Should encode txId WITH 0x prefix for modern version', () => {
+    ENCODING_VERSIONS.with0xPrefix.forEach((version) => {
+      const encoded = EncodingService.encodedMessage(testTxId, version);
+
+      expect(encoded.startsWith('0x')).toBe(true);
+    });
+  });
+
+  it('Should encode txId WITHOUT 0x prefix for legacy version', () => {
+    ENCODING_VERSIONS.without0xPrefix.forEach((version) => {
+      const encoded = EncodingService.encodedMessage(testTxId, version);
+
+      expect(encoded.startsWith('0x')).toBe(false);
+    });
+  });
+
   it('Should use connectorEncode function for with0xPrefix versions', () => {
     ENCODING_VERSIONS.with0xPrefix.forEach((version) => {
       const result = EncodingService.encodedMessage(testTxId, version);
@@ -302,7 +336,7 @@ describe('[ENCODING SERVICE - PREFIX 0x BEHAVIOR]', () => {
   it('Should use bakosafeEncode function for without0xPrefix versions', () => {
     ENCODING_VERSIONS.without0xPrefix.forEach((version) => {
       const result = EncodingService.encodedMessage(testTxId, version);
-      const expectedResult = EncodingService.bakosafeEncode(testTxId, version);
+      const expectedResult = EncodingService.bakosafeEncode(testTxId);
       expect(result).toBe(expectedResult);
     });
   });

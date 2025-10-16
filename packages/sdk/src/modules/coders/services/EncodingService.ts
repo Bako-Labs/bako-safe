@@ -1,7 +1,6 @@
 import { arrayify } from 'fuels';
 import { stringToHex } from 'viem';
 import { BYTE_VERSION_LIST, BytesVersion } from '../types';
-import { getTxIdEncoded } from '..';
 import { ENCODING_VERSIONS } from '../utils/versionsByEncode';
 
 /**
@@ -9,19 +8,11 @@ import { ENCODING_VERSIONS } from '../utils/versionsByEncode';
  */
 export class EncodingService {
   /**
-   * Set of predicate versions for efficient lookup of byte-encoding requirements.
-   */
-  private static readonly BYTE_VERSION_SET = new Set<string>(
-    BYTE_VERSION_LIST as readonly string[],
-  );
-
-
-  /**
    * Encodes a transaction ID based on the predicate version requirements.
    */
   static encodeTxId(txId: string, version: string): Uint8Array | string {
     switch (true) {
-      case EncodingService.BYTE_VERSION_SET.has(version):
+      case this.requiresByteEncoding(version):
         return arrayify(txId.startsWith('0x') ? txId : `0x${txId}`);
       default:
         return txId.startsWith('0x')
@@ -33,8 +24,8 @@ export class EncodingService {
   /**
    * Encodes a transaction ID for BakoSafe predicates
    */
-  static bakosafeEncode = (txId: string, version: string) => {
-    return this.encodeTxId(txId, version) as string;
+  static bakosafeEncode = (txId: string) => {
+    return txId.startsWith('0x') ? txId.slice(2) : txId;
   };
 
   /**
@@ -45,15 +36,15 @@ export class EncodingService {
   };
 
   /**
- * Determines the encoding function for a given version
- */
+   * Determines the encoding function for a given version
+   */
   static determineEncodingFunction(version: string): (txId: string) => string {
     if (ENCODING_VERSIONS.with0xPrefix.includes(version)) {
       return this.connectorEncode;
     }
 
     if (ENCODING_VERSIONS.without0xPrefix.includes(version)) {
-      return (txId: string) => this.bakosafeEncode(txId, version);
+      return (txId: string) => this.bakosafeEncode(txId);
     }
 
     throw new Error(`Unsupported version: ${version}`);
@@ -71,7 +62,7 @@ export class EncodingService {
    * Checks if a predicate version requires byte array encoding.
    */
   static requiresByteEncoding(version: string): version is BytesVersion {
-    return EncodingService.BYTE_VERSION_SET.has(version);
+    return ENCODING_VERSIONS.with0xPrefix.includes(version);
   }
 
   /**

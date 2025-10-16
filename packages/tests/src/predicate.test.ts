@@ -1,8 +1,8 @@
 import { deployPredicate, WebAuthn } from './utils';
 
 import {
-  bakoCoder,
   BakoError,
+  CoderUtils,
   DEFAULT_PREDICATE_VERSION,
   getCompatiblePredicateVersions,
   Wallet as WalletType,
@@ -10,10 +10,7 @@ import {
   legacyConnectorVersion,
   BakoProvider,
   TypeUser,
-  encodeSignature,
-  getTxIdEncoded,
   ErrorCodes,
-  SignatureType,
   Vault,
 } from 'bakosafe';
 import { ethers } from 'ethers';
@@ -124,12 +121,7 @@ describe('[Create]', () => {
     });
 
     const signature = await wallet.signMessage(hashTxId);
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature,
-      },
-    ]);
+    tx.witnesses = [vault.encodeSignature(wallet.address.toB256(), signature)];
 
     const res = await vault.send(tx);
     await res.waitForResult();
@@ -361,13 +353,12 @@ describe('[Version]', () => {
     });
 
     const signature = await evm_wallet.signMessage(
-      getTxIdEncoded(`0x${hashTxId}`, EVM_VERSION),
+      CoderUtils.encodeTxId(`0x${hashTxId}`, EVM_VERSION),
     );
 
-    const compactSignature = encodeSignature(
+    const compactSignature = vault.encodeSignature(
       evm_wallet.address,
       signature,
-      EVM_VERSION,
     );
 
     tx.witnesses = [compactSignature];
@@ -437,7 +428,7 @@ describe('[Version]', () => {
     ).toBe(true);
     expect(selectedVersion).toBeDefined();
 
-    const { tx, hashTxId } = await vault.transaction({
+    const { tx, hashTxId, encodedTxId } = await vault.transaction({
       name: 'Test',
       assets: [
         {
@@ -448,14 +439,11 @@ describe('[Version]', () => {
       ],
     });
 
-    const signature = await evm_wallet.signMessage(
-      getTxIdEncoded(`0x${hashTxId}`, EVM_VERSION),
-    );
+    const signature = await evm_wallet.signMessage(encodedTxId);
 
-    const compactSignature = encodeSignature(
+    const compactSignature = vault.encodeSignature(
       evm_wallet.address,
       signature,
-      EVM_VERSION,
     );
 
     tx.witnesses = [compactSignature];
@@ -593,12 +581,9 @@ describe('[Version]', () => {
     });
 
     const signature = await evm_wallet.signMessage(
-      getTxIdEncoded(hashTxId, EVM_VERSION),
+      CoderUtils.encodeTxId(hashTxId, EVM_VERSION),
     );
-    const compactSignature = bakoCoder.encode({
-      type: SignatureType.RawNoPrefix,
-      signature: signature,
-    });
+    const compactSignature = vault.encodeSignature(evm_adddress, signature);
 
     tx.witnesses = [compactSignature];
 
@@ -612,6 +597,33 @@ describe('[Version]', () => {
     const response = await result.waitForResult();
 
     expect(response).toHaveProperty('status', 'success');
+  });
+
+  it('Should generate an encoded txId without the 0x prefix when using the default version', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+    const evmWallet = ethers.Wallet.createRandom();
+
+    const vault = new Vault(
+      provider,
+      {
+        SIGNATURES_COUNT: 1,
+        SIGNERS: [evmWallet.address],
+      },
+      DEFAULT_PREDICATE_VERSION,
+    );
+
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    const contract = new ExampleContractFactory(vault);
+    const { transactionRequest } = contract.createTransactionRequest();
+    const { encodedTxId } = await vault.BakoTransfer(transactionRequest);
+
+    expect(encodedTxId.startsWith('0x')).toBe(false);
   });
 });
 
@@ -668,12 +680,7 @@ describe('[Transactions]', () => {
     const signature = await wallet.signMessage(hashTxId);
 
     // sign
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature: signature,
-      },
-    ]);
+    tx.witnesses = [vault.encodeSignature(wallet.address.toB256(), signature)];
 
     // send
     const { isStatusSuccess, isTypeScript } = await vault
@@ -730,7 +737,7 @@ describe('[Transactions]', () => {
     // sign
     const signature = await genesisWallet.signMessage(hashTxId);
     tx.witnesses = [
-      encodeSignature(genesisWallet.address.toB256(), signature, vault.version),
+      vault.encodeSignature(genesisWallet.address.toB256(), signature),
     ];
 
     // send
@@ -777,12 +784,7 @@ describe('[Transactions]', () => {
     const { tx, hashTxId } = await vault.BakoTransfer(contractRequest);
 
     const signature = await wallet.signMessage(hashTxId);
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature: signature,
-      },
-    ]);
+    tx.witnesses = [vault.encodeSignature(wallet.address.toB256(), signature)];
 
     const result = await vault.send(tx);
     const response = await result.waitForResult();
@@ -819,15 +821,13 @@ describe('[Transactions]', () => {
     const { tx, hashTxId } = await vault.BakoTransfer(transactionRequest);
 
     const signature = await wallet.signMessage(hashTxId);
-    const signatures = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature,
-      },
-    ]);
+    const encodedSignature = vault.encodeSignature(
+      wallet.address.toB256(),
+      signature,
+    );
     // keep the first signature position
     // because the first signature is the contract creation bytecode
-    tx.witnesses?.push(...signatures);
+    tx.witnesses?.push(encodedSignature);
 
     // send
     const result = await vault.send(tx);
@@ -884,16 +884,10 @@ describe('[Transactions]', () => {
       arrayify(stringToHex(hashTxId)),
     );
 
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature: fuelSignature,
-      },
-      {
-        type: SignatureType.Evm,
-        signature: evmSignature,
-      },
-    ]);
+    tx.witnesses = [
+      vault.encodeSignature(address, fuelSignature),
+      vault.encodeSignature(evmWallet.address, evmSignature),
+    ];
 
     const { isStatusSuccess, isTypeScript } = await vault
       .send(tx)
@@ -973,16 +967,10 @@ describe('[Transactions]', () => {
       arrayify(stringToHex(hashTxId)),
     );
 
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature: fuelSignature,
-      },
-      {
-        type: SignatureType.Evm,
-        signature: evmSignature,
-      },
-    ]);
+    tx.witnesses = [
+      vault.encodeSignature(address, fuelSignature),
+      vault.encodeSignature(evmWallet.address, evmSignature),
+    ];
 
     const { isStatusSuccess, isTypeScript } = await vault
       .send(tx)
@@ -1059,7 +1047,7 @@ describe('[Send With]', () => {
       hashTxId,
     );
     tx.witnesses = [
-      encodeSignature(webAuthnCredential.address, signature, vault.version),
+      vault.encodeSignature(webAuthnCredential.address, signature),
     ];
 
     const result = await vault.send(tx);
@@ -1095,16 +1083,16 @@ describe('[Send With]', () => {
       ],
     });
 
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature: await wallet.signMessage(hashTxId),
-      },
-      {
-        type: SignatureType.WebAuthn,
-        ...(await WebAuthn.signChallenge(webAuthnCredential, hashTxId)),
-      },
-    ]);
+    const fuelSignature = await wallet.signMessage(hashTxId);
+    const webAuthnSignature = await WebAuthn.signChallenge(
+      webAuthnCredential,
+      hashTxId,
+    );
+
+    tx.witnesses = [
+      vault.encodeSignature(wallet.address.toB256(), fuelSignature),
+      vault.encodeSignature(webAuthnCredential.address, webAuthnSignature),
+    ];
 
     const result = await vault.send(tx);
     const response = await result.waitForResult();
@@ -1138,12 +1126,9 @@ describe('[Send With]', () => {
       ],
     });
 
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature: await wallet.signMessage(hashTxId),
-      },
-    ]);
+    const signature = await wallet.signMessage(hashTxId);
+
+    tx.witnesses = [vault.encodeSignature(wallet.address.toB256(), signature)];
 
     await vault.send(tx).catch((e) => {
       const error = BakoError.parse(e);
@@ -1177,16 +1162,10 @@ describe('[Send With]', () => {
     });
 
     const signature = await owner.signMessage(hashTxId);
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature,
-      },
-      {
-        type: SignatureType.Fuel,
-        signature,
-      },
-    ]);
+    tx.witnesses = [
+      vault.encodeSignature(owner.address.toB256(), signature),
+      vault.encodeSignature(owner.address.toB256(), signature),
+    ];
 
     await vault.send(tx).catch((e) => {
       const error = BakoError.parse(e);
@@ -1220,16 +1199,11 @@ describe('[Send With]', () => {
       ],
     });
 
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature: await owner.signMessage(hashTxId),
-      },
-      {
-        type: SignatureType.Fuel,
-        signature: '0x',
-      },
-    ]);
+    const signature = await owner.signMessage(hashTxId);
+    tx.witnesses = [
+      vault.encodeSignature(owner.address.toB256(), signature),
+      vault.encodeSignature(signer.address.toB256(), '0x'),
+    ];
 
     await vault.send(tx).catch((e) => {
       const error = BakoError.parse(e);
@@ -1268,13 +1242,12 @@ describe('[Send With]', () => {
       hashTxId,
     );
 
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.WebAuthn,
-        ...signature,
-        signature: signature.signature.slice(0, -3) + '123',
-      },
-    ]);
+    tx.witnesses = [
+      vault.encodeSignature(
+        webAuthnCredential.address,
+        signature.signature.slice(0, -3) + '123',
+      ),
+    ];
   });
 
   it('Should handle signers located outside of the vault', async () => {
@@ -1303,12 +1276,7 @@ describe('[Send With]', () => {
     });
 
     const signature = await owner.signMessage(hashTxId);
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature,
-      },
-    ]);
+    tx.witnesses = [vault.encodeSignature(owner.address.toB256(), signature)];
 
     await vault.send(tx).catch((e) => {
       const error = BakoError.parse(e);
@@ -1347,12 +1315,7 @@ describe('[Send With]', () => {
       arrayify(stringToHex(hashTxId)),
     );
 
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Evm,
-        signature,
-      },
-    ]);
+    tx.witnesses = [vault.encodeSignature(evmWallet.address, signature)];
 
     const result = await vault.send(tx);
     const response = await result.waitForResult();
@@ -1392,20 +1355,20 @@ describe('[Send With]', () => {
       ],
     });
 
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Fuel,
-        signature: await wallet.signMessage(hashTxId),
-      },
-      {
-        type: SignatureType.WebAuthn,
-        ...(await WebAuthn.signChallenge(webAuthnCredential, hashTxId)),
-      },
-      {
-        type: SignatureType.Evm,
-        signature: await evmWallet.signMessage(arrayify(stringToHex(hashTxId))),
-      },
-    ]);
+    const fuelSignature = await wallet.signMessage(hashTxId);
+    const webAuthnSignature = await WebAuthn.signChallenge(
+      webAuthnCredential,
+      hashTxId,
+    );
+    const evmSignature = await evmWallet.signMessage(
+      arrayify(stringToHex(hashTxId)),
+    );
+
+    tx.witnesses = [
+      vault.encodeSignature(wallet.address.toB256(), fuelSignature),
+      vault.encodeSignature(webAuthnCredential.address, webAuthnSignature),
+      vault.encodeSignature(evmWallet.address, evmSignature),
+    ];
 
     const result = await vault.send(tx);
     const response = await result.waitForResult();
@@ -1443,12 +1406,9 @@ describe('[Send With]', () => {
       arrayify(stringToHex(hashTxId)),
     );
 
-    tx.witnesses = bakoCoder.encode([
-      {
-        type: SignatureType.Evm,
-        signature: signature.slice(0, -3) + '123',
-      },
-    ]);
+    tx.witnesses = [
+      vault.encodeSignature(evmWallet.address, signature.slice(0, -3) + '123'),
+    ];
 
     await vault.send(tx).catch((e) => {
       const error = BakoError.parse(e);

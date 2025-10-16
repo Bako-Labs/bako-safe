@@ -8,3 +8,4 @@
 .local/
 local/
 packages/sway/.fuels
+.context
