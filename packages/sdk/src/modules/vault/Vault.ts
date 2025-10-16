@@ -37,7 +37,7 @@ import {
 } from './services';
 import { VaultConfigurationFactory } from './factory';
 import { Asset } from './assets';
-import { EncodingService } from '../coders';
+import { EncodingService, SignatureService, type SigLoose } from '../coders';
 
 import partition from 'lodash.partition';
 
@@ -301,6 +301,17 @@ export class Vault extends Predicate<[]> {
     }
 
     throw new Error('Use a VaultProvider to consume this method');
+  }
+
+  /**
+   * Encodes a signature according to the vault version.
+   *
+   * @param walletAddress - Address of the signer who produced the signature.
+   * @param signature - The raw or structured signature.
+   * @returns Encoded signature string compatible with the vault version.
+   */
+  public encodeSignature(walletAddress: string, signature: SigLoose) {
+    return SignatureService.encode(walletAddress, signature, this.version);
   }
 
   /**
