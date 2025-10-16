@@ -398,6 +398,7 @@ export class Vault extends Predicate<[]> {
   async transaction(params: VaultTransaction): Promise<{
     tx: TransactionRequest;
     hashTxId: string;
+    encodedTxId: string;
   }> {
     const { assets } = params;
     const assetsWithAddressType = await Promise.all(

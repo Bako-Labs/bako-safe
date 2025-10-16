@@ -428,7 +428,7 @@ describe('[Version]', () => {
     ).toBe(true);
     expect(selectedVersion).toBeDefined();
 
-    const { tx, hashTxId } = await vault.transaction({
+    const { tx, hashTxId, encodedTxId } = await vault.transaction({
       name: 'Test',
       assets: [
         {
@@ -439,9 +439,7 @@ describe('[Version]', () => {
       ],
     });
 
-    const signature = await evm_wallet.signMessage(
-      CoderUtils.encodeTxId(`0x${hashTxId}`, EVM_VERSION),
-    );
+    const signature = await evm_wallet.signMessage(encodedTxId);
 
     const compactSignature = vault.encodeSignature(
       evm_wallet.address,
