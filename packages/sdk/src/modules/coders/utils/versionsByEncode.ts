@@ -1,10 +1,14 @@
 export const ENCODING_VERSIONS = {
-    with0xPrefix: [
-        '0xbbae06500cd11e6c1d024ac587198cb30c504bf14ba16548f19e21fa9e8f5f95',
-        '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938'
-    ],
-    without0xPrefix: [
-        '0x967aaa71b3db34acd8104ed1d7ff3900e67cff3d153a0ffa86d85957f579aa6a',
-        '0x3499b76bcb35d8bc68fb2fa74fbe1760461f64f0ac19890c0bacb69377ac19d2'
-    ]
+  with0xPrefix: [
+    '0xbbae06500cd11e6c1d024ac587198cb30c504bf14ba16548f19e21fa9e8f5f95',
+    '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938',
+  ],
+  without0xPrefix: [
+    '0x967aaa71b3db34acd8104ed1d7ff3900e67cff3d153a0ffa86d85957f579aa6a',
+    '0x3499b76bcb35d8bc68fb2fa74fbe1760461f64f0ac19890c0bacb69377ac19d2',
+    '0x0ec304f98efc18964de98c63be50d2360572a155b16bcb0f3718c685c70a00aa',
+    '0xd9db7dfffc24af334451a256e1c0201263b040526a56752462815aa7ef8ed6de',
+    '0x6ca3bcd759b944b128e9007e2fa75bf700f28c39ce7b34fc241e2c57bf02bdff',
+    '0x15f8fd16e3281aa89e7567c5f8423f77b34983a8cd7d0a1714100c8bc3d4c8d0',
+  ],
 };
