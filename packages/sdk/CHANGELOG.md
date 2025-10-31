@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.5.1
+
+### Patch Changes
+
+- 6a2350d: Adds new addresses to the encoding versions array to support additional predicate versions.
+
 ## 0.5.0
 
 ### Minor Changes
