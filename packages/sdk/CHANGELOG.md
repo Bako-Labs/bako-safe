@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.5.2
+
+### Patch Changes
+
+- 7231db0: Adds a new user type related to social login
+
 ## 0.5.1
 
 ### Patch Changes
