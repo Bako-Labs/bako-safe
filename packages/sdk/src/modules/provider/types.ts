@@ -8,6 +8,7 @@ export enum TypeUser {
   FUEL = 'FUEL',
   WEB_AUTHN = 'WEB_AUTHN',
   EVM = 'EVM',
+  SOCIAL = 'SOCIAL',
 }
 
 /**
