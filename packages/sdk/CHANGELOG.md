@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.5.3
+
+### Patch Changes
+
+- 6c61e46: Address can be formatted with the prefix `social`
+
 ## 0.5.2
 
 ### Patch Changes
