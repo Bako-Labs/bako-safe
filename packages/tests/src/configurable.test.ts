@@ -1,4 +1,4 @@
-import { Vault, ConfigVaultType, AddressUtils } from 'bakosafe';
+import { Vault, ConfigVaultType, AddressUtils, Bech32Prefix } from 'bakosafe';
 import { Address, Provider, ZeroBytes32 } from 'fuels';
 import { launchTestNode } from 'fuels/test-utils';
 import { accounts } from './mocks';
@@ -137,7 +137,10 @@ describe('[Configurable Functions]', () => {
     it('should create vault for compatible version webauthn_wallet:evm_connector_version', () => {
       const webauthn_wallet = WebAuthn.createCredentials();
       const connectorConfig = {
-        SIGNER: AddressUtils.toPasskey(webauthn_wallet.address),
+        SIGNER: AddressUtils.toBech32(
+          webauthn_wallet.address,
+          Bech32Prefix.PASSKEY,
+        ),
       };
 
       expect(() => {

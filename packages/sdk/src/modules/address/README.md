@@ -32,13 +32,17 @@ Converts an array of hex addresses to string representation, filtering out ZeroB
 
 Checks if an address is a passkey address by verifying if it starts with the passkey prefix.
 
-### toBech32(address: string): Bech32
+### isSocial(value: string): boolean
 
-**@deprecated** Use `toPasskey` instead.
+Checks if an address is a social address by verifying if it starts with the social prefix.
 
-Converts a hex address to Bech32 passkey format.
+### toBech32(address: string, prefix: Bech32Prefix): Bech32
+
+Converts a hex address to Bech32 prefix format.
 
 ### toPasskey(address: string): Bech32
+
+**@deprecated** Use `toBech32` instead.
 
 Converts a hex address to Bech32 passkey format.
 
