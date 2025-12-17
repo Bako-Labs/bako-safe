@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.5.4
+
+### Patch Changes
+
+- 3fbc8a7: changes default bako server api url to prod
+
 ## 0.5.3
 
 ### Patch Changes
