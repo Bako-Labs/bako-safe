@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.6.0
+
+### Minor Changes
+
+- 916f38d: Add optional BakoProvider parameter to legacyConnectorVersion function to query root wallet from API and ensure consistent predicate addresses across connections
+
 ## 0.5.4
 
 ### Patch Changes
