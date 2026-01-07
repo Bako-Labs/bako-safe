@@ -1,6 +1,6 @@
 import { Wallet, walletOrigin } from '../../modules/vault/utils/configurable';
 import { FuelToolChain, Version, versions } from './';
-import { Vault } from '../../modules';
+import { Vault, BakoProvider } from '../../modules';
 import { Address, CoinQuantity, JsonAbi, Provider } from 'fuels';
 
 /** Default predicate bytecode version used when none is specified. */
@@ -208,18 +208,27 @@ export type UsedPredicateVersions = {
  * @param HASH_PREDICATE Optional hash predicate value for deterministic predicate address generation.
  *                      Defaults to {@link DEFAULT_ASSET_ID.assetId}. When provided, ensures consistent
  *                      predicate addresses across multiple calls with the same configuration.
+ * @param bakoProvider Optional BakoProvider instance. When provided, queries the API to validate
+ *                     if predicates exist for each version and uses the actual configurable from
+ *                     the API to ensure address consistency.
  * @returns Array of used predicate version descriptors, sorted by `details.versionTime` desc.
  * @throws Error if there are no compatible versions for the derived wallet type.
  *
  * @example
  * const list = await legacyConnectorVersion('0xabc123...');
  * console.log(list[0].version, list[0].predicateAddress);
+ *
+ * @example
+ * // With BakoProvider to validate against API
+ * const provider = await BakoProvider.create(url, options);
+ * const list = await legacyConnectorVersion('0xabc123...', undefined, undefined, provider);
  */
 
 export async function legacyConnectorVersion(
   wallet: string,
   providerUrl: string = DEFAULT_PROVIDER_URL,
   HASH_PREDICATE: string = DEFAULT_ASSET_ID.assetId,
+  bakoProvider?: BakoProvider,
 ): Promise<UsedPredicateVersions[]> {
   const type = walletOrigin(wallet);
 
@@ -237,15 +246,51 @@ export async function legacyConnectorVersion(
   const provider = new Provider(providerUrl);
   const signer = new Address(wallet).toB256();
 
+  // If bakoProvider is available, try to get the root wallet from API
+  let rootWalletInfo: {
+    version: string;
+    configurable: Configurable;
+    address: string;
+  } | null = null;
+
+  if (bakoProvider) {
+    try {
+      const rootVault = await bakoProvider.wallet();
+      rootWalletInfo = {
+        version: rootVault.predicateVersion,
+        configurable: rootVault.configurable as Configurable,
+        address: rootVault.address.toB256(),
+      };
+    } catch {
+      // Root wallet not found or not authenticated, continue with defaults
+    }
+  }
+
   const settled = await Promise.allSettled(
     candidates.map(async (version) => {
-      const cfg: Configurable = versions[version].walletOrigin.includes(
+      const usesHashPredicate = versions[version].walletOrigin.includes(
         Wallet.FUEL,
-      )
+      );
+
+      // Calculate default configurable
+      let cfg: Configurable = usesHashPredicate
         ? { SIGNERS: [signer], SIGNATURES_COUNT: 1, HASH_PREDICATE }
         : { SIGNER: signer };
 
-      const vault = new Vault(provider, cfg, version);
+      let vault: Vault;
+      let predicateAddress: string;
+
+      // If we have root wallet info and this is the same version,
+      // use the configurable from the API to ensure consistent addresses
+      if (rootWalletInfo && rootWalletInfo.version === version) {
+        cfg = rootWalletInfo.configurable;
+        predicateAddress = rootWalletInfo.address;
+        vault = new Vault(provider, cfg, version);
+      } else {
+        // Create vault with default config
+        vault = new Vault(provider, cfg, version);
+        predicateAddress = vault.address.toB256();
+      }
 
       const { balances } = await vault.getBalances();
       const hasBalance =
@@ -262,7 +307,7 @@ export async function legacyConnectorVersion(
 
         // predicate info
         version,
-        predicateAddress: vault.address.toB256(),
+        predicateAddress,
 
         // metadata
         details: {
