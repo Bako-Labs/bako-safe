@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.6.1
+
+### Patch Changes
+
+- 4f70ee1: Remove unnecessary `build` and `pnpm` dependencies that introduced security vulnerabilities (CVE in uglify-js, js-yaml, timespan)
+
 ## 0.6.0
 
 ### Minor Changes
