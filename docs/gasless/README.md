@@ -53,43 +53,57 @@ Acompanhamento do desenvolvimento de transações patrocinadas (gasless) no Bako
 ### Objetivo
 Simplificar o uso de transações patrocinadas com métodos helper no SDK.
 
-### API Proposta
+### API Implementada (Test Utils)
 
 ```typescript
-// Opção 1: Método no Vault
-const result = await vault.sendSponsored({
-  sponsor: sponsorWallet, // WalletUnlocked ou Vault
-  assets: [{ to, amount, assetId }],
+// Para Wallet sender (Tests 1 e 3)
+import { sendSponsored } from './utils';
+
+const result = await sendSponsored({
+  sender: { account: wallet },
+  sponsor: { account: sponsorVault, signers: [signer1, signer2] },
+  transfers: [{ to, amount, assetId }],
+  provider,
 });
 
-// Opção 2: Builder pattern
-const tx = await vault.transaction({ assets: [...] });
-const sponsoredTx = await tx.withSponsor(sponsorWallet);
-await vault.send(sponsoredTx);
+// Para Vault sender (Test 2)
+import { sendSponsoredFromVault } from './utils';
 
-// Opção 3: Utility function
-import { createSponsoredTransaction } from 'bakosafe';
-
-const tx = await createSponsoredTransaction({
-  sender: vault,           // quem envia os fundos
-  sponsor: sponsorWallet,  // quem paga o gas
-  assets: [{ to, amount, assetId }],
+const result = await sendSponsoredFromVault({
+  vault,
+  signers: [signer1, signer2],
+  sponsor: walletSponsor,
+  transfers: [{ to, amount, assetId }],
+  provider,
 });
 ```
 
 ### Tarefas
 
-- [ ] Definir API final (qual opção acima)
-- [ ] Implementar helper para Wallet como sponsor
-- [ ] Implementar helper para Vault como sponsor
-- [ ] Simplificar sintaxe dos testes existentes
-- [ ] Adicionar testes para os novos helpers
+- [x] Implementar helper para Wallet sender + Wallet sponsor
+- [x] Implementar helper para Wallet sender + Vault sponsor
+- [x] Implementar helper para Vault sender + Wallet sponsor
+- [x] Simplificar sintaxe de TODOS os testes
+- [ ] Mover helpers para SDK
+- [ ] Definir API pública final
 - [ ] Documentar uso
 
-### Arquivos a Modificar
-- `packages/sdk/src/modules/vault/Vault.ts`
-- `packages/sdk/src/index.ts` (exports)
-- `packages/tests/src/sponsored.test.ts`
+### Helpers Disponíveis
+
+| Helper | Sender | Sponsor | Test |
+|--------|--------|---------|------|
+| `sendSponsored()` | Wallet | Wallet | 1 |
+| `sendSponsored()` | Wallet | Vault | 3 |
+| `sendSponsoredFromVault()` | Vault | Wallet | 2 |
+
+### Arquivos Relevantes
+- Helper: `packages/tests/src/utils/sponsored.ts`
+- Testes: `packages/tests/src/sponsored.test.ts`
+
+### Próximos Passos
+1. Mover helpers para `packages/sdk/src/`
+2. Exportar em `packages/sdk/src/index.ts`
+3. Decidir se integra ao `Vault` class ou mantém como utility functions
 
 ---
 
@@ -258,6 +272,13 @@ T+24h: Signer 2 ainda não assinou
 ---
 
 ## Changelog
+
+### 2026-02-03
+- ✅ Criado `sendSponsored()` helper para Wallet sender
+- ✅ Criado `sendSponsoredFromVault()` helper para Vault sender
+- ✅ Simplificado TODOS os 3 testes usando os helpers
+- ✅ Arquivo de testes reduzido de ~270 para ~183 linhas (32% menor)
+- ✅ Todos os 3 testes passando
 
 ### 2025-02-03
 - ✅ Criado teste para Vault 2/2 como sponsor
