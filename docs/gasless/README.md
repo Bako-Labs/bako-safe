@@ -176,6 +176,87 @@ tx.ownerInputIndex = 0; // Vault é o "dono" mesmo com sponsor pagando gas
 
 ---
 
+---
+
+## Desafios Técnicos
+
+### 1. UTXO do Sponsor deve estar na TX antes de assinar
+
+**Problema:** O hash da transação inclui os `inputs`. Se adicionarmos o sponsor UTXO depois que o usuário assinou, o hash muda e a assinatura fica inválida.
+
+**O que FAZ parte do hash:**
+- `inputs` (incluindo UTXOs)
+- `outputs`
+- `maxFee`
+- `gasLimit`
+
+**O que NÃO faz parte do hash:**
+- `predicateGasUsed`
+- `witnesses`
+
+**Fluxo obrigatório:**
+```
+1. SDK solicita UTXO do sponsor à API
+2. SDK monta tx COM sponsor input incluído
+3. Usuário assina (hash já inclui sponsor)
+4. Coleta demais assinaturas (se multisig)
+5. estimatePredicates com witnesses reais
+6. Envia
+```
+
+### 2. UTXO do Sponsor fica travado durante coleta de assinaturas
+
+**Problema:** Transações multisig (2/2, 3/5, etc.) podem demorar horas ou dias para coletar todas as assinaturas. Durante esse tempo, o UTXO do sponsor fica "reservado" e não pode ser usado em outras transações.
+
+**Cenário problemático:**
+```
+T+0:   Tx criada, UTXO sponsor reservado
+T+1h:  Signer 1 assina
+T+24h: Signer 2 ainda não assinou
+       → UTXO travado por 24h+
+       → Pool de sponsors pode esgotar
+```
+
+**Possíveis soluções:**
+
+| Solução | Prós | Contras |
+|---------|------|---------|
+| **Pool grande de UTXOs** | Simples | Custo de capital parado |
+| **Timeout + liberação** | Libera recursos | Tx pode falhar se expirar |
+| **Sponsor só no final** | UTXO travado por pouco tempo | Todos precisam re-assinar após adicionar sponsor |
+| **Dois fluxos** | Otimizado por caso | Complexidade |
+
+**Fluxo com re-assinatura (sponsor no final):**
+```
+1. SDK monta tx SEM sponsor
+2. Signers assinam (hash A)
+3. Quando todas assinaturas coletadas:
+   a. API adiciona sponsor input
+   b. Hash muda para B
+   c. Todos signers re-assinam (hash B)
+   d. Envia
+```
+
+**Fluxo com timeout:**
+```
+1. SDK solicita UTXO com TTL (ex: 1h)
+2. Monta tx COM sponsor
+3. Se não completar em 1h:
+   a. UTXO liberado
+   b. Tx precisa ser recriada com novo UTXO
+```
+
+### 3. Decisão Arquitetural Pendente
+
+**Pergunta:** Qual fluxo adotar para multisig gasless?
+
+- [ ] Pool grande + timeout
+- [ ] Re-assinatura no final
+- [ ] Híbrido (timeout curto + opção de re-assinar)
+- [ ] Outro
+
+---
+
 ## Changelog
 
 ### 2025-02-03
