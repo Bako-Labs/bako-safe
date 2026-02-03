@@ -422,12 +422,12 @@ Em wei: 200,000,000,000,000 (200_000_000_000_000)
 ### Configuração Recomendada
 
 ```typescript
-// Testnet (gas price baixo)
-UTXO_SPLIT_AMOUNT: '50000000000000',   // 0.00005 ETH
-
-// Mainnet (com margem)
-UTXO_SPLIT_AMOUNT: '200000000000000',  // 0.0002 ETH
+// Testnet e Mainnet (dust limit obrigatório)
+UTXO_SPLIT_AMOUNT: '200000000000000',  // 0.0002 ETH (mínimo permitido)
 ```
+
+> **Nota:** O dust limit de 0.0002 ETH é o mesmo para testnet e mainnet.
+> Não é possível criar UTXOs menores que esse valor.
 
 ### Estimativa de Custos Mensais
 
@@ -647,11 +647,11 @@ class BakoProvider {
 │                              FLUXO GASLESS                                   │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-          SDK                       API                        Worker
-           │                         │                           │
-           │  POST /gasless/reserve  │                           │
-           │────────────────────────▶│                           │
-           │                         │◀── reserveUtxo(MongoDB) ──│
+          SDK                                                  Worker
+           │                                                       │
+           │  POST /worker/gasless/reserve                         │
+           │──────────────────────────────────────────────────────▶│
+           │                                                       │── reserveUtxo(MongoDB)
            │    { utxo, sponsorId }  │                           │
            │◀────────────────────────│                           │
            │                         │                           │
@@ -664,10 +664,10 @@ class BakoProvider {
            │                         │                           │
            │                         │── assina com PK sponsor ──│
            │                         │                           │
-           │  POST /gasless/release  │   (ou tx completa)        │
+           │  POST /worker/gasless/release (ou automático)          │
            │  { utxoId, status }     │                           │
-           │────────────────────────▶│                           │
-           │                         │◀── releaseUtxo(MongoDB) ──│
+           │──────────────────────────────────────────────────────▶│
+           │                         │                           │── releaseUtxo(MongoDB)
            │                         │                           │
 ```
 
@@ -795,17 +795,14 @@ if (isGasless && gaslessReservationId) {
 
 ### Tarefas
 
-- [ ] Criar controller `GaslessController`
-- [ ] Criar service `GaslessService`
-- [ ] Implementar `POST /gasless/reserve`
-- [ ] Implementar `POST /gasless/release`
-- [ ] Implementar `GET /gasless/quota/:vaultId`
-- [ ] Implementar `GET /gasless/status`
-- [ ] Modificar `TransactionService` para suporte gasless
-- [ ] Criar middleware de validação de quota
+- [ ] Criar controller `GaslessController` no Worker
+- [ ] Criar service `GaslessService` no Worker
+- [ ] Implementar `POST /worker/gasless/reserve`
+- [ ] Implementar `POST /worker/gasless/release`
+- [ ] Implementar `POST /worker/gasless/sign`
+- [ ] Implementar `GET /worker/gasless/quota/:vaultId`
+- [ ] Implementar `GET /worker/gasless/status`
 - [ ] Adicionar logs/métricas para gasless
-
----
 
 ---
 
@@ -1086,7 +1083,6 @@ interface ICreateTransactionPayload {
   gaslessReservationId?: string;
 }
 ```
-```
 
 ### Tarefas
 
@@ -1358,8 +1354,6 @@ tx.ownerInputIndex = 0; // Vault é o "dono" mesmo com sponsor pagando gas
 
 ---
 
----
-
 ## Sponsor Vault - Arquitetura
 
 ### MVP: Vault 1/5 Simplificado
@@ -1373,14 +1367,14 @@ Para validação inicial, o sponsor será um **Vault BakoSafe 1/5**:
 └─────────────────────────────────────────────────────────────────┘
 
 Signers:
-├── [1] API Signer (private key na API) ─── Assinatura automática
-├── [2] Passkey Admin 1 ────────────────── Visualização/Backup
-├── [3] Passkey Admin 2 ────────────────── Visualização/Backup
-├── [4] Passkey Admin 3 ────────────────── Visualização/Backup
-└── [5] Passkey Admin 4 ────────────────── Visualização/Backup
+├── [1] Worker Signer (private key no Worker) ─── Assinatura automática
+├── [2] Passkey Admin 1 ───────────────────────── Visualização/Backup
+├── [3] Passkey Admin 2 ───────────────────────── Visualização/Backup
+├── [4] Passkey Admin 3 ───────────────────────── Visualização/Backup
+└── [5] Passkey Admin 4 ───────────────────────── Visualização/Backup
 
 Threshold: 1 de 5
-└── API assina sozinha, instantâneo
+└── Worker assina sozinho, instantâneo
 ```
 
 **Benefícios do MVP:**
@@ -1395,11 +1389,11 @@ Threshold: 1 de 5
 
 ### ⚠️ Considerações de Segurança (Pós-MVP)
 
-> **ALERTA:** A arquitetura MVP mantém a private key do sponsor na API principal.
+> **ALERTA:** A arquitetura MVP mantém a private key do sponsor no Worker.
 > Isso é aceitável para validação, mas deve ser melhorado antes de produção em larga escala.
 
 **Riscos do MVP:**
-- Comprometimento da API expõe a chave do sponsor
+- Comprometimento do Worker expõe a chave do sponsor
 - Todos os fundos do pool podem ser drenados
 - Sem segregação de responsabilidades
 
@@ -1681,7 +1675,7 @@ Para suportar Connector como sponsor, seria necessário:
 
 **Fluxo obrigatório:**
 ```
-1. SDK solicita UTXO do sponsor à API
+1. SDK solicita UTXO do sponsor ao Worker
 2. SDK monta tx COM sponsor input incluído
 3. Usuário assina (hash já inclui sponsor)
 4. Coleta demais assinaturas (se multisig)
@@ -1716,7 +1710,7 @@ T+24h: Signer 2 ainda não assinou
 1. SDK monta tx SEM sponsor
 2. Signers assinam (hash A)
 3. Quando todas assinaturas coletadas:
-   a. API adiciona sponsor input
+   a. SDK/Worker adiciona sponsor input
    b. Hash muda para B
    c. Todos signers re-assinam (hash B)
    d. Envia
