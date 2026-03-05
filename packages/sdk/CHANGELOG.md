@@ -1,5 +1,59 @@
 # bakosafe
 
+## 0.6.1
+
+### Patch Changes
+
+- 4f70ee1: Remove unnecessary `build` and `pnpm` dependencies that introduced security vulnerabilities (CVE in uglify-js, js-yaml, timespan)
+
+## 0.6.0
+
+### Minor Changes
+
+- 916f38d: Add optional BakoProvider parameter to legacyConnectorVersion function to query root wallet from API and ensure consistent predicate addresses across connections
+
+## 0.5.4
+
+### Patch Changes
+
+- 3fbc8a7: changes default bako server api url to prod
+
+## 0.5.3
+
+### Patch Changes
+
+- 6c61e46: Address can be formatted with the prefix `social`
+
+## 0.5.2
+
+### Patch Changes
+
+- 7231db0: Adds a new user type related to social login
+
+## 0.5.1
+
+### Patch Changes
+
+- 6a2350d: Adds new addresses to the encoding versions array to support additional predicate versions.
+
+## 0.5.0
+
+### Minor Changes
+
+- 3e53876: feat(coders): add comprehensive encoding utilities and vault signature support
+
+## 0.3.0
+
+### Minor Changes
+
+- 90a6c0c: add smart contract transfer support to vault
+
+## 0.2.3
+
+### Patch Changes
+
+- 17ced0c: fix(tx): increase total gas used based on tx bytes size
+
 ## 0.2.2
 
 ### Patch Changes

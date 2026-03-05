@@ -1,0 +1,265 @@
+import axios, { AxiosInstance } from 'axios';
+
+import {
+  UserCreate,
+  defaultConfig,
+  AuthRequestHeaders,
+  ISignTransactionRequest,
+  ICreateTransactionPayload,
+  IPredicatePayload,
+  AuthService,
+  TokenResponse,
+  PredicateResponse,
+  SignService,
+  CreateSessionResponse,
+  TransactionBakoResponse,
+  UserAuthResponse,
+  CLIAuthPayload,
+  CLIAuth,
+  IDAPPCreateRequest,
+} from './types';
+
+// keep here to sync with the other files
+export const api = axios.create({
+  baseURL: defaultConfig.serverUrl,
+});
+
+/**
+ * Service class for interacting with the Bako API.
+ */
+export class Service {
+  private api: AxiosInstance;
+
+  /**
+   * Initializes the Service with authentication data.
+   * @param {AuthService}       - The authentication data containing address and token.
+   *  @param {string} address   - The address of the user.
+   *  @param {string} token     - The token of the user.
+   */
+  constructor({ address, token, serverApi }: AuthService) {
+    this.api = axios.create({
+      ...api.defaults,
+      baseURL: serverApi ?? defaultConfig.serverUrl,
+    });
+
+    if (address && token) {
+      this.api.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS] = address;
+      this.api.defaults.headers[AuthRequestHeaders.AUTHORIZATION] = token;
+    }
+  }
+
+  /**
+   * Fetches the list of workspaces associated with the current user.
+   * @returns {Promise<[]>}    - The list of workspaces.
+   */
+  async getWorkspaces(): Promise<[]> {
+    const { data } = await this.api.get('/workspace/by-user');
+    return data;
+  }
+
+  /**
+   * Fetches the latest tokens for the user.
+   * @returns {Promise<TokenResponse>} - The user's latest tokens amount value.
+   */
+  async getToken(): Promise<TokenResponse> {
+    const { data } = await this.api.get('/user/latest/tokens');
+    return data;
+  }
+
+  /**
+   * Creates a new predicate.
+   * @param {IPredicatePayload} payload     - The payload for creating a predicate.
+   * @returns {Promise<PredicateResponse>}  - The response containing predicate details.
+   */
+  async createPredicate(
+    payload: IPredicatePayload,
+  ): Promise<PredicateResponse> {
+    const { provider, ...rest } = payload;
+    const {
+      data: { predicateAddress, configurable, version },
+    } = await this.api.post('/predicate', rest);
+
+    return {
+      predicateAddress,
+      configurable: JSON.parse(configurable),
+      version,
+    };
+  }
+
+  /**
+   * Finds a predicate by its address.
+   * @param {string} _predicateAddress      - The address of the predicate.
+   * @returns {Promise<PredicateResponse>}  - The response containing predicate details.
+   */
+  async findByAddress(_predicateAddress: string): Promise<PredicateResponse> {
+    const {
+      data: { configurable, predicateAddress, version },
+    } = await this.api.get(`/predicate/by-address/${_predicateAddress}`);
+
+    return {
+      configurable: JSON.parse(configurable),
+      predicateAddress,
+      version,
+    };
+  }
+
+  /**
+   * Fetches authentication information for the current user.
+   * @returns {Promise<UserAuthResponse>}   - The user's authentication details.
+   */
+  async authInfo(): Promise<UserAuthResponse> {
+    const { data } = await this.api.get('/user/latest/info');
+    return data;
+  }
+
+  /**
+   * Creates a new transaction.
+   * @param {ICreateTransactionPayload} params  - The transaction payload.
+   * @returns {Promise<boolean>}                - Whether the transaction was successfully created.
+   */
+  async createTransaction(params: ICreateTransactionPayload): Promise<boolean> {
+    const { data } = await this.api.post('/transaction', params);
+    return !!data;
+  }
+
+  /**
+   * Finds a transaction by its hash.
+   * @param {string} _hash - The hash of the transaction.
+   * @returns {Promise<TransactionBakoResponse>} - The transaction response.
+   */
+  async findTransactionByHash(_hash: string): Promise<TransactionBakoResponse> {
+    const hash = _hash.startsWith('0x') ? _hash : `0x${_hash}`;
+    const {
+      data: { txData },
+    } = await this.api.get(`/transaction/by-hash/${hash}`);
+
+    return {
+      txData,
+    };
+  }
+
+  /**
+   * Signs a transaction.
+   * @param {ISignTransactionRequest} params  - The sign transaction request payload.
+   * @returns {Promise<boolean>}              - Whether the transaction was successfully signed.
+   */
+  public async signTransaction(
+    params: ISignTransactionRequest,
+  ): Promise<boolean> {
+    const { hash, ...rest } = params;
+    const { data } = await this.api.put(
+      `/transaction/sign/${params.hash}`,
+      rest,
+    );
+
+    return !!data;
+  }
+
+  /**
+   * Sends a transaction.
+   * @param {string} hash               - The hash of the transaction to be sent.
+   * @returns {Promise<boolean>}        - Whether the transaction was successfully sent.
+   */
+  public async sendTransaction(hash: string): Promise<boolean> {
+    const { data } = await this.api.post(`/transaction/send/${hash}`);
+
+    return !!data;
+  }
+
+  public async userWallet(): Promise<{
+    address: string;
+    configurable: string;
+    version: string;
+  }> {
+    const { data } = await this.api.get('/user/wallet');
+    return data;
+  }
+
+  public setCredentials({
+    address,
+    token,
+    serverApi = defaultConfig.serverUrl,
+  }: AuthService): void {
+    this.api.defaults.baseURL = serverApi;
+    if (address && token) {
+      this.api.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS] = address;
+      this.api.defaults.headers[AuthRequestHeaders.AUTHORIZATION] = token;
+      return;
+    }
+    delete this.api.defaults.headers[AuthRequestHeaders.SIGNER_ADDRESS];
+    delete this.api.defaults.headers[AuthRequestHeaders.AUTHORIZATION];
+  }
+
+  public async createDapp(dapp: IDAPPCreateRequest): Promise<string> {
+    const { data } = await this.api.post('/connections', dapp);
+    return data;
+  }
+
+  public async disconnectDapp(sessionId: string): Promise<boolean> {
+    const { status } = await this.api.delete(`/connections/${sessionId}`);
+    this.setCredentials({});
+
+    return status === 200;
+  }
+
+  public async changeAccount(
+    sessionId: string,
+    vault: string,
+  ): Promise<boolean> {
+    const { status } = await this.api.put(
+      `${this.api.defaults.baseURL}/connections/${sessionId}/${vault}`,
+    );
+    return status === 200;
+  }
+
+  /**
+   * Creates a new user session.
+   * @param {string} serverApi - The server API URL.
+   * @param {UserCreate} params                 - The user creation payload.
+   * @returns {Promise<CreateSessionResponse>}  - The response containing the session code.
+   */
+  static async create(
+    params: UserCreate,
+    _api: AxiosInstance = api,
+  ): Promise<CreateSessionResponse> {
+    const {
+      data: { code },
+    } = await _api.post('/user', params);
+
+    return { code };
+  }
+
+  /**
+   * Signs in a user.
+   * @param  {string} serverApi - The server API URL
+   * @param {SignService} params - The sign-in payload.
+   * @returns {Promise<boolean>} - Whether the sign-in was successful.
+   */
+  static async sign(
+    params: SignService,
+    _api: AxiosInstance = api,
+  ): Promise<{
+    user: string;
+    rootWallet: string;
+  }> {
+    const { data } = await _api.post('/auth/sign-in', params);
+    return {
+      user: data.user_id,
+      rootWallet: data.rootWallet,
+    };
+  }
+
+  /**
+   * Authenticate with an API Token
+   * @param {CLIAuthPayload} params - The CLI authentication payload.
+   * @returns {Promise<CLIAuth>}    - The response containing the CLI authentication details.
+   */
+  static async cliAuth(params: CLIAuthPayload): Promise<CLIAuth> {
+    const { serverApi = defaultConfig.serverUrl, ...payload } = params;
+
+    const api = axios.create({ baseURL: serverApi });
+    const { data } = await api.post<CLIAuth>('/cli/auth', payload);
+
+    return data;
+  }
+}
