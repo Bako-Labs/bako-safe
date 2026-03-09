@@ -8,25 +8,28 @@ To integrate this multi-signature smart contract into your project, ensure you'r
 
 ## Supported Signatures
 
-Currently, our predicate contract supports only two types of signatures:
+Our predicate contract supports multiple types of signatures for maximum flexibility:
 
 1. **Fuel Ecosystem Native Wallets**: Signatures from the native wallets within the Fuel ecosystem are accepted. This includes:
 
    - [FuelWallet](https://chromewebstore.google.com/detail/fuel-wallet/dldjpboieedgcmpkchcjcbijingjcgok): A native wallet designed for seamless integration with Fuel's functionalities.
    - [Fuelet](https://chromewebstore.google.com/detail/fuelet-wallet-fuel/bifidjkcdpgfnlbcjpdkdcnbiooooblg): Another native wallet option for users within the Fuel ecosystem.
 
-2. **WebAuthn Signatures**: We also support signatures made through WebAuthn, providing a secure and widely compatible method for authentication. More about WebAuthn can be found [here](https://webauthn.io/).
+2. **WebAuthn Signatures**: We support signatures made through WebAuthn, providing a secure and widely compatible method for authentication. This enables biometric and hardware security key authentication.
 
-## Build contract
+   - Learn more: [WebAuthn Specification](https://webauthn.io/)
 
-- `pnpm fuels build`
+3. **EVM Signatures (Ethereum)**: We support Ethereum-compatible signatures (ECDSA), enabling interoperability with Ethereum wallets and signing mechanisms.
 
-## Deploy Predicate
+   - Compatible with: MetaMask, Hardware wallets, EVM-based signers
 
-1. **Copy the environment variables file**  
-   Copy the example file:  
-   `cp .env.example .env`
-   Add your private key and network
+---
 
-2. **Publish the bytecode**
-   `pnpm predicate:deploy`
+## 📖 Complete Guide
+
+For a comprehensive step-by-step guide on generating and publishing new predicate versions, please refer to the [Predicate Version Guide](../../docs/predicate-version/README.md).
+
+**Available Languages:**
+
+- [English](../../docs/predicate-version/README.en.md)
+- [Português (Brasil)](../../docs/predicate-version/README.md)
