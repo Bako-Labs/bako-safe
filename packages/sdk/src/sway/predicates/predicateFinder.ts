@@ -5,7 +5,7 @@ import { Address, CoinQuantity, JsonAbi, Provider } from 'fuels';
 
 /** Default predicate bytecode version used when none is specified. */
 export const DEFAULT_PREDICATE_VERSION =
-  `0x967aaa71b3db34acd8104ed1d7ff3900e67cff3d153a0ffa86d85957f579aa6a` as const;
+  `0x0111776e992751bd0928862c2a2cb9ea34b220c0ca8833ecbe5f8963805ee8c7` as const;
 
 /** Default Fuel provider URL. */
 export const DEFAULT_PROVIDER_URL =

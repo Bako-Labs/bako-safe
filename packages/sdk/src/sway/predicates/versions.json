@@ -615,7 +615,12 @@
       "forcVersion": "0.68.1",
       "fuelCoreVersion": "0.43.1"
     },
-    "description": "",
-    "deployed": []
+    "walletOrigin": ["fuel", "webauthn", "evm"],
+    "developedBy": "Bako Labs",
+    "description": "Improved signature validation and enhanced security checks",
+    "deployed": [
+      "https://testnet.fuel.network/v1/graphql",
+      "https://mainnet.fuel.network/v1/graphql"
+    ]
   }
 }

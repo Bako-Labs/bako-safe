@@ -4,6 +4,7 @@ export const ENCODING_VERSIONS = {
     '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938',
   ],
   without0xPrefix: [
+    '0x0111776e992751bd0928862c2a2cb9ea34b220c0ca8833ecbe5f8963805ee8c7',
     '0x967aaa71b3db34acd8104ed1d7ff3900e67cff3d153a0ffa86d85957f579aa6a',
     '0x3499b76bcb35d8bc68fb2fa74fbe1760461f64f0ac19890c0bacb69377ac19d2',
     '0x0ec304f98efc18964de98c63be50d2360572a155b16bcb0f3718c685c70a00aa',
