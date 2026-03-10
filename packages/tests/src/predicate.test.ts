@@ -375,8 +375,7 @@ describe('[Version]', () => {
     const { provider, wallets } = node;
     const wallet = wallets[0];
     const evm_wallet = ethers.Wallet.createRandom();
-    const EVM_VERSION =
-      '0x967aaa71b3db34acd8104ed1d7ff3900e67cff3d153a0ffa86d85957f579aa6a'; // -> newsest version used in the connector
+    const EVM_VERSION = DEFAULT_PREDICATE_VERSION; // -> newsest version used in the connector
     const fixed_hash_predicate =
       '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'; // -> we need to use a fixed hash predicate to get the same predicate address/balance in both vaults
     const baseAsset = await provider.getBaseAssetId();
