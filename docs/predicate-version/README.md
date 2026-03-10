@@ -860,7 +860,6 @@ O deploy é opcional - você só faz quando quer publicar em uma rede.
 - [Linguagem Sway](https://docs.fuel.network/guides/intro-to-sway/)
 - [Combustíveis Predicados](https://docs.fuel.network/guides/intro-to-predicates/)
 - [Especificação WebAuthn](https://webauthn.io/)
-- [Documentação Bako Safe](https://docs.bako.global/)
 
 ---
 

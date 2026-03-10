@@ -860,7 +860,6 @@ Deployment is optional - you only do it when you want to publish to a network.
 - [Sway Language](https://docs.fuel.network/guides/intro-to-sway/)
 - [Fuel Predicates](https://docs.fuel.network/guides/intro-to-predicates/)
 - [WebAuthn Spec](https://webauthn.io/)
-- [Bako Safe Docs](https://docs.bako.global/)
 
 ---
 
