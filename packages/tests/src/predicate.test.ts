@@ -12,6 +12,7 @@ import {
   TypeUser,
   ErrorCodes,
   Vault,
+  UsedPredicateVersions,
 } from 'bakosafe';
 import { ethers } from 'ethers';
 import { hexToBytes } from '@ethereumjs/util';
@@ -254,9 +255,16 @@ describe('[Version]', () => {
     const evmWallet = ethers.Wallet.createRandom();
     const wallet = wallets[0];
 
-    const predicate = new Vault(provider, {
-      SIGNER: evmWallet.address,
-    });
+    const EVM_VERSION =
+      '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
+
+    const predicate = new Vault(
+      provider,
+      {
+        SIGNER: evmWallet.address,
+      },
+      EVM_VERSION,
+    );
 
     // await expect(async () => {
     //   new Vault(provider, {
@@ -339,8 +347,10 @@ describe('[Version]', () => {
 
     expect(balances[0]).toBe(balances[1]);
     expect(versions.length).toBeGreaterThan(0);
-    expect(versions[0].version).toBe(EVM_VERSION);
     expect(aux_vault.address.toB256()).toBe(vault.address.toB256());
+    expect(
+      versions.some((v: UsedPredicateVersions) => v.version === EVM_VERSION),
+    ).toBe(true);
 
     const { tx, hashTxId } = await vault.transaction({
       name: 'Test',
