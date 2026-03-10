@@ -12,6 +12,7 @@ import {
   TypeUser,
   ErrorCodes,
   Vault,
+  UsedPredicateVersions,
 } from 'bakosafe';
 import { ethers } from 'ethers';
 import { hexToBytes } from '@ethereumjs/util';
@@ -26,6 +27,7 @@ import {
   Provider,
   ReceiptType,
   WalletUnlocked,
+  ZeroBytes32,
 } from 'fuels';
 import { launchTestNode } from 'fuels/test-utils';
 import { accounts, assets, networks } from './mocks';
@@ -253,9 +255,16 @@ describe('[Version]', () => {
     const evmWallet = ethers.Wallet.createRandom();
     const wallet = wallets[0];
 
-    const predicate = new Vault(provider, {
-      SIGNER: evmWallet.address,
-    });
+    const EVM_VERSION =
+      '0xfdac03fc617c264fa6f325fd6f4d2a5470bf44cfbd33bc11efb3bf8b7ee2e938';
+
+    const predicate = new Vault(
+      provider,
+      {
+        SIGNER: evmWallet.address,
+      },
+      EVM_VERSION,
+    );
 
     // await expect(async () => {
     //   new Vault(provider, {
@@ -338,8 +347,10 @@ describe('[Version]', () => {
 
     expect(balances[0]).toBe(balances[1]);
     expect(versions.length).toBeGreaterThan(0);
-    expect(versions[0].version).toBe(EVM_VERSION);
     expect(aux_vault.address.toB256()).toBe(vault.address.toB256());
+    expect(
+      versions.some((v: UsedPredicateVersions) => v.version === EVM_VERSION),
+    ).toBe(true);
 
     const { tx, hashTxId } = await vault.transaction({
       name: 'Test',
@@ -374,8 +385,7 @@ describe('[Version]', () => {
     const { provider, wallets } = node;
     const wallet = wallets[0];
     const evm_wallet = ethers.Wallet.createRandom();
-    const EVM_VERSION =
-      '0x967aaa71b3db34acd8104ed1d7ff3900e67cff3d153a0ffa86d85957f579aa6a'; // -> newsest version used in the connector
+    const EVM_VERSION = DEFAULT_PREDICATE_VERSION; // -> newsest version used in the connector
     const fixed_hash_predicate =
       '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'; // -> we need to use a fixed hash predicate to get the same predicate address/balance in both vaults
     const baseAsset = await provider.getBaseAssetId();
@@ -1369,6 +1379,41 @@ describe('[Send With]', () => {
       vault.encodeSignature(webAuthnCredential.address, webAuthnSignature),
       vault.encodeSignature(evmWallet.address, evmSignature),
     ];
+
+    const result = await vault.send(tx);
+    const response = await result.waitForResult();
+
+    expect(response).toHaveProperty('status', 'success');
+  });
+
+  it('Should process unordered signers', async () => {
+    const {
+      provider,
+      wallets: [wallet],
+    } = node;
+
+    const baseAsset = await provider.getBaseAssetId();
+
+    const vault = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [ZeroBytes32, ZeroBytes32, wallet.address.toB256()],
+    });
+    await wallet
+      .transfer(vault.address.toB256(), bn.parseUnits('0.3'))
+      .then((r) => r.waitForResult());
+
+    const { tx, hashTxId } = await vault.transaction({
+      assets: [
+        {
+          amount: '0.1',
+          assetId: baseAsset,
+          to: wallet.address.toB256(),
+        },
+      ],
+    });
+
+    const signature = await wallet.signMessage(hashTxId);
+    tx.witnesses = [vault.encodeSignature(wallet.address.toB256(), signature)];
 
     const result = await vault.send(tx);
     const response = await result.waitForResult();

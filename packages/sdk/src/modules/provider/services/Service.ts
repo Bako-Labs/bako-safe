@@ -214,6 +214,7 @@ export class Service {
 
   /**
    * Creates a new user session.
+   * @param {string} serverApi - The server API URL.
    * @param {UserCreate} params                 - The user creation payload.
    * @returns {Promise<CreateSessionResponse>}  - The response containing the session code.
    */
@@ -230,6 +231,7 @@ export class Service {
 
   /**
    * Signs in a user.
+   * @param  {string} serverApi - The server API URL
    * @param {SignService} params - The sign-in payload.
    * @returns {Promise<boolean>} - Whether the sign-in was successful.
    */

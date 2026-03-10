@@ -14,7 +14,6 @@ import {
   TransactionRequestLike,
   TransactionResponse,
   TransactionType,
-  ZeroBytes32,
 } from 'fuels';
 
 import { VaultConfigurable, VaultTransaction, VaultConfig } from './types';
@@ -225,7 +224,8 @@ export class Vault extends Predicate<[]> {
   ): Promise<T> {
     const originalMaxFee = transactionRequest.maxFee;
     const predicateGasUsed = await this.maxGasUsed();
-    this.populateTransactionPredicateData(transactionRequest);
+    transactionRequest =
+      this.populateTransactionPredicateData(transactionRequest);
 
     const witnesses = Array.from(transactionRequest.witnesses);
     const fakeSignatures = Array.from(
