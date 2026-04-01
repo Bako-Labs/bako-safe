@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.6.2
+
+### Patch Changes
+
+- 0e62253: fix: upgrade fuels to 0.103.0 for fuel-core 0.47.1 compatibility
+
 ## 0.6.1
 
 ### Patch Changes
