@@ -1,6 +1,6 @@
 {
   "name": "bakosafe",
-  "version": "0.6.1",
+  "version": "0.6.2-rc.0",
   "author": "Bako Labs",
   "description": "A signature validation package built based on sway in the fuel network",
   "main": "dist/index.js",
@@ -28,7 +28,7 @@
     "@types/uuid": "^9.0.6",
     "bech32": "^2.0.0",
     "dotenv": "^16.4.1",
-    "fuels": "0.101.3",
+    "fuels": "0.103.0",
     "patch-package": "8.0.0",
     "prettier": "3.0.3",
     "tsup": "^7.2.0",
@@ -45,6 +45,6 @@
     "uuid": "^9.0.1"
   },
   "peerDependencies": {
-    "fuels": "^0.101.0"
+    "fuels": "^0.102.0"
   }
 }
