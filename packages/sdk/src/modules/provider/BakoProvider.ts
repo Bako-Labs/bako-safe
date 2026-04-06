@@ -60,11 +60,11 @@ export class BakoProvider extends Provider {
   }
 
   /**
-  * Sets up a BakoProvider by generating a challenge for authentication.
-  *
-  * @param params Setup parameters including address, encoder, and provider.
-  * @returns A challenge string for authentication.
-  */
+   * Sets up a BakoProvider by generating a challenge for authentication.
+   *
+   * @param params Setup parameters including address, encoder, and provider.
+   * @returns A challenge string for authentication.
+   */
   static async setup(params: BakoProviderSetup) {
     const { address, encoder, provider, name, serverApi } = params;
 

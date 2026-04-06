@@ -54,7 +54,11 @@ describe('[Configurable Functions]', () => {
         SIGNER: evmAddress,
       };
 
-      const vault = new Vault(provider, connectorConfig);
+      const vault = new Vault(
+        provider,
+        connectorConfig,
+        EXAMPLE_PREDICATE_VERSIONS.FUEL_EVM,
+      );
       const result = vault.getConfigurable();
 
       expect(result).toEqual({
