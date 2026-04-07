@@ -3,7 +3,6 @@ import {
   arrayify,
   bn,
   BN,
-  calculateGasFee,
   GetAddressTypeResponse,
   hexlify,
   Predicate,
@@ -13,13 +12,11 @@ import {
   transactionRequestify,
   TransactionRequestLike,
   TransactionResponse,
-  TransactionType,
   ZeroBytes32,
 } from 'fuels';
 
 import { VaultConfigurable, VaultTransaction, VaultConfig } from './types';
 import {
-  FAKE_WITNESSES,
   parseConfig,
   assembleTransferToContractScript,
 } from './utils';
@@ -211,77 +208,6 @@ export class Vault extends Predicate<[]> {
    */
   public async maxGasUsed() {
     return this.transactionService['calculateMaxGasUsed']();
-  }
-
-  /**
-   * Prepares a transaction by estimating gas usage, calculating fees, and adjusting transaction parameters.
-   *
-   * @template T - The type of the transaction request, extending the base `TransactionRequest` type.
-   * @param {T} transactionRequest - The transaction request to prepare.
-   * @returns {Promise<T>} The prepared transaction request.
-   */
-  public async prepareTransaction<T extends TransactionRequest>(
-    transactionRequest: T,
-  ): Promise<T> {
-    const originalMaxFee = transactionRequest.maxFee;
-    const predicateGasUsed = await this.maxGasUsed();
-    this.populateTransactionPredicateData(transactionRequest);
-
-    const witnesses = Array.from(transactionRequest.witnesses);
-    const fakeSignatures = Array.from(
-      { length: this.maxSigners },
-      () => FAKE_WITNESSES,
-    );
-    transactionRequest.witnesses.push(...fakeSignatures);
-
-    const { assembledRequest } = await this.provider.assembleTx({
-      request: transactionRequest,
-      feePayerAccount: this,
-    });
-    transactionRequest = assembledRequest;
-
-    let totalGasUsed = bn(0);
-    transactionRequest.inputs.forEach((input) => {
-      if ('predicate' in input && input.predicate) {
-        input.witnessIndex = 0;
-        input.predicateGasUsed = undefined;
-        totalGasUsed = totalGasUsed.add(predicateGasUsed);
-      }
-    });
-
-    const { gasPriceFactor } = await this.provider.getGasConfig();
-    const { maxFee, gasPrice } = await this.provider.estimateTxGasAndFee({
-      transactionRequest,
-    });
-
-    const serializedTxCount = bn(
-      transactionRequest.toTransactionBytes().length,
-    );
-    totalGasUsed = totalGasUsed.add(serializedTxCount.mul(64));
-
-    const predicateSuccessFeeDiff = calculateGasFee({
-      gas: totalGasUsed,
-      priceFactor: gasPriceFactor,
-      gasPrice,
-    });
-
-    let baseMaxFee = maxFee;
-    if (!originalMaxFee.eq(0) && originalMaxFee.cmp(maxFee) === 1) {
-      baseMaxFee = originalMaxFee;
-    }
-
-    const maxFeeWithPredicateGas = baseMaxFee.add(predicateSuccessFeeDiff);
-
-    // multiplier -> 2x for regular transactions and 5x for upgrade transactions
-    const multiplier =
-      transactionRequest.type === TransactionType.Upgrade ? 50 : 14;
-
-    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(multiplier).div(10);
-
-    await this.provider.estimateTxDependencies(transactionRequest);
-    transactionRequest.witnesses = witnesses;
-
-    return transactionRequest;
   }
 
   /**
