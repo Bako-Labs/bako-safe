@@ -1,5 +1,11 @@
 # bakosafe
 
+## 0.6.3
+
+### Patch Changes
+
+- 3a8c779: fix: increase maxFee multiplier from 2.5x to 4x to handle gas price spikes and remove unused Vault.prepareTransaction
+
 ## 0.6.2
 
 ### Patch Changes
