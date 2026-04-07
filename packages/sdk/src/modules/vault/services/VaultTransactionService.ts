@@ -74,7 +74,7 @@ export class VaultTransactionService {
 
     const maxFeeWithPredicateGas = baseMaxFee.add(predicateSuccessFeeDiff);
     const multiplier =
-      transactionRequest.type === TransactionType.Upgrade ? 50 : 25;
+      transactionRequest.type === TransactionType.Upgrade ? 50 : 40;
     transactionRequest.maxFee = maxFeeWithPredicateGas.mul(multiplier).div(10);
 
     if (transactionRequest.type === TransactionType.Upgrade) {
