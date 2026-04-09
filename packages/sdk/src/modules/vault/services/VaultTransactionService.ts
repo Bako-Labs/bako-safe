@@ -1,7 +1,6 @@
 import {
   type BN,
   bn,
-  calculateGasFee,
   ScriptTransactionRequest,
   type TransactionRequest,
   type TransactionRequestLike,
@@ -47,24 +46,20 @@ export class VaultTransactionService {
     })) as AssembleTxResult;
     transactionRequest = assembledRequest;
 
-    let totalGasUsed = bn(0);
+    // Keep predicateGasUsed on inputs so estimateTxGasAndFee calculates
+    // the full cost including predicate execution, vmInitialization, and
+    // contractRoot costs. Previously this was zeroed and compensated
+    // separately, but the separate calculation missed vmInit and contractRoot
+    // costs, causing maxFee to be insufficient for vaults with many signers.
     transactionRequest.inputs.forEach((input) => {
       if ("predicate" in input && input.predicate) {
         input.witnessIndex = 0;
-        input.predicateGasUsed = undefined;
-        totalGasUsed = totalGasUsed.add(predicateGasUsed);
+        input.predicateGasUsed = predicateGasUsed;
       }
     });
 
-    const { gasPriceFactor } = await this.vault.provider.getGasConfig();
-    const { maxFee, gasPrice } = await this.vault.provider.estimateTxGasAndFee({
+    const { maxFee } = await this.vault.provider.estimateTxGasAndFee({
       transactionRequest,
-    });
-
-    const predicateSuccessFeeDiff = calculateGasFee({
-      gas: totalGasUsed,
-      priceFactor: gasPriceFactor,
-      gasPrice,
     });
 
     let baseMaxFee = maxFee;
@@ -72,13 +67,12 @@ export class VaultTransactionService {
       baseMaxFee = originalMaxFee;
     }
 
-    const maxFeeWithPredicateGas = baseMaxFee.add(predicateSuccessFeeDiff);
     const multiplier =
-      transactionRequest.type === TransactionType.Upgrade ? 50 : 40;
-    transactionRequest.maxFee = maxFeeWithPredicateGas.mul(multiplier).div(10);
+      transactionRequest.type === TransactionType.Upgrade ? 50 : 20;
+    transactionRequest.maxFee = baseMaxFee.mul(multiplier).div(10);
 
     if (transactionRequest.type === TransactionType.Upgrade) {
-      transactionRequest.maxFee = maxFeeWithPredicateGas.mul(5);
+      transactionRequest.maxFee = baseMaxFee.mul(5);
     }
 
     await this.vault.provider.estimateTxDependencies(transactionRequest);
